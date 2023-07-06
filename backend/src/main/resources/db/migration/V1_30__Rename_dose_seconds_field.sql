@@ -1,0 +1,1 @@
+alter table dose_schedule rename secondsfrom00 to seconds_from_00;

@@ -1,0 +1,2 @@
+drop index device_user_one_owner;
+drop index device_user_one_primary_user;

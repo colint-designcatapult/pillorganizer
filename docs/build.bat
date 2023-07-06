@@ -1,0 +1,1 @@
+pandoc --defaults defaults.yaml -N --variable "geometry=margin=1in" --variable fontsize=12pt --variable version=2.0 --toc -o docs.pdf

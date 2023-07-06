@@ -1,0 +1,37 @@
+# This is a basic workflow to help you get started with Actions
+name: app
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [master]
+    paths:
+      - 'app/**'
+  pull_request:
+    branches: [master]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  # A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build:
+    name: flutter build
+    # The type of runner that the job will run on
+    runs-on: macOS
+    steps:
+      - uses: actions/checkout@v2
+      - run: flutter pub get
+        working-directory: app
+      # Generate platform icons
+      - run: flutter pub run icons_launcher:create
+        working-directory: app
+      # Build android
+      - run: flutter build appbundle --release --build-number 1${{ github.run_number }}
+        working-directory: app
+      - uses: actions/upload-artifact@v3
+        with:
+          name: android-release-${{ github.run_number }}
+          path: app/build/app/outputs/bundle/release/app-release.aab
+          retention-days: 5

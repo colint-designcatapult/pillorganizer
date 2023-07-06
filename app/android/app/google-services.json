@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "205413249135",
+    "project_id": "jctpillorganizer",
+    "storage_bucket": "jctpillorganizer.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:205413249135:android:1233a760d3f61942229d9a",
+        "android_client_info": {
+          "package_name": "jct.pillorganizer.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "205413249135-7lv5ch4mah50t5mmbcpt7m4sq7salm1v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXXZsgBQ1DFZd1lUHRkgO5A-Z9-X8dlO4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "205413249135-7lv5ch4mah50t5mmbcpt7m4sq7salm1v.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "205413249135-gh1lf5og1o67q6kj4hcc7i7gktfccva1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "jct.pillorganizer.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,47 @@
+# This is a basic workflow to help you get started with Actions
+name: firmware
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches:
+      - 'master'
+    paths:
+      - 'firmware/**'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  # A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build-firmware:
+    name: firmware build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+      - name: Build PlatformIO Project
+        run: pio run
+        working-directory: firmware
+        env:
+          PLATFORMIO_BUILD_FLAGS: '-DFIRMWARE_BUILD=\"${{ github.run_number }}\" -DFIRMWARE_DATE=\"${{ github.event.repository.pushed_at }}\" -DAUTO_UPDATE=1'
+      - uses: actions/upload-artifact@v3
+        with:
+          name: firmware-binaries-${{ github.run_number }}
+          path: |
+            firmware/.pio/build/esp32dev/bootloader.bin
+            firmware/.pio/build/esp32dev/firmware.bin
+            firmware/.pio/build/esp32dev/ota_data_initial.bin
+            firmware/.pio/build/esp32dev/partitions.bin
+          retention-days: 5

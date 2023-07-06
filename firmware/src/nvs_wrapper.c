@@ -1,0 +1,75 @@
+#include "nvs_wrapper.h"
+#include <nvs.h>
+#include <nvs_flash.h>
+#include "esp_wifi.h"
+
+#define STORAGE_NAMESPACE "storage"
+
+void init_nvs()
+{
+    // Initialize NVS partition 
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        // NVS partition was truncated and needs to be erased 
+        ESP_ERROR_CHECK(nvs_flash_erase());
+
+        // Retry nvs_flash_init
+        ESP_ERROR_CHECK(nvs_flash_init());
+
+    }
+
+    ESP_ERROR_CHECK(ret);
+}
+
+esp_err_t nvs_write_blob(const char* key, const void* value, size_t len)
+{
+    nvs_handle_t h;
+    esp_err_t err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &h);
+    if (err != ESP_OK) 
+        return err;
+
+    err = nvs_set_blob(h, key, value, len);
+    if (err != ESP_OK) 
+        return err;
+    
+    err = nvs_commit(h);
+    if (err != ESP_OK)
+        return err;
+
+    nvs_close(h);
+    return ESP_OK;
+}
+
+esp_err_t nvs_read_blob(const char* key, void* value, size_t len)
+{
+    nvs_handle_t h;
+    esp_err_t err = nvs_open(STORAGE_NAMESPACE, NVS_READONLY, &h);
+    if (err != ESP_OK) 
+        return err;
+
+    size_t reqd_size;
+    err = nvs_get_blob(h, key, NULL, &reqd_size);
+    if (err != ESP_OK) 
+        return err;
+    
+    if(reqd_size > len)
+        return ESP_ERR_INVALID_SIZE;
+    
+    err = nvs_get_blob(h, key, value, &len);
+    if (err != ESP_OK) 
+        return err;
+
+    err = nvs_commit(h);
+    if (err != ESP_OK)
+        return err;
+
+    nvs_close(h);
+    return ESP_OK;
+}
+
+void nvs_factory_reset() {
+    nvs_handle_t h;
+    ESP_ERROR_CHECK(nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &h));
+    ESP_ERROR_CHECK(nvs_erase_all(h));
+    esp_wifi_restore();
+}

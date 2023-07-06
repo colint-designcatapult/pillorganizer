@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>Pill Organizer Engineering</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/picnic">
+        <script src="//cdn.rawgit.com/dcodeIO/protobuf.js/6.X.X/dist/protobuf.js"></script>
+
+    </head>
+    <body>
+        <main style="padding: 10px; max-width: 960px; width: 100%; margin: 100px auto 500px;">
+            <h1>Pill Organizer Firmware</h1>
+            <p>You're running firmware version <span id="firmware-id"></span></p>
+
+            <div id="conalert" style="width: 100%; padding: 25px; background-color: red; color: white">
+                Lost connection to pill organizer. Please wait...
+            </div> 
+
+            <h2>Tools</h2>
+
+            
+
+
+            <div class="flex two">
+                <div>
+                    <h3>Power</h3>
+                    <div class="flex two">
+                        <div><form action="/reboot" method="post"><button class='error' type="submit">Reboot</button></form></div>
+                        <div><form action="/reset" method="post"><button class='error' type="submit">Factory Reset</button></form></div>
+                    </div>
+
+                </div>
+                <div>
+                    <h3>OTA Firmware Update</h3>
+                        <div class="flex two">
+                            <div><input type="file" id="fwfile"></div>
+                            <div>
+                                <button class='warning' id="fwbtn" onclick="uploadfw()">Flash Firmware</button>
+                                May take 5+ minutes and there's no way to know when completed
+                            </div>
+                        
+                        </div>
+                </div>
+
+              </div>
+              
+
+            <h2>Bins</h2>
+            <table>
+                <thead>
+                    <tr>
+                      <th>PM MON</th>
+                      <th>PM TUE</th>
+                      <th>PM WED</th>
+                      <th>PM THU</th>
+                      <th>PM FRI</th>
+                      <th>PM SAT</th>
+                      <th>PM SUN</th>
+                    </tr>
+                </thead>
+                <tr>
+                    <td id="bin-0"></td>
+                    <td id="bin-2"></td>
+                    <td id="bin-4"></td>
+                    <td id="bin-6"></td>
+                    <td id="bin-8"></td>
+                    <td id="bin-10"></td>
+                    <td id="bin-12"></td>
+                </tr>
+                <tr>
+                    <td id="bin-1"></td>
+                    <td id="bin-3"></td>
+                    <td id="bin-5"></td>
+                    <td id="bin-7"></td>
+                    <td id="bin-9"></td>
+                    <td id="bin-11"></td>
+                    <td id="bin-13"></td>
+                </tr>
+                <tfoot>
+                    <tr>
+                      <th>AM MON</th>
+                      <th>AM TUE</th>
+                      <th>AM WED</th>
+                      <th>AM THU</th>
+                      <th>AM FRI</th>
+                      <th>AM SAT</th>
+                      <th>AM SUN</th>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <h2>Console</h2>
+            <pre id="console" style="white-space: pre-wrap; word-break: break-word; width: 100%; height: 500px;">
+
+            </pre>
+        </main>
+
+        <script>
+            var proto = `syntax="proto3";
+enum BinStatus {
+  DISABLED = 0;
+  TAKEN = 1;
+  MISSED = 2;
+  PENDING = 3;
+  TAKE_NOW = 4;
+}
+
+ message EngineeringBinState {
+  int32 voltage = 1;
+  bool open = 2;
+  BinStatus status = 3;
+  int64 scheduled_time = 4;
+}
+
+message EngineeringAllBins {
+  repeated EngineeringBinState bins = 1;
+}
+`;
+
+            var root = protobuf.parse(proto, { keepCase: true }).root; // or use Root#load
+
+            fetch('/version')
+                .then(response => response.text())
+                .then(t => document.getElementById("firmware-id").innerHTML = t);
+
+            function bgcolor(status) {
+                if(status == 1) {
+                    return '#b7f7c8';
+                } else if(status == 2) {
+                    return '#f7b7bb';
+                } else if(status == 4) {
+                    return '#2fff00';
+                } else {
+                    return 'white';
+                }
+            }
+
+            function updateBin(id, b) {
+                var dt = new Date(b.scheduled_time * 1000);
+                document.getElementById("bin-" + id).innerHTML = `
+                    <div style='height: 150px; width: 100px; background-color: ${bgcolor(b.status)}; text-align: center; vertical-align: middle;'>
+                        Bin #${id}<br/>
+                        ${b.voltage} mV <br/>
+                        ${b.open ? 'OPEN' : ''}<br/>
+                        <strong>${b.scheduled_time != 0 ? dt.toLocaleDateString("en-US", {weekday: 'short', month: 'numeric', day: 'numeric'}) : ''}<br/>${b.scheduled_time != 0 ? dt.toLocaleTimeString("en-US", {timeStyle: "short"}) : ''}</strong>
+                        </div>
+                `;
+            }
+
+            function updateBins(buffer) {
+                document.getElementById("conalert").style.display = "none";
+                var message = root.EngineeringAllBins.decode(new Uint8Array(buffer));
+                for(var i = 0; i < 14; i++) {
+                    updateBin(i, message.bins[i]);
+                }
+            }
+
+
+            function uploadfw() {
+
+                var fileInput = document.getElementById("fwfile").files;
+                /* Max size of an individual file. Make sure this
+                * value is same as that set in file_server.c */
+                var MAX_FILE_SIZE = 1000*1024;
+                var MAX_FILE_SIZE_STR = "1000KB";
+
+                if (fileInput.length == 0) {
+                    alert("No file selected!");
+                } else {
+                    document.getElementById("fwbtn").disabled = true;
+
+                    var file = fileInput[0];
+                    var xhttp = new XMLHttpRequest();
+                    xhttp.onreadystatechange = function() {
+                        if (xhttp.readyState == 4) {
+                            if (xhttp.status == 200) {
+                                document.open();
+                                document.write(xhttp.responseText);
+                                document.close();
+
+                                alert("Firmware update completed, restarting");
+                            } else if (xhttp.status == 0) {
+                                alert("Server closed the connection abruptly!");
+                                location.reload()
+                            } else {
+                                alert(xhttp.status + " Error!\n" + xhttp.responseText);
+                                location.reload()
+                            }
+                        }
+                    };
+                    xhttp.open("POST", "/update", true);
+                    xhttp.send(file);
+                    
+                }
+
+                //ev.preventDefault();
+            }
+            //document.getElementById('fwbtn').addEventListener('onclick', (event) => uploadfw(event));
+
+
+            (function(){
+                fetch('/bins')
+                    .then(response => response.arrayBuffer())
+                    .then(t => updateBins(t))
+                    .catch(err => document.getElementById("conalert").style.display = "block");
+                fetch('/logs')
+                    .then(response => response.text())
+                    .then(t => {
+                        var elem = document.getElementById('console');
+                        elem.insertAdjacentHTML("beforeend", t);
+                        elem.scrollTop = elem.scrollHeight;
+                    }).catch(err => {
+                        document.getElementById("conalert").style.display = "block";
+                    });
+
+                setTimeout(arguments.callee, 500);
+            })();
+
+        </script>
+    </body>
+</html>

@@ -1,0 +1,107 @@
+openapi: 3.0.1
+info:
+  title: Authentication
+  description: Endpoints related to user authentication
+  version: "1.0"
+paths:
+  /api/v1/auth/login:
+    post:
+      tags:
+        - security
+      description: accepts an email/password pair to authenticate a JWT session
+      operationId: login
+      parameters: []
+      requestBody:
+        description: credential pair
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsernamePasswordCredential'
+      responses:
+        "200":
+          description: authentication success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWTAuthenticationResult'
+        "401":
+          description: authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationFailed'
+  /api/v1/auth/login_anonymous:
+    post:
+      tags:
+        - security
+      description: accepts an id/secret pair
+      operationId: login_anonymous
+      parameters: []
+      requestBody:
+        description: credential pair
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnonymousCredential'
+      responses:
+        "200":
+          description: authentication success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWTAuthenticationResult'
+        "401":
+          description: authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationFailed'
+components:
+  schemas:
+    UsernamePasswordCredential:
+      title: A email/password credential pair
+      type: object
+      properties:
+        username:
+          type: string
+          description: The account's email address
+        password:
+          type: string
+          description: Password to authenticate the account with
+    AnonymousCredential:
+      title: A id/secret credential pair
+      type: object
+      properties:
+        id:
+          type: number
+          description: ID
+        secret:
+          type: string
+          description: Secret
+    JWTAuthenticationResult:
+      title: Information including JWT token after a successful authentication
+      type: object
+      properties:
+        username:
+          type: string
+          description: The account's email address
+        access_token:
+          type: string
+          description: JWT token
+        token_type:
+          type: string
+          description: The type of JWT token (this API supports only Bearer tokens)
+        expires_in:
+          type: integer
+          description: The amount of seconds the newly-issued JWT token is valid for
+    AuthenticationFailed:
+      title: Information after a failed authentication attempt
+      type: object
+      properties:
+        message:
+          type: string
+          description: A short message describing why authentication failed
+security:
+  - jwt: []

@@ -1,0 +1,8 @@
+input-files:
+  - ../readme.md
+  - architecture.md
+  - misc.md
+  - backend.md
+  - app.md
+  - firmware.md
+  - hosting.md

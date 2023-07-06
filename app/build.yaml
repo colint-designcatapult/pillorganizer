@@ -1,0 +1,13 @@
+targets:
+  $default:
+    builders:
+      freezed:freezed:
+        generate_for:
+          include:
+            - lib/models/**.dart
+            - lib/api/**.dart
+            - lib/screens/device_settings/medication/medication_entry_wizard.dart
+      json_serializable:
+        generate_for:
+          include:
+            - lib/api/**.dart

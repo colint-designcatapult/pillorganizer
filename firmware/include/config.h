@@ -1,0 +1,25 @@
+#pragma once
+
+#ifndef FIRMWARE_REVISION
+#define FIRMWARE_REVISION       23
+#endif
+
+#ifndef FIRMWARE_BUILD          
+#define FIRMWARE_BUILD          "(local build)"
+#endif
+
+#ifndef FIRMWARE_DATE          
+#define FIRMWARE_DATE           "(local build)"
+#endif
+
+#ifndef BOARD_REV
+#define BOARD_REV   2
+#endif
+
+#ifndef AUTO_UPDATE
+#define AUTO_UPDATE (0)
+#endif
+
+#ifndef GPIO_PRINT_BINS
+#define GPIO_PRINT_BINS 0
+#endif

@@ -1,0 +1,32 @@
+micronaut:
+  server:
+    port: 8080
+  application:
+    name: backend
+  security:
+    authentication: bearer
+    redirect:
+      enabled: false
+      forbidden:
+        enabled: false
+      unauthorized:
+        enabled: false
+    endpoints:
+      login:
+        enabled: true
+        path: /login
+    token:
+      jwt:
+        signatures:
+          secret:
+            generator:
+              secret: ${JWT_GENERATOR_SIGNATURE_SECRET:pleaseChangeThisSecretForANewOne}
+datasources:
+  default:
+    schema-generate: NONE
+    db-type: postgres
+flyway:
+  datasources:
+    default:
+      enabled: true
+      baselineOnMigrate: true

@@ -1,0 +1,22 @@
+diff --git a/components/protocomm/src/transports/protocomm_nimble.c b/components/protocomm/src/transports/protocomm_nimble.c
+index 2d3dee3fc4..713e276508 100644
+--- a/components/protocomm/src/transports/protocomm_nimble.c
++++ b/components/protocomm/src/transports/protocomm_nimble.c
+@@ -20,7 +20,7 @@
+ #include "host/ble_uuid.h"
+ #include "host/util/util.h"
+ #include "services/gap/ble_svc_gap.h"
+-
++#include "services/gatt/ble_svc_gatt.h"
+ static const char *TAG = "protocomm_nimble";
+ 
+ ESP_EVENT_DEFINE_BASE(PROTOCOMM_TRANSPORT_BLE_EVENT);
+@@ -436,6 +436,8 @@ gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg)
+ int
+ gatt_svr_init(const simple_ble_cfg_t *config)
+ {
++    ble_svc_gap_init();
++    ble_svc_gatt_init();
+     int rc;
+     rc = ble_gatts_count_cfg(config->gatt_db);
+     if (rc != 0) {

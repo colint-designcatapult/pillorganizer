@@ -1,0 +1,1 @@
+ALTER TABLE device_state ALTER COLUMN scheduled_time TYPE bigint using extract(epoch from scheduled_time);

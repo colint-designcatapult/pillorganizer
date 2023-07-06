@@ -1,0 +1,6 @@
+applicationType: default
+defaultPackage: jct.pillorganizer
+testFramework: junit
+sourceLanguage: java
+buildTool: maven
+features: [annotation-api, app-name, data, data-jpa, h2, hibernate-jpa, hibernate-validator, http-client, java, java-application, jdbc-hikari, junit, logback, maven, netty-server, openapi, problem-json, reactor, reactor-http-client, readme, security, security-annotations, security-jwt, serialization-jackson, shade, swagger-ui, yaml]

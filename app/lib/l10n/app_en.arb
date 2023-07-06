@@ -1,0 +1,56 @@
+{
+	"appName": "CabiNET",
+	"signInPrompt": "Sign In",
+	"signInAction": "Sign in",
+	"email": "E-mail",
+	"password": "Password",
+	"previousPageShort": "Back",
+	"errorPromptTryAgain": "Try Again",
+	"provErrConGeneric": "Connection Problem",
+	"provConConnecting": "Connecting...",
+	"provConSearching": "Searching...",
+	"provConConnectingSubtitle": "Your phone is connecting to your pill organizer. Keep your phone close to it.",
+	"genericError": "Error",
+	"provConSearchingSubtitle": "Hold your phone close to your pill organizer. Your phone is searching for it.",
+	"provErrConGenericSubtitle": "There was a problem connecting to your pill organizer.",
+	"genericOK": "OK",
+	"genericCancel": "Cancel",
+	"provSelectWifi": "Select Wi-Fi Network",
+	"provSelectWifiSubtitle": "Select your Wi-Fi network from the list below. Your pill organizer will be connected to the one you choose.",
+	"provRescanWifi": "Rescan Networks",
+	"genericTryAgain": "Try Again",
+	"genericCompleteAction": "Complete",
+	"noticeDisconnected": "Can't connect to your pill organizer.",
+	"noticeDisconnectedSubtitle": "Please ensure your pill organizer is powered and nearby.",
+	"noticeEmpty": "Your pill organizer is empty.",
+	"noticeEmptySubtitle": "Please reload your pill organizer with a week's worth of pills and then press the button below.",
+	"noticeEmptyAction": "Pills Reloaded",
+	"noticeNoMeds": "You don't have any medications entered.",
+	"actionAddMed": "Add Medication",
+	"doseTakeNow": "Take now",
+	"doseTakeAt": "Take at {time}",
+	"@doseTakeAt": {
+		"placeholders": {
+			"time": {
+				"type": "String"
+			}
+		}
+	},
+	"doseTakenAt": "Taken today at {time}",
+	"@doseTakenAt": {
+		"placeholders": {
+			"time": {
+				"type": "String"
+			}
+		}
+	},
+	"genericToday": "Today",
+	"doseTodayAt": "Today at {time}",
+	"@doseTodayAt": {
+		"placeholders": {
+			"time": {
+				"type": "String"
+			}
+		}
+	}
+}

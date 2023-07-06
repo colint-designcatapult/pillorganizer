@@ -1,0 +1,27 @@
+syntax = "proto3";
+import "nanopb.proto";
+
+option java_package = "jct.pillorganizer.proto";
+
+message StateCheckpoint {
+
+}
+
+message ScheduleUpdated {
+    
+}
+
+message 
+
+
+message PillEvent {
+    // Unix timestamp (millis & UTC) that this event ocurred
+    int64 timestamp = 1;
+    oneof event {
+        StateCheckpoint checkpoint = 2;
+    }
+}
+
+message EpochEvents {
+    repeated PillEvent events = 1;
+}

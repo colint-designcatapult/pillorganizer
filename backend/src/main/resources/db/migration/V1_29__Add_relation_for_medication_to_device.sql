@@ -1,0 +1,1 @@
+alter table scheduled_medication add column device_id bigint;

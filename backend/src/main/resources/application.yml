@@ -1,0 +1,79 @@
+micronaut:
+  server:
+    port: ${PORT}
+  application:
+    name: backend
+  security:
+    authentication: bearer
+    redirect:
+      enabled: false
+      forbidden:
+        enabled: false
+      unauthorized:
+        enabled: false
+    endpoints:
+      login:
+        enabled: true
+        path: /login
+    token:
+      jwt:
+        generator:
+          access-token:
+            expiration: 604800
+        signatures:
+          secret:
+            generator:
+              secret: ${JWT_GENERATOR_SIGNATURE_SECRET:pleaseChangeThisSecretForANewOne}
+              jws-algorithm: HS256
+    intercept-url-map:
+    - access: isAnonymous()
+      pattern: /login
+    - access: isAnonymous()
+      pattern: /swagger/**
+    - access: isAnonymous()
+      pattern: /swagger-ui/**
+    - access: isAnonymous()
+      pattern: /api/v1/device/**
+    - access: device
+      pattern: /api/v1_2/device/**
+    - access: isAnonymous()
+      pattern: /static/firmware/**
+  router:
+    static-resources:
+      swagger:
+        paths: classpath:META-INF/swagger
+        mapping: /swagger/**
+      swagger-ui:
+        paths: classpath:META-INF/swagger/views/swagger-ui
+        mapping: /swagger-ui/**
+      firmware:
+        enabled: true
+        mapping: "/static/firmware/**"
+        paths: classpath:firmware
+datasources:
+  default:
+    url: jdbc:postgresql://${DB_HOSTNAME}:${DB_PORT}/${DB_DATABASE}?stringtype=unspecified
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driverClassName: org.postgresql.Driver
+    schema-generate: NONE
+    dialect: org.hibernate.dialect.PostgreSQLDialect
+jpa.default.properties.hibernate:
+  hbm2ddl.auto: none
+  format_sql: true
+  dialect: org.hibernate.dialect.PostgreSQLDialect
+netty:
+  default:
+    allocator:
+      max-order: 3
+flyway:
+  datasources:
+    default:
+      enabled: true
+      baselineOnMigrate: true
+firebase:
+  privkey: ${FIREBASE_PRIVATE_KEY}
+  project: ${FIREBASE_PROJECT_ID}
+  email: ${FIREBASE_CLIENT_EMAIL}
+issuer:
+  jwk: ${SIGNING_JWK:eyJwIjoiNFRDVG9KSE0zSHdBUHRyZ0R2SzlxN2d5UDJzQVJxVkJucjdBWHNpNHk2WlowWnBUd3ZydklEaVFGQ2RUSFhHUVZYbGJsdDJrSk9BX1NQN1ZGNXJ6SnNJN3JhUHpORGVIZDhRd29xLUwyekl1LVpZaUYxS255bGt1alk3SnhSRE9ncHRjNEVscm1OYmRMRmt4bjJyVkIzRUJIVjJPdldnSXJJeDdHZ3BHRDZjIiwia3R5IjoiUlNBIiwicSI6IjB1UWc0X0g5WFQybnZhU3lLUWw1azhRbFFGVUFsQTB5Ql96Wm9HQ0pBYk5UdEN3T0xTVU5hXzg1eVV1a2puSWkzaW43c0tiajJWNkh1Mzd5WlBWQUFwVTk4czIxMThCaU9EZVA2NDBnYjZTMjlBUkhDTWNYR0hoMHZtSlUtM29mQ2NZVWIzS2JwNVBGWGJwVEwzYmVCeWdFVTRIMlNuOE5mczR5ODlyTEFiTSIsImQiOiJNZWdTTWl2eExTRWFzUUhmdGlMbVp3ZUIzU2FuTjhYdUV3X3dReHZadEdhdWZUM21zU2tJS2RhcjB1X0Q3UHh4dEpVZWZPVU55UjRHeGJ0aWJNN25lN0VNakRGMk5UT0l3dzNuMEVvZzdCMExMZjlyaUJxNmg3M0ltUlVsZXM4SkVBcER6WUplT2x2SmZRMFplaU9iQkd4cVM3WnhLcTdlYTZJLWs4MURsTDA3VjNmZ1JEN3VjUFRWZTJ3bFJ2cUhuYjFmbmRHR282UGd0amVvckktbkgwdnBldkN4SUg3TXpTMnRHVjQwdGRUUk83b2J4Z3lGbThkenFGZkR0YWZVOFdCR0tpSnNobndCamx5UUtoMkVaUlJCZTVUQVZldnZ2R1JnWV90SU1zWFdPdE1kR2xfLWZ0MXdBV21GTlNJSWFpa2FqeVhPWlBCQ3l5WVdhUEduRlEiLCJlIjoiQVFBQiIsImtpZCI6ImNhYi1yc2EtMSIsInFpIjoic1pHcFNMd19IV0gyUnBiTmMwMGRtNXlHZE8wRDhlM1F6VUNaQ0lvZkZqRjJfTFNhdGdYU1JiVW5zZHdWNC0xNl9haV8zMTA5QjZTYXQzVnAxRHdxamZQQ1hNMnUwVFNFNWxockp2QUdJWkxzWERRdTJaOXd5VExSd0xhRXNwSjU4c2J5ZVVfby1iQ2hDOW9HQkZjdUZ0MnIyX3ZSLVdaYU9vT29jaUZVdF9jIiwiZHAiOiJybnJ2OTdyZ2kzbTh5dmJXSWw3c25VX2tCd1ZHT25hekNHZnVMOExBaEhLSko0RzNJdDFCU0tycTMtSzBZSnpzWTMzYmZHS1JXMDB4VzhLdm8xR1kwdEF1WTFVa0RMSjEwVk5fQjU2Uzg2ekhmdlZYeHRCeFY3U1FBSGpCVjJLMVQ3ZEhXRFVySEVwbkpvU1prVmE2WnNDbFIzYUZNYmFZLWZFRE5PTC05QU0iLCJkcSI6ImhwS0VXbkNrMk1ickx4elZnMUpFZm9KX3N0bUxFTzZLcW9ZeTZTQXd6U0Q5bk04d0RLYkVOZElic2RQUElnYTdNVUZoRm95b2dLRE54RnR4bWZMVjhkQUNROW40MjhBcjdPdW5yd3ZUVXVxc3hIR21VbmVZeVVpMFZuaXctZmducmpqei1Wb004WlplTHowaXJfc09HMHJ4MThmcXZnYnRPYW1pNGZFUDhmayIsIm4iOiJ1WUtGUzhnQWV1M3Jqc0RPTHJSdWphZVdQeXRDbEhCYVJSMWttQ3VEYkU4MFVHTkJ4cVI0ckQ4Mjg3bUlkRWZUU3k1dmcwdnZNRDh3WExucU1hWHpzaC1DLVF1TWs1cjRXMGdha3YtWXRZYnNTRmpFaU1DRGh5UWRxWVFSQkVNRm14TzY4SzhiSG9HcENjQmFQcGl0eGp0UFJCQzlXd2FRZ2xjUWM2SlBDOW9uQjhrZUZDMnlWeGxvVC1sWkh4TkRDRkF6WU5QZEk0cERqSVRhclFlYUZIS1JrQndaTE9URXVwNmRSWmptdlROeE5kS0x2N2Z5aEh6OHJUakpOSTdvSXN6VlhfZ2FRVEFZVExBTjNMRW1QbFVzVC1tY1VEcHFpbjM2TnZTNzlJZ1JwMWluMlNSZ2FwTnNHdU5UdUE5V3ZEMVBNTTZuajBBM0RIV25GSG1ZeFEifQ==}
