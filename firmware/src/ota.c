@@ -279,7 +279,7 @@ void ota_attempt_reset() {
 esp_err_t ota_update(ota_source source, void* indata, size_t insize, void* outdata, size_t outbufsize, size_t* bytesWritten) {
 
     time_t currentTime;
-    time(currentTime);
+    time(&currentTime);
 
     if(xSemaphoreTake(ota_proto_semphr, 0)) {
 

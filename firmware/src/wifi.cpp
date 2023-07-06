@@ -315,14 +315,14 @@ private:
     static esp_err_t fw_version_handler(uint32_t session_id, const uint8_t *inbuf, ssize_t inlen,
                                           uint8_t **outbuf, ssize_t *outlen, void *priv_data) {
         *outbuf = new uint8_t[4];
-        ota_get_current_version((void*)inbuf, inlen, *outbuf, 4, (size_t*)outlen);
+        return ota_get_current_version((void*)inbuf, inlen, *outbuf, 4, (size_t*)outlen);
     }
 
 
     static esp_err_t update_fw_handler(uint32_t session_id, const uint8_t *inbuf, ssize_t inlen,
                                           uint8_t **outbuf, ssize_t *outlen, void *priv_data) {
         *outbuf = new uint8_t[sizeof(_ota_update_response)];
-        ota_update(OTA_METHOD_PROTOCOMM, (void*)inbuf, inlen, *outbuf, sizeof(_ota_update_response), (size_t*)outlen);
+       return ota_update(OTA_METHOD_PROTOCOMM, (void*)inbuf, inlen, *outbuf, sizeof(_ota_update_response), (size_t*)outlen);
     }
 
 
