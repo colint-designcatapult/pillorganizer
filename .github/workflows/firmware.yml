@@ -1,23 +1,26 @@
-# This is a basic workflow to help you get started with Actions
 name: firmware
 
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
+  pull_request:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/firmware.yml"
+      - "firmware/**"
   push:
     branches:
-      - 'master'
+      - master
     paths:
-      - 'firmware/**'
+      - ".github/workflows/firmware.yml"
+      - "firmware/**"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-  # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build-firmware:
     name: firmware build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
@@ -28,7 +31,7 @@ jobs:
           key: ${{ runner.os }}-pio
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: "3.11.5"
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
       - name: Build PlatformIO Project
