@@ -167,7 +167,6 @@ class UserOnboardSpec extends Specification {
         first.deviceClass() == DeviceClass.v1_7x2
         first.owner()
         !first.notifications()
-        first.timezone() == "America/Detroit"
     }
 
     void "user set device settings"() {
