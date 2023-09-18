@@ -24,41 +24,35 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return BasicPage(
         title: const Text('Sign in to CabiNET'),
-        child: BasicForm(
-          buttonText: 'Continue',
-          onSubmit: _submitForm,
-          future: _loginFuture,
-          children: [
-            BasicPageTextFormField(
-              labelText: 'Email',
-              validator: Validatorless.multiple([
-                if (!useAnon) Validatorless.email('Not a valid email'),
-                Validatorless.required('Enter an email')
-              ]),
-              autofocus: true,
-              onSaved: (val) => username = val,
-            ),
-            BasicPageTextFormField(
-              labelText: 'Password',
-              validator: Validatorless.required('Enter your password'),
-              onFieldSubmitted: (value) => _submitForm(),
-              onSaved: (val) => password = val,
-              textInputAction: TextInputAction.done,
-              obscureText: true,
-            ),
-            CheckboxListTile(
-              title: const Text("Engineering: use anonymous account"),
-              value: useAnon,
-              onChanged: (newValue) {
-                setState(() {
-                  useAnon = newValue ?? false;
-                });
-              },
-              controlAffinity:
-                  ListTileControlAffinity.leading, //  <-- leading Checkbox
-            )
-          ],
-        ));
+        bgColor: const Color(0xFFBFD2DB),
+        child: Padding(
+            padding: const EdgeInsets.only(top: 35),
+            child: BasicForm(
+              titleText: 'Sign In',
+              subtitleText: 'Sign In to your account for better experience.',
+              buttonText: 'Continue',
+              onSubmit: _submitForm,
+              future: _loginFuture,
+              children: [
+                BasicPageTextFormField(
+                  labelText: 'Email',
+                  validator: Validatorless.multiple([
+                    if (!useAnon) Validatorless.email('Not a valid email'),
+                    Validatorless.required('Enter an email')
+                  ]),
+                  autofocus: true,
+                  onSaved: (val) => username = val,
+                ),
+                BasicPageTextFormField(
+                  labelText: 'Password',
+                  validator: Validatorless.required('Enter your password'),
+                  onFieldSubmitted: (value) => _submitForm(),
+                  onSaved: (val) => password = val,
+                  textInputAction: TextInputAction.done,
+                  obscureText: true,
+                ),
+              ],
+            )));
   }
 
   void _showErrorDialog(String message) {

@@ -23,7 +23,7 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
     const double edgePadding = 24;
     const double topPadding = 120;
     const double bottomPadding = 80;
-    const double buttonHeight = 42;
+    const double buttonHeight = 48;
 
     return Scaffold(
       backgroundColor: Theme.of(context).primaryColor,
