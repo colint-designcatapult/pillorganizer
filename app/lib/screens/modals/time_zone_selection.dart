@@ -1,4 +1,3 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
@@ -8,8 +7,7 @@ import 'package:timezone/standalone.dart' as tz;
 import '../../service/time_service.dart';
 
 class TimeZoneOption extends StatelessWidget {
-
-  TimeZoneOption({super.key, required this.location}) { }
+  TimeZoneOption({super.key, required this.location}) {}
 
   final tz.Location location;
 
@@ -21,16 +19,14 @@ class TimeZoneOption extends StatelessWidget {
       style: ListTileStyle.drawer,
     );
   }
-
 }
 
 class TimeZoneSelectionModal extends StatelessWidget {
   const TimeZoneSelectionModal({super.key});
 
-
   static Route<TimeZoneLocation> route(context) {
-    return platformPageRoute(context: context, builder:
-        (_) => const TimeZoneSelectionModal());
+    return platformPageRoute(
+        context: context, builder: (_) => const TimeZoneSelectionModal());
   }
 
   Widget _buildZoneItem(BuildContext context, tz.Location location) {
@@ -46,48 +42,49 @@ class TimeZoneSelectionModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (BuildContext context) => FilterableTimeZoneProvider(),
-      builder: (BuildContext context, Widget? v) {
-       return Scaffold(
-         appBar: AppBar(
-           title: Text('Time Zone'),
-         ),
-         body: Column(
-           crossAxisAlignment: CrossAxisAlignment.stretch,
-           mainAxisSize: MainAxisSize.max,
-           children: [
-             Padding(
-               padding: const EdgeInsets.all(8.0),
-               child: PlatformWidget(
-                 cupertino: (context, _) {
-                   return CupertinoSearchTextField(
-                     onChanged: (val) {
-                       Provider.of<FilterableTimeZoneProvider>(context, listen: false)
-                           .filter(val);
-                     },
-                     placeholder: 'Search time zones',
-                     autofocus: true,
-                   );
-                 },
-                 material: (context, _) {
-                   return TextField(
-                     onChanged: (val) {
-                       Provider.of<FilterableTimeZoneProvider>(context, listen: false)
-                           .filter(val);
-                     },
-                     decoration: InputDecoration(
-                       border: OutlineInputBorder(
-                         borderRadius: BorderRadius.circular(10.0),
-                       ),
-                       filled: true,
-                       prefixIcon: const Icon(Icons.search),
-                       hintText: 'Search time zones'
-                     ),
-                     autofocus: true,
-                   );
-                 },
-               ),
-               /*child: PlatformTextField(
+        create: (BuildContext context) => FilterableTimeZoneProvider(),
+        builder: (BuildContext context, Widget? v) {
+          return Scaffold(
+              appBar: AppBar(
+                title: const Text('Time Zone'),
+              ),
+              body: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: PlatformWidget(
+                      cupertino: (context, _) {
+                        return CupertinoSearchTextField(
+                          onChanged: (val) {
+                            Provider.of<FilterableTimeZoneProvider>(context,
+                                    listen: false)
+                                .filter(val);
+                          },
+                          placeholder: 'Search time zones',
+                          autofocus: true,
+                        );
+                      },
+                      material: (context, _) {
+                        return TextField(
+                          onChanged: (val) {
+                            Provider.of<FilterableTimeZoneProvider>(context,
+                                    listen: false)
+                                .filter(val);
+                          },
+                          decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              filled: true,
+                              prefixIcon: const Icon(Icons.search),
+                              hintText: 'Search time zones'),
+                          autofocus: true,
+                        );
+                      },
+                    ),
+                    /*child: PlatformTextField(
                  onChanged: (val) {
                    Provider.of<FilterableTimeZoneProvider>(context, listen: false)
                        .filter(val);
@@ -107,25 +104,22 @@ class TimeZoneSelectionModal extends StatelessWidget {
                  hintText: 'Search time zones',
                  autofocus: true,
                ),*/
-             ),
-             const Divider(),
-             Expanded(
-               child: Consumer<FilterableTimeZoneProvider>(
-                 builder: (context, val, _) {
-                   return ListView.builder(
-                     itemBuilder: (context, index) {
-                       return _buildZoneItem(context, val.filteredZones[index]);
-                     },
-                     itemCount: val.filteredZones.length
-                   );
-                 },
-               ),
-             )
-           ],
-         )
-       );
-      }
-    );
+                  ),
+                  const Divider(),
+                  Expanded(
+                    child: Consumer<FilterableTimeZoneProvider>(
+                      builder: (context, val, _) {
+                        return ListView.builder(
+                            itemBuilder: (context, index) {
+                              return _buildZoneItem(
+                                  context, val.filteredZones[index]);
+                            },
+                            itemCount: val.filteredZones.length);
+                      },
+                    ),
+                  )
+                ],
+              ));
+        });
   }
-  
 }

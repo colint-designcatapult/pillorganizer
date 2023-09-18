@@ -30,13 +30,11 @@ class AppApi {
   }
 
   static Future<int?> deviceID() async {
-    return (await SharedPreferences.getInstance())
-      .getInt("device_id");
+    return (await SharedPreferences.getInstance()).getInt("device_id");
   }
 
   static Future<String?> deviceSerial() async {
-    return (await SharedPreferences.getInstance())
-        .getString("device_sn");
+    return (await SharedPreferences.getInstance()).getString("device_sn");
   }
 }
 
@@ -51,10 +49,8 @@ abstract class RestClient {
   Future<ProvisionStatus> provisionStatus(
       @Path("id") int id, @Body() VerifyProvision status);
 
-
   @POST("/device/{id}/reload")
   Future<void> reload(@Path("id") int id);
-
 
   @POST("/user/register_anonymous")
   Future<AnonymousCredentialsDTO> registerAnonymous();
@@ -74,43 +70,46 @@ abstract class RestClient {
   @POST("/user/register")
   Future<UserDTO> register(@Body() UserRegistrationDTO reg);
 
-
   @GET("/device/list")
   Future<List<DeviceUserDTO>> listMyDevices();
-
 
   @GET("/device/{id}/medication")
   Future<List<ScheduledMedicationDTO>> medications(@Path("id") int deviceID);
 
   @PUT("/device/{id}/medication")
-  Future<ScheduledMedicationDTO> addMedication(@Path("id") int deviceID, @Body() ScheduledMedicationDTO dto);
+  Future<ScheduledMedicationDTO> addMedication(
+      @Path("id") int deviceID, @Body() ScheduledMedicationDTO dto);
 
   @POST("/device/{id}/medication")
-  Future<ScheduledMedicationDTO> saveMedication(@Path("id") int deviceID, @Body() SaveMedicationDTO dto);
+  Future<ScheduledMedicationDTO> saveMedication(
+      @Path("id") int deviceID, @Body() SaveMedicationDTO dto);
 
   @DELETE("/device/{id}/medication/{med_id}")
-  Future<void> deleteMedication(@Path("id") int deviceID, @Path("med_id") int medID);
+  Future<void> deleteMedication(
+      @Path("id") int deviceID, @Path("med_id") int medID);
 
   @GET("/device/{id}/medication/{med_id}")
-  Future<ScheduledMedicationDTO> medication(@Path("id") int deviceID, @Path("med_id") int medID);
+  Future<ScheduledMedicationDTO> medication(
+      @Path("id") int deviceID, @Path("med_id") int medID);
 
   @PUT("/device/{id}")
-  Future<DeviceUserDTO> setDeviceSettings(@Path("id") int deviceID, @Body() UpdateDeviceUserSettings settings);
+  Future<DeviceUserDTO> setDeviceSettings(
+      @Path("id") int deviceID, @Body() UpdateDeviceUserSettings settings);
 
   @GET("/device/{id}/dispense_time")
   Future<SimpleScheduleDTO> getDispenseTimes(@Path("id") int deviceID);
 
   @POST("/device/{id}/dispense_time")
-  Future<SimpleScheduleDTO> updateDispenseTimes(@Path("id") int deviceID, @Body() SimpleScheduleDTO dto);
+  Future<SimpleScheduleDTO> updateDispenseTimes(
+      @Path("id") int deviceID, @Body() SimpleScheduleDTO dto);
 
   @POST("/device/{id}/sync")
   Future<String> deviceSync(@Path("id") int deviceID, @Body() String data);
 
   @POST("/device/{id}/state")
   @FormUrlEncoded()
-  Future<DeviceStateDTO> stateDate(@Path("id") int deviceID, @Field() String date);
-
-
+  Future<DeviceStateDTO> stateDate(
+      @Path("id") int deviceID, @Field() String date);
 }
 
 @JsonSerializable()
@@ -118,9 +117,7 @@ class ProblemJsonViolation {
   final String? field;
   final String? message;
 
-  ProblemJsonViolation({
-    this.field, this.message
-  });
+  ProblemJsonViolation({this.field, this.message});
   factory ProblemJsonViolation.fromJson(Map<String, dynamic> json) =>
       _$ProblemJsonViolationFromJson(json);
 
@@ -132,7 +129,6 @@ class ProblemJsonViolation {
   }
 }
 
-
 @JsonSerializable()
 class ProblemJson {
   final String? type;
@@ -141,15 +137,14 @@ class ProblemJson {
   final ProblemJson? cause;
   final List<ProblemJsonViolation>? violations;
 
-  ProblemJson({
-    this.type, this.title, this.detail, this.cause, this.violations
-  });
+  ProblemJson(
+      {this.type, this.title, this.detail, this.cause, this.violations});
   factory ProblemJson.fromJson(Map<String, dynamic> json) =>
       _$ProblemJsonFromJson(json);
 
   @override
   String toString() {
-    if(violations != null && violations!.isNotEmpty) {
+    if (violations != null && violations!.isNotEmpty) {
       var str = violations!.map((e) => '  \u2022 $e\n').join();
       return 'Please correct the following errors:\n$str';
     } else {
@@ -159,23 +154,17 @@ class ProblemJson {
 }
 
 class ProblemJsonException extends DioError {
-  ProblemJsonException({
-    required super.requestOptions,
-    required this.problem
-  });
+  ProblemJsonException({required super.requestOptions, required this.problem});
 
   final ProblemJson problem;
 }
 
 class ProblemJsonInterceptor extends Interceptor {
-
   DioError? tryHandleResponse(Response response) {
     if (response.headers['content-type']?.first == 'application/problem+json') {
       final problem = ProblemJson.fromJson(json.decode(response.data));
       return ProblemJsonException(
-        requestOptions: response.requestOptions,
-        problem: problem
-      );
+          requestOptions: response.requestOptions, problem: problem);
     } else {
       return null;
     }
@@ -183,23 +172,22 @@ class ProblemJsonInterceptor extends Interceptor {
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    if(tryHandleResponse(response) == null) {
+    if (tryHandleResponse(response) == null) {
       super.onResponse(response, handler);
     }
   }
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    FlutterTimezone.getLocalTimezone()
-        .then((value) {
-          options.headers["X-Local-TZ"] = value;
-          handler.next(options);
-        });
+    FlutterTimezone.getLocalTimezone().then((value) {
+      options.headers["X-Local-TZ"] = value;
+      handler.next(options);
+    });
   }
 
   @override
   void onError(DioError err, ErrorInterceptorHandler handler) {
-    switch(err.type) {
+    switch (err.type) {
       case DioErrorType.connectionTimeout:
       case DioErrorType.receiveTimeout:
       case DioErrorType.sendTimeout:
@@ -215,16 +203,11 @@ Dio addProblemJsonInterceptorToDio(Dio dio) {
 }
 
 final client = RestClient(
-    addProblemJsonInterceptorToDio(addAuthInterceptorsToDio(
-        Dio(
-  BaseOptions(
-    connectTimeout: const Duration(seconds: 5),
-    receiveTimeout: const Duration(seconds: 5),
-      contentType: 'application/json'
-  )
-))
-    ), baseUrl: AppApi.base());
-
+    addProblemJsonInterceptorToDio(addAuthInterceptorsToDio(Dio(BaseOptions(
+        connectTimeout: const Duration(seconds: 5),
+        receiveTimeout: const Duration(seconds: 5),
+        contentType: 'application/json')))),
+    baseUrl: AppApi.base());
 
 @JsonSerializable()
 class UserDTO {
@@ -244,7 +227,6 @@ class UserRegistrationDTO {
   UserRegistrationDTO({required this.email, required this.password});
   Map<String, dynamic> toJson() => _$UserRegistrationDTOToJson(this);
 }
-
 
 @JsonSerializable()
 class ProvisionStart {
@@ -311,12 +293,14 @@ class BinEventDTO {
   final String eventType;
   final int bin;
 
-  BinEventDTO({required this.id, required this.ts, required this.eventType, required this.bin});
+  BinEventDTO(
+      {required this.id,
+      required this.ts,
+      required this.eventType,
+      required this.bin});
   factory BinEventDTO.fromJson(Map<String, dynamic> json) =>
       _$BinEventDTOFromJson(json);
 }
-
-
 
 @JsonSerializable()
 class BinStateDTO {
@@ -326,7 +310,12 @@ class BinStateDTO {
   final BinEventDTO? event;
   final ScheduleDTO? schedule;
 
-  BinStateDTO({required this.id, required this.binStatus, required this.scheduledTime, this.event, this.schedule});
+  BinStateDTO(
+      {required this.id,
+      required this.binStatus,
+      required this.scheduledTime,
+      this.event,
+      this.schedule});
   factory BinStateDTO.fromJson(Map<String, dynamic> json) =>
       _$BinStateDTOFromJson(json);
   Map<String, dynamic> toJson() => _$BinStateDTOToJson(this);
@@ -345,21 +334,19 @@ class DeviceUserDTO {
   final bool notifications;
   final String? timezone;
 
-  DeviceUserDTO({
-    required this.id,
-    required this.deviceID,
-    required this.deviceClass,
-    this.customName,
-    required this.serialNo,
-    this.lastSync,
-    required this.primaryUser,
-    required this.owner,
-    required this.notifications,
-    this.timezone
-  });
+  DeviceUserDTO(
+      {required this.id,
+      required this.deviceID,
+      required this.deviceClass,
+      this.customName,
+      required this.serialNo,
+      this.lastSync,
+      required this.primaryUser,
+      required this.owner,
+      required this.notifications,
+      this.timezone});
   factory DeviceUserDTO.fromJson(Map<String, dynamic> json) =>
       _$DeviceUserDTOFromJson(json);
-
 }
 
 @JsonSerializable()
@@ -370,13 +357,18 @@ class DeviceDTO {
   final String? customName;
   final int? lastSync;
 
-  DeviceDTO({required this.id, required this.deviceClass, required this.serialNo, this.customName, this.lastSync});
+  DeviceDTO(
+      {required this.id,
+      required this.deviceClass,
+      required this.serialNo,
+      this.customName,
+      this.lastSync});
   factory DeviceDTO.fromJson(Map<String, dynamic> json) =>
       _$DeviceDTOFromJson(json);
   Map<String, dynamic> toJson() => _$DeviceDTOToJson(this);
 
   String bestHumanNane() {
-    if(customName != null) {
+    if (customName != null) {
       return customName!;
     } else {
       return "Device #${id}";
@@ -393,19 +385,16 @@ class AnonymousCredentialsDTO {
   factory AnonymousCredentialsDTO.fromJson(Map<String, dynamic> json) =>
       _$AnonymousCredentialsDTOFromJson(json);
   Map<String, dynamic> toJson() => _$AnonymousCredentialsDTOToJson(this);
-
 }
 
 @freezed
 class EmailPasswordCredentialsDTO with _$EmailPasswordCredentialsDTO {
-  const factory EmailPasswordCredentialsDTO({
-    required String? username,
-    required String? password
-  }) = _EmailPasswordCredentialsDTO;
+  const factory EmailPasswordCredentialsDTO(
+      {required String? username,
+      required String? password}) = _EmailPasswordCredentialsDTO;
 
   factory EmailPasswordCredentialsDTO.fromJson(Map<String, dynamic> json) =>
       _$EmailPasswordCredentialsDTOFromJson(json);
-
 }
 
 @JsonSerializable()
@@ -416,24 +405,25 @@ class JwtCredentials {
   final String? token_type;
   final int? expires_in;
 
-  JwtCredentials({this.username, this.roles, this.access_token, this.token_type, this.expires_in});
+  JwtCredentials(
+      {this.username,
+      this.roles,
+      this.access_token,
+      this.token_type,
+      this.expires_in});
   factory JwtCredentials.fromJson(Map<String, dynamic> json) =>
       _$JwtCredentialsFromJson(json);
   Map<String, dynamic> toJson() => _$JwtCredentialsToJson(this);
 }
 
-
 @JsonSerializable()
 class ScheduleDTO {
-
   final int binID;
   late String dayOfWeek;
   late int secondsFrom00;
 
-  ScheduleDTO.fromTimeOfDayOfWeek({
-    required this.binID,
-    required TimeOfDayOfWeek tdow
-  }) {
+  ScheduleDTO.fromTimeOfDayOfWeek(
+      {required this.binID, required TimeOfDayOfWeek tdow}) {
     dayOfWeek = tdow.dayOfWeekString();
     secondsFrom00 = tdow.offsetFrom00;
   }
@@ -444,10 +434,14 @@ class ScheduleDTO {
   }
 
   ScheduleDTOAndTimeOfDayOfWeek toLocalCombined() {
-    return ScheduleDTOAndTimeOfDayOfWeek(dto: this, tdow: toTimeOfDayOfWeek().toLocal());
+    return ScheduleDTOAndTimeOfDayOfWeek(
+        dto: this, tdow: toTimeOfDayOfWeek().toLocal());
   }
 
-  ScheduleDTO({required this.binID, required this.dayOfWeek, required this.secondsFrom00});
+  ScheduleDTO(
+      {required this.binID,
+      required this.dayOfWeek,
+      required this.secondsFrom00});
   factory ScheduleDTO.fromJson(Map<String, dynamic> json) =>
       _$ScheduleDTOFromJson(json);
   Map<String, dynamic> toJson() => _$ScheduleDTOToJson(this);
@@ -460,9 +454,6 @@ class ScheduleDTOAndTimeOfDayOfWeek {
   ScheduleDTOAndTimeOfDayOfWeek({required this.dto, required this.tdow});
 }
 
-
-
-
 @JsonSerializable()
 class EngineeringDataDTO {
   final double vbatMeas;
@@ -470,7 +461,11 @@ class EngineeringDataDTO {
   final String timestamp;
   final List<int> voltages;
 
-  EngineeringDataDTO({required this.vbatMeas, required this.vbatScaled, required this.timestamp, required this.voltages});
+  EngineeringDataDTO(
+      {required this.vbatMeas,
+      required this.vbatScaled,
+      required this.timestamp,
+      required this.voltages});
   factory EngineeringDataDTO.fromJson(Map<String, dynamic> json) =>
       _$EngineeringDataDTOFromJson(json);
 }
@@ -504,7 +499,11 @@ class EventDTO {
   final String eventType;
   final int bin;
 
-  EventDTO({required this.id, required this.ts, required this.eventType, required this.bin});
+  EventDTO(
+      {required this.id,
+      required this.ts,
+      required this.eventType,
+      required this.bin});
   factory EventDTO.fromJson(Map<String, dynamic> json) =>
       _$EventDTOFromJson(json);
 }
@@ -536,12 +535,16 @@ class MedicationDispenseTimeDTO {
   final int? quantity;
   final SimpleDispenseTimeDTO? dispense;
 
-  MedicationDispenseTimeDTO({this.id, this.medicationID, this.dispenseID, this.quantity, this.dispense});
+  MedicationDispenseTimeDTO(
+      {this.id,
+      this.medicationID,
+      this.dispenseID,
+      this.quantity,
+      this.dispense});
 
   factory MedicationDispenseTimeDTO.fromJson(Map<String, dynamic> json) =>
       _$MedicationDispenseTimeDTOFromJson(json);
   Map<String, dynamic> toJson() => _$MedicationDispenseTimeDTOToJson(this);
-
 }
 
 @JsonSerializable()
@@ -555,7 +558,6 @@ class SimpleDispenseTimeDTO {
   factory SimpleDispenseTimeDTO.fromJson(Map<String, dynamic> json) =>
       _$SimpleDispenseTimeDTOFromJson(json);
   Map<String, dynamic> toJson() => _$SimpleDispenseTimeDTOToJson(this);
-
 }
 
 @JsonSerializable()
@@ -566,7 +568,12 @@ class ScheduledMedicationDTO {
   final int? color;
   final List<MedicationDispenseTimeDTO>? dispenseTimes;
 
-  ScheduledMedicationDTO({this.id, required this.med_name, this.shape, this.color, this.dispenseTimes});
+  ScheduledMedicationDTO(
+      {this.id,
+      required this.med_name,
+      this.shape,
+      this.color,
+      this.dispenseTimes});
   factory ScheduledMedicationDTO.fromJson(Map<String, dynamic> json) =>
       _$ScheduledMedicationDTOFromJson(json);
   Map<String, dynamic> toJson() => _$ScheduledMedicationDTOToJson(this);
@@ -579,11 +586,14 @@ class UpdateDeviceUserSettings {
   final bool? notifications;
   final String? timezone;
 
-  UpdateDeviceUserSettings({required this.deviceName, required this.notificationToken, required this.notifications, required this.timezone});
+  UpdateDeviceUserSettings(
+      {required this.deviceName,
+      required this.notificationToken,
+      required this.notifications,
+      required this.timezone});
   factory UpdateDeviceUserSettings.fromJson(Map<String, dynamic> json) =>
       _$UpdateDeviceUserSettingsFromJson(json);
   Map<String, dynamic> toJson() => _$UpdateDeviceUserSettingsToJson(this);
-
 }
 
 @JsonSerializable()
@@ -593,13 +603,11 @@ class SimpleScheduleDTO {
   final int? pmID;
   final int? pmSecondsFrom00;
 
-  SimpleScheduleDTO({
-    this.amID, this.amSecondsFrom00, this.pmID, this.pmSecondsFrom00
-  });
+  SimpleScheduleDTO(
+      {this.amID, this.amSecondsFrom00, this.pmID, this.pmSecondsFrom00});
   factory SimpleScheduleDTO.fromJson(Map<String, dynamic> json) =>
       _$SimpleScheduleDTOFromJson(json);
   Map<String, dynamic> toJson() => _$SimpleScheduleDTOToJson(this);
-
 }
 
 @JsonSerializable()
@@ -610,13 +618,11 @@ class SaveMedicationDTO {
   final int? color;
   final Set<int>? dispenseTimes;
 
-  SaveMedicationDTO({
-    this.id, this.name, this.shape, this.color, this.dispenseTimes
-  });
+  SaveMedicationDTO(
+      {this.id, this.name, this.shape, this.color, this.dispenseTimes});
   factory SaveMedicationDTO.fromJson(Map<String, dynamic> json) =>
       _$SaveMedicationDTOFromJson(json);
   Map<String, dynamic> toJson() => _$SaveMedicationDTOToJson(this);
-
 }
 
 @JsonSerializable()
@@ -625,12 +631,13 @@ class DosePeriodDTO {
   final int? timestamp;
   final int status;
   final List<int>? medications;
-  DosePeriodDTO({
-    required this.binID, this.timestamp, required this.status, this.medications
-  });
+  DosePeriodDTO(
+      {required this.binID,
+      this.timestamp,
+      required this.status,
+      this.medications});
   factory DosePeriodDTO.fromJson(Map<String, dynamic> json) =>
       _$DosePeriodDTOFromJson(json);
-
 }
 
 @JsonSerializable()
@@ -639,9 +646,8 @@ class DeviceStateDTO {
   final int? lastSync;
   final int? bins;
   final List<DosePeriodDTO>? dosePeriods;
-  DeviceStateDTO({
-    required this.id, this.lastSync, this.bins, this.dosePeriods
-  });
+  DeviceStateDTO(
+      {required this.id, this.lastSync, this.bins, this.dosePeriods});
   factory DeviceStateDTO.fromJson(Map<String, dynamic> json) =>
       _$DeviceStateDTOFromJson(json);
 }
@@ -682,16 +688,14 @@ class RefreshableValueNotifier<T> extends LoadingValueNotifier<T>
   void refresh() {
     fromFuture(loadFunction());
   }
-
 }
 
 class AutoRefresh extends StatefulWidget {
-  const AutoRefresh({
-    super.key,
-    required this.refreshable,
-    required this.child,
-    this.refreshInterval = const Duration(seconds: 10)
-  });
+  const AutoRefresh(
+      {super.key,
+      required this.refreshable,
+      required this.child,
+      this.refreshInterval = const Duration(seconds: 10)});
 
   final Refreshable refreshable;
   final Widget child;
@@ -699,18 +703,15 @@ class AutoRefresh extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() => _AutoRefreshState();
-
 }
 
 class _AutoRefreshState extends State<AutoRefresh> {
-
   late Timer _timer;
 
   @override
   Widget build(BuildContext context) {
     return widget.child;
   }
-
 
   @override
   void dispose() {

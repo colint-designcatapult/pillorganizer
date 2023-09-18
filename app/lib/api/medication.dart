@@ -101,7 +101,7 @@ extension MedicationShapeExtension on MedicationShape {
   }
 
   static MedicationShape byInternalName(String name) {
-    switch(name) {
+    switch (name) {
       case 'CAPSULE':
         return MedicationShape.capsule;
       case 'DIAMOND':
@@ -141,25 +141,25 @@ extension MedicationShapeExtension on MedicationShape {
 Set<DayOfWeek> parseDaysOfWeekFlags(int bitmask) {
   var result = <DayOfWeek>{};
 
-  if(bitmask & (1 << 0) != 0) {
+  if (bitmask & (1 << 0) != 0) {
     result.add(DayOfWeek.monday);
   }
-  if(bitmask & (1 << 1) != 0) {
+  if (bitmask & (1 << 1) != 0) {
     result.add(DayOfWeek.tuesday);
   }
-  if(bitmask & (1 << 2) != 0) {
+  if (bitmask & (1 << 2) != 0) {
     result.add(DayOfWeek.wednesday);
   }
-  if(bitmask & (1 << 3) != 0) {
+  if (bitmask & (1 << 3) != 0) {
     result.add(DayOfWeek.thursday);
   }
-  if(bitmask & (1 << 4) != 0) {
+  if (bitmask & (1 << 4) != 0) {
     result.add(DayOfWeek.friday);
   }
-  if(bitmask & (1 << 5) != 0) {
+  if (bitmask & (1 << 5) != 0) {
     result.add(DayOfWeek.saturday);
   }
-  if(bitmask & (1 << 6) != 0) {
+  if (bitmask & (1 << 6) != 0) {
     result.add(DayOfWeek.sunday);
   }
   return result;
@@ -167,41 +167,43 @@ Set<DayOfWeek> parseDaysOfWeekFlags(int bitmask) {
 
 int createDaysOfWeekFlag(Set<DayOfWeek> set) {
   int result = 0;
-  for(DayOfWeek dow in set) {
+  for (DayOfWeek dow in set) {
     result |= (1 << dow.index);
   }
   return result;
 }
 
-
 @freezed
 class ScheduledMedication extends Equatable with _$ScheduledMedication {
   const ScheduledMedication._();
-  const factory ScheduledMedication({
-    int? id,
-    required String name,
-    MedicationShape? shape,
-    Color? color,
-    required List<MedicationDispenseTime> dispenseTimes
-  }) = _ScheduledMedication;
+  const factory ScheduledMedication(
+          {int? id,
+          required String name,
+          MedicationShape? shape,
+          Color? color,
+          required List<MedicationDispenseTime> dispenseTimes}) =
+      _ScheduledMedication;
 
   factory ScheduledMedication.fromDTO(ScheduledMedicationDTO dto) {
     return ScheduledMedication(
-      id: dto.id,
-      name: dto.med_name,
-      shape: dto.shape != null ? MedicationShapeExtension.byInternalName(dto.shape!) : null,
-      color: dto.color != null ? Color(dto.color!) : null,
-      dispenseTimes: dto.dispenseTimes?.map((e) => MedicationDispenseTime.fromDTO(e)).toList(growable: false)
-        ?? []
-    );
+        id: dto.id,
+        name: dto.med_name,
+        shape: dto.shape != null
+            ? MedicationShapeExtension.byInternalName(dto.shape!)
+            : null,
+        color: dto.color != null ? Color(dto.color!) : null,
+        dispenseTimes: dto.dispenseTimes
+                ?.map((e) => MedicationDispenseTime.fromDTO(e))
+                .toList(growable: false) ??
+            []);
   }
 
   ScheduledMedicationDTO toDTO() {
     return ScheduledMedicationDTO(
-        id: id,
-        med_name: name,
-        shape: shape?.internalName,
-        color: color?.value,
+      id: id,
+      med_name: name,
+      shape: shape?.internalName,
+      color: color?.value,
     );
   }
 
@@ -209,28 +211,27 @@ class ScheduledMedication extends Equatable with _$ScheduledMedication {
   List<Object?> get props => [id, name, shape, color];
 }
 
-
-
 class MedicationRepository {
-  MedicationRepository({
-    required this.client
-  });
+  MedicationRepository({required this.client});
 
   final RestClient client;
 
   Future<ScheduledMedication> medication(int deviceID, int medicationID) {
-    return client.medication(deviceID, medicationID)
-      .then((value) => ScheduledMedication.fromDTO(value));
+    return client
+        .medication(deviceID, medicationID)
+        .then((value) => ScheduledMedication.fromDTO(value));
   }
 
   Future<List<ScheduledMedication>> medications(int deviceID) async {
     return (await client.medications(deviceID))
-      .map((e) => ScheduledMedication.fromDTO(e))
-      .toList(growable: false);
+        .map((e) => ScheduledMedication.fromDTO(e))
+        .toList(growable: false);
   }
 
-  Future<ScheduledMedication> save(int deviceID, ScheduledMedication model) async {
-    return ScheduledMedication.fromDTO(await client.addMedication(deviceID, model.toDTO()));
+  Future<ScheduledMedication> save(
+      int deviceID, ScheduledMedication model) async {
+    return ScheduledMedication.fromDTO(
+        await client.addMedication(deviceID, model.toDTO()));
   }
 
   Future<void> delete(int deviceID, int medID) {
@@ -238,28 +239,29 @@ class MedicationRepository {
   }
 }
 
-final MedicationRepository medicationRepo = MedicationRepository(client: client);
+final MedicationRepository medicationRepo =
+    MedicationRepository(client: client);
 
-
-class MedicationsProvider extends RefreshableValueNotifier<List<ScheduledMedication>?> {
+class MedicationsProvider
+    extends RefreshableValueNotifier<List<ScheduledMedication>?> {
   DeviceUser? _device;
   Map<int, ScheduledMedication>? _idToMed;
 
   MedicationsProvider(this._device) : super(null, () => Future.value(null));
 
   MedicationsProvider update(DeviceUser? newDevice) {
-   // if(newDevice?.id != _device?.id) {
-      _device = newDevice;
-      super.loadFunction = _load;
-      refresh();
-   // }
+    // if(newDevice?.id != _device?.id) {
+    _device = newDevice;
+    super.loadFunction = _load;
+    refresh();
+    // }
     return this;
   }
 
   Future<List<ScheduledMedication>?> _load() {
-    if(_device != null) {
+    if (_device != null) {
       return medicationRepo.medications(_device!.deviceID).then((value) {
-        _idToMed = { for (var v in value) v.id ?? 0 : v };
+        _idToMed = {for (var v in value) v.id ?? 0: v};
         return value;
       });
     } else {
@@ -272,7 +274,6 @@ class MedicationsProvider extends RefreshableValueNotifier<List<ScheduledMedicat
   }
 }
 
-
 class MedicationProvider with ChangeNotifier {
   ScheduledMedication get medication => _medication!;
   late ScheduledMedication? _medication;
@@ -282,7 +283,7 @@ class MedicationProvider with ChangeNotifier {
   }
 
   Future<void> load(int deviceID, ScheduledMedication model) async {
-    if(model.id != null) {
+    if (model.id != null) {
       _medication = await medicationRepo.medication(deviceID, model.id!);
     } else {
       _medication = model;
@@ -300,10 +301,8 @@ class MedicationProvider with ChangeNotifier {
   }
 
   Future<void> delete(int deviceID) async {
-    if(_medication!.id != null) {
+    if (_medication!.id != null) {
       return await medicationRepo.delete(deviceID, _medication!.id!);
     }
   }
-
 }
-

@@ -1,4 +1,3 @@
-
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -22,15 +21,15 @@ class DevicePeriodIcon extends StatelessWidget {
       width: this.width,
     );
   }
-
 }
-
-
 
 class DeviceStatusIcon extends StatelessWidget {
   final double size;
   final DeviceConnectionStatus status;
-  const DeviceStatusIcon({super.key, this.status = DeviceConnectionStatus.offline, this.size = 48.0});
+  const DeviceStatusIcon(
+      {super.key,
+      this.status = DeviceConnectionStatus.offline,
+      this.size = 48.0});
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +37,7 @@ class DeviceStatusIcon extends StatelessWidget {
     final Color outlineColor;
     final Color orbColor;
 
-    switch(status) {
+    switch (status) {
       case DeviceConnectionStatus.online:
         orbColor = Colors.green;
         outlineColor = orbColor;
@@ -58,32 +57,34 @@ class DeviceStatusIcon extends StatelessWidget {
       width: size,
       child: Stack(
         children: [
-          Positioned.fill(child: Padding(
+          Positioned.fill(
+              child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Image.asset("lib/assets/organizer_128.png"),
           )),
-          Positioned.fill(child: CircularProgressIndicator(
+          Positioned.fill(
+              child: CircularProgressIndicator(
             color: Theme.of(context).colorScheme.surface,
             value: 1,
             strokeWidth: 3.0,
           )),
-          Positioned.fill(child: CircularProgressIndicator(
+          Positioned.fill(
+              child: CircularProgressIndicator(
             color: outlineColor,
             value: status == DeviceConnectionStatus.loading ? null : 1.0,
             strokeWidth: 3.0,
           )),
-          if(status != DeviceConnectionStatus.loading) ... [
-            Positioned.fill(child: Align(
+          if (status != DeviceConnectionStatus.loading) ...[
+            Positioned.fill(
+                child: Align(
               alignment: Alignment.bottomRight,
               child: Padding(
                 padding: EdgeInsets.only(right: (orbSize / 4.0)),
                 child: Container(
                   height: orbSize,
                   width: orbSize,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: orbColor
-                  ),
+                  decoration:
+                      BoxDecoration(shape: BoxShape.circle, color: orbColor),
                 ),
               ),
             ))
@@ -92,7 +93,6 @@ class DeviceStatusIcon extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class BinIcon extends StatelessWidget {
@@ -100,13 +100,12 @@ class BinIcon extends StatelessWidget {
   final DayPeriod dayPeriod;
   final Color? color;
   final double size;
-  const BinIcon({
-    super.key,
-    this.text,
-    required this.dayPeriod,
-    this.color,
-    this.size = 32.0
-  });
+  const BinIcon(
+      {super.key,
+      this.text,
+      required this.dayPeriod,
+      this.color,
+      this.size = 32.0});
 
   factory BinIcon.forBin({required int bin, Color? color, double size = 32.0}) {
     return BinIcon(
@@ -120,28 +119,23 @@ class BinIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Color? c = color ?? Theme.of(context).iconTheme.color;
-    String icon = "lib/assets/256w/DEV_SYM_${dayPeriod == DayPeriod.am ? 'AM' : 'PM'}.png";
+    String icon =
+        "lib/assets/256w/DEV_SYM_${dayPeriod == DayPeriod.am ? 'AM' : 'PM'}.png";
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Image.asset(
-          icon,
-          color: c,
-          width: size,
-          height: size
-        ),
-        if(text != null) Text(
-          text!,
-          style: TextStyle(
-            color: c,
-            fontSize: (3.0 * size) / 5,
-            fontWeight: FontWeight.w700
-          ),
-        )
+        Image.asset(icon, color: c, width: size, height: size),
+        if (text != null)
+          Text(
+            text!,
+            style: TextStyle(
+                color: c,
+                fontSize: (3.0 * size) / 5,
+                fontWeight: FontWeight.w700),
+          )
       ],
     );
   }
-
 }

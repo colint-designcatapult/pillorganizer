@@ -1,4 +1,3 @@
-
 import 'package:app/screens/provision.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
@@ -19,7 +18,6 @@ class DeviceListHeader extends StatelessWidget {
       title: child,
     );
   }
-
 }
 
 class DeviceListEntry extends StatelessWidget {
@@ -34,18 +32,18 @@ class DeviceListEntry extends StatelessWidget {
       child: ListTile(
         title: Text(device.name),
         leading: DeviceStatusIcon(
-          size: 48.0,
-          status: device.isOnline ? DeviceConnectionStatus.online : DeviceConnectionStatus.offline
-        ),
+            size: 48.0,
+            status: device.isOnline
+                ? DeviceConnectionStatus.online
+                : DeviceConnectionStatus.offline),
         onTap: () {
           Provider.of<SelectedDeviceProvider>(context, listen: false)
-            .selectDevice(device);
+              .selectDevice(device);
           Navigator.of(context).pop(device);
         },
       ),
     );
   }
-
 }
 
 class DeviceSelectorModal extends StatelessWidget {
@@ -53,18 +51,13 @@ class DeviceSelectorModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return PlatformScaffold(
       appBar: PlatformAppBar(
         title: const Text('Switch Pill Organizers'),
         automaticallyImplyLeading: false,
       ),
-      material: (_, __) => MaterialScaffoldData(
-
-      ),
-      cupertino: (_, __) => CupertinoPageScaffoldData(
-
-      ),
+      material: (_, __) => MaterialScaffoldData(),
+      cupertino: (_, __) => CupertinoPageScaffoldData(),
       body: SafeArea(
         bottom: false,
         child: Consumer<DeviceListProvider>(
@@ -80,11 +73,11 @@ class DeviceSelectorModal extends StatelessWidget {
               shrinkWrap: true,
               controller: ModalScrollController.of(context),
               children: [
-                if(yourDevices.isNotEmpty) ... [
+                if (yourDevices.isNotEmpty) ...[
                   const DeviceListHeader(child: Text('My Devices')),
                   ...yourDevices
                 ],
-                if(otherDevices.isNotEmpty) ... [
+                if (otherDevices.isNotEmpty) ...[
                   const DeviceListHeader(child: Text('Other Devices')),
                   ...otherDevices
                 ],
@@ -103,16 +96,14 @@ class DeviceSelectorModal extends StatelessWidget {
       ),
     );
   }
-
 }
 
 Future<DeviceUser?> showDeviceSelectorModal(BuildContext context) {
   return showPlatformModalBottomSheet(
-    context: context,
-    expand: false,
-    builder: (context) {
-      deviceRepo.deviceListProvider.refresh();
-      return const DeviceSelectorModal();
-    }
-  );
+      context: context,
+      expand: false,
+      builder: (context) {
+        deviceRepo.deviceListProvider.refresh();
+        return const DeviceSelectorModal();
+      });
 }

@@ -25,31 +25,8 @@ Future<T?> showPlatformModalBottomSheet<T>({
   Color? transitionBackgroundColor,
   BoxShadow? shadow,
 }) async {
-  if(Platform.isIOS) {
+  if (Platform.isIOS) {
     return showCupertinoModalBottomSheet(
-      context: context,
-      builder: builder,
-      backgroundColor: backgroundColor,
-      elevation: elevation,
-      closeProgressThreshold: closeProgressThreshold,
-      shape: shape,
-      clipBehavior: clipBehavior,
-      barrierColor: barrierColor,
-      expand: expand,
-      secondAnimation: secondAnimation,
-      animationCurve: animationCurve,
-      previousRouteAnimationCurve: previousRouteAnimationCurve,
-      useRootNavigator: useRootNavigator,
-      bounce: bounce,
-      isDismissible: isDismissible,
-      enableDrag: enableDrag,
-      duration: duration,
-      settings: settings,
-      transitionBackgroundColor: transitionBackgroundColor,
-      shadow: shadow
-    );
-  } else {
-    return showMaterialModalBottomSheet(
         context: context,
         builder: builder,
         backgroundColor: backgroundColor,
@@ -61,11 +38,33 @@ Future<T?> showPlatformModalBottomSheet<T>({
         expand: expand,
         secondAnimation: secondAnimation,
         animationCurve: animationCurve,
+        previousRouteAnimationCurve: previousRouteAnimationCurve,
         useRootNavigator: useRootNavigator,
         bounce: bounce,
+        isDismissible: isDismissible,
         enableDrag: enableDrag,
         duration: duration,
         settings: settings,
+        transitionBackgroundColor: transitionBackgroundColor,
+        shadow: shadow);
+  } else {
+    return showMaterialModalBottomSheet(
+      context: context,
+      builder: builder,
+      backgroundColor: backgroundColor,
+      elevation: elevation,
+      closeProgressThreshold: closeProgressThreshold,
+      shape: shape,
+      clipBehavior: clipBehavior,
+      barrierColor: barrierColor,
+      expand: expand,
+      secondAnimation: secondAnimation,
+      animationCurve: animationCurve,
+      useRootNavigator: useRootNavigator,
+      bounce: bounce,
+      enableDrag: enableDrag,
+      duration: duration,
+      settings: settings,
     );
   }
 }

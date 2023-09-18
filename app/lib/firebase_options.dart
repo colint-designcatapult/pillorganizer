@@ -63,7 +63,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '205413249135',
     projectId: 'jctpillorganizer',
     storageBucket: 'jctpillorganizer.appspot.com',
-    iosClientId: '205413249135-g6s9nr09tgg3r3f1knhbbo5ve3k3n4cr.apps.googleusercontent.com',
+    iosClientId:
+        '205413249135-g6s9nr09tgg3r3f1knhbbo5ve3k3n4cr.apps.googleusercontent.com',
     iosBundleId: ' com.cabinet.pillorganizer',
   );
 }

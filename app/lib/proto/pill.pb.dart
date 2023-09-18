@@ -15,11 +15,26 @@ import 'pill.pbenum.dart';
 export 'pill.pbenum.dart';
 
 class BinState extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'BinState', createEmptyInstance: create)
-    ..aInt64(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'scheduledTime')
-    ..e<BinStatus>(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'status', $pb.PbFieldType.OE, defaultOrMaker: BinStatus.DISABLED, valueOf: BinStatus.valueOf, enumValues: BinStatus.values)
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      const $core.bool.fromEnvironment('protobuf.omit_message_names')
+          ? ''
+          : 'BinState',
+      createEmptyInstance: create)
+    ..aInt64(
+        1,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'scheduledTime')
+    ..e<BinStatus>(
+        2,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'status',
+        $pb.PbFieldType.OE,
+        defaultOrMaker: BinStatus.DISABLED,
+        valueOf: BinStatus.valueOf,
+        enumValues: BinStatus.values)
+    ..hasRequiredFields = false;
 
   BinState._() : super();
   factory BinState({
@@ -35,31 +50,39 @@ class BinState extends $pb.GeneratedMessage {
     }
     return _result;
   }
-  factory BinState.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory BinState.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
+  factory BinState.fromBuffer($core.List<$core.int> i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory BinState.fromJson($core.String i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(i, r);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+      'Will be removed in next major version')
   BinState clone() => BinState()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  BinState copyWith(void Function(BinState) updates) => super.copyWith((message) => updates(message as BinState)) as BinState; // ignore: deprecated_member_use
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+      'Will be removed in next major version')
+  BinState copyWith(void Function(BinState) updates) =>
+      super.copyWith((message) => updates(message as BinState))
+          as BinState; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
   static BinState create() => BinState._();
   BinState createEmptyInstance() => create();
   static $pb.PbList<BinState> createRepeated() => $pb.PbList<BinState>();
   @$core.pragma('dart2js:noInline')
-  static BinState getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<BinState>(create);
+  static BinState getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<BinState>(create);
   static BinState? _defaultInstance;
 
   @$pb.TagNumber(1)
   $fixnum.Int64 get scheduledTime => $_getI64(0);
   @$pb.TagNumber(1)
-  set scheduledTime($fixnum.Int64 v) { $_setInt64(0, v); }
+  set scheduledTime($fixnum.Int64 v) {
+    $_setInt64(0, v);
+  }
+
   @$pb.TagNumber(1)
   $core.bool hasScheduledTime() => $_has(0);
   @$pb.TagNumber(1)
@@ -68,7 +91,10 @@ class BinState extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   BinStatus get status => $_getN(1);
   @$pb.TagNumber(2)
-  set status(BinStatus v) { setField(2, v); }
+  set status(BinStatus v) {
+    setField(2, v);
+  }
+
   @$pb.TagNumber(2)
   $core.bool hasStatus() => $_has(1);
   @$pb.TagNumber(2)
@@ -76,10 +102,19 @@ class BinState extends $pb.GeneratedMessage {
 }
 
 class AllBinsState extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'AllBinsState', createEmptyInstance: create)
-    ..pc<BinState>(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'bins', $pb.PbFieldType.PM, subBuilder: BinState.create)
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      const $core.bool.fromEnvironment('protobuf.omit_message_names')
+          ? ''
+          : 'AllBinsState',
+      createEmptyInstance: create)
+    ..pc<BinState>(
+        1,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'bins',
+        $pb.PbFieldType.PM,
+        subBuilder: BinState.create)
+    ..hasRequiredFields = false;
 
   AllBinsState._() : super();
   factory AllBinsState({
@@ -91,25 +126,31 @@ class AllBinsState extends $pb.GeneratedMessage {
     }
     return _result;
   }
-  factory AllBinsState.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory AllBinsState.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
+  factory AllBinsState.fromBuffer($core.List<$core.int> i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory AllBinsState.fromJson($core.String i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(i, r);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+      'Will be removed in next major version')
   AllBinsState clone() => AllBinsState()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  AllBinsState copyWith(void Function(AllBinsState) updates) => super.copyWith((message) => updates(message as AllBinsState)) as AllBinsState; // ignore: deprecated_member_use
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+      'Will be removed in next major version')
+  AllBinsState copyWith(void Function(AllBinsState) updates) =>
+      super.copyWith((message) => updates(message as AllBinsState))
+          as AllBinsState; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
   static AllBinsState create() => AllBinsState._();
   AllBinsState createEmptyInstance() => create();
-  static $pb.PbList<AllBinsState> createRepeated() => $pb.PbList<AllBinsState>();
+  static $pb.PbList<AllBinsState> createRepeated() =>
+      $pb.PbList<AllBinsState>();
   @$core.pragma('dart2js:noInline')
-  static AllBinsState getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<AllBinsState>(create);
+  static AllBinsState getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<AllBinsState>(create);
   static AllBinsState? _defaultInstance;
 
   @$pb.TagNumber(1)
@@ -117,12 +158,32 @@ class AllBinsState extends $pb.GeneratedMessage {
 }
 
 class RecordedEvent extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'RecordedEvent', createEmptyInstance: create)
-    ..e<RecordedEvent_EventType>(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'type', $pb.PbFieldType.OE, defaultOrMaker: RecordedEvent_EventType.OPENED, valueOf: RecordedEvent_EventType.valueOf, enumValues: RecordedEvent_EventType.values)
-    ..aInt64(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'timestamp')
-    ..a<$core.int>(3, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'bin', $pb.PbFieldType.O3)
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      const $core.bool.fromEnvironment('protobuf.omit_message_names')
+          ? ''
+          : 'RecordedEvent',
+      createEmptyInstance: create)
+    ..e<RecordedEvent_EventType>(
+        1,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'type',
+        $pb.PbFieldType.OE,
+        defaultOrMaker: RecordedEvent_EventType.OPENED,
+        valueOf: RecordedEvent_EventType.valueOf,
+        enumValues: RecordedEvent_EventType.values)
+    ..aInt64(
+        2,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'timestamp')
+    ..a<$core.int>(
+        3,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'bin',
+        $pb.PbFieldType.O3)
+    ..hasRequiredFields = false;
 
   RecordedEvent._() : super();
   factory RecordedEvent({
@@ -142,31 +203,40 @@ class RecordedEvent extends $pb.GeneratedMessage {
     }
     return _result;
   }
-  factory RecordedEvent.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory RecordedEvent.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
+  factory RecordedEvent.fromBuffer($core.List<$core.int> i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory RecordedEvent.fromJson($core.String i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(i, r);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+      'Will be removed in next major version')
   RecordedEvent clone() => RecordedEvent()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  RecordedEvent copyWith(void Function(RecordedEvent) updates) => super.copyWith((message) => updates(message as RecordedEvent)) as RecordedEvent; // ignore: deprecated_member_use
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+      'Will be removed in next major version')
+  RecordedEvent copyWith(void Function(RecordedEvent) updates) =>
+      super.copyWith((message) => updates(message as RecordedEvent))
+          as RecordedEvent; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
   static RecordedEvent create() => RecordedEvent._();
   RecordedEvent createEmptyInstance() => create();
-  static $pb.PbList<RecordedEvent> createRepeated() => $pb.PbList<RecordedEvent>();
+  static $pb.PbList<RecordedEvent> createRepeated() =>
+      $pb.PbList<RecordedEvent>();
   @$core.pragma('dart2js:noInline')
-  static RecordedEvent getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<RecordedEvent>(create);
+  static RecordedEvent getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<RecordedEvent>(create);
   static RecordedEvent? _defaultInstance;
 
   @$pb.TagNumber(1)
   RecordedEvent_EventType get type => $_getN(0);
   @$pb.TagNumber(1)
-  set type(RecordedEvent_EventType v) { setField(1, v); }
+  set type(RecordedEvent_EventType v) {
+    setField(1, v);
+  }
+
   @$pb.TagNumber(1)
   $core.bool hasType() => $_has(0);
   @$pb.TagNumber(1)
@@ -175,7 +245,10 @@ class RecordedEvent extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   $fixnum.Int64 get timestamp => $_getI64(1);
   @$pb.TagNumber(2)
-  set timestamp($fixnum.Int64 v) { $_setInt64(1, v); }
+  set timestamp($fixnum.Int64 v) {
+    $_setInt64(1, v);
+  }
+
   @$pb.TagNumber(2)
   $core.bool hasTimestamp() => $_has(1);
   @$pb.TagNumber(2)
@@ -184,7 +257,10 @@ class RecordedEvent extends $pb.GeneratedMessage {
   @$pb.TagNumber(3)
   $core.int get bin => $_getIZ(2);
   @$pb.TagNumber(3)
-  set bin($core.int v) { $_setSignedInt32(2, v); }
+  set bin($core.int v) {
+    $_setSignedInt32(2, v);
+  }
+
   @$pb.TagNumber(3)
   $core.bool hasBin() => $_has(2);
   @$pb.TagNumber(3)
@@ -192,12 +268,29 @@ class RecordedEvent extends $pb.GeneratedMessage {
 }
 
 class SubmitEventRequest extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'SubmitEventRequest', createEmptyInstance: create)
-    ..a<$core.List<$core.int>>(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'deviceId', $pb.PbFieldType.OY)
-    ..aInt64(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'stateHash')
-    ..aOM<RecordedEvent>(3, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'event', subBuilder: RecordedEvent.create)
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      const $core.bool.fromEnvironment('protobuf.omit_message_names')
+          ? ''
+          : 'SubmitEventRequest',
+      createEmptyInstance: create)
+    ..a<$core.List<$core.int>>(
+        1,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'deviceId',
+        $pb.PbFieldType.OY)
+    ..aInt64(
+        2,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'stateHash')
+    ..aOM<RecordedEvent>(
+        3,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'event',
+        subBuilder: RecordedEvent.create)
+    ..hasRequiredFields = false;
 
   SubmitEventRequest._() : super();
   factory SubmitEventRequest({
@@ -217,31 +310,40 @@ class SubmitEventRequest extends $pb.GeneratedMessage {
     }
     return _result;
   }
-  factory SubmitEventRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory SubmitEventRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
+  factory SubmitEventRequest.fromBuffer($core.List<$core.int> i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory SubmitEventRequest.fromJson($core.String i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(i, r);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+      'Will be removed in next major version')
   SubmitEventRequest clone() => SubmitEventRequest()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  SubmitEventRequest copyWith(void Function(SubmitEventRequest) updates) => super.copyWith((message) => updates(message as SubmitEventRequest)) as SubmitEventRequest; // ignore: deprecated_member_use
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+      'Will be removed in next major version')
+  SubmitEventRequest copyWith(void Function(SubmitEventRequest) updates) =>
+      super.copyWith((message) => updates(message as SubmitEventRequest))
+          as SubmitEventRequest; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
   static SubmitEventRequest create() => SubmitEventRequest._();
   SubmitEventRequest createEmptyInstance() => create();
-  static $pb.PbList<SubmitEventRequest> createRepeated() => $pb.PbList<SubmitEventRequest>();
+  static $pb.PbList<SubmitEventRequest> createRepeated() =>
+      $pb.PbList<SubmitEventRequest>();
   @$core.pragma('dart2js:noInline')
-  static SubmitEventRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<SubmitEventRequest>(create);
+  static SubmitEventRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SubmitEventRequest>(create);
   static SubmitEventRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
   $core.List<$core.int> get deviceId => $_getN(0);
   @$pb.TagNumber(1)
-  set deviceId($core.List<$core.int> v) { $_setBytes(0, v); }
+  set deviceId($core.List<$core.int> v) {
+    $_setBytes(0, v);
+  }
+
   @$pb.TagNumber(1)
   $core.bool hasDeviceId() => $_has(0);
   @$pb.TagNumber(1)
@@ -250,7 +352,10 @@ class SubmitEventRequest extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   $fixnum.Int64 get stateHash => $_getI64(1);
   @$pb.TagNumber(2)
-  set stateHash($fixnum.Int64 v) { $_setInt64(1, v); }
+  set stateHash($fixnum.Int64 v) {
+    $_setInt64(1, v);
+  }
+
   @$pb.TagNumber(2)
   $core.bool hasStateHash() => $_has(1);
   @$pb.TagNumber(2)
@@ -259,7 +364,10 @@ class SubmitEventRequest extends $pb.GeneratedMessage {
   @$pb.TagNumber(3)
   RecordedEvent get event => $_getN(2);
   @$pb.TagNumber(3)
-  set event(RecordedEvent v) { setField(3, v); }
+  set event(RecordedEvent v) {
+    setField(3, v);
+  }
+
   @$pb.TagNumber(3)
   $core.bool hasEvent() => $_has(2);
   @$pb.TagNumber(3)
@@ -269,11 +377,24 @@ class SubmitEventRequest extends $pb.GeneratedMessage {
 }
 
 class SubmitEventsRequest extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'SubmitEventsRequest', createEmptyInstance: create)
-    ..aInt64(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'stateHash')
-    ..pc<RecordedEvent>(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'event', $pb.PbFieldType.PM, subBuilder: RecordedEvent.create)
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      const $core.bool.fromEnvironment('protobuf.omit_message_names')
+          ? ''
+          : 'SubmitEventsRequest',
+      createEmptyInstance: create)
+    ..aInt64(
+        1,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'stateHash')
+    ..pc<RecordedEvent>(
+        2,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'event',
+        $pb.PbFieldType.PM,
+        subBuilder: RecordedEvent.create)
+    ..hasRequiredFields = false;
 
   SubmitEventsRequest._() : super();
   factory SubmitEventsRequest({
@@ -289,31 +410,40 @@ class SubmitEventsRequest extends $pb.GeneratedMessage {
     }
     return _result;
   }
-  factory SubmitEventsRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory SubmitEventsRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
+  factory SubmitEventsRequest.fromBuffer($core.List<$core.int> i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory SubmitEventsRequest.fromJson($core.String i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(i, r);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+      'Will be removed in next major version')
   SubmitEventsRequest clone() => SubmitEventsRequest()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  SubmitEventsRequest copyWith(void Function(SubmitEventsRequest) updates) => super.copyWith((message) => updates(message as SubmitEventsRequest)) as SubmitEventsRequest; // ignore: deprecated_member_use
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+      'Will be removed in next major version')
+  SubmitEventsRequest copyWith(void Function(SubmitEventsRequest) updates) =>
+      super.copyWith((message) => updates(message as SubmitEventsRequest))
+          as SubmitEventsRequest; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
   static SubmitEventsRequest create() => SubmitEventsRequest._();
   SubmitEventsRequest createEmptyInstance() => create();
-  static $pb.PbList<SubmitEventsRequest> createRepeated() => $pb.PbList<SubmitEventsRequest>();
+  static $pb.PbList<SubmitEventsRequest> createRepeated() =>
+      $pb.PbList<SubmitEventsRequest>();
   @$core.pragma('dart2js:noInline')
-  static SubmitEventsRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<SubmitEventsRequest>(create);
+  static SubmitEventsRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SubmitEventsRequest>(create);
   static SubmitEventsRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
   $fixnum.Int64 get stateHash => $_getI64(0);
   @$pb.TagNumber(1)
-  set stateHash($fixnum.Int64 v) { $_setInt64(0, v); }
+  set stateHash($fixnum.Int64 v) {
+    $_setInt64(0, v);
+  }
+
   @$pb.TagNumber(1)
   $core.bool hasStateHash() => $_has(0);
   @$pb.TagNumber(1)
@@ -324,11 +454,23 @@ class SubmitEventsRequest extends $pb.GeneratedMessage {
 }
 
 class SubmitEventsResponse extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'SubmitEventsResponse', createEmptyInstance: create)
-    ..a<$core.int>(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'result', $pb.PbFieldType.O3)
-    ..aInt64(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'stateHash')
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      const $core.bool.fromEnvironment('protobuf.omit_message_names')
+          ? ''
+          : 'SubmitEventsResponse',
+      createEmptyInstance: create)
+    ..a<$core.int>(
+        1,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'result',
+        $pb.PbFieldType.O3)
+    ..aInt64(
+        2,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'stateHash')
+    ..hasRequiredFields = false;
 
   SubmitEventsResponse._() : super();
   factory SubmitEventsResponse({
@@ -344,31 +486,41 @@ class SubmitEventsResponse extends $pb.GeneratedMessage {
     }
     return _result;
   }
-  factory SubmitEventsResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory SubmitEventsResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
-  SubmitEventsResponse clone() => SubmitEventsResponse()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  SubmitEventsResponse copyWith(void Function(SubmitEventsResponse) updates) => super.copyWith((message) => updates(message as SubmitEventsResponse)) as SubmitEventsResponse; // ignore: deprecated_member_use
+  factory SubmitEventsResponse.fromBuffer($core.List<$core.int> i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory SubmitEventsResponse.fromJson($core.String i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(i, r);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+      'Will be removed in next major version')
+  SubmitEventsResponse clone() =>
+      SubmitEventsResponse()..mergeFromMessage(this);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+      'Will be removed in next major version')
+  SubmitEventsResponse copyWith(void Function(SubmitEventsResponse) updates) =>
+      super.copyWith((message) => updates(message as SubmitEventsResponse))
+          as SubmitEventsResponse; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
   static SubmitEventsResponse create() => SubmitEventsResponse._();
   SubmitEventsResponse createEmptyInstance() => create();
-  static $pb.PbList<SubmitEventsResponse> createRepeated() => $pb.PbList<SubmitEventsResponse>();
+  static $pb.PbList<SubmitEventsResponse> createRepeated() =>
+      $pb.PbList<SubmitEventsResponse>();
   @$core.pragma('dart2js:noInline')
-  static SubmitEventsResponse getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<SubmitEventsResponse>(create);
+  static SubmitEventsResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SubmitEventsResponse>(create);
   static SubmitEventsResponse? _defaultInstance;
 
   @$pb.TagNumber(1)
   $core.int get result => $_getIZ(0);
   @$pb.TagNumber(1)
-  set result($core.int v) { $_setSignedInt32(0, v); }
+  set result($core.int v) {
+    $_setSignedInt32(0, v);
+  }
+
   @$pb.TagNumber(1)
   $core.bool hasResult() => $_has(0);
   @$pb.TagNumber(1)
@@ -377,7 +529,10 @@ class SubmitEventsResponse extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   $fixnum.Int64 get stateHash => $_getI64(1);
   @$pb.TagNumber(2)
-  set stateHash($fixnum.Int64 v) { $_setInt64(1, v); }
+  set stateHash($fixnum.Int64 v) {
+    $_setInt64(1, v);
+  }
+
   @$pb.TagNumber(2)
   $core.bool hasStateHash() => $_has(1);
   @$pb.TagNumber(2)
@@ -385,11 +540,28 @@ class SubmitEventsResponse extends $pb.GeneratedMessage {
 }
 
 class BinSchedule extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'BinSchedule', createEmptyInstance: create)
-    ..e<BinSchedule_DayOfWeek>(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'dayOfWeek', $pb.PbFieldType.OE, defaultOrMaker: BinSchedule_DayOfWeek.MONDAY, valueOf: BinSchedule_DayOfWeek.valueOf, enumValues: BinSchedule_DayOfWeek.values)
-    ..a<$core.int>(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'secondsFrom00', $pb.PbFieldType.OU3, protoName: 'seconds_from_00')
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      const $core.bool.fromEnvironment('protobuf.omit_message_names')
+          ? ''
+          : 'BinSchedule',
+      createEmptyInstance: create)
+    ..e<BinSchedule_DayOfWeek>(
+        1,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'dayOfWeek',
+        $pb.PbFieldType.OE,
+        defaultOrMaker: BinSchedule_DayOfWeek.MONDAY,
+        valueOf: BinSchedule_DayOfWeek.valueOf,
+        enumValues: BinSchedule_DayOfWeek.values)
+    ..a<$core.int>(
+        2,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'secondsFrom00',
+        $pb.PbFieldType.OU3,
+        protoName: 'seconds_from_00')
+    ..hasRequiredFields = false;
 
   BinSchedule._() : super();
   factory BinSchedule({
@@ -405,31 +577,39 @@ class BinSchedule extends $pb.GeneratedMessage {
     }
     return _result;
   }
-  factory BinSchedule.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory BinSchedule.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
+  factory BinSchedule.fromBuffer($core.List<$core.int> i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory BinSchedule.fromJson($core.String i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(i, r);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+      'Will be removed in next major version')
   BinSchedule clone() => BinSchedule()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  BinSchedule copyWith(void Function(BinSchedule) updates) => super.copyWith((message) => updates(message as BinSchedule)) as BinSchedule; // ignore: deprecated_member_use
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+      'Will be removed in next major version')
+  BinSchedule copyWith(void Function(BinSchedule) updates) =>
+      super.copyWith((message) => updates(message as BinSchedule))
+          as BinSchedule; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
   static BinSchedule create() => BinSchedule._();
   BinSchedule createEmptyInstance() => create();
   static $pb.PbList<BinSchedule> createRepeated() => $pb.PbList<BinSchedule>();
   @$core.pragma('dart2js:noInline')
-  static BinSchedule getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<BinSchedule>(create);
+  static BinSchedule getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<BinSchedule>(create);
   static BinSchedule? _defaultInstance;
 
   @$pb.TagNumber(1)
   BinSchedule_DayOfWeek get dayOfWeek => $_getN(0);
   @$pb.TagNumber(1)
-  set dayOfWeek(BinSchedule_DayOfWeek v) { setField(1, v); }
+  set dayOfWeek(BinSchedule_DayOfWeek v) {
+    setField(1, v);
+  }
+
   @$pb.TagNumber(1)
   $core.bool hasDayOfWeek() => $_has(0);
   @$pb.TagNumber(1)
@@ -438,7 +618,10 @@ class BinSchedule extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   $core.int get secondsFrom00 => $_getIZ(1);
   @$pb.TagNumber(2)
-  set secondsFrom00($core.int v) { $_setUnsignedInt32(1, v); }
+  set secondsFrom00($core.int v) {
+    $_setUnsignedInt32(1, v);
+  }
+
   @$pb.TagNumber(2)
   $core.bool hasSecondsFrom00() => $_has(1);
   @$pb.TagNumber(2)
@@ -446,10 +629,19 @@ class BinSchedule extends $pb.GeneratedMessage {
 }
 
 class ScheduleResponse extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'ScheduleResponse', createEmptyInstance: create)
-    ..pc<BinSchedule>(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'schedule', $pb.PbFieldType.PM, subBuilder: BinSchedule.create)
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      const $core.bool.fromEnvironment('protobuf.omit_message_names')
+          ? ''
+          : 'ScheduleResponse',
+      createEmptyInstance: create)
+    ..pc<BinSchedule>(
+        1,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'schedule',
+        $pb.PbFieldType.PM,
+        subBuilder: BinSchedule.create)
+    ..hasRequiredFields = false;
 
   ScheduleResponse._() : super();
   factory ScheduleResponse({
@@ -461,25 +653,31 @@ class ScheduleResponse extends $pb.GeneratedMessage {
     }
     return _result;
   }
-  factory ScheduleResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory ScheduleResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
+  factory ScheduleResponse.fromBuffer($core.List<$core.int> i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory ScheduleResponse.fromJson($core.String i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(i, r);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+      'Will be removed in next major version')
   ScheduleResponse clone() => ScheduleResponse()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  ScheduleResponse copyWith(void Function(ScheduleResponse) updates) => super.copyWith((message) => updates(message as ScheduleResponse)) as ScheduleResponse; // ignore: deprecated_member_use
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+      'Will be removed in next major version')
+  ScheduleResponse copyWith(void Function(ScheduleResponse) updates) =>
+      super.copyWith((message) => updates(message as ScheduleResponse))
+          as ScheduleResponse; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
   static ScheduleResponse create() => ScheduleResponse._();
   ScheduleResponse createEmptyInstance() => create();
-  static $pb.PbList<ScheduleResponse> createRepeated() => $pb.PbList<ScheduleResponse>();
+  static $pb.PbList<ScheduleResponse> createRepeated() =>
+      $pb.PbList<ScheduleResponse>();
   @$core.pragma('dart2js:noInline')
-  static ScheduleResponse getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ScheduleResponse>(create);
+  static ScheduleResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ScheduleResponse>(create);
   static ScheduleResponse? _defaultInstance;
 
   @$pb.TagNumber(1)
@@ -487,12 +685,29 @@ class ScheduleResponse extends $pb.GeneratedMessage {
 }
 
 class ProvisionRequest extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'ProvisionRequest', createEmptyInstance: create)
-    ..a<$core.List<$core.int>>(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'deviceId', $pb.PbFieldType.OY)
-    ..a<$core.List<$core.int>>(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'bssid', $pb.PbFieldType.OY)
-    ..aOS(3, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'ssid')
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      const $core.bool.fromEnvironment('protobuf.omit_message_names')
+          ? ''
+          : 'ProvisionRequest',
+      createEmptyInstance: create)
+    ..a<$core.List<$core.int>>(
+        1,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'deviceId',
+        $pb.PbFieldType.OY)
+    ..a<$core.List<$core.int>>(
+        2,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'bssid',
+        $pb.PbFieldType.OY)
+    ..aOS(
+        3,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'ssid')
+    ..hasRequiredFields = false;
 
   ProvisionRequest._() : super();
   factory ProvisionRequest({
@@ -512,31 +727,40 @@ class ProvisionRequest extends $pb.GeneratedMessage {
     }
     return _result;
   }
-  factory ProvisionRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory ProvisionRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
+  factory ProvisionRequest.fromBuffer($core.List<$core.int> i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory ProvisionRequest.fromJson($core.String i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(i, r);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+      'Will be removed in next major version')
   ProvisionRequest clone() => ProvisionRequest()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  ProvisionRequest copyWith(void Function(ProvisionRequest) updates) => super.copyWith((message) => updates(message as ProvisionRequest)) as ProvisionRequest; // ignore: deprecated_member_use
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+      'Will be removed in next major version')
+  ProvisionRequest copyWith(void Function(ProvisionRequest) updates) =>
+      super.copyWith((message) => updates(message as ProvisionRequest))
+          as ProvisionRequest; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
   static ProvisionRequest create() => ProvisionRequest._();
   ProvisionRequest createEmptyInstance() => create();
-  static $pb.PbList<ProvisionRequest> createRepeated() => $pb.PbList<ProvisionRequest>();
+  static $pb.PbList<ProvisionRequest> createRepeated() =>
+      $pb.PbList<ProvisionRequest>();
   @$core.pragma('dart2js:noInline')
-  static ProvisionRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ProvisionRequest>(create);
+  static ProvisionRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ProvisionRequest>(create);
   static ProvisionRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
   $core.List<$core.int> get deviceId => $_getN(0);
   @$pb.TagNumber(1)
-  set deviceId($core.List<$core.int> v) { $_setBytes(0, v); }
+  set deviceId($core.List<$core.int> v) {
+    $_setBytes(0, v);
+  }
+
   @$pb.TagNumber(1)
   $core.bool hasDeviceId() => $_has(0);
   @$pb.TagNumber(1)
@@ -545,7 +769,10 @@ class ProvisionRequest extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   $core.List<$core.int> get bssid => $_getN(1);
   @$pb.TagNumber(2)
-  set bssid($core.List<$core.int> v) { $_setBytes(1, v); }
+  set bssid($core.List<$core.int> v) {
+    $_setBytes(1, v);
+  }
+
   @$pb.TagNumber(2)
   $core.bool hasBssid() => $_has(1);
   @$pb.TagNumber(2)
@@ -554,7 +781,10 @@ class ProvisionRequest extends $pb.GeneratedMessage {
   @$pb.TagNumber(3)
   $core.String get ssid => $_getSZ(2);
   @$pb.TagNumber(3)
-  set ssid($core.String v) { $_setString(2, v); }
+  set ssid($core.String v) {
+    $_setString(2, v);
+  }
+
   @$pb.TagNumber(3)
   $core.bool hasSsid() => $_has(2);
   @$pb.TagNumber(3)
@@ -562,13 +792,35 @@ class ProvisionRequest extends $pb.GeneratedMessage {
 }
 
 class EngineeringData extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'EngineeringData', createEmptyInstance: create)
-    ..aInt64(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'timestamp')
-    ..p<$core.int>(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'voltages', $pb.PbFieldType.K3)
-    ..a<$core.double>(3, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'vbatScaled', $pb.PbFieldType.OF)
-    ..a<$core.double>(4, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'vbatMeas', $pb.PbFieldType.OF)
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      const $core.bool.fromEnvironment('protobuf.omit_message_names')
+          ? ''
+          : 'EngineeringData',
+      createEmptyInstance: create)
+    ..aInt64(
+        1,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'timestamp')
+    ..p<$core.int>(
+        2,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'voltages',
+        $pb.PbFieldType.K3)
+    ..a<$core.double>(
+        3,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'vbatScaled',
+        $pb.PbFieldType.OF)
+    ..a<$core.double>(
+        4,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'vbatMeas',
+        $pb.PbFieldType.OF)
+    ..hasRequiredFields = false;
 
   EngineeringData._() : super();
   factory EngineeringData({
@@ -592,31 +844,40 @@ class EngineeringData extends $pb.GeneratedMessage {
     }
     return _result;
   }
-  factory EngineeringData.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory EngineeringData.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
+  factory EngineeringData.fromBuffer($core.List<$core.int> i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory EngineeringData.fromJson($core.String i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(i, r);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+      'Will be removed in next major version')
   EngineeringData clone() => EngineeringData()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  EngineeringData copyWith(void Function(EngineeringData) updates) => super.copyWith((message) => updates(message as EngineeringData)) as EngineeringData; // ignore: deprecated_member_use
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+      'Will be removed in next major version')
+  EngineeringData copyWith(void Function(EngineeringData) updates) =>
+      super.copyWith((message) => updates(message as EngineeringData))
+          as EngineeringData; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
   static EngineeringData create() => EngineeringData._();
   EngineeringData createEmptyInstance() => create();
-  static $pb.PbList<EngineeringData> createRepeated() => $pb.PbList<EngineeringData>();
+  static $pb.PbList<EngineeringData> createRepeated() =>
+      $pb.PbList<EngineeringData>();
   @$core.pragma('dart2js:noInline')
-  static EngineeringData getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<EngineeringData>(create);
+  static EngineeringData getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<EngineeringData>(create);
   static EngineeringData? _defaultInstance;
 
   @$pb.TagNumber(1)
   $fixnum.Int64 get timestamp => $_getI64(0);
   @$pb.TagNumber(1)
-  set timestamp($fixnum.Int64 v) { $_setInt64(0, v); }
+  set timestamp($fixnum.Int64 v) {
+    $_setInt64(0, v);
+  }
+
   @$pb.TagNumber(1)
   $core.bool hasTimestamp() => $_has(0);
   @$pb.TagNumber(1)
@@ -628,7 +889,10 @@ class EngineeringData extends $pb.GeneratedMessage {
   @$pb.TagNumber(3)
   $core.double get vbatScaled => $_getN(2);
   @$pb.TagNumber(3)
-  set vbatScaled($core.double v) { $_setFloat(2, v); }
+  set vbatScaled($core.double v) {
+    $_setFloat(2, v);
+  }
+
   @$pb.TagNumber(3)
   $core.bool hasVbatScaled() => $_has(2);
   @$pb.TagNumber(3)
@@ -637,7 +901,10 @@ class EngineeringData extends $pb.GeneratedMessage {
   @$pb.TagNumber(4)
   $core.double get vbatMeas => $_getN(3);
   @$pb.TagNumber(4)
-  set vbatMeas($core.double v) { $_setFloat(3, v); }
+  set vbatMeas($core.double v) {
+    $_setFloat(3, v);
+  }
+
   @$pb.TagNumber(4)
   $core.bool hasVbatMeas() => $_has(3);
   @$pb.TagNumber(4)
@@ -645,10 +912,18 @@ class EngineeringData extends $pb.GeneratedMessage {
 }
 
 class EngineeringRequest extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'EngineeringRequest', createEmptyInstance: create)
-    ..a<$core.int>(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'holdMuxChannel', $pb.PbFieldType.O3)
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      const $core.bool.fromEnvironment('protobuf.omit_message_names')
+          ? ''
+          : 'EngineeringRequest',
+      createEmptyInstance: create)
+    ..a<$core.int>(
+        1,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'holdMuxChannel',
+        $pb.PbFieldType.O3)
+    ..hasRequiredFields = false;
 
   EngineeringRequest._() : super();
   factory EngineeringRequest({
@@ -660,31 +935,40 @@ class EngineeringRequest extends $pb.GeneratedMessage {
     }
     return _result;
   }
-  factory EngineeringRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory EngineeringRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
+  factory EngineeringRequest.fromBuffer($core.List<$core.int> i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory EngineeringRequest.fromJson($core.String i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(i, r);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+      'Will be removed in next major version')
   EngineeringRequest clone() => EngineeringRequest()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  EngineeringRequest copyWith(void Function(EngineeringRequest) updates) => super.copyWith((message) => updates(message as EngineeringRequest)) as EngineeringRequest; // ignore: deprecated_member_use
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+      'Will be removed in next major version')
+  EngineeringRequest copyWith(void Function(EngineeringRequest) updates) =>
+      super.copyWith((message) => updates(message as EngineeringRequest))
+          as EngineeringRequest; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
   static EngineeringRequest create() => EngineeringRequest._();
   EngineeringRequest createEmptyInstance() => create();
-  static $pb.PbList<EngineeringRequest> createRepeated() => $pb.PbList<EngineeringRequest>();
+  static $pb.PbList<EngineeringRequest> createRepeated() =>
+      $pb.PbList<EngineeringRequest>();
   @$core.pragma('dart2js:noInline')
-  static EngineeringRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<EngineeringRequest>(create);
+  static EngineeringRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<EngineeringRequest>(create);
   static EngineeringRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
   $core.int get holdMuxChannel => $_getIZ(0);
   @$pb.TagNumber(1)
-  set holdMuxChannel($core.int v) { $_setSignedInt32(0, v); }
+  set holdMuxChannel($core.int v) {
+    $_setSignedInt32(0, v);
+  }
+
   @$pb.TagNumber(1)
   $core.bool hasHoldMuxChannel() => $_has(0);
   @$pb.TagNumber(1)
@@ -692,16 +976,53 @@ class EngineeringRequest extends $pb.GeneratedMessage {
 }
 
 class SyncRequest extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'SyncRequest', createEmptyInstance: create)
-    ..aInt64(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'stateHash')
-    ..aInt64(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'eventCtr')
-    ..pc<RecordedEvent>(3, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'events', $pb.PbFieldType.PM, subBuilder: RecordedEvent.create)
-    ..aOM<AllBinsState>(4, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'binState', subBuilder: AllBinsState.create)
-    ..aOM<EngineeringData>(5, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'engrData', subBuilder: EngineeringData.create)
-    ..a<$core.int>(6, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'ipv4', $pb.PbFieldType.OF3)
-    ..a<$core.List<$core.int>>(7, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'ipv6', $pb.PbFieldType.OY)
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      const $core.bool.fromEnvironment('protobuf.omit_message_names')
+          ? ''
+          : 'SyncRequest',
+      createEmptyInstance: create)
+    ..aInt64(
+        1,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'stateHash')
+    ..aInt64(
+        2,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'eventCtr')
+    ..pc<RecordedEvent>(
+        3,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'events',
+        $pb.PbFieldType.PM,
+        subBuilder: RecordedEvent.create)
+    ..aOM<AllBinsState>(
+        4,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'binState',
+        subBuilder: AllBinsState.create)
+    ..aOM<EngineeringData>(
+        5,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'engrData',
+        subBuilder: EngineeringData.create)
+    ..a<$core.int>(
+        6,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'ipv4',
+        $pb.PbFieldType.OF3)
+    ..a<$core.List<$core.int>>(
+        7,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'ipv6',
+        $pb.PbFieldType.OY)
+    ..hasRequiredFields = false;
 
   SyncRequest._() : super();
   factory SyncRequest({
@@ -737,31 +1058,39 @@ class SyncRequest extends $pb.GeneratedMessage {
     }
     return _result;
   }
-  factory SyncRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory SyncRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
+  factory SyncRequest.fromBuffer($core.List<$core.int> i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory SyncRequest.fromJson($core.String i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(i, r);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+      'Will be removed in next major version')
   SyncRequest clone() => SyncRequest()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  SyncRequest copyWith(void Function(SyncRequest) updates) => super.copyWith((message) => updates(message as SyncRequest)) as SyncRequest; // ignore: deprecated_member_use
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+      'Will be removed in next major version')
+  SyncRequest copyWith(void Function(SyncRequest) updates) =>
+      super.copyWith((message) => updates(message as SyncRequest))
+          as SyncRequest; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
   static SyncRequest create() => SyncRequest._();
   SyncRequest createEmptyInstance() => create();
   static $pb.PbList<SyncRequest> createRepeated() => $pb.PbList<SyncRequest>();
   @$core.pragma('dart2js:noInline')
-  static SyncRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<SyncRequest>(create);
+  static SyncRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SyncRequest>(create);
   static SyncRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
   $fixnum.Int64 get stateHash => $_getI64(0);
   @$pb.TagNumber(1)
-  set stateHash($fixnum.Int64 v) { $_setInt64(0, v); }
+  set stateHash($fixnum.Int64 v) {
+    $_setInt64(0, v);
+  }
+
   @$pb.TagNumber(1)
   $core.bool hasStateHash() => $_has(0);
   @$pb.TagNumber(1)
@@ -770,7 +1099,10 @@ class SyncRequest extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   $fixnum.Int64 get eventCtr => $_getI64(1);
   @$pb.TagNumber(2)
-  set eventCtr($fixnum.Int64 v) { $_setInt64(1, v); }
+  set eventCtr($fixnum.Int64 v) {
+    $_setInt64(1, v);
+  }
+
   @$pb.TagNumber(2)
   $core.bool hasEventCtr() => $_has(1);
   @$pb.TagNumber(2)
@@ -782,7 +1114,10 @@ class SyncRequest extends $pb.GeneratedMessage {
   @$pb.TagNumber(4)
   AllBinsState get binState => $_getN(3);
   @$pb.TagNumber(4)
-  set binState(AllBinsState v) { setField(4, v); }
+  set binState(AllBinsState v) {
+    setField(4, v);
+  }
+
   @$pb.TagNumber(4)
   $core.bool hasBinState() => $_has(3);
   @$pb.TagNumber(4)
@@ -793,7 +1128,10 @@ class SyncRequest extends $pb.GeneratedMessage {
   @$pb.TagNumber(5)
   EngineeringData get engrData => $_getN(4);
   @$pb.TagNumber(5)
-  set engrData(EngineeringData v) { setField(5, v); }
+  set engrData(EngineeringData v) {
+    setField(5, v);
+  }
+
   @$pb.TagNumber(5)
   $core.bool hasEngrData() => $_has(4);
   @$pb.TagNumber(5)
@@ -804,7 +1142,10 @@ class SyncRequest extends $pb.GeneratedMessage {
   @$pb.TagNumber(6)
   $core.int get ipv4 => $_getIZ(5);
   @$pb.TagNumber(6)
-  set ipv4($core.int v) { $_setUnsignedInt32(5, v); }
+  set ipv4($core.int v) {
+    $_setUnsignedInt32(5, v);
+  }
+
   @$pb.TagNumber(6)
   $core.bool hasIpv4() => $_has(5);
   @$pb.TagNumber(6)
@@ -813,7 +1154,10 @@ class SyncRequest extends $pb.GeneratedMessage {
   @$pb.TagNumber(7)
   $core.List<$core.int> get ipv6 => $_getN(6);
   @$pb.TagNumber(7)
-  set ipv6($core.List<$core.int> v) { $_setBytes(6, v); }
+  set ipv6($core.List<$core.int> v) {
+    $_setBytes(6, v);
+  }
+
   @$pb.TagNumber(7)
   $core.bool hasIpv6() => $_has(6);
   @$pb.TagNumber(7)
@@ -821,15 +1165,48 @@ class SyncRequest extends $pb.GeneratedMessage {
 }
 
 class SyncResponse extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'SyncResponse', createEmptyInstance: create)
-    ..a<$core.int>(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'persistedEvents', $pb.PbFieldType.O3)
-    ..aOM<AllBinsState>(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'binState', subBuilder: AllBinsState.create)
-    ..pc<BinSchedule>(3, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'schedule', $pb.PbFieldType.PM, subBuilder: BinSchedule.create)
-    ..aOB(4, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'engrMode')
-    ..aOM<EngineeringRequest>(6, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'engrReq', subBuilder: EngineeringRequest.create)
-    ..a<$core.int>(7, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'latestFirmware', $pb.PbFieldType.O3)
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      const $core.bool.fromEnvironment('protobuf.omit_message_names')
+          ? ''
+          : 'SyncResponse',
+      createEmptyInstance: create)
+    ..a<$core.int>(
+        1,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'persistedEvents',
+        $pb.PbFieldType.O3)
+    ..aOM<AllBinsState>(
+        2,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'binState',
+        subBuilder: AllBinsState.create)
+    ..pc<BinSchedule>(
+        3,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'schedule',
+        $pb.PbFieldType.PM,
+        subBuilder: BinSchedule.create)
+    ..aOB(
+        4,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'engrMode')
+    ..aOM<EngineeringRequest>(
+        6,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'engrReq',
+        subBuilder: EngineeringRequest.create)
+    ..a<$core.int>(
+        7,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'latestFirmware',
+        $pb.PbFieldType.O3)
+    ..hasRequiredFields = false;
 
   SyncResponse._() : super();
   factory SyncResponse({
@@ -861,31 +1238,40 @@ class SyncResponse extends $pb.GeneratedMessage {
     }
     return _result;
   }
-  factory SyncResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory SyncResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
+  factory SyncResponse.fromBuffer($core.List<$core.int> i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory SyncResponse.fromJson($core.String i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(i, r);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+      'Will be removed in next major version')
   SyncResponse clone() => SyncResponse()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  SyncResponse copyWith(void Function(SyncResponse) updates) => super.copyWith((message) => updates(message as SyncResponse)) as SyncResponse; // ignore: deprecated_member_use
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+      'Will be removed in next major version')
+  SyncResponse copyWith(void Function(SyncResponse) updates) =>
+      super.copyWith((message) => updates(message as SyncResponse))
+          as SyncResponse; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
   static SyncResponse create() => SyncResponse._();
   SyncResponse createEmptyInstance() => create();
-  static $pb.PbList<SyncResponse> createRepeated() => $pb.PbList<SyncResponse>();
+  static $pb.PbList<SyncResponse> createRepeated() =>
+      $pb.PbList<SyncResponse>();
   @$core.pragma('dart2js:noInline')
-  static SyncResponse getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<SyncResponse>(create);
+  static SyncResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SyncResponse>(create);
   static SyncResponse? _defaultInstance;
 
   @$pb.TagNumber(1)
   $core.int get persistedEvents => $_getIZ(0);
   @$pb.TagNumber(1)
-  set persistedEvents($core.int v) { $_setSignedInt32(0, v); }
+  set persistedEvents($core.int v) {
+    $_setSignedInt32(0, v);
+  }
+
   @$pb.TagNumber(1)
   $core.bool hasPersistedEvents() => $_has(0);
   @$pb.TagNumber(1)
@@ -894,7 +1280,10 @@ class SyncResponse extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   AllBinsState get binState => $_getN(1);
   @$pb.TagNumber(2)
-  set binState(AllBinsState v) { setField(2, v); }
+  set binState(AllBinsState v) {
+    setField(2, v);
+  }
+
   @$pb.TagNumber(2)
   $core.bool hasBinState() => $_has(1);
   @$pb.TagNumber(2)
@@ -908,7 +1297,10 @@ class SyncResponse extends $pb.GeneratedMessage {
   @$pb.TagNumber(4)
   $core.bool get engrMode => $_getBF(3);
   @$pb.TagNumber(4)
-  set engrMode($core.bool v) { $_setBool(3, v); }
+  set engrMode($core.bool v) {
+    $_setBool(3, v);
+  }
+
   @$pb.TagNumber(4)
   $core.bool hasEngrMode() => $_has(3);
   @$pb.TagNumber(4)
@@ -917,7 +1309,10 @@ class SyncResponse extends $pb.GeneratedMessage {
   @$pb.TagNumber(6)
   EngineeringRequest get engrReq => $_getN(4);
   @$pb.TagNumber(6)
-  set engrReq(EngineeringRequest v) { setField(6, v); }
+  set engrReq(EngineeringRequest v) {
+    setField(6, v);
+  }
+
   @$pb.TagNumber(6)
   $core.bool hasEngrReq() => $_has(4);
   @$pb.TagNumber(6)
@@ -928,7 +1323,10 @@ class SyncResponse extends $pb.GeneratedMessage {
   @$pb.TagNumber(7)
   $core.int get latestFirmware => $_getIZ(5);
   @$pb.TagNumber(7)
-  set latestFirmware($core.int v) { $_setSignedInt32(5, v); }
+  set latestFirmware($core.int v) {
+    $_setSignedInt32(5, v);
+  }
+
   @$pb.TagNumber(7)
   $core.bool hasLatestFirmware() => $_has(5);
   @$pb.TagNumber(7)
@@ -936,11 +1334,23 @@ class SyncResponse extends $pb.GeneratedMessage {
 }
 
 class AuthorizeRequest extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'AuthorizeRequest', createEmptyInstance: create)
-    ..aInt64(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'serialNo')
-    ..a<$core.List<$core.int>>(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'oobKey', $pb.PbFieldType.OY)
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      const $core.bool.fromEnvironment('protobuf.omit_message_names')
+          ? ''
+          : 'AuthorizeRequest',
+      createEmptyInstance: create)
+    ..aInt64(
+        1,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'serialNo')
+    ..a<$core.List<$core.int>>(
+        2,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'oobKey',
+        $pb.PbFieldType.OY)
+    ..hasRequiredFields = false;
 
   AuthorizeRequest._() : super();
   factory AuthorizeRequest({
@@ -956,31 +1366,40 @@ class AuthorizeRequest extends $pb.GeneratedMessage {
     }
     return _result;
   }
-  factory AuthorizeRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory AuthorizeRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
+  factory AuthorizeRequest.fromBuffer($core.List<$core.int> i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory AuthorizeRequest.fromJson($core.String i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(i, r);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+      'Will be removed in next major version')
   AuthorizeRequest clone() => AuthorizeRequest()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  AuthorizeRequest copyWith(void Function(AuthorizeRequest) updates) => super.copyWith((message) => updates(message as AuthorizeRequest)) as AuthorizeRequest; // ignore: deprecated_member_use
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+      'Will be removed in next major version')
+  AuthorizeRequest copyWith(void Function(AuthorizeRequest) updates) =>
+      super.copyWith((message) => updates(message as AuthorizeRequest))
+          as AuthorizeRequest; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
   static AuthorizeRequest create() => AuthorizeRequest._();
   AuthorizeRequest createEmptyInstance() => create();
-  static $pb.PbList<AuthorizeRequest> createRepeated() => $pb.PbList<AuthorizeRequest>();
+  static $pb.PbList<AuthorizeRequest> createRepeated() =>
+      $pb.PbList<AuthorizeRequest>();
   @$core.pragma('dart2js:noInline')
-  static AuthorizeRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<AuthorizeRequest>(create);
+  static AuthorizeRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<AuthorizeRequest>(create);
   static AuthorizeRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
   $fixnum.Int64 get serialNo => $_getI64(0);
   @$pb.TagNumber(1)
-  set serialNo($fixnum.Int64 v) { $_setInt64(0, v); }
+  set serialNo($fixnum.Int64 v) {
+    $_setInt64(0, v);
+  }
+
   @$pb.TagNumber(1)
   $core.bool hasSerialNo() => $_has(0);
   @$pb.TagNumber(1)
@@ -989,7 +1408,10 @@ class AuthorizeRequest extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   $core.List<$core.int> get oobKey => $_getN(1);
   @$pb.TagNumber(2)
-  set oobKey($core.List<$core.int> v) { $_setBytes(1, v); }
+  set oobKey($core.List<$core.int> v) {
+    $_setBytes(1, v);
+  }
+
   @$pb.TagNumber(2)
   $core.bool hasOobKey() => $_has(1);
   @$pb.TagNumber(2)
@@ -997,13 +1419,32 @@ class AuthorizeRequest extends $pb.GeneratedMessage {
 }
 
 class AuthorizeResponse extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'AuthorizeResponse', createEmptyInstance: create)
-    ..aOS(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'accessToken')
-    ..aOS(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'refreshToken')
-    ..aOS(3, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'tokenType')
-    ..aInt64(4, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'expiresIn')
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      const $core.bool.fromEnvironment('protobuf.omit_message_names')
+          ? ''
+          : 'AuthorizeResponse',
+      createEmptyInstance: create)
+    ..aOS(
+        1,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'accessToken')
+    ..aOS(
+        2,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'refreshToken')
+    ..aOS(
+        3,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'tokenType')
+    ..aInt64(
+        4,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'expiresIn')
+    ..hasRequiredFields = false;
 
   AuthorizeResponse._() : super();
   factory AuthorizeResponse({
@@ -1027,31 +1468,40 @@ class AuthorizeResponse extends $pb.GeneratedMessage {
     }
     return _result;
   }
-  factory AuthorizeResponse.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory AuthorizeResponse.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
+  factory AuthorizeResponse.fromBuffer($core.List<$core.int> i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory AuthorizeResponse.fromJson($core.String i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(i, r);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+      'Will be removed in next major version')
   AuthorizeResponse clone() => AuthorizeResponse()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  AuthorizeResponse copyWith(void Function(AuthorizeResponse) updates) => super.copyWith((message) => updates(message as AuthorizeResponse)) as AuthorizeResponse; // ignore: deprecated_member_use
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+      'Will be removed in next major version')
+  AuthorizeResponse copyWith(void Function(AuthorizeResponse) updates) =>
+      super.copyWith((message) => updates(message as AuthorizeResponse))
+          as AuthorizeResponse; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
   static AuthorizeResponse create() => AuthorizeResponse._();
   AuthorizeResponse createEmptyInstance() => create();
-  static $pb.PbList<AuthorizeResponse> createRepeated() => $pb.PbList<AuthorizeResponse>();
+  static $pb.PbList<AuthorizeResponse> createRepeated() =>
+      $pb.PbList<AuthorizeResponse>();
   @$core.pragma('dart2js:noInline')
-  static AuthorizeResponse getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<AuthorizeResponse>(create);
+  static AuthorizeResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<AuthorizeResponse>(create);
   static AuthorizeResponse? _defaultInstance;
 
   @$pb.TagNumber(1)
   $core.String get accessToken => $_getSZ(0);
   @$pb.TagNumber(1)
-  set accessToken($core.String v) { $_setString(0, v); }
+  set accessToken($core.String v) {
+    $_setString(0, v);
+  }
+
   @$pb.TagNumber(1)
   $core.bool hasAccessToken() => $_has(0);
   @$pb.TagNumber(1)
@@ -1060,7 +1510,10 @@ class AuthorizeResponse extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   $core.String get refreshToken => $_getSZ(1);
   @$pb.TagNumber(2)
-  set refreshToken($core.String v) { $_setString(1, v); }
+  set refreshToken($core.String v) {
+    $_setString(1, v);
+  }
+
   @$pb.TagNumber(2)
   $core.bool hasRefreshToken() => $_has(1);
   @$pb.TagNumber(2)
@@ -1069,7 +1522,10 @@ class AuthorizeResponse extends $pb.GeneratedMessage {
   @$pb.TagNumber(3)
   $core.String get tokenType => $_getSZ(2);
   @$pb.TagNumber(3)
-  set tokenType($core.String v) { $_setString(2, v); }
+  set tokenType($core.String v) {
+    $_setString(2, v);
+  }
+
   @$pb.TagNumber(3)
   $core.bool hasTokenType() => $_has(2);
   @$pb.TagNumber(3)
@@ -1078,7 +1534,10 @@ class AuthorizeResponse extends $pb.GeneratedMessage {
   @$pb.TagNumber(4)
   $fixnum.Int64 get expiresIn => $_getI64(3);
   @$pb.TagNumber(4)
-  set expiresIn($fixnum.Int64 v) { $_setInt64(3, v); }
+  set expiresIn($fixnum.Int64 v) {
+    $_setInt64(3, v);
+  }
+
   @$pb.TagNumber(4)
   $core.bool hasExpiresIn() => $_has(3);
   @$pb.TagNumber(4)
@@ -1086,11 +1545,23 @@ class AuthorizeResponse extends $pb.GeneratedMessage {
 }
 
 class DeviceProvisionRequest extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'DeviceProvisionRequest', createEmptyInstance: create)
-    ..a<$core.List<$core.int>>(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'bssid', $pb.PbFieldType.OY)
-    ..aOS(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'ssid')
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      const $core.bool.fromEnvironment('protobuf.omit_message_names')
+          ? ''
+          : 'DeviceProvisionRequest',
+      createEmptyInstance: create)
+    ..a<$core.List<$core.int>>(
+        1,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'bssid',
+        $pb.PbFieldType.OY)
+    ..aOS(
+        2,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'ssid')
+    ..hasRequiredFields = false;
 
   DeviceProvisionRequest._() : super();
   factory DeviceProvisionRequest({
@@ -1106,31 +1577,42 @@ class DeviceProvisionRequest extends $pb.GeneratedMessage {
     }
     return _result;
   }
-  factory DeviceProvisionRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory DeviceProvisionRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
-  DeviceProvisionRequest clone() => DeviceProvisionRequest()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  DeviceProvisionRequest copyWith(void Function(DeviceProvisionRequest) updates) => super.copyWith((message) => updates(message as DeviceProvisionRequest)) as DeviceProvisionRequest; // ignore: deprecated_member_use
+  factory DeviceProvisionRequest.fromBuffer($core.List<$core.int> i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory DeviceProvisionRequest.fromJson($core.String i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(i, r);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+      'Will be removed in next major version')
+  DeviceProvisionRequest clone() =>
+      DeviceProvisionRequest()..mergeFromMessage(this);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+      'Will be removed in next major version')
+  DeviceProvisionRequest copyWith(
+          void Function(DeviceProvisionRequest) updates) =>
+      super.copyWith((message) => updates(message as DeviceProvisionRequest))
+          as DeviceProvisionRequest; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
   static DeviceProvisionRequest create() => DeviceProvisionRequest._();
   DeviceProvisionRequest createEmptyInstance() => create();
-  static $pb.PbList<DeviceProvisionRequest> createRepeated() => $pb.PbList<DeviceProvisionRequest>();
+  static $pb.PbList<DeviceProvisionRequest> createRepeated() =>
+      $pb.PbList<DeviceProvisionRequest>();
   @$core.pragma('dart2js:noInline')
-  static DeviceProvisionRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DeviceProvisionRequest>(create);
+  static DeviceProvisionRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<DeviceProvisionRequest>(create);
   static DeviceProvisionRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
   $core.List<$core.int> get bssid => $_getN(0);
   @$pb.TagNumber(1)
-  set bssid($core.List<$core.int> v) { $_setBytes(0, v); }
+  set bssid($core.List<$core.int> v) {
+    $_setBytes(0, v);
+  }
+
   @$pb.TagNumber(1)
   $core.bool hasBssid() => $_has(0);
   @$pb.TagNumber(1)
@@ -1139,7 +1621,10 @@ class DeviceProvisionRequest extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   $core.String get ssid => $_getSZ(1);
   @$pb.TagNumber(2)
-  set ssid($core.String v) { $_setString(1, v); }
+  set ssid($core.String v) {
+    $_setString(1, v);
+  }
+
   @$pb.TagNumber(2)
   $core.bool hasSsid() => $_has(1);
   @$pb.TagNumber(2)
@@ -1147,13 +1632,37 @@ class DeviceProvisionRequest extends $pb.GeneratedMessage {
 }
 
 class EngineeringBinState extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'EngineeringBinState', createEmptyInstance: create)
-    ..a<$core.int>(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'voltage', $pb.PbFieldType.O3)
-    ..aOB(2, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'open')
-    ..e<BinStatus>(3, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'status', $pb.PbFieldType.OE, defaultOrMaker: BinStatus.DISABLED, valueOf: BinStatus.valueOf, enumValues: BinStatus.values)
-    ..aInt64(4, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'scheduledTime')
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      const $core.bool.fromEnvironment('protobuf.omit_message_names')
+          ? ''
+          : 'EngineeringBinState',
+      createEmptyInstance: create)
+    ..a<$core.int>(
+        1,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'voltage',
+        $pb.PbFieldType.O3)
+    ..aOB(
+        2,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'open')
+    ..e<BinStatus>(
+        3,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'status',
+        $pb.PbFieldType.OE,
+        defaultOrMaker: BinStatus.DISABLED,
+        valueOf: BinStatus.valueOf,
+        enumValues: BinStatus.values)
+    ..aInt64(
+        4,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'scheduledTime')
+    ..hasRequiredFields = false;
 
   EngineeringBinState._() : super();
   factory EngineeringBinState({
@@ -1177,31 +1686,40 @@ class EngineeringBinState extends $pb.GeneratedMessage {
     }
     return _result;
   }
-  factory EngineeringBinState.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory EngineeringBinState.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
+  factory EngineeringBinState.fromBuffer($core.List<$core.int> i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory EngineeringBinState.fromJson($core.String i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(i, r);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+      'Will be removed in next major version')
   EngineeringBinState clone() => EngineeringBinState()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  EngineeringBinState copyWith(void Function(EngineeringBinState) updates) => super.copyWith((message) => updates(message as EngineeringBinState)) as EngineeringBinState; // ignore: deprecated_member_use
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+      'Will be removed in next major version')
+  EngineeringBinState copyWith(void Function(EngineeringBinState) updates) =>
+      super.copyWith((message) => updates(message as EngineeringBinState))
+          as EngineeringBinState; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
   static EngineeringBinState create() => EngineeringBinState._();
   EngineeringBinState createEmptyInstance() => create();
-  static $pb.PbList<EngineeringBinState> createRepeated() => $pb.PbList<EngineeringBinState>();
+  static $pb.PbList<EngineeringBinState> createRepeated() =>
+      $pb.PbList<EngineeringBinState>();
   @$core.pragma('dart2js:noInline')
-  static EngineeringBinState getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<EngineeringBinState>(create);
+  static EngineeringBinState getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<EngineeringBinState>(create);
   static EngineeringBinState? _defaultInstance;
 
   @$pb.TagNumber(1)
   $core.int get voltage => $_getIZ(0);
   @$pb.TagNumber(1)
-  set voltage($core.int v) { $_setSignedInt32(0, v); }
+  set voltage($core.int v) {
+    $_setSignedInt32(0, v);
+  }
+
   @$pb.TagNumber(1)
   $core.bool hasVoltage() => $_has(0);
   @$pb.TagNumber(1)
@@ -1210,7 +1728,10 @@ class EngineeringBinState extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   $core.bool get open => $_getBF(1);
   @$pb.TagNumber(2)
-  set open($core.bool v) { $_setBool(1, v); }
+  set open($core.bool v) {
+    $_setBool(1, v);
+  }
+
   @$pb.TagNumber(2)
   $core.bool hasOpen() => $_has(1);
   @$pb.TagNumber(2)
@@ -1219,7 +1740,10 @@ class EngineeringBinState extends $pb.GeneratedMessage {
   @$pb.TagNumber(3)
   BinStatus get status => $_getN(2);
   @$pb.TagNumber(3)
-  set status(BinStatus v) { setField(3, v); }
+  set status(BinStatus v) {
+    setField(3, v);
+  }
+
   @$pb.TagNumber(3)
   $core.bool hasStatus() => $_has(2);
   @$pb.TagNumber(3)
@@ -1228,7 +1752,10 @@ class EngineeringBinState extends $pb.GeneratedMessage {
   @$pb.TagNumber(4)
   $fixnum.Int64 get scheduledTime => $_getI64(3);
   @$pb.TagNumber(4)
-  set scheduledTime($fixnum.Int64 v) { $_setInt64(3, v); }
+  set scheduledTime($fixnum.Int64 v) {
+    $_setInt64(3, v);
+  }
+
   @$pb.TagNumber(4)
   $core.bool hasScheduledTime() => $_has(3);
   @$pb.TagNumber(4)
@@ -1236,10 +1763,19 @@ class EngineeringBinState extends $pb.GeneratedMessage {
 }
 
 class EngineeringAllBins extends $pb.GeneratedMessage {
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(const $core.bool.fromEnvironment('protobuf.omit_message_names') ? '' : 'EngineeringAllBins', createEmptyInstance: create)
-    ..pc<EngineeringBinState>(1, const $core.bool.fromEnvironment('protobuf.omit_field_names') ? '' : 'bins', $pb.PbFieldType.PM, subBuilder: EngineeringBinState.create)
-    ..hasRequiredFields = false
-  ;
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      const $core.bool.fromEnvironment('protobuf.omit_message_names')
+          ? ''
+          : 'EngineeringAllBins',
+      createEmptyInstance: create)
+    ..pc<EngineeringBinState>(
+        1,
+        const $core.bool.fromEnvironment('protobuf.omit_field_names')
+            ? ''
+            : 'bins',
+        $pb.PbFieldType.PM,
+        subBuilder: EngineeringBinState.create)
+    ..hasRequiredFields = false;
 
   EngineeringAllBins._() : super();
   factory EngineeringAllBins({
@@ -1251,28 +1787,33 @@ class EngineeringAllBins extends $pb.GeneratedMessage {
     }
     return _result;
   }
-  factory EngineeringAllBins.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory EngineeringAllBins.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
+  factory EngineeringAllBins.fromBuffer($core.List<$core.int> i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(i, r);
+  factory EngineeringAllBins.fromJson($core.String i,
+          [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(i, r);
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+      'Will be removed in next major version')
   EngineeringAllBins clone() => EngineeringAllBins()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  EngineeringAllBins copyWith(void Function(EngineeringAllBins) updates) => super.copyWith((message) => updates(message as EngineeringAllBins)) as EngineeringAllBins; // ignore: deprecated_member_use
+  @$core.Deprecated('Using this can add significant overhead to your binary. '
+      'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+      'Will be removed in next major version')
+  EngineeringAllBins copyWith(void Function(EngineeringAllBins) updates) =>
+      super.copyWith((message) => updates(message as EngineeringAllBins))
+          as EngineeringAllBins; // ignore: deprecated_member_use
   $pb.BuilderInfo get info_ => _i;
   @$core.pragma('dart2js:noInline')
   static EngineeringAllBins create() => EngineeringAllBins._();
   EngineeringAllBins createEmptyInstance() => create();
-  static $pb.PbList<EngineeringAllBins> createRepeated() => $pb.PbList<EngineeringAllBins>();
+  static $pb.PbList<EngineeringAllBins> createRepeated() =>
+      $pb.PbList<EngineeringAllBins>();
   @$core.pragma('dart2js:noInline')
-  static EngineeringAllBins getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<EngineeringAllBins>(create);
+  static EngineeringAllBins getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<EngineeringAllBins>(create);
   static EngineeringAllBins? _defaultInstance;
 
   @$pb.TagNumber(1)
   $core.List<EngineeringBinState> get bins => $_getList(0);
 }
-

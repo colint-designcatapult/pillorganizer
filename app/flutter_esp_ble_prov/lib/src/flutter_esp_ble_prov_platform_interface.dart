@@ -43,8 +43,8 @@ abstract class FlutterEspBleProvPlatform extends PlatformInterface {
     throw UnimplementedError('provisionWifi has not been implemented');
   }
 
-  Future<Uint8List?> customEndpoint(String deviceName, String pop,
-      String endpoint, Uint8List data) {
+  Future<Uint8List?> customEndpoint(
+      String deviceName, String pop, String endpoint, Uint8List data) {
     throw UnimplementedError('customEndpoint has not been implemented');
   }
 }

@@ -41,12 +41,12 @@ class MethodChannelFlutterEspBleProv extends FlutterEspBleProvPlatform {
         'scanWifiNetworks', args);
     final Set<String> uniqNetworks = {};
     final List<Map<String, String>> networks = [];
-    if(raw != null) {
+    if (raw != null) {
       for (Object? o in raw) {
         Map<Object?, Object?> rawMap = o as Map<Object?, Object?>;
-        Map<String, String> map = rawMap.map((key, value) =>
-            MapEntry(key as String, value as String));
-        if(map.containsKey("name") && !uniqNetworks.contains(map["name"]!)) {
+        Map<String, String> map = rawMap
+            .map((key, value) => MapEntry(key as String, value as String));
+        if (map.containsKey("name") && !uniqNetworks.contains(map["name"]!)) {
           uniqNetworks.add(map["name"]!);
           networks.add(map);
         }
@@ -68,8 +68,8 @@ class MethodChannelFlutterEspBleProv extends FlutterEspBleProvPlatform {
   }
 
   @override
-  Future<Uint8List?> customEndpoint(String deviceName, String pop,
-      String endpoint, Uint8List data) async {
+  Future<Uint8List?> customEndpoint(
+      String deviceName, String pop, String endpoint, Uint8List data) async {
     final args = {
       'deviceName': deviceName,
       'proofOfPossession': pop,

@@ -14,7 +14,6 @@ class ScheduleEntry extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() => _ScheduleEntyState();
-
 }
 
 class _ScheduleEntyState extends State<ScheduleEntry> {
@@ -25,32 +24,40 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Select when you\'d like to be reminded to take your pills.'),
+            const Text(
+                'Select when you\'d like to be reminded to take your pills.'),
             _buildTimeBlock(schedProv, DayPeriod.am, schedProv.schedule?.am),
             _buildTimeBlock(schedProv, DayPeriod.pm, schedProv.schedule?.pm),
             const Text('Select the time zone your pill organizer should use.'),
             ListTile(
-              title: Text(_buildTimeZoneName(Provider.of<SelectedDeviceProvider>(context).device?.timezone)),
-              leading: Icon(Icons.south_america),
-              trailing: Icon(Icons.arrow_right),
+              title: Text(_buildTimeZoneName(
+                  Provider.of<SelectedDeviceProvider>(context)
+                      .device
+                      ?.timezone)),
+              leading: const Icon(Icons.south_america),
+              trailing: const Icon(Icons.arrow_right),
               onTap: () {
-                final prov = Provider.of<SelectedDeviceProvider>(
-                    context, listen: false);
+                final prov =
+                    Provider.of<SelectedDeviceProvider>(context, listen: false);
 
-                 Navigator.of(context)
-                    .push(TimeZoneSelectionModal.route(context)).then((value) {
-                      if(value != null) {
-                        prov.updateTimeZone(value);
-                      }
-                 });
+                Navigator.of(context)
+                    .push(TimeZoneSelectionModal.route(context))
+                    .then((value) {
+                  if (value != null) {
+                    prov.updateTimeZone(value);
+                  }
+                });
               },
             ),
             const Text('Notification preferences'),
             ListTile(
               title: const Text('Send reminder notifications to your phone'),
-              leading: Icon(Icons.notifications),
+              leading: const Icon(Icons.notifications),
               trailing: Switch(
-                value: Provider.of<SelectedDeviceProvider>(context).device?.notifications ?? false,
+                value: Provider.of<SelectedDeviceProvider>(context)
+                        .device
+                        ?.notifications ??
+                    false,
                 onChanged: (bool value) {
                   _toggleNotifications();
                 },
@@ -69,7 +76,7 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
   }
 
   String _buildTimeZoneName(TimeZoneLocation? loc) {
-    if(loc == null) {
+    if (loc == null) {
       return "UTC/GMT";
     } else {
       final idx = loc.name.indexOf('/') + 1;
@@ -78,8 +85,8 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
     }
   }
 
-  Widget _buildTimeBlock(ScheduleProvider prov, DayPeriod dayPeriod,
-      DispenseTime? entry) {
+  Widget _buildTimeBlock(
+      ScheduleProvider prov, DayPeriod dayPeriod, DispenseTime? entry) {
     /*return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: ListTile(
@@ -101,7 +108,8 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
             return Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
               child: ListTile(
-                visualDensity: const VisualDensity(horizontal: 2.0, vertical: 2.0),
+                visualDensity:
+                    const VisualDensity(horizontal: 2.0, vertical: 2.0),
                 title: _buildTimeTitle(loading, entry),
                 leading: BinIcon(dayPeriod: dayPeriod),
                 trailing: Icon(Icons.arrow_right),
@@ -110,7 +118,7 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
                     initialTime: entry?.time ?? TimeOfDay.now(),
                     context: context,
                   ).then((value) {
-                    if(value != null) {
+                    if (value != null) {
                       Provider.of<ScheduleProvider>(context, listen: false)
                           .updateTime(dayPeriod, value);
                     }
@@ -125,16 +133,15 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
   }
 
   Widget _buildTimeTitle(bool loading, DispenseTime? entry) {
-    if(loading) {
+    if (loading) {
       return Container(width: 120.0, height: 32.0, color: Colors.white);
     } else {
-      if(entry == null) {
-        return Text('Tap to set time');
+      if (entry == null) {
+        return const Text('Tap to set time');
       } else {
         final fm = DateFormat.jm();
         return Text('Every day at ${entry.time.format(context)}');
       }
     }
   }
-
 }

@@ -12,12 +12,9 @@ class StateLed extends StatefulWidget {
 
   @override
   State<StateLed> createState() => _StateLed();
-
-
 }
 
 class _StateLed extends State<StateLed> {
-
   Timer? blinkTimer;
   bool blinkState = true;
   late Image? imageGreen;
@@ -28,27 +25,28 @@ class _StateLed extends State<StateLed> {
     Image? image;
     bool shouldBlink = false;
     BinStatus? status = widget.binStatus;
-    if(status == BinStatus.TAKE_NOW) {
+    if (status == BinStatus.TAKE_NOW) {
       image = imageGreen;
       shouldBlink = true;
-    } else if(status == BinStatus.TAKEN) {
+    } else if (status == BinStatus.TAKEN) {
       image = imageGreen;
-    } else if(status == BinStatus.MISSED) {
+    } else if (status == BinStatus.MISSED) {
       image = imageRed;
     } else {
       image = null;
     }
     // todo: fix hardcoded sizes
-    var ratio =  widget.ledWidth / 356;
+    var ratio = widget.ledWidth / 356;
     var height = 103 * ratio;
 
-    return image == null ? Container(width: widget.ledWidth, height: height) : Visibility(
-      visible: !shouldBlink || blinkState,
-      maintainSize: true,
-      maintainAnimation: true,
-      maintainState: true,
-      child: image!
-    );
+    return image == null
+        ? Container(width: widget.ledWidth, height: height)
+        : Visibility(
+            visible: !shouldBlink || blinkState,
+            maintainSize: true,
+            maintainAnimation: true,
+            maintainState: true,
+            child: image!);
   }
 
   void blink(Timer t) {
@@ -71,25 +69,18 @@ class _StateLed extends State<StateLed> {
     super.dispose();
     blinkTimer?.cancel();
   }
-
 }
 
 class MiniDevice extends StatefulWidget {
-  MiniDevice({
-    Key? key,
-    required this.status
-  }) : super(key: key);
+  const MiniDevice({Key? key, required this.status}) : super(key: key);
 
   final List<BinStatus> status;
 
   @override
   State<MiniDevice> createState() => _MiniDeviceState();
-
 }
 
 class _MiniDeviceState extends State<MiniDevice> {
-
-
   @override
   Widget build(BuildContext context) {
     var imgWidth = MediaQuery.of(context).size.width - 70;
@@ -100,26 +91,28 @@ class _MiniDeviceState extends State<MiniDevice> {
       children: [
         Image.asset("lib/assets/organizer.png"),
         Positioned.fill(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Row(
+            child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
                 mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: List.generate(7, (index) => 2 * index)
-                    .map((e) => StateLed(binStatus: widget.status.elementAtOrNull(e), ledWidth: ledWidth)).toList()
-              ),
-              Row(
+                    .map((e) => StateLed(
+                        binStatus: widget.status.elementAtOrNull(e),
+                        ledWidth: ledWidth))
+                    .toList()),
+            Row(
                 mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: List.generate(7, (index) => (2 * index) + 1)
-                    .map((e) => StateLed(binStatus: widget.status.elementAtOrNull(e), ledWidth: ledWidth)).toList()
-              )
-            ],
-          )
-        )
+                    .map((e) => StateLed(
+                        binStatus: widget.status.elementAtOrNull(e),
+                        ledWidth: ledWidth))
+                    .toList())
+          ],
+        ))
       ],
     );
   }
-
 }

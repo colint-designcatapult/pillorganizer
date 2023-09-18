@@ -11,7 +11,6 @@ import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-
 import '../api/device.dart';
 import '../main.dart';
 import '../provider/time_provider.dart';
@@ -36,7 +35,6 @@ class BLEAutoSuppress extends StatefulWidget {
 
 // Implement RouteAware in a widget's state and subscribe it to the RouteObserver.
 class BLEAutoSuppressState extends State<BLEAutoSuppress> with RouteAware {
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -60,7 +58,6 @@ class BLEAutoSuppressState extends State<BLEAutoSuppress> with RouteAware {
     //Provider.of<DeviceBluetoothProvider>(context, listen: false).unsuppress();
   }
 
-
   @override
   void initState() {
     super.initState();
@@ -69,15 +66,13 @@ class BLEAutoSuppressState extends State<BLEAutoSuppress> with RouteAware {
 
   @override
   Widget build(BuildContext context) => widget.child;
-
 }
-
 
 class IndexAppBar extends StatelessWidget {
   IndexAppBar({super.key});
 
-  final textStyle = const TextStyle(fontWeight: FontWeight.w200,
-      fontFamily: 'RobotoSlab');
+  final textStyle =
+      const TextStyle(fontWeight: FontWeight.w200, fontFamily: 'RobotoSlab');
   final dayOfWeekFormat = DateFormat.EEEE();
   final subtitleFormat = DateFormat.yMMMMd();
   String _title(MinuteBasedTimeProvider prov) {
@@ -97,7 +92,8 @@ class IndexAppBar extends StatelessWidget {
       expandedHeight: 160.0,
       collapsedHeight: 100.0,
       flexibleSpace: FlexibleSpaceBar(
-          titlePadding: const EdgeInsets.only(left: sidePadQ, bottom: sidePadQ, right: sidePadQ),
+          titlePadding: const EdgeInsets.only(
+              left: sidePadQ, bottom: sidePadQ, right: sidePadQ),
           collapseMode: CollapseMode.parallax,
           title: Consumer<MinuteBasedTimeProvider>(
             builder: (_, prov, __) {
@@ -109,8 +105,10 @@ class IndexAppBar extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      Text(_title(prov), style: textStyle.copyWith(fontSize: 32)),
-                      Text(_subtitle(prov), style: textStyle.copyWith(fontSize: 16))
+                      Text(_title(prov),
+                          style: textStyle.copyWith(fontSize: 32)),
+                      Text(_subtitle(prov),
+                          style: textStyle.copyWith(fontSize: 16))
                     ],
                   ),
                   IconButton(
@@ -123,14 +121,10 @@ class IndexAppBar extends StatelessWidget {
                 ],
               );
             },
-          )
-      ),
+          )),
     );
   }
-
 }
-
-
 
 class DeviceListSelector extends StatelessWidget {
   const DeviceListSelector({super.key});
@@ -142,13 +136,14 @@ class DeviceListSelector extends StatelessWidget {
         return RefreshablePlaceholder(
           notifier: prov,
           builder: (context, _, loading) {
-            if(loading) {
+            if (loading) {
               return Row(
                 children: [
-                  Container(height: 48, width: 48, decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle
-                  )),
+                  Container(
+                      height: 48,
+                      width: 48,
+                      decoration: const BoxDecoration(
+                          color: Colors.white, shape: BoxShape.circle)),
                   const SizedBox(width: 12.0),
                   Container(width: 120.0, height: 16.0, color: Colors.white),
                 ],
@@ -173,13 +168,12 @@ class DeviceListSelector extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(left: 12.0, right: 4.0),
                       child: Consumer<SelectedDeviceProvider>(
-                        builder: (_, selectedDevice, __) {
-                          return Text(
-                            '${selectedDevice.device?.name}',
-                            style: Theme.of(context).textTheme.labelLarge,
-                          );
-                        }
-                      ),
+                          builder: (_, selectedDevice, __) {
+                        return Text(
+                          '${selectedDevice.device?.name}',
+                          style: Theme.of(context).textTheme.labelLarge,
+                        );
+                      }),
                     ),
                     const Icon(Icons.expand_more)
                   ],
@@ -191,7 +185,6 @@ class DeviceListSelector extends StatelessWidget {
       },
     );
   }
-
 }
 
 class DeviceSettingsItem extends StatelessWidget {
@@ -199,13 +192,12 @@ class DeviceSettingsItem extends StatelessWidget {
   final String title;
   final Widget? icon;
   final bool warning;
-  const DeviceSettingsItem({
-    super.key,
-    required this.onSelected,
-    required this.title,
-    this.icon,
-    this.warning = false
-  });
+  const DeviceSettingsItem(
+      {super.key,
+      required this.onSelected,
+      required this.title,
+      this.icon,
+      this.warning = false});
 
   @override
   Widget build(BuildContext context) {
@@ -214,11 +206,10 @@ class DeviceSettingsItem extends StatelessWidget {
       children: [
         Text(title, style: TextStyle(inherit: true, color: color)),
         const Spacer(),
-        if(icon != null) icon!,
+        if (icon != null) icon!,
       ],
     );
   }
-
 }
 
 class ChangeDeviceNameDialog extends StatefulWidget {
@@ -226,7 +217,6 @@ class ChangeDeviceNameDialog extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() => _ChangeDeviceNameDialogState();
-
 }
 
 class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
@@ -267,12 +257,11 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
   }
 
   void _onSubmit() async {
-    _save()
-        .then((value) => Navigator.of(context).pop());
+    _save().then((value) => Navigator.of(context).pop());
   }
 
   Future<void> _save() async {
-    if(value != null) {
+    if (value != null) {
       await Provider.of<SelectedDeviceProvider>(context, listen: false)
           .updateName(value!);
     }
@@ -293,10 +282,10 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
 }
 
 void changeName(context) {
-    showPlatformDialog<String?>(
-      context: context,
-      builder: (_) => const ChangeDeviceNameDialog(),
-    );
+  showPlatformDialog<String?>(
+    context: context,
+    builder: (_) => const ChangeDeviceNameDialog(),
+  );
 }
 
 void editSchedule(context) {
@@ -312,13 +301,11 @@ class DeviceSettings {
   static const DeviceSettingsItem changeTimezone = DeviceSettingsItem(
       onSelected: editSchedule,
       title: "Edit Schedule",
-      icon: Icon(Icons.alarm)
-  );
+      icon: Icon(Icons.alarm));
   static const DeviceSettingsItem deviceInfo = DeviceSettingsItem(
-    onSelected: changeName,
-    title: "Device Info",
-    icon: Icon(Icons.info_outline)
-  );
+      onSelected: changeName,
+      title: "Device Info",
+      icon: Icon(Icons.info_outline));
 
   static const List<DeviceSettingsItem> choices = <DeviceSettingsItem>[
     rename,
@@ -347,7 +334,6 @@ class DeviceSettingsButton extends StatelessWidget {
       },
     );
   }
-
 }
 
 class MiniDeviceArea extends StatelessWidget {
@@ -356,89 +342,85 @@ class MiniDeviceArea extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RefreshablePlaceholder(
-      notifier: Provider.of<DeviceStateProvider>(context),
-      preferData: true,
-      builder: (context, prov, loading) {
-        double opacity = context.watch<DeviceConnectionStatusProvider>()
-            .value == DeviceConnectionStatus.online ? 1 : 0.3;
-        if(loading) {
-          return Column(
-            children: [
-              AspectRatio(
-                aspectRatio: 1.4,
-                child: Container(
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    borderRadius: BorderRadius.all(Radius.circular(20.0)),
-                    color: Colors.white
+        notifier: Provider.of<DeviceStateProvider>(context),
+        preferData: true,
+        builder: (context, prov, loading) {
+          double opacity =
+              context.watch<DeviceConnectionStatusProvider>().value ==
+                      DeviceConnectionStatus.online
+                  ? 1
+                  : 0.3;
+          if (loading) {
+            return Column(
+              children: [
+                AspectRatio(
+                  aspectRatio: 1.4,
+                  child: Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                        color: Colors.white),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 96.0),
-                child: Container(
-                  decoration: const BoxDecoration(
-                    borderRadius: BorderRadius.all(Radius.circular(16.0)),
-                    color: Colors.white
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 16.0, horizontal: 96.0),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                        borderRadius: BorderRadius.all(Radius.circular(16.0)),
+                        color: Colors.white),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: SizedBox(width: 96, height: 24),
+                    ),
                   ),
-                  child: const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: SizedBox(width: 96, height: 24),
-                  ),
-                ),
-              )
-            ],
-          );
-        } else {
-          return Column(
-            children: [
-              Opacity(
-                opacity: opacity,
-                child: MiniDevice(status: prov.value!.bins)
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 96.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.all(Radius.circular(16.0)),
-                    border: Border.all(color: Theme.of(context).highlightColor)
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: IconTheme(
-                      data: IconThemeData(
-                        color: Theme.of(context).hintColor
-                      ),
-                      child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.wifi),
-                              Icon(Icons.bluetooth_disabled),
-                              Icon(Icons.battery_unknown)
-                            ],
+                )
+              ],
+            );
+          } else {
+            return Column(
+              children: [
+                Opacity(
+                    opacity: opacity,
+                    child: MiniDevice(status: prov.value!.bins)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 16.0, horizontal: 96.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(16.0)),
+                        border: Border.all(
+                            color: Theme.of(context).highlightColor)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: IconTheme(
+                        data: IconThemeData(color: Theme.of(context).hintColor),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.wifi),
+                            Icon(Icons.bluetooth_disabled),
+                            Icon(Icons.battery_unknown)
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              )
-            ],
-          );
-        }
-      }
-    );
+                )
+              ],
+            );
+          }
+        });
   }
-
 }
 
 class DosePeriodMedication extends StatelessWidget {
   final DosePeriod period;
   final ScheduledMedication? medication;
-  const DosePeriodMedication({
-    super.key,
-    required this.medication,
-    required this.period
-  });
+  const DosePeriodMedication(
+      {super.key, required this.medication, required this.period});
 
   @override
   Widget build(BuildContext context) {
@@ -448,7 +430,7 @@ class DosePeriodMedication extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.start,
         mainAxisSize: MainAxisSize.max,
         children: [
-          if(medication != null) ... [
+          if (medication != null) ...[
             MedicationIcon.fromMed(medication!, 32.0),
             Text('${medication!.name}')
           ]
@@ -456,7 +438,6 @@ class DosePeriodMedication extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class CircularBinStatusIndicator extends StatelessWidget {
@@ -466,7 +447,7 @@ class CircularBinStatusIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Color color;
-    switch(status) {
+    switch (status) {
       case BinStatus.TAKEN:
       case BinStatus.TAKE_NOW:
         color = Colors.green;
@@ -482,13 +463,11 @@ class CircularBinStatusIndicator extends StatelessWidget {
       height: 16.0,
       width: 16.0,
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: filled ? color : Colors.transparent,
-        border: filled ? null : Border.all(color: color, width: 4.0)
-      ),
+          shape: BoxShape.circle,
+          color: filled ? color : Colors.transparent,
+          border: filled ? null : Border.all(color: color, width: 4.0)),
     );
   }
-
 }
 
 class DeviceNoticeArea extends StatelessWidget {
@@ -499,7 +478,7 @@ class DeviceNoticeArea extends StatelessWidget {
     return SliverToBoxAdapter(
       child: Consumer<DeviceNoticeProvider>(
         builder: (context, prov, _) {
-          if(prov.value != DeviceNotice.none) {
+          if (prov.value != DeviceNotice.none) {
             return Padding(
               padding: sidePad,
               child: _buildNotice(context, prov.value, prov),
@@ -513,16 +492,17 @@ class DeviceNoticeArea extends StatelessWidget {
   }
 
   Widget _buildNotice(context, DeviceNotice notice, DeviceNoticeProvider prov) {
-    if(notice == DeviceNotice.disconnected) {
+    if (notice == DeviceNotice.disconnected) {
       return Card(
         child: ListTile(
           contentPadding: EdgeInsets.all(16.0),
           leading: Icon(Icons.warning),
           title: Text(AppLocalizations.of(context)!.noticeDisconnected),
-          subtitle: Text(AppLocalizations.of(context)!.noticeDisconnectedSubtitle),
+          subtitle:
+              Text(AppLocalizations.of(context)!.noticeDisconnectedSubtitle),
         ),
       );
-    } else if(notice == DeviceNotice.empty) {
+    } else if (notice == DeviceNotice.empty) {
       return Card(
         child: Column(
           children: [
@@ -537,18 +517,21 @@ class DeviceNoticeArea extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(right: 16.0, bottom: 16.0),
                 child: FutureBuilder(
-                  future: prov.reloadFuture,
-                  builder: (context, snapshot) {
-                    bool loading = snapshot.connectionState != ConnectionState.none;
-                    return TextButton.icon(
-                      onPressed: loading ? null : () => _reload(prov),
-                      icon: loading
-                          ? SizedBox(child: CircularProgressIndicator(), height: 16.0, width: 16.0)
-                          : Icon(Icons.check),
-                      label: Text(AppLocalizations.of(context)!.noticeEmptyAction)
-                    );
-                  }
-                ),
+                    future: prov.reloadFuture,
+                    builder: (context, snapshot) {
+                      bool loading =
+                          snapshot.connectionState != ConnectionState.none;
+                      return TextButton.icon(
+                          onPressed: loading ? null : () => _reload(prov),
+                          icon: loading
+                              ? SizedBox(
+                                  child: CircularProgressIndicator(),
+                                  height: 16.0,
+                                  width: 16.0)
+                              : Icon(Icons.check),
+                          label: Text(
+                              AppLocalizations.of(context)!.noticeEmptyAction));
+                    }),
               ),
             )
           ],
@@ -562,7 +545,6 @@ class DeviceNoticeArea extends StatelessWidget {
   void _reload(DeviceNoticeProvider prov) {
     prov.reload();
   }
-
 }
 
 class DosePeriodArea extends StatelessWidget {
@@ -572,7 +554,7 @@ class DosePeriodArea extends StatelessWidget {
   Widget build(BuildContext context) {
     return Selector<DeviceStateProvider, List<DosePeriod>?>(
       selector: (_, prov) => prov.value?.dosePeriods,
-      builder:  (_, list, __) {
+      builder: (_, list, __) {
         return SliverList.builder(
           itemBuilder: (BuildContext context, int index) {
             return _buildPanel(context, list?[index]);
@@ -606,34 +588,39 @@ class DosePeriodArea extends StatelessWidget {
               const Expanded(child: Divider()),
             ],
           ),
-          if(period.medicationIDs.isNotEmpty) ... [
-            ...period.medicationIDs.map((e) =>
-                _buildMed(context, period, medProv.byID(e)))
+          if (period.medicationIDs.isNotEmpty) ...[
+            ...period.medicationIDs
+                .map((e) => _buildMed(context, period, medProv.byID(e)))
                 .toList(growable: false),
-          ] else ... [
+          ] else ...[
             Padding(
               padding: EdgeInsets.all(32.0),
               child: Text(AppLocalizations.of(context)!.noticeNoMeds),
             )
           ],
           TextButton.icon(
-            icon: Icon(Icons.add),
-            label: Text(AppLocalizations.of(context)!.actionAddMed),
-            onPressed: () {
-              Navigator.of(context).push(NewMedicationWizardPage.route(context,
-                  Provider.of<SelectedDeviceProvider>(context, listen: false)
-                      .device!.deviceID)).then((value) {
-                Provider.of<MedicationsProvider>(context, listen: false).refresh();
-              });
-            }
-          )
+              icon: Icon(Icons.add),
+              label: Text(AppLocalizations.of(context)!.actionAddMed),
+              onPressed: () {
+                Navigator.of(context)
+                    .push(NewMedicationWizardPage.route(
+                        context,
+                        Provider.of<SelectedDeviceProvider>(context,
+                                listen: false)
+                            .device!
+                            .deviceID))
+                    .then((value) {
+                  Provider.of<MedicationsProvider>(context, listen: false)
+                      .refresh();
+                });
+              })
         ],
       ),
     );
   }
 
   Widget _buildMed(context, DosePeriod period, ScheduledMedication? med) {
-    if(med != null) {
+    if (med != null) {
       return Card(
         child: ListTile(
           leading: MedicationIcon.fromMed(med, 32.0),
@@ -641,11 +628,14 @@ class DosePeriodArea extends StatelessWidget {
           subtitle: Text(_buildSubtitle(context, period)),
           trailing: CircularBinStatusIndicator(status: period.status),
           onTap: () {
-            Navigator.of(context).push(EditMedicationWizardPage.route(context,
-                med, Provider
-                    .of<SelectedDeviceProvider>(context, listen: false)
-                    .device!
-                    .deviceID)).then((value) {
+            Navigator.of(context)
+                .push(EditMedicationWizardPage.route(
+                    context,
+                    med,
+                    Provider.of<SelectedDeviceProvider>(context, listen: false)
+                        .device!
+                        .deviceID))
+                .then((value) {
               Provider.of<MedicationsProvider>(context, listen: false)
                   .refresh();
             });
@@ -659,10 +649,8 @@ class DosePeriodArea extends StatelessWidget {
           builder: (BuildContext context, bool loading) {
             return ListTile(
               leading: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white
-                ),
+                decoration:
+                    BoxDecoration(shape: BoxShape.circle, color: Colors.white),
                 height: 32.0,
                 width: 32.0,
               ),
@@ -676,16 +664,16 @@ class DosePeriodArea extends StatelessWidget {
 
   String _buildSubtitle(context, DosePeriod period) {
     final fm = DateFormat.jm();
-    if(period.scheduledTime == null) {
+    if (period.scheduledTime == null) {
       return "";
     }
     String format = fm.format(period.scheduledTime!);
 
-    if(period.status == BinStatus.PENDING) {
+    if (period.status == BinStatus.PENDING) {
       return AppLocalizations.of(context)!.doseTakeAt(format);
-    } else if(period.status == BinStatus.TAKEN) {
+    } else if (period.status == BinStatus.TAKEN) {
       return AppLocalizations.of(context)!.doseTakenAt(format);
-    } else if(period.status == BinStatus.TAKE_NOW) {
+    } else if (period.status == BinStatus.TAKE_NOW) {
       return AppLocalizations.of(context)!.doseTakeNow;
     } else {
       return '';
@@ -694,43 +682,43 @@ class DosePeriodArea extends StatelessWidget {
 
   String _buildTimeString(context, DosePeriod period) {
     final fm = DateFormat.jm();
-    if(period.scheduledTime != null) {
-      return AppLocalizations.of(context)!.doseTodayAt(fm.format(period.scheduledTime!));
+    if (period.scheduledTime != null) {
+      return AppLocalizations.of(context)!
+          .doseTodayAt(fm.format(period.scheduledTime!));
     } else {
       return AppLocalizations.of(context)!.genericToday;
     }
   }
-
 }
 
 class IndexPage extends StatelessWidget {
   const IndexPage({super.key});
 
   static Route<IndexPage> route(context) {
-    return platformPageRoute(context: context, builder: (_) {
-      // Prompt initial data load here
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) {
-        deviceRepo.deviceListProvider.refresh();
-      });
+    return platformPageRoute(
+        context: context,
+        builder: (_) {
+          // Prompt initial data load here
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            deviceRepo.deviceListProvider.refresh();
+          });
 
-
-      return const IndexPage();
-    });
+          return const IndexPage();
+        });
   }
-
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<ScrollProvider>(
-            create: (_) => ScrollProvider(),
+          create: (_) => ScrollProvider(),
         ),
-        ChangeNotifierProxyProvider2<MinuteBasedTimeProvider, SelectedDeviceProvider,
-            DeviceStateProvider>(
+        ChangeNotifierProxyProvider2<MinuteBasedTimeProvider,
+            SelectedDeviceProvider, DeviceStateProvider>(
           create: (_) => DeviceStateProvider(),
-          update: (_, time, selected, old) => old!.update(time.value, selected.device),
+          update: (_, time, selected, old) =>
+              old!.update(time.value, selected.device),
         ),
         ChangeNotifierProxyProvider<DeviceStateProvider,
             DeviceConnectionStatusProvider>(
@@ -741,46 +729,46 @@ class IndexPage extends StatelessWidget {
         ChangeNotifierProxyProvider2<DeviceStateProvider,
             DeviceConnectionStatusProvider, DeviceNoticeProvider>(
           create: (_) => DeviceNoticeProvider(),
-          update: (_, state, status, old) => old!.update(state.value, status.value),
+          update: (_, state, status, old) =>
+              old!.update(state.value, status.value),
         )
       ],
-      builder: (context, _) => BLEAutoSuppress(child: AutoRefresh(
+      builder: (context, _) => BLEAutoSuppress(
+          child: AutoRefresh(
         refreshable: Provider.of<DeviceStateProvider>(context),
         refreshInterval: const Duration(seconds: 3),
         child: TimeOfDayScaffold(
             child: CustomScrollView(
-              controller: context.select<ScrollProvider, ScrollController>(
-                      (p) => p.controller),
-              slivers: [
-                IndexAppBar(),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: sidePad.copyWith(top: 16.0),
-                    child: const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.symmetric(vertical: 8.0),
-                          child: Row(
-                            children: [
-                              DeviceListSelector(),
-                              Spacer(),
-                              DeviceSettingsButton()
-                            ],
-                          ),
-                        ),
-                        MiniDeviceArea()
-                      ],
+          controller: context
+              .select<ScrollProvider, ScrollController>((p) => p.controller),
+          slivers: [
+            IndexAppBar(),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: sidePad.copyWith(top: 16.0),
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        children: [
+                          DeviceListSelector(),
+                          Spacer(),
+                          DeviceSettingsButton()
+                        ],
+                      ),
                     ),
-                  ),
+                    MiniDeviceArea()
+                  ],
                 ),
-                DeviceNoticeArea(),
-                DosePeriodArea(),
-              ],
-            )
-        ),
+              ),
+            ),
+            DeviceNoticeArea(),
+            DosePeriodArea(),
+          ],
+        )),
       )),
     );
   }
-
 }

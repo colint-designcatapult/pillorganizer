@@ -1,9 +1,12 @@
-
 import 'package:app/api/medication.dart';
 import 'package:flutter/material.dart';
 
 class MedicationIcon extends StatelessWidget {
-  const MedicationIcon({super.key, required this.size, required this.shape, required this.color});
+  const MedicationIcon(
+      {super.key,
+      required this.size,
+      required this.shape,
+      required this.color});
 
   factory MedicationIcon.fromMed(ScheduledMedication med, double size) {
     return MedicationIcon(size: size, shape: med.shape, color: med.color);
@@ -19,24 +22,20 @@ class MedicationIcon extends StatelessWidget {
       width: size,
       height: size,
       child: Center(
-        child: Stack(
-            children: [
-              Center(
-                child: Image.asset(_assetColor(),
-                    width: size * _sizeModifier(),
-                    color: color ?? Theme.of(context).iconTheme.color),
-              ),
-              Center(
-                  child: Image.asset(_assetFG(), width: size * _sizeModifier())
-              ),
-            ]
-        ),
+        child: Stack(children: [
+          Center(
+            child: Image.asset(_assetColor(),
+                width: size * _sizeModifier(),
+                color: color ?? Theme.of(context).iconTheme.color),
+          ),
+          Center(child: Image.asset(_assetFG(), width: size * _sizeModifier())),
+        ]),
       ),
     );
   }
 
   String _assetFG() {
-    switch(shape) {
+    switch (shape) {
       case MedicationShape.capsule:
         return "lib/assets/meds/CAPSULE_FG.png";
       case MedicationShape.diamond:
@@ -55,7 +54,7 @@ class MedicationIcon extends StatelessWidget {
   }
 
   String _assetColor() {
-    switch(shape) {
+    switch (shape) {
       case MedicationShape.capsule:
         return "lib/assets/meds/CAPSULE_COLOR.png";
       case MedicationShape.diamond:
@@ -74,19 +73,24 @@ class MedicationIcon extends StatelessWidget {
   }
 
   double _sizeModifier() {
-    switch(shape) {
-      case MedicationShape.square: return 0.75;
-      case MedicationShape.round: return 0.75;
-      default: return 1;
+    switch (shape) {
+      case MedicationShape.square:
+        return 0.75;
+      case MedicationShape.round:
+        return 0.75;
+      default:
+        return 1;
     }
   }
-
 }
 
 class HorizontalPillShapeSelectorOption extends StatelessWidget {
-  const HorizontalPillShapeSelectorOption({super.key,
-    required this.shape, required this.color, required this.selected,
-    required this.onTap });
+  const HorizontalPillShapeSelectorOption(
+      {super.key,
+      required this.shape,
+      required this.color,
+      required this.selected,
+      required this.onTap});
 
   final MedicationShape shape;
   final Color color;
@@ -102,19 +106,17 @@ class HorizontalPillShapeSelectorOption extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
               borderRadius: BorderRadius.all(Radius.circular(10)),
-              color: Color.fromARGB(16, 0, 0, 0),
-            border: selected ? Border.all(
-              color: Theme.of(context).hintColor,
-              width: 2.0
-            ) : const Border()
-          ),
+              color: const Color.fromARGB(16, 0, 0, 0),
+              border: selected
+                  ? Border.all(color: Theme.of(context).hintColor, width: 2.0)
+                  : const Border()),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               MedicationIcon(size: 64, shape: shape, color: color),
               Text(
-                  '${shape.displayName}',
+                '${shape.displayName}',
                 overflow: TextOverflow.ellipsis,
               )
             ],
@@ -123,11 +125,11 @@ class HorizontalPillShapeSelectorOption extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class PillShapeSelector extends StatefulWidget {
-  const PillShapeSelector({super.key, this.color = Colors.white, this.selected, this.onChange});
+  const PillShapeSelector(
+      {super.key, this.color = Colors.white, this.selected, this.onChange});
 
   final Color? color;
   final MedicationShape? selected;
@@ -135,12 +137,9 @@ class PillShapeSelector extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() => _PillShapeSelectorState();
-
 }
 
 class _PillShapeSelectorState extends State<PillShapeSelector> {
-
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -149,39 +148,37 @@ class _PillShapeSelectorState extends State<PillShapeSelector> {
       children: [
         Text('Choose a Shape', style: Theme.of(context).textTheme.titleSmall),
         GridView.count(
-          crossAxisCount: 3,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          children: [
-            ...MedicationShape.values.map((e) =>
-                HorizontalPillShapeSelectorOption(
-                  shape: e,
-                  color: widget.color ?? Colors.white,
-                  selected: widget.selected == e,
-                  onTap: (val) => widget.onChange != null ? widget.onChange!(val) : {},
-                ))
-          ]
-        )
+            crossAxisCount: 3,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              ...MedicationShape.values
+                  .map((e) => HorizontalPillShapeSelectorOption(
+                        shape: e,
+                        color: widget.color ?? Colors.white,
+                        selected: widget.selected == e,
+                        onTap: (val) => widget.onChange != null
+                            ? widget.onChange!(val)
+                            : {},
+                      ))
+            ])
       ],
     );
   }
-
 }
 
 class MedicationColorSelectorColor extends StatelessWidget {
-
   final Color color;
   final bool selected;
   final Icon? icon;
   final Function(Color?) onTap;
 
-  const MedicationColorSelectorColor({
-    super.key,
-    required this.color,
-    this.selected = false,
-    this.icon,
-    required this.onTap
-  });
+  const MedicationColorSelectorColor(
+      {super.key,
+      required this.color,
+      this.selected = false,
+      this.icon,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -191,34 +188,29 @@ class MedicationColorSelectorColor extends StatelessWidget {
         onTap: () => onTap(color),
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: const BorderRadius.all(Radius.circular(64)),
-            color: color,
-            border: Border.all(
-              color: selected ? Theme.of(context).hintColor : Theme.of(context).shadowColor,
-              width: 2
-            ),
-            boxShadow: [BoxShadow(
-                offset: Offset.fromDirection(1),
-                blurRadius: 1,
-                color: Colors.black.withAlpha(100),
-                spreadRadius: 1
-            )]
-          ),
+              borderRadius: const BorderRadius.all(Radius.circular(64)),
+              color: color,
+              border: Border.all(
+                  color: selected
+                      ? Theme.of(context).hintColor
+                      : Theme.of(context).shadowColor,
+                  width: 2),
+              boxShadow: [
+                BoxShadow(
+                    offset: Offset.fromDirection(1),
+                    blurRadius: 1,
+                    color: Colors.black.withAlpha(100),
+                    spreadRadius: 1)
+              ]),
           child: icon,
         ),
       ),
     );
   }
-
 }
 
-
 class MedicationColorSelector extends StatelessWidget {
-  const MedicationColorSelector({
-    super.key,
-    this.selected,
-    this.onChange
-  });
+  const MedicationColorSelector({super.key, this.selected, this.onChange});
 
   final List<Color> commonColors = const [
     Color.fromARGB(255, 232, 232, 232),
@@ -245,15 +237,16 @@ class MedicationColorSelector extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           children: [
-            ...commonColors.map((e) => MedicationColorSelectorColor(
-              color: e,
-              selected: e == selected,
-              onTap: (color) => onChange!(color),
-            ))
+            ...commonColors
+                .map((e) => MedicationColorSelectorColor(
+                      color: e,
+                      selected: e == selected,
+                      onTap: (color) => onChange!(color),
+                    ))
                 .toList(growable: false),
             MedicationColorSelectorColor(
               color: Colors.white30,
-              icon: Icon(Icons.colorize),
+              icon: const Icon(Icons.colorize),
               onTap: (color) => onChange!(color),
             )
           ],
@@ -261,5 +254,4 @@ class MedicationColorSelector extends StatelessWidget {
       ],
     );
   }
-
 }
