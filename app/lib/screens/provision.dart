@@ -74,6 +74,8 @@ class _ProvisionPageState extends State<ProvisionPage>
                   prov.state.stage, prov.state.error, prov.state.progress),
               builder: (_, data, __) {
                 return WizardStep(
+                  stepTitle: 'Device Setup',
+                  stepNumber: '1',
                   icon: _buildIcon(data),
                   title: _buildTitle(data),
                   subtext: _buildSubtitle(data),
@@ -100,22 +102,23 @@ class _ProvisionPageState extends State<ProvisionPage>
   Widget _buildBody(data) {
     if (data.item2 != null) {
       return SliverToBoxAdapter(
-          child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40.0),
-        child: ErrorInfoBox(error: data.item2),
+          child: Column(
+        children: [
+          Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40.0),
+              child: ErrorInfoBox(error: data.item2)),
+        ],
       ));
     } else {
-      return SliverFillRemaining(
-          hasScrollBody: false,
-          child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40.0),
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: LinearProgressIndicator(
-                  value: data.item3,
-                  semanticsLabel: 'Progress',
-                ),
-              )));
+      return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40.0),
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: LinearProgressIndicator(
+              value: data.item3,
+              semanticsLabel: 'Progress',
+            ),
+          ));
     }
   }
 
@@ -253,36 +256,40 @@ class ProvisionSelectWifiPage extends StatelessWidget {
             selector: (_, prov) => Tuple2(prov.state.stage, prov.state.error),
             builder: (_, data, __) {
               return WizardStep(
+                fullscreen: true,
+                stepTitle: 'Device Setup',
+                stepNumber: '1',
                 icon: const Icon(Icons.wifi),
                 title: "Select Wi-Fi Network",
                 subtext: "",
-                child: SliverFillRemaining(
-                    hasScrollBody: false,
+                child: Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.only(
-                          left: 40.0, right: 40.0, bottom: 40.0),
-                      child: Consumer<ProvisionProvider>(
-                          builder: (_, prov, child) {
-                        if (prov.state.wifiNetworks == null) {
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        } else {
-                          return Column(
-                              mainAxisSize: MainAxisSize.max,
-                              children: [
-                                ...prov.state.wifiNetworks!
-                                    .map(
-                                        (e) => _buildWifiCard(context, e, prov))
-                                    .toList(growable: false),
-                                TextButton(
-                                    onPressed: () {
-                                      prov.rescanNetworks();
-                                    },
-                                    child: const Text('Rescan Networks'))
-                              ]);
-                        }
-                      }),
-                    )),
+                  padding: const EdgeInsets.only(
+                      left: 40.0, right: 40.0, bottom: 40.0),
+                  child: Consumer<ProvisionProvider>(builder: (_, prov, child) {
+                    if (prov.state.wifiNetworks == null) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else {
+                      return SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.max,
+                          children: [
+                            ...prov.state.wifiNetworks!
+                                .map((e) => _buildWifiCard(context, e, prov))
+                                .toList(growable: false),
+                            TextButton(
+                              onPressed: () {
+                                prov.rescanNetworks();
+                              },
+                              child: const Text('Rescan Networks'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                  }),
+                )),
               );
             }),
       ),
@@ -386,6 +393,8 @@ class ProvisionConnectingPage extends StatelessWidget {
               selector: (_, prov) => Tuple2(prov.state.stage, prov.state.error),
               builder: (_, data, __) {
                 return WizardStep(
+                  stepTitle: 'Device Setup',
+                  stepNumber: '1',
                   icon: _buildIcon(context, data),
                   title: _buildTitle(data),
                   subtext: _buildSubtitle(data),
@@ -425,32 +434,29 @@ class ProvisionConnectingPage extends StatelessWidget {
         child: ErrorInfoBox(error: data.item2),
       ));
     } else {
-      return SliverFillRemaining(
-          hasScrollBody: false,
-          child: Padding(
-              padding:
-                  const EdgeInsets.only(left: 40.0, right: 40.0, bottom: 40.0),
-              child: Center(
-                child: Consumer<ProvisionProvider>(builder: (_, prov, child) {
-                  if (prov.state.stage == ProvisionStage.complete) {
-                    return Container();
-                  } else if (prov.state.stage == ProvisionStage.finalizing) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        LinearProgressIndicator(
-                          value: prov.state.progress,
-                          semanticsLabel: 'Progress',
-                        ),
-                        Text('Estimated time remaining: '
-                            '${(prov.state.completionETA?.inMinutes ?? 0) + 1} min.')
-                      ],
-                    );
-                  } else {
-                    return Container();
-                  }
-                }),
-              )));
+      return Padding(
+          padding: const EdgeInsets.only(left: 40.0, right: 40.0, bottom: 40.0),
+          child: Center(
+            child: Consumer<ProvisionProvider>(builder: (_, prov, child) {
+              if (prov.state.stage == ProvisionStage.complete) {
+                return Container();
+              } else if (prov.state.stage == ProvisionStage.finalizing) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LinearProgressIndicator(
+                      value: prov.state.progress,
+                      semanticsLabel: 'Progress',
+                    ),
+                    Text('Estimated time remaining: '
+                        '${(prov.state.completionETA?.inMinutes ?? 0) + 1} min.')
+                  ],
+                );
+              } else {
+                return Container();
+              }
+            }),
+          ));
     }
     /*if(state.stage == ProvisionStage.complete) {
       return Container();

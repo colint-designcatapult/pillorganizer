@@ -1,83 +1,98 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 
-class WizardStepHeaderDelegate extends SliverPersistentHeaderDelegate {
-  WizardStepHeaderDelegate(
-      {this.icon,
+class WizardStepBodyDelegate extends StatelessWidget {
+  const WizardStepBodyDelegate(
+      {super.key,
+      this.icon,
       this.title,
       this.subtext,
       this.hasBackButton = true,
-      this.onBackPressed});
-
-  final double _maxExtent = 280;
-  final double _minExtent = 100;
+      this.onBackPressed,
+      this.child});
 
   final Widget? icon;
   final String? title;
   final String? subtext;
   final bool hasBackButton;
   final VoidCallback? onBackPressed;
+  final Widget? child;
 
   @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(_shadowOpacity(shrinkOffset)),
-              spreadRadius: 1,
-              blurRadius: 3,
-              offset: const Offset(0, 3), // changes position of shadow
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              top: 27,
-              left: 12,
-              child: BackButton(
-                onPressed: onBackPressed,
-              ),
-            ),
-            Align(
-                alignment: Alignment(_xOffset(shrinkOffset), 0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (icon != null && _percent(shrinkOffset) > 0.75)
-                      Padding(
-                          padding: const EdgeInsets.only(top: 40, bottom: 20),
-                          child: Theme(
-                              data: Theme.of(context).copyWith(
-                                  iconTheme: IconThemeData(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary)),
-                              child: _buildTransition(
-                                  context: context, child: icon!))),
-                    if (title != null)
-                      _buildAnimatedText(
-                          context: context,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(
-                                  fontSize: 22 * _fontMultiplier(shrinkOffset)),
-                          text: title!),
-                    if (subtext != null && _percent(shrinkOffset) > 0.75)
-                      Padding(
-                          padding: const EdgeInsets.only(
-                              top: 20, bottom: 20, left: 40, right: 40),
-                          child: _buildAnimatedText(
-                              context: context, text: subtext!))
-                  ],
-                ))
-          ],
-        ));
+  Widget build(BuildContext context) {
+    return Expanded(
+        child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: CustomScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        slivers: [
+          SliverSafeArea(
+            sliver: SliverFillRemaining(
+                hasScrollBody: true,
+                child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color.fromRGBO(0, 0, 0, 0.1),
+                          offset: Offset(4, 4),
+                          blurRadius: 10,
+                          spreadRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          top: 27,
+                          left: 12,
+                          child: BackButton(
+                            onPressed: onBackPressed,
+                          ),
+                        ),
+                        Align(
+                            alignment: Alignment.center,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (icon != null)
+                                  Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 40, bottom: 20),
+                                      child: Theme(
+                                          data: Theme.of(context).copyWith(
+                                              iconTheme: IconThemeData(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .primary)),
+                                          child: _buildTransition(
+                                              context: context, child: icon!))),
+                                if (title != null)
+                                  _buildAnimatedText(
+                                      context: context,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(fontSize: 22),
+                                      text: title!),
+                                if (subtext != null)
+                                  Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 20,
+                                          bottom: 20,
+                                          left: 40,
+                                          right: 40),
+                                      child: _buildAnimatedText(
+                                          context: context, text: subtext!)),
+                                if (child != null) child!,
+                              ],
+                            )),
+                      ],
+                    ))),
+          ),
+        ],
+      ),
+    ));
   }
 
   Widget _buildTransition({context, child}) {
@@ -100,50 +115,24 @@ class WizardStepHeaderDelegate extends SliverPersistentHeaderDelegate {
             style: style,
             textAlign: TextAlign.center));
   }
-
-  double _percent(shrinkOffset) => 1.0 - (shrinkOffset / _maxExtent);
-
-  double _backButtonOffset() => hasBackButton ? 140 : 40;
-
-  double _xOffset(shrinkOffset) {
-    return -(shrinkOffset > _maxExtent - _backButtonOffset()
-            ? _maxExtent - _backButtonOffset()
-            : shrinkOffset) /
-        _maxExtent;
-  }
-
-  double _fontMultiplier(shrinkOffset) {
-    return max(
-        0.90, (1.0 - (shrinkOffset / _maxExtent) * (_minExtent / _maxExtent)));
-  }
-
-  double _shadowOpacity(shrinkOffset) {
-    return (shrinkOffset / _maxExtent) * 0.2;
-  }
-
-  @override
-  double get maxExtent => _maxExtent;
-
-  @override
-  double get minExtent => _minExtent;
-
-  @override
-  bool shouldRebuild(covariant WizardStepHeaderDelegate oldDelegate) {
-    return oldDelegate != this;
-  }
 }
 
 class WizardStep extends StatelessWidget {
   const WizardStep(
       {super.key,
+      required this.stepNumber,
+      required this.stepTitle,
       this.icon,
       this.title,
       this.child,
       this.subtext,
       this.footer,
       this.hasBackButton = true,
+      this.fullscreen = false,
       this.onBackPressed});
 
+  final String stepNumber;
+  final String stepTitle;
   final Widget? icon;
   final String? title;
   final String? subtext;
@@ -151,101 +140,92 @@ class WizardStep extends StatelessWidget {
   final Widget? footer;
   final bool hasBackButton;
   final VoidCallback? onBackPressed;
+  final bool? fullscreen;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisSize: MainAxisSize.max,
-      children: [
-        Expanded(
-          child: CustomScrollView(
-            slivers: [
-              SliverSafeArea(
-                sliver: SliverPersistentHeader(
-                  pinned: true,
-                  delegate: WizardStepHeaderDelegate(
+    return Scaffold(
+        backgroundColor: const Color(0xFFBFD2DB),
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 24, top: 100),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "STEP $stepNumber / 3",
+                    textAlign: TextAlign.left,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  Text(
+                    stepTitle,
+                    textAlign: TextAlign.left,
+                    style: Theme.of(context).textTheme.displayLarge,
+                  ),
+                ],
+              ),
+            ),
+            fullscreen!
+                ? WizardStepBodyDelegate(
+                    title: title,
+                    icon: icon,
+                    subtext: subtext,
+                    hasBackButton: hasBackButton,
+                    onBackPressed: onBackPressed,
+                    child: child,
+                  )
+                : SizedBox(
+                    height: 400,
+                    child: WizardStepBodyDelegate(
                       title: title,
                       icon: icon,
                       subtext: subtext,
                       hasBackButton: hasBackButton,
-                      onBackPressed: onBackPressed),
-                ),
-              ),
-              if (child != null) child!,
-            ],
-          ),
-        ),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 350),
-          switchInCurve: Curves.easeIn,
-          switchOutCurve: Curves.easeIn,
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            return SlideTransition(
-              position: Tween(
-                begin: const Offset(0.0, 1.0),
-                end: const Offset(0.0, 0.0),
-              ).animate(animation),
-              child: child,
-            );
-          },
-          child: footer != null
-              ? Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).scaffoldBackgroundColor,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.2),
-                        spreadRadius: 1,
-                        blurRadius: 3,
-                        offset:
-                            const Offset(0, -3), // changes position of shadow
+                      onBackPressed: onBackPressed,
+                      child: child,
+                    )),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 350),
+              switchInCurve: Curves.easeIn,
+              switchOutCurve: Curves.easeIn,
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return SlideTransition(
+                  position: Tween(
+                    begin: const Offset(0.0, 1.0),
+                    end: const Offset(0.0, 0.0),
+                  ).animate(animation),
+                  child: child,
+                );
+              },
+              child: footer != null
+                  ? Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.2),
+                            spreadRadius: 1,
+                            blurRadius: 3,
+                            offset: const Offset(
+                                0, -3), // changes position of shadow
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: footer!,
-                  ),
-                )
-              : Container(
-                  key: UniqueKey(),
-                ),
-        )
-      ],
-    );
-  }
-}
-
-class DecoratedWizardStep extends StatefulWidget {
-  const DecoratedWizardStep(
-      {super.key, this.icon, this.title, this.subtext, this.child});
-
-  final Widget? icon;
-  final String? title;
-  final String? subtext;
-  final Widget? child;
-
-  @override
-  State<StatefulWidget> createState() => _DecoratedWizardStep();
-}
-
-class _DecoratedWizardStep extends State<DecoratedWizardStep> {
-  final GlobalKey<FormState> formKey = GlobalKey();
-
-  @override
-  Widget build(BuildContext context) {
-    return Form(
-      key: formKey,
-      child: WizardStep(
-        icon: widget.icon,
-        title: widget.title,
-        subtext: widget.subtext,
-        child: widget.child,
-        footer: ElevatedButton(onPressed: null, child: Text('Continue')),
-      ),
-    );
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: footer!,
+                      ),
+                    )
+                  : Container(
+                      key: UniqueKey(),
+                    ),
+            )
+          ],
+        ));
   }
 }
