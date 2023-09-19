@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:timezone/standalone.dart' as tz;
 
@@ -12,7 +10,6 @@ enum DayOfWeek {
   saturday,
   sunday
 }
-
 
 extension DayOfWeekExtension on DayOfWeek {
   String get internalName {
@@ -92,7 +89,7 @@ extension DayOfWeekExtension on DayOfWeek {
   }
 
   static DayOfWeek byInternalName(String name) {
-    switch(name) {
+    switch (name) {
       case 'MONDAY':
         return DayOfWeek.monday;
       case 'TUESDAY':
@@ -114,8 +111,15 @@ extension DayOfWeekExtension on DayOfWeek {
 }
 
 class TimeService {
-  static const List<String> DAYS_OF_WEEK = <String>['MONDAY', 'TUESDAY',
-    'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+  static const List<String> DAYS_OF_WEEK = <String>[
+    'MONDAY',
+    'TUESDAY',
+    'WEDNESDAY',
+    'THURSDAY',
+    'FRIDAY',
+    'SATURDAY',
+    'SUNDAY'
+  ];
 
   DateTime now = DateTime.now();
 
@@ -140,13 +144,11 @@ class TimeService {
   String dayOfWeekToString(int dow) {
     return DAYS_OF_WEEK[dow];
   }
-
-
 }
 
 TimeOfDay timeOfDayFromSecondsFrom00(int secondsFrom00, {bool isUTC = true}) {
   DateTime dt;
-  if(isUTC) {
+  if (isUTC) {
     dt = DateTime.utc(0, 1, 1, 0, 0, secondsFrom00).toLocal();
   } else {
     dt = DateTime(0, 1, 1, 0, 0, secondsFrom00);
@@ -167,38 +169,31 @@ class TimeOfDayOfWeek {
   final bool isUTC;
   late Duration duration;
 
-  TimeOfDayOfWeek({
-    required this.dayOfWeek,
-    required this.offsetFrom00,
-    required this.isUTC
-  }) {
+  TimeOfDayOfWeek(
+      {required this.dayOfWeek,
+      required this.offsetFrom00,
+      required this.isUTC}) {
     duration = Duration(seconds: offsetFrom00);
   }
 
-  TimeOfDayOfWeek.fromString({
-    required String dowString,
-    required this.offsetFrom00,
-    required this.isUTC
-  }) {
+  TimeOfDayOfWeek.fromString(
+      {required String dowString,
+      required this.offsetFrom00,
+      required this.isUTC}) {
     duration = Duration(seconds: offsetFrom00);
     dayOfWeek = TimeService().parseDayOfWeek(dowString);
   }
 
-  TimeOfDayOfWeek.fromTimeOfDay({
-    required this.dayOfWeek,
-    required TimeOfDay tod,
-    required this.isUTC
-  }) {
+  TimeOfDayOfWeek.fromTimeOfDay(
+      {required this.dayOfWeek, required TimeOfDay tod, required this.isUTC}) {
     offsetFrom00 = (tod.hour * 3600) + (tod.minute * 60);
     duration = Duration(seconds: offsetFrom00);
   }
 
-
   TimeOfDayOfWeek adjust(bool positive, bool isUTC) {
-
     int tzOffset = DateTime.now().timeZoneOffset.inSeconds;
-    var dur = Duration(seconds: positive ? offsetFrom00 + tzOffset
-                                         : offsetFrom00 - tzOffset);
+    var dur = Duration(
+        seconds: positive ? offsetFrom00 + tzOffset : offsetFrom00 - tzOffset);
 
     var epoch = DateTime.fromMillisecondsSinceEpoch(1, isUtc: true);
     var relativeToEpoch = epoch.add(dur);
@@ -207,20 +202,21 @@ class TimeOfDayOfWeek {
 
     return TimeOfDayOfWeek(
         dayOfWeek: (dayOfWeek + deltaDays) % 7,
-        offsetFrom00: (relativeToEpoch.hour * 3600) + (relativeToEpoch.minute * 60) + relativeToEpoch.second,
-        isUTC: isUTC
-    );
+        offsetFrom00: (relativeToEpoch.hour * 3600) +
+            (relativeToEpoch.minute * 60) +
+            relativeToEpoch.second,
+        isUTC: isUTC);
   }
 
   TimeOfDayOfWeek toLocal() {
-    if(!isUTC) {
+    if (!isUTC) {
       return this;
     }
     return adjust(true, false);
   }
 
   TimeOfDayOfWeek toUTC() {
-    if(isUTC) {
+    if (isUTC) {
       return this;
     }
     return adjust(false, true);
@@ -245,16 +241,11 @@ class FilterableTimeZoneProvider extends ChangeNotifier {
   List<tz.Location> get filteredZones => _filteredZones;
 
   FilterableTimeZoneProvider() {
-    _zones = tz.timeZoneDatabase.locations
-        .map((key, value) {
-          String index = value.name.replaceAll("/", " ")
-              .replaceAll("_", " ");
-          index += " ${value.currentTimeZone.abbreviation}";
-          return MapEntry(
-              index.toLowerCase(),
-              value
-          );
-        });
+    _zones = tz.timeZoneDatabase.locations.map((key, value) {
+      String index = value.name.replaceAll("/", " ").replaceAll("_", " ");
+      index += " ${value.currentTimeZone.abbreviation}";
+      return MapEntry(index.toLowerCase(), value);
+    });
   }
 
   Future<List<tz.Location>> filter(String? filterBy) {
@@ -266,30 +257,28 @@ class FilterableTimeZoneProvider extends ChangeNotifier {
       return Future.value(_filteredZones);
     } else {
       _filteredZones = _zones?.entries
-          .where((element) => element.key.contains(fb!))
-          .map((e) => e.value)
-          .toList(growable: false) ?? List.empty(growable: false);
+              .where((element) => element.key.contains(fb!))
+              .map((e) => e.value)
+              .toList(growable: false) ??
+          List.empty(growable: false);
       notifyListeners();
-      return Future.value(
-          _filteredZones
-      );
+      return Future.value(_filteredZones);
     }
   }
-
 }
 
 typedef TimeZone = tz.TimeZone;
 typedef TimeZoneLocation = tz.Location;
 
 TimeZone? lookupTimeZone(String? tzString) {
-  if(tzString == null) {
+  if (tzString == null) {
     return null;
   }
   return tz.timeZoneDatabase.locations[tzString]?.currentTimeZone;
 }
 
 TimeZoneLocation? lookupTimeZoneLocation(String? tzString) {
-  if(tzString == null) {
+  if (tzString == null) {
     return null;
   }
   return tz.timeZoneDatabase.locations[tzString];

@@ -12,23 +12,18 @@ import '../../../widgets/medication_icon.dart';
 
 part 'medication_entry_wizard.freezed.dart';
 
-enum NewMedicationStage {
-  name,
-  appearance,
-  schedule
-}
+enum NewMedicationStage { name, appearance, schedule }
 
 @freezed
 class NewMedicationState with _$NewMedicationState {
-  const factory NewMedicationState({
-    ScheduledMedication? existing,
-    required int deviceID,
-    @Default(NewMedicationStage.name) NewMedicationStage stage,
-    String? name,
-    MedicationShape? shape,
-    Color? color,
-    Set<int>? assignedDispenseTimes
-  }) = _NewMedicationState;
+  const factory NewMedicationState(
+      {ScheduledMedication? existing,
+      required int deviceID,
+      @Default(NewMedicationStage.name) NewMedicationStage stage,
+      String? name,
+      MedicationShape? shape,
+      Color? color,
+      Set<int>? assignedDispenseTimes}) = _NewMedicationState;
 }
 
 class NewMedicationProvider with ChangeNotifier {
@@ -41,13 +36,13 @@ class NewMedicationProvider with ChangeNotifier {
 
   NewMedicationProvider.fromExisting(int deviceID, ScheduledMedication med) {
     _state = NewMedicationState(
-      existing: med,
-      deviceID: deviceID,
-      name: med.name,
-      shape: med.shape,
-      color: med.color,
-      assignedDispenseTimes: med.dispenseTimes.map((e) => e.dispenseTimeID).toSet()
-    );
+        existing: med,
+        deviceID: deviceID,
+        name: med.name,
+        shape: med.shape,
+        color: med.color,
+        assignedDispenseTimes:
+            med.dispenseTimes.map((e) => e.dispenseTimeID).toSet());
   }
 
   void update(NewMedicationState newState) {
@@ -71,24 +66,29 @@ class NewMedicationProvider with ChangeNotifier {
   }
 
   void nextStage() {
-    _state = state.copyWith(stage: NewMedicationStage.values[state.stage.index + 1]);
+    _state =
+        state.copyWith(stage: NewMedicationStage.values[state.stage.index + 1]);
     notifyListeners();
   }
 
   void previousStage() {
-    _state = state.copyWith(stage: NewMedicationStage.values[state.stage.index - 1]);
+    _state =
+        state.copyWith(stage: NewMedicationStage.values[state.stage.index - 1]);
     notifyListeners();
   }
 
   void complete(context) {
-    client.saveMedication(_state.deviceID, SaveMedicationDTO(
-      id: _state.existing?.id,
-      name: _state.name,
-      shape: _state.shape?.internalName,
-      color: _state.color?.value,
-      dispenseTimes: _state.assignedDispenseTimes
-    )).then((value) {
-      if(context.mounted) {
+    client
+        .saveMedication(
+            _state.deviceID,
+            SaveMedicationDTO(
+                id: _state.existing?.id,
+                name: _state.name,
+                shape: _state.shape?.internalName,
+                color: _state.color?.value,
+                dispenseTimes: _state.assignedDispenseTimes))
+        .then((value) {
+      if (context.mounted) {
         Navigator.of(context).pop();
       }
     });
@@ -96,7 +96,7 @@ class NewMedicationProvider with ChangeNotifier {
 
   void toggleDispenseTime(int dispenseID) {
     Set<int> newSet = {...?state.assignedDispenseTimes};
-    if(newSet.contains(dispenseID)) {
+    if (newSet.contains(dispenseID)) {
       newSet.remove(dispenseID);
     } else {
       newSet.add(dispenseID);
@@ -105,33 +105,33 @@ class NewMedicationProvider with ChangeNotifier {
     notifyListeners();
   }
 
-
-
   final Key nameKey = UniqueKey();
   final Key appearanceKey = UniqueKey();
   final Key scheduleKey = UniqueKey();
 
   Widget buildWidgetForState() {
-    if(state.name == null || state.stage == NewMedicationStage.name) {
+    if (state.name == null || state.stage == NewMedicationStage.name) {
       return NewMedicationWizardNameStage(key: nameKey);
-    } else if(state.shape == null || state.color == null || state.stage == NewMedicationStage.appearance) {
+    } else if (state.shape == null ||
+        state.color == null ||
+        state.stage == NewMedicationStage.appearance) {
       return NewMedicationWizardAppearanceStage(key: appearanceKey);
-    } else if(state.stage == NewMedicationStage.schedule || (state.assignedDispenseTimes?.isEmpty ?? true)) {
+    } else if (state.stage == NewMedicationStage.schedule ||
+        (state.assignedDispenseTimes?.isEmpty ?? true)) {
       return NewMedicationWizardScheduleStage(key: scheduleKey);
     } else {
-      return Text('over');
+      return const Text('over');
     }
   }
 }
 
 class NewMedicationWizardStage extends StatefulWidget {
-  const NewMedicationWizardStage({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.child,
-    this.onContinue
-  });
+  const NewMedicationWizardStage(
+      {super.key,
+      required this.icon,
+      required this.title,
+      required this.child,
+      this.onContinue});
 
   final IconData icon;
   final String title;
@@ -139,23 +139,21 @@ class NewMedicationWizardStage extends StatefulWidget {
   final VoidCallback? onContinue;
 
   @override
-  State<StatefulWidget> createState() =>
-      _NewMedicationWizardStageState();
+  State<StatefulWidget> createState() => _NewMedicationWizardStageState();
 }
 
 class _NewMedicationWizardStageState extends State<NewMedicationWizardStage> {
-
   final _formKey = GlobalKey<FormState>();
 
   Widget _buildBottomButtons(context) {
     final prov = Provider.of<NewMedicationProvider>(context, listen: false);
     final stage = prov.state.stage;
     return Padding(
-      padding: EdgeInsets.all(8),
+      padding: const EdgeInsets.all(8),
       child: Row(
         mainAxisSize: MainAxisSize.max,
         children: [
-          if(stage != NewMedicationStage.name) ...[
+          if (stage != NewMedicationStage.name) ...[
             PlatformTextButton(
               child: const Text('Back'),
               onPressed: () {
@@ -166,19 +164,20 @@ class _NewMedicationWizardStageState extends State<NewMedicationWizardStage> {
           ],
           Expanded(
             child: PlatformElevatedButton(
-              onPressed: widget.onContinue != null ? () {
-                if(_formKey.currentState!.validate()) {
-                  _formKey.currentState?.save();
-                  widget.onContinue!();
-                }
-              } : null,
+              onPressed: widget.onContinue != null
+                  ? () {
+                      if (_formKey.currentState!.validate()) {
+                        _formKey.currentState?.save();
+                        widget.onContinue!();
+                      }
+                    }
+                  : null,
               child: const Text('Continue'),
             ),
           )
         ],
       ),
     );
-
   }
 
   @override
@@ -198,19 +197,14 @@ class _NewMedicationWizardStageState extends State<NewMedicationWizardStage> {
                 children: [
                   Padding(
                       padding: const EdgeInsets.only(top: 40, bottom: 20),
-                      child: Icon(
-                          widget.icon,
-                          color: Theme.of(context).colorScheme.primary
-                      )
-                  ),
+                      child: Icon(widget.icon,
+                          color: Theme.of(context).colorScheme.primary)),
                   Padding(
-                      padding: const EdgeInsets.only(bottom: 20, left: 20, right: 20),
-                      child: Text(
-                          widget.title,
+                      padding: const EdgeInsets.only(
+                          bottom: 20, left: 20, right: 20),
+                      child: Text(widget.title,
                           style: Theme.of(context).textTheme.titleLarge,
-                          textAlign: TextAlign.center
-                      )
-                  )
+                          textAlign: TextAlign.center))
                 ],
               ),
               Expanded(
@@ -223,7 +217,6 @@ class _NewMedicationWizardStageState extends State<NewMedicationWizardStage> {
       ),
     );
   }
-
 }
 
 class NewMedicationWizardNameStage extends StatelessWidget {
@@ -239,10 +232,12 @@ class NewMedicationWizardNameStage extends StatelessWidget {
         children: [
           PlatformTextFormField(
             autofocus: true,
-            initialValue: Provider.of<NewMedicationProvider>(context).state.name,
+            initialValue:
+                Provider.of<NewMedicationProvider>(context).state.name,
             validator: Validatorless.multiple([
               Validatorless.required("Name is required"),
-              Validatorless.between(1, 32, "Name can't be more than 32 characters")
+              Validatorless.between(
+                  1, 32, "Name can't be more than 32 characters")
             ]),
             textInputAction: TextInputAction.next,
             onFieldSubmitted: (val) {
@@ -253,40 +248,33 @@ class NewMedicationWizardNameStage extends StatelessWidget {
               _save(context, val);
             },
           ),
-          SizedBox(height: 20),
-          Text(
-            'Ex: Aspirin, Vitamin D',
-            style: TextStyle(color: Colors.grey[500])
-          )
+          const SizedBox(height: 20),
+          Text('Ex: Aspirin, Vitamin D',
+              style: TextStyle(color: Colors.grey[500]))
         ],
       ),
     );
   }
 
   void _save(context, val) {
-    Provider.of<NewMedicationProvider>(context, listen: false)
-        .updateName(val);
+    Provider.of<NewMedicationProvider>(context, listen: false).updateName(val);
   }
 
   void _continue(context) {
-    Provider.of<NewMedicationProvider>(context, listen: false)
-        .nextStage();
+    Provider.of<NewMedicationProvider>(context, listen: false).nextStage();
   }
-
 }
 
 class NewMedicationWizardScheduleStage extends StatelessWidget {
   const NewMedicationWizardScheduleStage({super.key});
-  
+
   Widget _buildTitle(context, DispenseTime time) {
-    return Text(
-        '${time.time.format(context)}',
-        style: TextStyle(fontWeight: FontWeight.bold)
-    );
+    return Text('${time.time.format(context)}',
+        style: const TextStyle(fontWeight: FontWeight.bold));
   }
-  
+
   Widget _buildIcon(context, DispenseTime time, bool checked) {
-    if(!checked) {
+    if (!checked) {
       return DevicePeriodIcon(
         period: time.period,
         width: 32,
@@ -296,9 +284,9 @@ class NewMedicationWizardScheduleStage extends StatelessWidget {
         onPressed: () {},
         elevation: 2.0,
         fillColor: Colors.white,
-        child: Text('1 x'),
-        padding: EdgeInsets.all(10.0),
-        shape: CircleBorder(),
+        padding: const EdgeInsets.all(10.0),
+        shape: const CircleBorder(),
+        child: const Text('1 x'),
       );
     }
   }
@@ -310,7 +298,7 @@ class NewMedicationWizardScheduleStage extends StatelessWidget {
       selected: checked?.contains(time.id) ?? false,
       onPressed: () {
         Provider.of<NewMedicationProvider>(context, listen: false)
-          .toggleDispenseTime(time.id!);
+            .toggleDispenseTime(time.id!);
       },
       /*onDeleted: () {
         Provider.of<NewMedicationProvider>(context, listen: false)
@@ -320,12 +308,13 @@ class NewMedicationWizardScheduleStage extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildForSchedule(context, SimpleSchedule sched,
-      Set<int>? checked) {
+  List<Widget> _buildForSchedule(
+      context, SimpleSchedule sched, Set<int>? checked) {
     return [
-      if(sched.am != null) _buildDose(context, sched.am!, checked),
-      if(sched.pm != null) _buildDose(context, sched.pm!, checked),
-      if(sched.am == null && sched.pm == null) Text('Please set medication times in device settings')
+      if (sched.am != null) _buildDose(context, sched.am!, checked),
+      if (sched.pm != null) _buildDose(context, sched.pm!, checked),
+      if (sched.am == null && sched.pm == null)
+        const Text('Please set medication times in device settings')
     ];
   }
 
@@ -337,33 +326,30 @@ class NewMedicationWizardScheduleStage extends StatelessWidget {
       icon: Icons.schedule,
       title: 'When do you take ${prov.state.name}?',
       onContinue: prov.state.assignedDispenseTimes?.isNotEmpty ?? false
-        ? () {
-          prov.complete(context);
-        }
-        : null,
+          ? () {
+              prov.complete(context);
+            }
+          : null,
       child: Provider(
         create: (BuildContext context) {
-          return ScheduleProvider(
-            deviceID: prov.state.deviceID
-          );
+          return ScheduleProvider(deviceID: prov.state.deviceID);
         },
         child: FutureBuilder<SimpleSchedule?>(
-          future: Provider.of<ScheduleProvider>(context).future,
-          builder: (context, snapshot) {
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                if(!snapshot.hasData)... [
-                  const CircularProgressIndicator()
-                ] else... [
-                  ..._buildForSchedule(context, snapshot.requireData!,
-                      prov.state.assignedDispenseTimes)
-                ]
-              ],
-            );
-          }
-        ),
+            future: Provider.of<ScheduleProvider>(context).future,
+            builder: (context, snapshot) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  if (!snapshot.hasData) ...[
+                    const CircularProgressIndicator()
+                  ] else ...[
+                    ..._buildForSchedule(context, snapshot.requireData!,
+                        prov.state.assignedDispenseTimes)
+                  ]
+                ],
+              );
+            }),
       ),
     );
   }
@@ -374,7 +360,7 @@ class NewMedicationWizardAppearanceStage extends StatelessWidget {
 
   VoidCallback? _onContinue(context) {
     final prov = Provider.of<NewMedicationProvider>(context, listen: false);
-    if(prov.state.shape != null && prov.state.color != null) {
+    if (prov.state.shape != null && prov.state.color != null) {
       return () => prov.nextStage();
     }
     return null;
@@ -384,17 +370,17 @@ class NewMedicationWizardAppearanceStage extends StatelessWidget {
   Widget build(BuildContext context) {
     return NewMedicationWizardStage(
       icon: Icons.medication,
-      title: 'What does ${Provider.of<NewMedicationProvider>(context).state.name} look like?',
+      title:
+          'What does ${Provider.of<NewMedicationProvider>(context).state.name} look like?',
       onContinue: _onContinue(context),
       child: ListView(
         children: [
           MedicationColorSelector(
-            selected: Provider.of<NewMedicationProvider>(context).state.color,
-            onChange: (color) {
-              Provider.of<NewMedicationProvider>(context, listen: false)
-                  .updateColor(color);
-            }
-          ),
+              selected: Provider.of<NewMedicationProvider>(context).state.color,
+              onChange: (color) {
+                Provider.of<NewMedicationProvider>(context, listen: false)
+                    .updateColor(color);
+              }),
           PillShapeSelector(
             color: Provider.of<NewMedicationProvider>(context).state.color,
             selected: Provider.of<NewMedicationProvider>(context).state.shape,
@@ -407,63 +393,62 @@ class NewMedicationWizardAppearanceStage extends StatelessWidget {
       ),
     );
   }
-
 }
-
 
 class NewMedicationWizardPage extends StatelessWidget {
   const NewMedicationWizardPage({super.key, required this.deviceID});
 
   static Route<NewMedicationWizardPage> route(context, deviceID) =>
-      platformPageRoute(context: context, builder:
-          (_) => NewMedicationWizardPage(deviceID: deviceID));
+      platformPageRoute(
+          context: context,
+          builder: (_) => NewMedicationWizardPage(deviceID: deviceID));
 
   final int deviceID;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: new Text('New Medication'),
-      ),
-      body: ChangeNotifierProvider<NewMedicationProvider>(
-        create: (context) => NewMedicationProvider(deviceID),
-        builder: (context, _) =>
-            AnimatedSwitcher(
-              switchInCurve: Curves.easeOut,
-              reverseDuration: const Duration(seconds: 0),
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (child, animation) {
-                const begin = Offset(1.0, 0.0);
-                const end = Offset.zero;
-                const curve = Curves.ease;
+        appBar: AppBar(
+          title: const Text('New Medication'),
+        ),
+        body: ChangeNotifierProvider<NewMedicationProvider>(
+          create: (context) => NewMedicationProvider(deviceID),
+          builder: (context, _) => AnimatedSwitcher(
+            switchInCurve: Curves.easeOut,
+            reverseDuration: const Duration(seconds: 0),
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (child, animation) {
+              const begin = Offset(1.0, 0.0);
+              const end = Offset.zero;
+              const curve = Curves.ease;
 
-                final tween = Tween(begin: begin, end: end);
-                final curvedAnimation = CurvedAnimation(
-                  parent: animation,
-                  curve: curve,
-                );
+              final tween = Tween(begin: begin, end: end);
+              final curvedAnimation = CurvedAnimation(
+                parent: animation,
+                curve: curve,
+              );
 
-                return SlideTransition(
-                  position: tween.animate(curvedAnimation),
-                  child: child,
-                );
-              },
-              child: Provider.of<NewMedicationProvider>(context)
-                  .buildWidgetForState(),
-            ),
-      )
-    );
+              return SlideTransition(
+                position: tween.animate(curvedAnimation),
+                child: child,
+              );
+            },
+            child: Provider.of<NewMedicationProvider>(context)
+                .buildWidgetForState(),
+          ),
+        ));
   }
-
 }
 
 class EditMedicationWizardPage extends StatelessWidget {
-  const EditMedicationWizardPage({super.key, required this.existing, required this.deviceID});
+  const EditMedicationWizardPage(
+      {super.key, required this.existing, required this.deviceID});
 
   static Route<EditMedicationWizardPage> route(context, existing, deviceID) =>
-      platformPageRoute(context: context, builder:
-          (_) => EditMedicationWizardPage(existing: existing, deviceID: deviceID));
+      platformPageRoute(
+          context: context,
+          builder: (_) =>
+              EditMedicationWizardPage(existing: existing, deviceID: deviceID));
 
   final ScheduledMedication existing;
   final int deviceID;
@@ -472,40 +457,38 @@ class EditMedicationWizardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: new Text('${existing.name}'),
+          title: Text(existing.name),
           actions: [
             IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: () {
-                client.deleteMedication(deviceID, existing.id!)
-                  .then((_) {
-                    if(context.mounted) {
+                icon: const Icon(Icons.delete),
+                onPressed: () {
+                  client.deleteMedication(deviceID, existing.id!).then((_) {
+                    if (context.mounted) {
                       Navigator.of(context).pop();
                     }
                   });
-              }
-            )
+                })
           ],
         ),
         body: ChangeNotifierProvider<NewMedicationProvider>(
-          create: (context) => NewMedicationProvider.fromExisting(deviceID, existing),
-          builder: (context, _) =>
-              AnimatedSwitcher(
-                switchInCurve: Curves.easeOut,
-                reverseDuration: const Duration(seconds: 0),
-                duration: const Duration(milliseconds: 300),
-                transitionBuilder: (child, anim) {
-                  return SlideTransition(
-                    position: Tween(begin: const Offset(1.0, 0.0), end: const Offset(0.0, 0.0))
-                        .animate(anim),
-                    child: child,
-                  );
-                },
-                child: Provider.of<NewMedicationProvider>(context)
-                    .buildWidgetForState(),
-              ),
-        )
-    );
+          create: (context) =>
+              NewMedicationProvider.fromExisting(deviceID, existing),
+          builder: (context, _) => AnimatedSwitcher(
+            switchInCurve: Curves.easeOut,
+            reverseDuration: const Duration(seconds: 0),
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (child, anim) {
+              return SlideTransition(
+                position: Tween(
+                        begin: const Offset(1.0, 0.0),
+                        end: const Offset(0.0, 0.0))
+                    .animate(anim),
+                child: child,
+              );
+            },
+            child: Provider.of<NewMedicationProvider>(context)
+                .buildWidgetForState(),
+          ),
+        ));
   }
-
 }

@@ -38,8 +38,7 @@ class FlutterEspBleProv {
 
   Future<Uint8List?> customEndpoint(String deviceName, String proofOfPossession,
       String endpoint, Uint8List data) {
-    return FlutterEspBleProvPlatform.instance.customEndpoint(deviceName,
-        proofOfPossession, endpoint, data);
+    return FlutterEspBleProvPlatform.instance
+        .customEndpoint(deviceName, proofOfPossession, endpoint, data);
   }
-
 }

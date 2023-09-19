@@ -1,4 +1,3 @@
-
 import 'package:app/api/auth.dart';
 import 'package:app/screens/auth/create_account.dart';
 import 'package:flutter/material.dart';
@@ -13,23 +12,19 @@ class MyAccountPage extends StatefulWidget {
   State<MyAccountPage> createState() => _MyAccountPageState();
 
   static Route<MyAccountPage> route(context) {
-    return platformPageRoute(context: context, builder:
-        (_) => const MyAccountPage());
+    return platformPageRoute(
+        context: context, builder: (_) => const MyAccountPage());
   }
-
 }
 
 class _MyAccountPageState extends State<MyAccountPage> {
-
   @override
   Widget build(BuildContext context) {
     var authProvider = Provider.of<AuthenticationProvider>(context);
     var user = authProvider.currentUser;
 
     return Scaffold(
-      appBar: AppBar(
-          title: const Text('My Account')
-      ),
+      appBar: AppBar(title: const Text('My Account')),
       body: SettingsList(
         sections: [
           if (user is User) ...[
@@ -37,7 +32,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
               title: Text('${user.email}'),
               tiles: [
                 SettingsTile(
-                  title: Text('Sign out'),
+                  title: const Text('Sign out'),
                   leading: const Icon(Icons.logout_outlined),
                   onPressed: (context) {
                     authProvider.signOut(context);
@@ -48,23 +43,24 @@ class _MyAccountPageState extends State<MyAccountPage> {
           ],
           if (user is AnonymousUser) ...[
             SettingsSection(
-              title: Text('Not signed in'),
+              title: const Text('Not signed in'),
               tiles: [
                 SettingsTile(
-                  title: Text('Create Account'),
+                  title: const Text('Create Account'),
                   leading: const Icon(Icons.person_add_alt),
                   onPressed: (context) {
-                    Navigator.of(context).push(CreateAccountPage.route(context));
+                    Navigator.of(context)
+                        .push(CreateAccountPage.route(context));
                   },
                 )
               ],
             ),
           ],
           SettingsSection(
-            title: Text('Engineering'),
+            title: const Text('Engineering'),
             tiles: [
               SettingsTile(
-                title: Text('Force sign out (engineering only)'),
+                title: const Text('Force sign out (engineering only)'),
                 leading: const Icon(Icons.warning_amber),
                 onPressed: (context) {
                   Provider.of<AuthenticationProvider>(context, listen: false)

@@ -15,9 +15,9 @@ class UserService {
   }
 
   Future<void> register(UserRegistration registration) async {
-    if(await credentialManager.isAnonUser()) {
+    if (await credentialManager.isAnonUser()) {
       await client.upgradeAnonymous(registration.toDTO());
-    } else if(await credentialManager.isRealUser()) {
+    } else if (await credentialManager.isRealUser()) {
       throw 'Already a full user';
     } else {
       await client.register(registration.toDTO());
@@ -30,16 +30,11 @@ final UserService userService = UserService();
 @freezed
 class UserRegistration extends Equatable with _$UserRegistration {
   const UserRegistration._();
-  const factory UserRegistration({
-    required String email,
-    required String password
-  }) = _UserRegistration;
+  const factory UserRegistration(
+      {required String email, required String password}) = _UserRegistration;
 
   factory UserRegistration.fromDTO(UserRegistrationDTO dto) {
-    return UserRegistration(
-      email: dto.email,
-      password: dto.password
-    );
+    return UserRegistration(email: dto.email, password: dto.password);
   }
 
   UserRegistrationDTO toDTO() {
@@ -48,11 +43,11 @@ class UserRegistration extends Equatable with _$UserRegistration {
 
   @override
   List<Object?> get props => [email, password];
-
 }
 
 class UserRegistrationProvider with ChangeNotifier {
-  UserRegistration _registration = const UserRegistration(email: '', password: '');
+  UserRegistration _registration =
+      const UserRegistration(email: '', password: '');
   UserRegistration get model => _registration;
   Future<void> _future = Future.value();
   Future<void> get future => _future;
@@ -72,5 +67,4 @@ class UserRegistrationProvider with ChangeNotifier {
     notifyListeners();
     return _future;
   }
-
 }
