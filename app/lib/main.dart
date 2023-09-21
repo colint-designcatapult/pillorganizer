@@ -17,6 +17,7 @@ import 'api/auth.dart';
 import 'api/medication.dart';
 import 'api/schedule.dart';
 import 'firebase_options.dart';
+import 'screens/auth/launch_page_login.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -87,7 +88,19 @@ class MyApp extends StatelessWidget {
               title: 'Cabinet Pills',
               themeMode: ThemeMode.system,
               routes: {
-                '/': (context) => const FirstLaunchPage(),
+                '/': (context) {
+                  return FutureBuilder<bool>(
+                    future: _checkIfAccountExists(context),
+                    builder:
+                        (BuildContext context, AsyncSnapshot<bool> snapshot) {
+                      if (snapshot.hasData && snapshot.data!) {
+                        return const LaunchPageLogin();
+                      } else {
+                        return const FirstLaunchPage();
+                      }
+                    },
+                  );
+                },
                 '/index': (context) => const IndexPage(),
                 '/post_setup': (context) => const PostSetupWizard()
               },
@@ -120,7 +133,7 @@ class MyApp extends StatelessWidget {
                       fontWeight: FontWeight.normal,
                     ),
                     systemOverlayStyle: SystemUiOverlayStyle(
-                      systemNavigationBarColor: Colors.white,
+                      systemNavigationBarColor: Colors.black,
                       statusBarColor: Colors.transparent,
                       systemNavigationBarIconBrightness: Brightness.light,
                       statusBarIconBrightness: Brightness.light,
@@ -134,9 +147,9 @@ class MyApp extends StatelessWidget {
                       fontSize: 24,
                     ),
                     titleMedium: TextStyle(
-                      fontFamily: 'Roboto Slab',
-                      fontWeight: FontWeight.w400,
-                      fontSize: 22,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 20,
                     ),
                     titleSmall: TextStyle(
                       fontFamily: 'Roboto Slab',
@@ -157,5 +170,10 @@ class MyApp extends StatelessWidget {
             ),
           )),
     );
+  }
+
+  Future<bool> _checkIfAccountExists(BuildContext context) async {
+    CredentialManager cred = CredentialManager();
+    return await cred.hasAccount();
   }
 }

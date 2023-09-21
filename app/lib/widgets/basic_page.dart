@@ -2,41 +2,46 @@ import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 
 class BasicPage extends StatelessWidget {
-  const BasicPage({super.key, required this.child, this.title});
+  const BasicPage({super.key, required this.child, this.title, this.bgColor});
 
   final Widget child;
   final Widget? title;
+  final Color? bgColor;
 
   @override
   Widget build(BuildContext context) {
     return PlatformScaffold(
-        body: SafeArea(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 20),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                IconButton(
+      backgroundColor: bgColor,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 20),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  IconButton(
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
-                    icon: const Icon(Icons.close)),
-                if (title != null)
-                  DefaultTextStyle.merge(
+                    icon: const Icon(Icons.close),
+                  ),
+                  if (title != null)
+                    DefaultTextStyle.merge(
                       style: Theme.of(context).textTheme.labelLarge,
-                      child: title!)
-              ],
+                      child: title!,
+                    ),
+                ],
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: child,
-          )
-        ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: child,
+            ),
+          ],
+        ),
       ),
-    ));
+    );
   }
 }
 
@@ -44,6 +49,8 @@ class BasicForm extends StatefulWidget {
   const BasicForm(
       {super.key,
       this.buttonText,
+      this.titleText,
+      this.subtitleText,
       required this.children,
       this.future,
       this.onSubmit,
@@ -51,6 +58,8 @@ class BasicForm extends StatefulWidget {
 
   final bool hasButton;
   final String? buttonText;
+  final String? titleText;
+  final String? subtitleText;
   final List<Widget> children;
   final Future? future;
   final VoidCallback? onSubmit;
@@ -93,7 +102,13 @@ class _BasicFormState extends State<BasicForm> {
           width: 21,
           child: CircularProgressIndicator(color: Colors.white));
     } else {
-      return Text(widget.buttonText ?? 'Continue');
+      return Text(
+        widget.buttonText ?? 'Continue',
+        style: Theme.of(context)
+            .textTheme
+            .bodyMedium
+            ?.copyWith(color: Colors.white),
+      );
     }
   }
 
@@ -117,37 +132,92 @@ class _BasicFormState extends State<BasicForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: FormSubmitCallback(
-        callback: _onSubmit,
-        child: Column(
-          children: [
-            const SizedBox(
-              height: 15,
-            ),
-            ...widget.children,
-            SizedBox(
-                width: double.infinity,
-                child: FutureBuilder(
-                    future: widget.future,
-                    builder: (context, snapshot) {
-                      return OutlinedButton(
-                          onPressed: _onPressed(snapshot),
-                          style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.all(12),
-                              backgroundColor: Theme.of(context).primaryColor,
-                              foregroundColor: Colors.white,
-                              disabledForegroundColor: Colors.white,
-                              disabledBackgroundColor: Theme.of(context)
-                                  .primaryColor
-                                  .withAlpha(127)),
-                          child: _buildButtonContents(snapshot));
-                    })),
-          ],
-        ),
-      ),
-    );
+    return SizedBox(
+        width: double.infinity,
+        child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 32, 20, 24),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.all(Radius.circular(16)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color.fromRGBO(0, 0, 0, 0.10),
+                      offset: Offset(4.0, 4.0),
+                      blurRadius: 10.0,
+                      spreadRadius: 0.0,
+                    ),
+                  ],
+                ),
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            widget.titleText ?? '',
+                            style: Theme.of(context).textTheme.titleMedium,
+                            textAlign: TextAlign.left,
+                          )),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                              top: 8, bottom: 22, right: 0),
+                          child: Text(
+                            widget.subtitleText ?? '',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                      ),
+                      Form(
+                        key: _formKey,
+                        child: FormSubmitCallback(
+                          callback: _onSubmit,
+                          child: Column(
+                            children: [
+                              const SizedBox(
+                                height: 15,
+                              ),
+                              ...widget.children,
+                              const SizedBox(
+                                height: 15,
+                              ),
+                              SizedBox(
+                                  width: double.infinity,
+                                  height: 48,
+                                  child: FutureBuilder(
+                                      future: widget.future,
+                                      builder: (context, snapshot) {
+                                        return OutlinedButton(
+                                            onPressed: _onPressed(snapshot),
+                                            style: OutlinedButton.styleFrom(
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          8.0),
+                                                ),
+                                                padding:
+                                                    const EdgeInsets.all(12),
+                                                backgroundColor:
+                                                    const Color(0xff043C4D),
+                                                foregroundColor: Colors.white,
+                                                disabledForegroundColor:
+                                                    Colors.white,
+                                                disabledBackgroundColor:
+                                                    Theme.of(context)
+                                                        .primaryColor
+                                                        .withAlpha(127)),
+                                            child:
+                                                _buildButtonContents(snapshot));
+                                      })),
+                            ],
+                          ),
+                        ),
+                      )
+                    ]))));
   }
 }
 
@@ -197,7 +267,7 @@ class BasicPageTextFormField extends StatelessWidget {
           obscureText: obscureText,
         ),
         const SizedBox(
-          height: 15,
+          height: 36,
         )
       ],
     );

@@ -26,6 +26,7 @@ class CredentialManager {
   final KEY_USER_EMAIL = 'user_email';
   final KEY_USER_PASS = 'user_pass';
   final KEY_JWT = 'jwt';
+  final KEY_HAS_ACCOUNT = 'has_account';
 
   CredentialPair? credentialPair;
   JwtCredentials? jwt;
@@ -38,6 +39,10 @@ class CredentialManager {
   Future<bool> hasUserCreds() async {
     return await storage.read(key: KEY_USER_EMAIL) != null &&
         await storage.read(key: KEY_USER_PASS) != null;
+  }
+
+  Future<bool> hasAccount() async {
+    return await storage.read(key: KEY_HAS_ACCOUNT) != null;
   }
 
   Future<CredentialPair?> getBestCredentials() async {
@@ -105,6 +110,7 @@ class CredentialManager {
 
   Future<void> signOut() async {
     await storage.deleteAll();
+    storage.write(key: KEY_HAS_ACCOUNT, value: "true");
     jwt = null;
     credentialPair = null;
   }
