@@ -1,3 +1,4 @@
+import 'package:app/api/device.dart';
 import 'package:app/api/medication.dart';
 import 'package:app/api/schedule.dart';
 import 'package:app/provider/schedule_provider.dart';

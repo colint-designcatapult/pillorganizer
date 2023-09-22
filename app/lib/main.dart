@@ -1,4 +1,5 @@
 import 'package:app/api/device.dart';
+import 'package:app/provider/medication_provider.dart';
 import 'package:app/provider/time_provider.dart';
 import 'package:app/screens/first_launch.dart';
 import 'package:app/screens/index.dart';
@@ -15,7 +16,6 @@ import 'package:provider/provider.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
 import 'provider/authentication_provider.dart';
-import 'api/medication.dart';
 import 'firebase_options.dart';
 import 'provider/schedule_provider.dart';
 import 'provider/selected_device_provider.dart';

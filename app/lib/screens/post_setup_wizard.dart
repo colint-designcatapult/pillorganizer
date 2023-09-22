@@ -1,5 +1,7 @@
 import 'package:app/api/medication.dart';
 import 'package:app/provider/authentication_provider.dart';
+import 'package:app/provider/medication_provider.dart';
+import 'package:app/provider/schedule_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
 import 'package:app/widgets/medication_icon.dart';
@@ -14,7 +16,6 @@ import 'package:validatorless/validatorless.dart';
 import '../api/api.dart';
 import '../models/user.dart';
 import '../platform/dialog.dart';
-import '../provider/schedule_provider.dart';
 import '../widgets/basic_page.dart';
 import 'device_settings/medication/medication_entry_wizard.dart';
 
