@@ -69,34 +69,34 @@ class _ProvisionPageState extends State<ProvisionPage>
         return prov;
       },
       builder: (context, child) {
-        return Scaffold(
-          body: Selector<ProvisionProvider,
-                  Tuple3<ProvisionStage, Object?, double?>>(
-              selector: (_, prov) => Tuple3(
-                  prov.state.stage, prov.state.error, prov.state.progress),
-              builder: (_, data, __) {
-                return WizardStep(
-                  stepTitle: 'Device Setup',
-                  stepNumber: '1',
-                  icon: _buildIcon(data),
-                  title: _buildTitle(data),
-                  subtext: _buildSubtitle(data),
-                  footer: data.item2 != null
-                      ? PlatformElevatedButton(
-                          child: Text(
-                              AppLocalizations.of(context)!.genericTryAgain),
-                          onPressed: () {
-                            _startProvisioning(
-                                context,
-                                Provider.of<ProvisionProvider>(context,
-                                    listen: false));
-                          },
-                        )
-                      : null,
-                  child: _buildBody(data),
-                );
-              }),
-        );
+        return Selector<ProvisionProvider,
+                Tuple3<ProvisionStage, Object?, double?>>(
+            selector: (_, prov) =>
+                Tuple3(prov.state.stage, prov.state.error, prov.state.progress),
+            builder: (_, data, __) {
+              return WizardStep(
+                height: 400,
+                stepTitle: 'Device Setup',
+                stepNumber: '1',
+                icon: _buildIcon(data),
+                title: _buildTitle(data),
+                subtext: _buildSubtitle(data),
+                onBackPressed: () => Navigator.of(context).pop(),
+                footer: data.item2 != null
+                    ? PlatformElevatedButton(
+                        child:
+                            Text(AppLocalizations.of(context)!.genericTryAgain),
+                        onPressed: () {
+                          _startProvisioning(
+                              context,
+                              Provider.of<ProvisionProvider>(context,
+                                  listen: false));
+                        },
+                      )
+                    : null,
+                child: _buildBody(data),
+              );
+            });
       },
     );
   }
@@ -253,48 +253,49 @@ class ProvisionSelectWifiPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<ProvisionProvider>(
       create: (context) => ProvisionProvider(initialState: initialState),
-      child: Scaffold(
-        body: Selector<ProvisionProvider, Tuple2<ProvisionStage, Object?>>(
-            selector: (_, prov) => Tuple2(prov.state.stage, prov.state.error),
-            builder: (_, data, __) {
-              return WizardStep(
-                fullscreen: true,
-                stepTitle: 'Device Setup',
-                stepNumber: '1',
-                icon: const Icon(Icons.wifi),
-                title: "Select Wi-Fi Network",
-                subtext: "",
-                child: Expanded(
-                    child: Padding(
-                  padding: const EdgeInsets.only(
-                      left: 40.0, right: 40.0, bottom: 40.0),
-                  child: Consumer<ProvisionProvider>(builder: (_, prov, child) {
-                    if (prov.state.wifiNetworks == null) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else {
-                      return SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.max,
-                          children: [
-                            ...prov.state.wifiNetworks!
-                                .map((e) => _buildWifiCard(context, e, prov))
-                                .toList(growable: false),
-                            TextButton(
-                              onPressed: () {
-                                prov.rescanNetworks();
-                              },
-                              child: const Text('Rescan Networks'),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                  }),
-                )),
-              );
-            }),
-      ),
+      child: Selector<ProvisionProvider, Tuple2<ProvisionStage, Object?>>(
+          selector: (_, prov) => Tuple2(prov.state.stage, prov.state.error),
+          builder: (_, data, __) {
+            return WizardStep(
+              stepTitle: 'Device Setup',
+              stepNumber: '1',
+              icon: const Icon(Icons.wifi),
+              title: "Select Wi-Fi Network",
+              subtext: "",
+              onBackPressed: () => Navigator.of(context).pop(),
+              child: Expanded(
+                  child: Padding(
+                padding: const EdgeInsets.only(
+                    left: 40.0, right: 40.0, bottom: 40.0),
+                child: Consumer<ProvisionProvider>(builder: (_, prov, child) {
+                  if (prov.state.wifiNetworks == null) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else {
+                    return SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.max,
+                        children: [
+                          ...prov.state.wifiNetworks!
+                              .map((e) => _buildWifiCard(context, e, prov))
+                              .toList(growable: false),
+                          TextButton(
+                            onPressed: () {
+                              prov.rescanNetworks();
+                            },
+                            child: const Text('Rescan Networks'),
+                          ),
+                          const SizedBox(
+                            height: 35,
+                          )
+                        ],
+                      ),
+                    );
+                  }
+                }),
+              )),
+            );
+          }),
     );
   }
 
@@ -381,30 +382,27 @@ class ProvisionConnectingPage extends StatelessWidget {
             Provider.of<DeviceListProvider>(context, listen: false).refresh();
             Provider.of<SelectedDeviceProvider>(context, listen: false)
                 .selectDeviceByID(value.deviceID!);
-
-            Navigator.of(context)
-                .pushNamedAndRemoveUntil('/index', (route) => false);
             Navigator.of(context).pushNamed('/post_setup');
           }
         });
         return prov;
       },
       builder: (context, __) {
-        return Scaffold(
-          body: Selector<ProvisionProvider, Tuple2<ProvisionStage, Object?>>(
-              selector: (_, prov) => Tuple2(prov.state.stage, prov.state.error),
-              builder: (_, data, __) {
-                return WizardStep(
-                  stepTitle: 'Device Setup',
-                  stepNumber: '1',
-                  icon: _buildIcon(context, data),
-                  title: _buildTitle(data),
-                  subtext: _buildSubtitle(data),
-                  footer: _buildFooter(context, data),
-                  child: _buildBody(context, data),
-                );
-              }),
-        );
+        return Selector<ProvisionProvider, Tuple2<ProvisionStage, Object?>>(
+            selector: (_, prov) => Tuple2(prov.state.stage, prov.state.error),
+            builder: (_, data, __) {
+              return WizardStep(
+                height: 400,
+                stepTitle: 'Device Setup',
+                stepNumber: '1',
+                icon: _buildIcon(context, data),
+                title: _buildTitle(data),
+                subtext: _buildSubtitle(data),
+                footer: _buildFooter(context, data),
+                onBackPressed: () => Navigator.of(context).pop(),
+                child: _buildBody(context, data),
+              );
+            });
       },
     );
   }

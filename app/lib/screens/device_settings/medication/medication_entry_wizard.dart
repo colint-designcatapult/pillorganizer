@@ -299,12 +299,17 @@ class NewMedicationWizardAppearanceStage extends StatelessWidget {
 }
 
 class NewMedicationWizardPage extends StatelessWidget {
-  const NewMedicationWizardPage({super.key, required this.deviceID});
+  const NewMedicationWizardPage(
+      {super.key, this.onComplete, required this.deviceID});
 
-  static Route<NewMedicationWizardPage> route(context, deviceID) =>
+  final VoidCallback? onComplete;
+
+  static Route<NewMedicationWizardPage> route(context, deviceID,
+          {VoidCallback? onComplete}) =>
       platformPageRoute(
           context: context,
-          builder: (_) => NewMedicationWizardPage(deviceID: deviceID));
+          builder: (_) => NewMedicationWizardPage(
+              deviceID: deviceID, onComplete: onComplete));
 
   final int deviceID;
 
@@ -312,8 +317,10 @@ class NewMedicationWizardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text('New Medication'),
-        ),
+            title: GestureDetector(
+          onTap: onComplete,
+          child: (const Text('New Medication')),
+        )),
         body: ChangeNotifierProvider<NewMedicationProvider>(
           create: (context) => NewMedicationProvider(deviceID),
           builder: (context, _) => AnimatedSwitcher(
@@ -337,7 +344,7 @@ class NewMedicationWizardPage extends StatelessWidget {
               );
             },
             child: Provider.of<NewMedicationProvider>(context)
-                .buildWidgetForState(),
+                .buildWidgetForState(onComplete: onComplete),
           ),
         ));
   }

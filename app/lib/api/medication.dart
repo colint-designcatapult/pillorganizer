@@ -246,6 +246,7 @@ class MedicationsProvider
     extends RefreshableValueNotifier<List<ScheduledMedication>?> {
   DeviceUser? _device;
   Map<int, ScheduledMedication>? _idToMed;
+  bool isUpdateMedication = false;
 
   MedicationsProvider(this._device) : super(null, () => Future.value(null));
 
@@ -260,6 +261,7 @@ class MedicationsProvider
 
   Future<List<ScheduledMedication>?> _load() {
     if (_device != null) {
+      isUpdateMedication = true;
       return medicationRepo.medications(_device!.deviceID).then((value) {
         _idToMed = {for (var v in value) v.id ?? 0: v};
         return value;

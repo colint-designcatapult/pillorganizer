@@ -9,6 +9,7 @@ class ScheduleProvider with ChangeNotifier {
   Future<SimpleSchedule?>? get future => _future;
   Future<SimpleSchedule?>? _future;
   int? deviceID;
+  bool isUpdatedTimeCalled = false;
 
   @override
   void dispose() {
@@ -30,7 +31,7 @@ class ScheduleProvider with ChangeNotifier {
     if (selectedDevice != null) {
       load(selectedDevice.deviceID);
     } else if (deviceID != null) {
-      load(deviceID!); // a voir maybe delete
+      load(deviceID!);
     }
   }
 
@@ -59,6 +60,7 @@ class ScheduleProvider with ChangeNotifier {
     }
     return repo.updateDispenseTimes(deviceID!, _schedule!).then((value) {
       _schedule = value;
+      isUpdatedTimeCalled = true;
       notifyListeners();
       return value;
     });

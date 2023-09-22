@@ -129,6 +129,7 @@ class MyApp extends StatelessWidget {
                       statusBarIconBrightness: Brightness.light,
                     )),
                 primaryColor: const Color(0xff206b8b),
+                secondaryHeaderColor: const Color(0xFFBFD2DB),
                 fontFamily: 'Roboto',
                 textTheme: const TextTheme(
                     titleLarge: TextStyle(
