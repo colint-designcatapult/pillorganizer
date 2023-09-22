@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
-import '../../api/auth.dart';
+import '../../provider/auth.dart';
 import '../index.dart';
 import '../provision.dart';
 

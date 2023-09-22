@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:app/api/auth.dart';
+import 'package:app/provider/auth.dart';
 import 'package:app/screens/auth/login.dart';
 import 'package:app/screens/index.dart';
 import 'package:app/screens/provision.dart';

@@ -9,9 +9,10 @@ import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
 
 import '../api/api.dart';
-import '../api/auth.dart';
+import '../provider/auth.dart';
 import '../api/device.dart';
 import '../api/user.dart';
+import '../models/user.dart';
 import '../platform/dialog.dart';
 import '../widgets/basic_page.dart';
 import 'device_settings/medication/medication_entry_wizard.dart';

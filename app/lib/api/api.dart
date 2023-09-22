@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:app/api/intreceptors/auth-interceptors.dart';
 import 'package:app/service/time_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
@@ -9,8 +10,6 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:retrofit/retrofit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'auth.dart';
 
 part 'api.freezed.dart';
 part 'api.g.dart';
