@@ -1,3 +1,4 @@
+import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/provision.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';

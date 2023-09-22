@@ -1,4 +1,4 @@
-import 'package:app/provider/auth.dart';
+import 'package:app/provider/authentication_provider.dart';
 import 'package:app/screens/auth/create_account.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
