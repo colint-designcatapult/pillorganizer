@@ -164,7 +164,11 @@ class MyApp extends StatelessWidget {
                     bodyMedium: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 16,
-                        fontWeight: FontWeight.w500)),
+                        fontWeight: FontWeight.w500),
+                    displayLarge: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700)),
               ),
               navigatorObservers: [routeObserver],
             ),
