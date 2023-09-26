@@ -1,5 +1,6 @@
-import 'package:app/api/device.dart';
 import 'package:app/api/schedule.dart';
+import 'package:app/provider/schedule_provider.dart';
+import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';

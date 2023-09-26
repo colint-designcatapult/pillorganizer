@@ -1,10 +1,8 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'api.dart';
-import '../provider/auth.dart';
+import '../provider/authentication_provider.dart';
 
 part 'user.freezed.dart';
 
@@ -43,28 +41,4 @@ class UserRegistration extends Equatable with _$UserRegistration {
 
   @override
   List<Object?> get props => [email, password];
-}
-
-class UserRegistrationProvider with ChangeNotifier {
-  UserRegistration _registration =
-      const UserRegistration(email: '', password: '');
-  UserRegistration get model => _registration;
-  Future<void> _future = Future.value();
-  Future<void> get future => _future;
-
-  void updateEmail(String? email) {
-    _registration = _registration.copyWith(email: email ?? '');
-    notifyListeners();
-  }
-
-  void updatePassword(String? password) {
-    _registration = _registration.copyWith(password: password ?? '');
-    notifyListeners();
-  }
-
-  Future<void> register() {
-    _future = userService.register(_registration);
-    notifyListeners();
-    return _future;
-  }
 }

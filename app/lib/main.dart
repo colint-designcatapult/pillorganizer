@@ -14,10 +14,11 @@ import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
-import 'provider/auth.dart';
+import 'provider/authentication_provider.dart';
 import 'api/medication.dart';
-import 'api/schedule.dart';
 import 'firebase_options.dart';
+import 'provider/schedule_provider.dart';
+import 'provider/selected_device_provider.dart';
 import 'screens/auth/launch_page_login.dart';
 
 @pragma('vm:entry-point')
