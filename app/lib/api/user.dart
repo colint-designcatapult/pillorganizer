@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'api.dart';
-import 'auth.dart';
+import '../provider/auth.dart';
 
 part 'user.freezed.dart';
 

@@ -3,6 +3,7 @@ import 'package:app/provider/time_provider.dart';
 import 'package:app/screens/first_launch.dart';
 import 'package:app/screens/index.dart';
 import 'package:app/screens/post_setup_wizard.dart';
+import 'package:app/service/credential_manager.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
@@ -13,7 +14,7 @@ import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
-import 'api/auth.dart';
+import 'provider/auth.dart';
 import 'api/medication.dart';
 import 'api/schedule.dart';
 import 'firebase_options.dart';
@@ -62,18 +63,6 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProxyProvider<SelectedDeviceProvider, ScheduleProvider>(
             create: (context) => ScheduleProvider(),
             update: (context, dev, prov) => prov!.update(dev.device)),
-        // Bluetooth disabled because it is horribly broken and needs rewrite
-        /*ChangeNotifierProxyProvider<SelectedDeviceProvider, DeviceBluetoothProvider>(
-            create: (context) => DeviceBluetoothProvider(),
-            update: (context, dev, prov) {
-              if(prov != null) {
-                prov.changeDevice(dev.device);
-                return prov;
-              } else {
-                return DeviceBluetoothProvider(selectedDevice: dev.device);
-              }
-            }
-        ),*/
         ChangeNotifierProvider<MinuteBasedTimeProvider>(
           create: (context) => MinuteBasedTimeProvider(),
         ),

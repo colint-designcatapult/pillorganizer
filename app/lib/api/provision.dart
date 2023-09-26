@@ -8,7 +8,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:provider/provider.dart';
 
 import 'api.dart';
-import 'auth.dart';
+import '../provider/auth.dart';
 
 part 'provision.freezed.dart';
 
