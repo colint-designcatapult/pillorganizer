@@ -1,5 +1,7 @@
 import 'package:app/api/medication.dart';
 import 'package:app/provider/authentication_provider.dart';
+import 'package:app/provider/medication_provider.dart';
+import 'package:app/provider/schedule_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
 import 'package:app/widgets/medication_icon.dart';
@@ -22,88 +24,105 @@ class PostSetupWizard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: WizardStep(
-        fullscreen: true,
-        stepTitle: 'Preferences',
-        stepNumber: '2',
-        title: 'Welcome to CabiNET!',
-        subtext: 'Complete these final steps to set up your pill organizer.',
-        footer: ElevatedButton(
-            onPressed: () {
-              Navigator.of(context)
-                  .pushReplacement(MedicationEntryStep.route(context));
-            },
-            child: const Text('Continue')),
-        child: const Padding(
-          padding: EdgeInsets.all(16.0),
-          child: SingleChildScrollView(child: ScheduleEntry()),
-        ),
-      ),
+    return Consumer2<ScheduleProvider, SelectedDeviceProvider>(
+      builder: (context, scheduleProvider, selectedDeviceProvider, child) {
+        bool isUpdatedTimeCalled = scheduleProvider.isUpdatedTimeCalled;
+        bool isUpdatedTimeZoneCalled =
+            selectedDeviceProvider.isUpdatedTimeZoneCalled;
+
+        bool canGoNext = isUpdatedTimeCalled || isUpdatedTimeZoneCalled;
+
+        return WizardStep(
+          stepTitle: 'Preferences',
+          stepNumber: '2',
+          title: 'Welcome to CabiNET!',
+          subtext: 'Complete these final steps to set up your pill organizer.',
+          onBackPressed: () => Navigator.of(context)
+              .pushNamedAndRemoveUntil('/', (route) => false),
+          onNextPressed: () =>
+              Navigator.of(context).push(MedicationEntryStep.route(context)),
+          onSkipPressed: () =>
+              Navigator.of(context).push(CreateAccountStep.route(context)),
+          canGoNext: canGoNext,
+          child: const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: SingleChildScrollView(child: ScheduleEntry()),
+          ),
+        );
+      },
     );
   }
 }
 
-class MedicationEntryStep extends StatelessWidget {
+class MedicationEntryStep extends StatefulWidget {
   const MedicationEntryStep({super.key});
+
+  @override
+  _MedicationEntryStepState createState() => _MedicationEntryStepState();
 
   static Route<MedicationEntryStep> route(context) => platformPageRoute(
       context: context, builder: (_) => const MedicationEntryStep());
+}
+
+class _MedicationEntryStepState extends State<MedicationEntryStep> {
+  bool canGoNext = false;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: WizardStep(
-        fullscreen: true,
-        stepTitle: 'Preferences',
-        stepNumber: '2',
-        title: 'Add Medications',
-        subtext:
-            'Enter in the medications you take so your pill organizer can remind you.',
-        footer: ElevatedButton(
-            onPressed: () {
-              var currentUser =
-                  Provider.of<AuthenticationProvider>(context, listen: false)
-                      .currentUser;
-              if (currentUser is AnonymousUser) {
-                Navigator.of(context)
-                    .pushReplacement(CreateAccountStep.route(context));
-              } else {
-                Navigator.of(context).pop();
-              }
-            },
-            child: const Text('Continue')),
-        child: Padding(
-          padding: const EdgeInsets.only(left: 32.0, right: 32.0, bottom: 32.0),
-          child: Consumer<MedicationsProvider>(
-            builder: (context, prov, _) {
-              return Column(mainAxisSize: MainAxisSize.max, children: [
-                if ((prov.value?.isNotEmpty ?? false)) ...[
-                  ...prov.value!
-                      .map((e) => _buildMedCard(context, e))
-                      .toList(growable: false),
-                ] else ...[
-                  const Text('You don\'t have any medications entered yet.')
-                ],
-                TextButton.icon(
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add Medication'),
-                    onPressed: () {
-                      Navigator.of(context)
-                          .push(NewMedicationWizardPage.route(
-                              context,
-                              Provider.of<SelectedDeviceProvider>(context,
-                                      listen: false)
-                                  .device!
-                                  .deviceID))
-                          .then((value) {
-                        Provider.of<MedicationsProvider>(context, listen: false)
-                            .refresh();
-                      });
-                    })
-              ]);
-            },
-          ),
+    void onNext() {
+      var currentUser =
+          Provider.of<AuthenticationProvider>(context, listen: false)
+              .currentUser;
+      if (currentUser is AnonymousUser) {
+        Navigator.of(context).push(CreateAccountStep.route(context));
+      } else {
+        Navigator.of(context).pop();
+      }
+    }
+
+    return WizardStep(
+      stepTitle: 'Preferences',
+      stepNumber: '2',
+      title: 'Add Medications',
+      subtext:
+          'Enter in the medications you take so your pill organizer can remind you.',
+      onBackPressed: () => Navigator.of(context).pop(),
+      onNextPressed: onNext,
+      onSkipPressed: onNext,
+      canGoNext: canGoNext,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 32.0, right: 32.0, bottom: 32.0),
+        child: Consumer<MedicationsProvider>(
+          builder: (context, prov, _) {
+            return Column(mainAxisSize: MainAxisSize.max, children: [
+              if ((prov.value?.isNotEmpty ?? false)) ...[
+                ...prov.value!
+                    .map((e) => _buildMedCard(context, e))
+                    .toList(growable: false),
+              ] else ...[
+                const Text('You don\'t have any medications entered yet.')
+              ],
+              TextButton.icon(
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Medication'),
+                  onPressed: () {
+                    Navigator.of(context)
+                        .push(NewMedicationWizardPage.route(
+                            context,
+                            Provider.of<SelectedDeviceProvider>(context,
+                                    listen: false)
+                                .device!
+                                .deviceID,
+                            onComplete: () => setState(() {
+                                  canGoNext = true;
+                                })))
+                        .then((value) {
+                      Provider.of<MedicationsProvider>(context, listen: false)
+                          .refresh();
+                    });
+                  })
+            ]);
+          },
         ),
       ),
     );
@@ -143,66 +162,49 @@ class CreateAccountStep extends StatelessWidget {
     return ChangeNotifierProvider<UserRegistrationProvider>(
         create: (_) => UserRegistrationProvider(),
         builder: (context, up) {
-          return Scaffold(
-            body: WizardStep(
-              fullscreen: true,
-              stepTitle: 'Create an account',
-              stepNumber: '3',
-              title: 'Create Account',
-              subtext:
-                  'Create a CabiNET account to unlock additional features.',
-              child: Padding(
-                  padding: const EdgeInsets.only(
-                      left: 32.0, right: 32.0, bottom: 32.0),
-                  child: Column(
-                    children: [
-                      BasicForm(
-                        onSubmit: () => _submit(context),
-                        future: Provider.of<UserRegistrationProvider>(context)
-                            .future,
-                        children: [
-                          BasicPageTextFormField(
-                            labelText: 'Email',
-                            validator: Validatorless.multiple([
-                              Validatorless.email('Not a valid email'),
-                              Validatorless.required('Enter an email')
-                            ]),
-                            autofocus: true,
-                            onSaved: (val) {
-                              context
-                                  .read<UserRegistrationProvider>()
-                                  .updateEmail(val);
-                            },
-                          ),
-                          BasicPageTextFormField(
-                            labelText: 'Password',
-                            validator: Validatorless.multiple([
-                              Validatorless.between(6, 48,
-                                  "Passwords must be between 6 and 32 characters")
-                            ]),
-                            obscureText: true,
-                            textInputAction: TextInputAction.done,
-                            onSaved: (val) {
-                              context
-                                  .read<UserRegistrationProvider>()
-                                  .updatePassword(val);
-                            },
-                            onFieldSubmitted: (val) {
-                              context
-                                  .read<UserRegistrationProvider>()
-                                  .updatePassword(val);
-                            },
-                          )
-                        ],
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text('Skip'),
-                      )
-                    ],
-                  )),
+          return WizardStep(
+            title: 'Create Account',
+            subtext: 'Create a CabiNET account to unlock additional features.',
+            stepTitle: 'Create an account',
+            stepNumber: '3',
+            onBackPressed: () => Navigator.of(context).pop(),
+            canGoNext: false,
+            onSkipPressed: () => Navigator.of(context)
+                .pushNamedAndRemoveUntil('/index', (route) => false),
+            child: BasicForm(
+              onSubmit: () => _submit(context),
+              future: Provider.of<UserRegistrationProvider>(context).future,
+              children: [
+                BasicPageTextFormField(
+                  labelText: 'Email',
+                  validator: Validatorless.multiple([
+                    Validatorless.email('Not a valid email'),
+                    Validatorless.required('Enter an email')
+                  ]),
+                  onSaved: (val) {
+                    context.read<UserRegistrationProvider>().updateEmail(val);
+                  },
+                ),
+                BasicPageTextFormField(
+                  labelText: 'Password',
+                  validator: Validatorless.multiple([
+                    Validatorless.between(
+                        6, 48, "Passwords must be between 6 and 32 characters")
+                  ]),
+                  obscureText: true,
+                  textInputAction: TextInputAction.done,
+                  onSaved: (val) {
+                    context
+                        .read<UserRegistrationProvider>()
+                        .updatePassword(val);
+                  },
+                  onFieldSubmitted: (val) {
+                    context
+                        .read<UserRegistrationProvider>()
+                        .updatePassword(val);
+                  },
+                ),
+              ],
             ),
           );
         });

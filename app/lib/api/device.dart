@@ -1,13 +1,12 @@
 import 'dart:async';
 
 import 'package:app/service/time_service.dart';
-import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:intl/intl.dart';
 import 'package:timezone/standalone.dart' as tz;
-
+import 'package:collection/collection.dart';
 import '../service/notification_service.dart';
 import 'api.dart';
 

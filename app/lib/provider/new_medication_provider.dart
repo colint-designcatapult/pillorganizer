@@ -4,9 +4,9 @@ import 'package:app/screens/device_settings/medication/medication_entry_wizard.d
 import 'package:flutter/material.dart';
 
 class NewMedicationProvider with ChangeNotifier {
+  VoidCallback? _onComplete;
   late NewMedicationState _state;
   NewMedicationState get state => _state;
-
   NewMedicationProvider(int deviceID) {
     _state = NewMedicationState(deviceID: deviceID);
   }
@@ -20,11 +20,6 @@ class NewMedicationProvider with ChangeNotifier {
         color: med.color,
         assignedDispenseTimes:
             med.dispenseTimes.map((e) => e.dispenseTimeID).toSet());
-  }
-
-  void update(NewMedicationState newState) {
-    _state = newState;
-    notifyListeners();
   }
 
   void updateName(String? newName) {
@@ -66,6 +61,9 @@ class NewMedicationProvider with ChangeNotifier {
                 dispenseTimes: _state.assignedDispenseTimes))
         .then((value) {
       if (context.mounted) {
+        if (_onComplete != null) {
+          _onComplete!();
+        }
         Navigator.of(context).pop();
       }
     });
@@ -86,7 +84,8 @@ class NewMedicationProvider with ChangeNotifier {
   final Key appearanceKey = UniqueKey();
   final Key scheduleKey = UniqueKey();
 
-  Widget buildWidgetForState() {
+  Widget buildWidgetForState({VoidCallback? onComplete}) {
+    _onComplete = onComplete;
     if (state.name == null || state.stage == NewMedicationStage.name) {
       return NewMedicationWizardNameStage(key: nameKey);
     } else if (state.shape == null ||

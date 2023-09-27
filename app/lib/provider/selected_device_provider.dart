@@ -11,6 +11,7 @@ class SelectedDeviceProvider with ChangeNotifier {
   int? _prevID;
   int? _selectedID;
   static const String lastSelectedKeyName = "selectedDeviceID";
+  bool isUpdatedTimeZoneCalled = false;
 
   SelectedDeviceProvider() {
     _loadSaved();
@@ -73,12 +74,14 @@ class SelectedDeviceProvider with ChangeNotifier {
     var newDevice =
         await deviceRepo.update(_selectedDevice!.deviceID, timezone: newTZ);
     _selectedDevice = newDevice;
+    isUpdatedTimeZoneCalled = true;
     notifyListeners();
   }
 
   Future<void> updateNotifications(bool notifications) async {
     var newDevice = await deviceRepo.update(_selectedDevice!.deviceID,
         notifications: notifications);
+    isUpdatedTimeZoneCalled = true;
     notifyListeners();
     _selectedDevice = newDevice;
   }

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'api.dart';
-import 'device.dart';
 
 part 'medication.freezed.dart';
 
@@ -241,35 +240,3 @@ class MedicationRepository {
 
 final MedicationRepository medicationRepo =
     MedicationRepository(client: client);
-
-class MedicationsProvider
-    extends RefreshableValueNotifier<List<ScheduledMedication>?> {
-  DeviceUser? _device;
-  Map<int, ScheduledMedication>? _idToMed;
-
-  MedicationsProvider(this._device) : super(null, () => Future.value(null));
-
-  MedicationsProvider update(DeviceUser? newDevice) {
-    // if(newDevice?.id != _device?.id) {
-    _device = newDevice;
-    super.loadFunction = _load;
-    refresh();
-    // }
-    return this;
-  }
-
-  Future<List<ScheduledMedication>?> _load() {
-    if (_device != null) {
-      return medicationRepo.medications(_device!.deviceID).then((value) {
-        _idToMed = {for (var v in value) v.id ?? 0: v};
-        return value;
-      });
-    } else {
-      return Future.value(null);
-    }
-  }
-
-  ScheduledMedication? byID(int id) {
-    return _idToMed?[id];
-  }
-}

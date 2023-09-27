@@ -15,6 +15,7 @@ import '../api/device.dart';
 import '../main.dart';
 import '../provider/device_connection_status_provider.dart';
 import '../provider/device_notice_provider.dart';
+import '../provider/medication_provider.dart';
 import '../provider/selected_device_provider.dart';
 import '../provider/time_provider.dart';
 import '../widgets/device_icon.dart';

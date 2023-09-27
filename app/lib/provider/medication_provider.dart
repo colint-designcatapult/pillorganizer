@@ -1,35 +1,37 @@
+import 'package:app/api/api.dart';
+import 'package:app/api/device.dart';
 import 'package:app/api/medication.dart';
-import 'package:flutter/material.dart';
 
-class MedicationProvider with ChangeNotifier {
-  ScheduledMedication get medication => _medication!;
-  late ScheduledMedication? _medication;
+class MedicationsProvider
+    extends RefreshableValueNotifier<List<ScheduledMedication>?> {
+  DeviceUser? _device;
+  Map<int, ScheduledMedication>? _idToMed;
+  bool isUpdateMedication = false;
 
-  MedicationProvider({medication, validTimes}) {
-    _medication = medication;
+  MedicationsProvider(this._device) : super(null, () => Future.value(null));
+
+  MedicationsProvider update(DeviceUser? newDevice) {
+    // if(newDevice?.id != _device?.id) {
+    _device = newDevice;
+    super.loadFunction = _load;
+    refresh();
+    // }
+    return this;
   }
 
-  Future<void> load(int deviceID, ScheduledMedication model) async {
-    if (model.id != null) {
-      _medication = await medicationRepo.medication(deviceID, model.id!);
+  Future<List<ScheduledMedication>?> _load() {
+    if (_device != null) {
+      isUpdateMedication = true;
+      return medicationRepo.medications(_device!.deviceID).then((value) {
+        _idToMed = {for (var v in value) v.id ?? 0: v};
+        return value;
+      });
     } else {
-      _medication = model;
+      return Future.value(null);
     }
-    notifyListeners();
   }
 
-  void update(ScheduledMedication val) {
-    _medication = val;
-    notifyListeners();
-  }
-
-  Future<ScheduledMedication> save(int deviceID) async {
-    return await medicationRepo.save(deviceID, _medication!);
-  }
-
-  Future<void> delete(int deviceID) async {
-    if (_medication!.id != null) {
-      return await medicationRepo.delete(deviceID, _medication!.id!);
-    }
+  ScheduledMedication? byID(int id) {
+    return _idToMed?[id];
   }
 }
