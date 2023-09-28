@@ -23,6 +23,7 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
     return Consumer<ScheduleProvider>(
       builder: (context, schedProv, _) {
         return Column(
+          mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
@@ -65,6 +66,9 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
               ),
               onTap: _toggleNotifications,
             ),
+            const SizedBox(
+              height: 50,
+            )
           ],
         );
       },

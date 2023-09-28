@@ -126,6 +126,13 @@ flutter:
     - lib/assets/256w/DEV_SYM_PM.png
     - lib/assets/star_bg.png
     - lib/assets/main-icon.png
+    - lib/assets/SVG/Bluetooth.svg
+    - lib/assets/SVG/WifiHigh.svg
+    - lib/assets/SVG/PlugsConnected.svg
+    - lib/assets/SVG/Timer.svg
+    - lib/assets/SVG/BellSimpleRinging.svg
+    - lib/assets/SVG/Pill.svg
+    - lib/assets/SVG/CheckCircle.svg
   fonts:
     - family: Roboto Slab
       fonts:
