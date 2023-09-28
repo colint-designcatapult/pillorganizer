@@ -439,7 +439,7 @@ class ProvisionConnectingPage extends StatelessWidget {
       ));
     } else {
       return Padding(
-          padding: const EdgeInsets.only(left: 40.0, right: 40.0, bottom: 40.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Center(
             child: Consumer<ProvisionProvider>(builder: (_, prov, child) {
               if (prov.state.stage == ProvisionStage.complete) {
@@ -448,11 +448,16 @@ class ProvisionConnectingPage extends StatelessWidget {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    LinearProgressIndicator(
-                      value: prov.state.progress,
-                      semanticsLabel: 'Progress',
-                    ),
-                    Text('Estimated time remaining: '
+                    ClipRRect(
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(32)),
+                        child: LinearProgressIndicator(
+                          value: prov.state.progress,
+                          semanticsLabel: 'Progress',
+                          minHeight: 12,
+                        )),
+                    const SizedBox(height: 14),
+                    Text('Estimated time: '
                         '${(prov.state.completionETA?.inMinutes ?? 0) + 1} min.')
                   ],
                 );
@@ -487,7 +492,7 @@ class ProvisionConnectingPage extends StatelessWidget {
     if (data.item2 != null) {
       return "Connection Problem";
     } else if (data.item1 == ProvisionStage.finalizing) {
-      return "Finishing Setup...";
+      return "Finishing Setup";
     } else if (data.item1 == ProvisionStage.complete) {
       return "Setup Complete";
     } else {
