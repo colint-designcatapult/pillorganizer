@@ -4,6 +4,7 @@ import 'package:app/provider/medication_provider.dart';
 import 'package:app/provider/schedule_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
+import 'package:app/service/provisioning_service.dart';
 import 'package:app/widgets/medication_icon.dart';
 import 'package:app/widgets/schedule_entry.dart';
 import 'package:app/widgets/wizard.dart';
@@ -24,6 +25,7 @@ class PostSetupWizard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ProvisionningProgress provisionningProgress = ProvisionningProgress(2, 1);
     return Consumer2<ScheduleProvider, SelectedDeviceProvider>(
       builder: (context, scheduleProvider, selectedDeviceProvider, child) {
         bool isUpdatedTimeCalled = scheduleProvider.isUpdatedTimeCalled;
@@ -33,22 +35,24 @@ class PostSetupWizard extends StatelessWidget {
         bool canGoNext = isUpdatedTimeCalled || isUpdatedTimeZoneCalled;
 
         return WizardStep(
-          stepTitle: 'Preferences',
-          stepNumber: '2',
-          title: 'Welcome to CabiNET!',
-          subtext: 'Complete these final steps to set up your pill organizer.',
-          onBackPressed: () => Navigator.of(context)
-              .pushNamedAndRemoveUntil('/', (route) => false),
-          onNextPressed: () =>
-              Navigator.of(context).push(MedicationEntryStep.route(context)),
-          onSkipPressed: () =>
-              Navigator.of(context).push(CreateAccountStep.route(context)),
-          canGoNext: canGoNext,
-          child: const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: SingleChildScrollView(child: ScheduleEntry()),
-          ),
-        );
+            provisionningProgress: provisionningProgress,
+            title: 'Welcome to CabiNET!',
+            subtext:
+                'Complete these final steps to set up your pill organizer.',
+            onBackPressed: () => Navigator.of(context)
+                .pushNamedAndRemoveUntil('/', (route) => false),
+            onNextPressed: () =>
+                Navigator.of(context).push(MedicationEntryStep.route(context)),
+            onSkipPressed: () =>
+                Navigator.of(context).push(CreateAccountStep.route(context)),
+            canGoNext: canGoNext,
+            child: const Expanded(
+                child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: SingleChildScrollView(
+                  physics: AlwaysScrollableScrollPhysics(),
+                  child: ScheduleEntry()),
+            )));
       },
     );
   }
@@ -69,6 +73,7 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
 
   @override
   Widget build(BuildContext context) {
+    ProvisionningProgress provisionningProgress = ProvisionningProgress(2, 2);
     void onNext() {
       var currentUser =
           Provider.of<AuthenticationProvider>(context, listen: false)
@@ -81,8 +86,7 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
     }
 
     return WizardStep(
-      stepTitle: 'Preferences',
-      stepNumber: '2',
+      provisionningProgress: provisionningProgress,
       title: 'Add Medications',
       subtext:
           'Enter in the medications you take so your pill organizer can remind you.',
@@ -159,14 +163,14 @@ class CreateAccountStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ProvisionningProgress provisionningProgress = ProvisionningProgress(3, 1);
     return ChangeNotifierProvider<UserRegistrationProvider>(
         create: (_) => UserRegistrationProvider(),
         builder: (context, up) {
           return WizardStep(
             title: 'Create Account',
             subtext: 'Create a CabiNET account to unlock additional features.',
-            stepTitle: 'Create an account',
-            stepNumber: '3',
+            provisionningProgress: provisionningProgress,
             onBackPressed: () => Navigator.of(context).pop(),
             canGoNext: false,
             onSkipPressed: () => Navigator.of(context)

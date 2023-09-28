@@ -1,18 +1,23 @@
+import 'package:app/service/provisioning_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class WizardStepBodyDelegate extends StatelessWidget {
   const WizardStepBodyDelegate(
-      {super.key, this.icon, this.title, this.subtext, this.child});
+      {super.key,
+      required this.provisionningProgress,
+      this.title,
+      this.subtext,
+      this.child});
 
-  final Widget? icon;
+  final ProvisionningProgress provisionningProgress;
   final String? title;
   final String? subtext;
   final Widget? child;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-        child: Container(
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: CustomScrollView(
         physics: const NeverScrollableScrollPhysics(),
@@ -34,44 +39,41 @@ class WizardStepBodyDelegate extends StatelessWidget {
                     ],
                   ),
                   child: Align(
-                      alignment: Alignment.center,
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (icon != null)
-                            Padding(
-                                padding:
-                                    const EdgeInsets.only(top: 40, bottom: 20),
-                                child: Theme(
-                                    data: Theme.of(context).copyWith(
-                                        iconTheme: IconThemeData(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .primary)),
-                                    child: _buildTransition(
-                                        context: context, child: icon!))),
-                          if (title != null)
-                            _buildAnimatedText(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (provisionningProgress.step != 3)
+                        Padding(
+                            padding: const EdgeInsets.only(top: 34, bottom: 70),
+                            child: _buildTransition(
+                                context: context,
+                                child: WizardProgressBar(
+                                    provisionningProgress:
+                                        provisionningProgress))),
+                      if (title != null)
+                        Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: _buildAnimatedText(
                                 context: context,
                                 style: Theme.of(context)
                                     .textTheme
-                                    .titleLarge
-                                    ?.copyWith(fontSize: 22),
-                                text: title!),
-                          if (subtext != null)
-                            Padding(
-                                padding: const EdgeInsets.only(
-                                    top: 20, bottom: 20, left: 40, right: 40),
-                                child: _buildAnimatedText(
-                                    context: context, text: subtext!)),
-                          if (child != null) child!,
-                        ],
-                      )),
+                                    .titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                                text: title!)),
+                      if (subtext != null)
+                        Padding(
+                            padding: const EdgeInsets.only(
+                                top: 8, bottom: 24, left: 24, right: 24),
+                            child: _buildAnimatedText(
+                                context: context, text: subtext!)),
+                      if (child != null) child!,
+                    ],
+                  )),
                 )),
           ),
         ],
       ),
-    ));
+    );
   }
 
   Widget _buildTransition({context, child}) {
@@ -92,15 +94,84 @@ class WizardStepBodyDelegate extends StatelessWidget {
         child: Text(text,
             key: ValueKey<String>(text),
             style: style,
-            textAlign: TextAlign.center));
+            textAlign: TextAlign.left));
+  }
+}
+
+class WizardProgressBar extends StatelessWidget {
+  const WizardProgressBar({super.key, required this.provisionningProgress});
+
+  final ProvisionningProgress provisionningProgress;
+
+  @override
+  Widget build(BuildContext context) {
+    int selectedStage = provisionningProgress.stage - 1;
+    var iconList = provisionningProgress.getIconList();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 36),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          for (int i = 0; i < iconList.length; i++) ...[
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: selectedStage == i
+                    ? Theme.of(context).primaryColor
+                    : Theme.of(context).secondaryHeaderColor,
+              ),
+              child: SvgPicture.asset(
+                colorFilter: ColorFilter.mode(
+                  selectedStage == i ? Colors.white : Colors.black,
+                  BlendMode.srcIn,
+                ),
+                iconList[i],
+                width: 24,
+                height: 24,
+              ),
+            ),
+            if (i < iconList.length - 1) ...[
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    height: 2,
+                    width: 36,
+                    color: Theme.of(context).secondaryHeaderColor,
+                  ),
+                  if (selectedStage > i)
+                    Container(
+                      height: 20,
+                      width: 20,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(32),
+                        color: Theme.of(context).secondaryHeaderColor,
+                      ),
+                      child: SizedBox(
+                        width: 50,
+                        height: 50,
+                        child: SvgPicture.asset(
+                          'lib/assets/SVG/CheckCircle.svg',
+                          width: 24,
+                          height: 24,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
   }
 }
 
 class WizardStep extends StatelessWidget {
   const WizardStep(
       {super.key,
-      this.stepNumber,
-      this.stepTitle,
+      required this.provisionningProgress,
       this.icon,
       this.title,
       this.child,
@@ -112,8 +183,7 @@ class WizardStep extends StatelessWidget {
       this.canGoNext = false,
       this.onBackPressed});
 
-  final String? stepNumber;
-  final String? stepTitle;
+  final ProvisionningProgress provisionningProgress;
   final Widget? icon;
   final String? title;
   final String? subtext;
@@ -131,182 +201,162 @@ class WizardStep extends StatelessWidget {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: const Color(0xFFBFD2DB),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.max,
+      body: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 24, top: 100),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "STEP $stepNumber / 3",
-                  textAlign: TextAlign.left,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                Text(
-                  stepTitle!,
-                  textAlign: TextAlign.left,
-                  style: Theme.of(context).textTheme.displayLarge,
-                ),
-              ],
-            ),
-          ),
-          height != null
-              ? SizedBox(
-                  height: height,
-                  child: WizardStepBodyDelegate(
-                    title: title,
-                    icon: icon,
-                    subtext: subtext,
-                    child: child,
-                  ))
-              : WizardStepBodyDelegate(
-                  title: title,
-                  icon: icon,
-                  subtext: subtext,
-                  child: child,
-                ),
-          if (footer != null)
-            Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                    top: 100,
-                  ),
-                  child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 350),
-                      switchInCurve: Curves.easeIn,
-                      switchOutCurve: Curves.easeIn,
-                      transitionBuilder:
-                          (Widget child, Animation<double> animation) {
-                        return SlideTransition(
-                          position: Tween(
-                            begin: const Offset(0.0, 1.0),
-                            end: const Offset(0.0, 0.0),
-                          ).animate(animation),
-                          child: child,
-                        );
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).scaffoldBackgroundColor,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.2),
-                              spreadRadius: 1,
-                              blurRadius: 3,
-                              offset: const Offset(
-                                  0, -3), // changes position of shadow
-                            ),
-                          ],
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: footer!,
-                        ),
-                      )),
-                ))
-        ],
-      ),
-      bottomNavigationBar: Container(
-        color: Theme.of(context).secondaryHeaderColor,
-        child: Row(
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: onBackPressed,
-                child: SizedBox(
-                  height: navFooterHeight,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.arrow_back,
-                        size: 24,
-                      ),
-                      const SizedBox(
-                        width: 8,
-                      ),
-                      Text('Go Back',
-                          style: Theme.of(context).textTheme.bodyMedium),
-                    ],
-                  ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 24, top: 100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "STEP ${provisionningProgress.step} / 3",
+                      textAlign: TextAlign.left,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    Text(
+                      provisionningProgress.getTitle(),
+                      textAlign: TextAlign.left,
+                      style: Theme.of(context).textTheme.displayLarge,
+                    ),
+                  ],
                 ),
               ),
-            ),
-            stepNumber == '1'
-                ? const Expanded(
-                    child: SizedBox(),
-                  )
-                : Expanded(
+              height != null
+                  ? SizedBox(
+                      height: height,
+                      child: WizardStepBodyDelegate(
+                        title: title,
+                        provisionningProgress: provisionningProgress,
+                        subtext: subtext,
+                        child: child,
+                      ))
+                  : Expanded(
+                      //height: MediaQuery.of(context).size.height * 0.73,
+                      child: WizardStepBodyDelegate(
+                      title: title,
+                      provisionningProgress: provisionningProgress,
+                      subtext: subtext,
+                      child: child,
+                    )),
+              if (footer != null)
+                Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        top: 100,
+                      ),
+                      child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 350),
+                          switchInCurve: Curves.easeIn,
+                          switchOutCurve: Curves.easeIn,
+                          transitionBuilder:
+                              (Widget child, Animation<double> animation) {
+                            return SlideTransition(
+                              position: Tween(
+                                begin: const Offset(0.0, 1.0),
+                                end: const Offset(0.0, 0.0),
+                              ).animate(animation),
+                              child: child,
+                            );
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).scaffoldBackgroundColor,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.2),
+                                  spreadRadius: 1,
+                                  blurRadius: 3,
+                                  offset: const Offset(0, -3),
+                                ),
+                              ],
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: footer!,
+                            ),
+                          )),
+                    ))
+            ],
+          ),
+          Positioned(
+            // Position the bottomNavigationBar at the bottom
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              color: Theme.of(context).secondaryHeaderColor,
+              child: Row(
+                children: [
+                  Expanded(
                     child: GestureDetector(
-                      onTap: canGoNext ? onNextPressed : onSkipPressed,
-                      child: Container(
+                      onTap: onBackPressed,
+                      child: SizedBox(
                         height: navFooterHeight,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(32),
-                          ),
-                        ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(canGoNext ? "Next" : 'Skip',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(color: Colors.white)),
+                            const Icon(
+                              Icons.arrow_back,
+                              size: 24,
+                            ),
                             const SizedBox(
                               width: 8,
                             ),
-                            const Icon(
-                              Icons.arrow_forward,
-                              color: Colors.white,
-                              size: 24,
-                            ),
+                            Text('Back',
+                                style: Theme.of(context).textTheme.bodyMedium),
                           ],
                         ),
                       ),
                     ),
                   ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class DecoratedWizardStep extends StatefulWidget {
-  const DecoratedWizardStep(
-      {super.key, this.icon, this.title, this.subtext, this.child});
-
-  final Widget? icon;
-  final String? title;
-  final String? subtext;
-  final Widget? child;
-
-  @override
-  State<StatefulWidget> createState() => _DecoratedWizardStep();
-}
-
-class _DecoratedWizardStep extends State<DecoratedWizardStep> {
-  final GlobalKey<FormState> formKey = GlobalKey();
-
-  @override
-  Widget build(BuildContext context) {
-    return Form(
-      key: formKey,
-      child: WizardStep(
-        icon: widget.icon,
-        title: widget.title,
-        subtext: widget.subtext,
-        footer: const ElevatedButton(onPressed: null, child: Text('Continue')),
-        child: widget.child,
+                  provisionningProgress.step == 1
+                      ? const Expanded(
+                          child: SizedBox(),
+                        )
+                      : Expanded(
+                          child: GestureDetector(
+                            onTap: canGoNext ? onNextPressed : onSkipPressed,
+                            child: Container(
+                              height: navFooterHeight,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).primaryColor,
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(32),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(canGoNext ? "Next" : 'Skip',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(color: Colors.white)),
+                                  const SizedBox(
+                                    width: 8,
+                                  ),
+                                  const Icon(
+                                    Icons.arrow_forward,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

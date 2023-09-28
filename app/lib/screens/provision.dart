@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:app/api/device.dart';
 import 'package:app/provider/provision_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
+import 'package:app/service/provisioning_service.dart';
 import 'package:app/widgets/wizard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -60,6 +61,7 @@ class _ProvisionPageState extends State<ProvisionPage>
     with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
+    ProvisionningProgress provisionningProgress = ProvisionningProgress(1, 1);
     return ChangeNotifierProvider<ProvisionProvider>(
       create: (context) {
         final prov = ProvisionProvider(initialState: widget.initialState);
@@ -76,8 +78,7 @@ class _ProvisionPageState extends State<ProvisionPage>
             builder: (_, data, __) {
               return WizardStep(
                 height: 400,
-                stepTitle: 'Device Setup',
-                stepNumber: '1',
+                provisionningProgress: provisionningProgress,
                 icon: _buildIcon(data),
                 title: _buildTitle(data),
                 subtext: _buildSubtitle(data),
@@ -113,13 +114,16 @@ class _ProvisionPageState extends State<ProvisionPage>
       ));
     } else {
       return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Align(
             alignment: Alignment.topCenter,
-            child: LinearProgressIndicator(
-              value: data.item3,
-              semanticsLabel: 'Progress',
-            ),
+            child: ClipRRect(
+                borderRadius: const BorderRadius.all(Radius.circular(32)),
+                child: LinearProgressIndicator(
+                  value: data.item3,
+                  semanticsLabel: 'Progress',
+                  minHeight: 12,
+                )),
           ));
     }
   }
@@ -251,14 +255,14 @@ class ProvisionSelectWifiPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ProvisionningProgress provisionningProgress = ProvisionningProgress(1, 2);
     return ChangeNotifierProvider<ProvisionProvider>(
       create: (context) => ProvisionProvider(initialState: initialState),
       child: Selector<ProvisionProvider, Tuple2<ProvisionStage, Object?>>(
           selector: (_, prov) => Tuple2(prov.state.stage, prov.state.error),
           builder: (_, data, __) {
             return WizardStep(
-              stepTitle: 'Device Setup',
-              stepNumber: '1',
+              provisionningProgress: provisionningProgress,
               icon: const Icon(Icons.wifi),
               title: "Select Wi-Fi Network",
               subtext: "",
@@ -374,6 +378,7 @@ class ProvisionConnectingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ProvisionningProgress provisionningProgress = ProvisionningProgress(1, 3);
     return ChangeNotifierProvider<ProvisionProvider>(
       create: (context) {
         final prov = ProvisionProvider(initialState: initialState);
@@ -393,8 +398,7 @@ class ProvisionConnectingPage extends StatelessWidget {
             builder: (_, data, __) {
               return WizardStep(
                 height: 400,
-                stepTitle: 'Device Setup',
-                stepNumber: '1',
+                provisionningProgress: provisionningProgress,
                 icon: _buildIcon(context, data),
                 title: _buildTitle(data),
                 subtext: _buildSubtitle(data),
