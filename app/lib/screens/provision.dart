@@ -264,13 +264,13 @@ class ProvisionSelectWifiPage extends StatelessWidget {
             return WizardStep(
               provisionningProgress: provisionningProgress,
               icon: const Icon(Icons.wifi),
-              title: "Select Wi-Fi Network",
-              subtext: "",
+              title: AppLocalizations.of(context)!.provSelectWifi,
+              subtext: AppLocalizations.of(context)!.provSelectWifiSubtitle,
               onBackPressed: () => Navigator.of(context).pop(),
               child: Expanded(
                   child: Padding(
                 padding: const EdgeInsets.only(
-                    left: 40.0, right: 40.0, bottom: 40.0),
+                    left: 20.0, right: 20.0, bottom: 32.0),
                 child: Consumer<ProvisionProvider>(builder: (_, prov, child) {
                   if (prov.state.wifiNetworks == null) {
                     return const Center(child: CircularProgressIndicator());
@@ -337,23 +337,25 @@ class ProvisionSelectWifiPage extends StatelessWidget {
       }
     }
 
-    return Card(
-      elevation: 1,
-      child: ListTile(
-        leading: prov.state.ssid == entry.name && prov.state.error == null
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(),
-              )
-            : Icon(_wifiIcon(entry)),
-        title: Text(entry.name),
-        subtitle: subtitle,
-        onTap: () {
-          _showPasswordDialog(context, entry, prov);
-        },
-      ),
-    );
+    return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Card(
+          elevation: 1,
+          child: ListTile(
+            leading: prov.state.ssid == entry.name && prov.state.error == null
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(),
+                  )
+                : Icon(_wifiIcon(entry)),
+            title: Text(entry.name),
+            subtitle: subtitle,
+            onTap: () {
+              _showPasswordDialog(context, entry, prov);
+            },
+          ),
+        ));
   }
 
   IconData _wifiIcon(WifiEntry entry) {
