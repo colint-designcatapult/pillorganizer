@@ -132,20 +132,20 @@ class MyApp extends StatelessWidget {
                 secondaryHeaderColor: const Color(0xFFBFD2DB),
                 fontFamily: 'Poppins',
                 textTheme: const TextTheme(
-                  titleLarge: TextStyle(
+                  titleSmall: TextStyle(
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.w700,
-                    fontSize: 24,
+                    fontSize: 16,
                   ),
                   titleMedium: TextStyle(
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.w700,
                     fontSize: 20,
                   ),
-                  titleSmall: TextStyle(
+                  titleLarge: TextStyle(
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.w700,
-                    fontSize: 16,
+                    fontSize: 24,
                   ),
                   labelSmall: TextStyle(
                       fontFamily: 'Poppins',
@@ -154,6 +154,10 @@ class MyApp extends StatelessWidget {
                   labelMedium: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 18,
+                      fontWeight: FontWeight.w600),
+                  labelLarge: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 20,
                       fontWeight: FontWeight.w600),
                   displaySmall: TextStyle(
                       fontFamily: 'Poppins',
@@ -167,10 +171,6 @@ class MyApp extends StatelessWidget {
                       fontFamily: 'Poppins',
                       fontSize: 32,
                       fontWeight: FontWeight.w500),
-                  labelLarge: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600),
                   bodySmall: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 14,
