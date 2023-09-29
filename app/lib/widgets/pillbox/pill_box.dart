@@ -18,10 +18,11 @@ class Pillbox extends StatelessWidget {
             DeviceNoticeProvider>(
         builder: (context, deviceProv, minuteProv, deviceNoticeProv, _) {
       final String currentDayOfWeek =
-          DateFormat.EEEE().format(minuteProv.value);
-      final DeviceNotice notice = deviceNoticeProv.value;
+          DateFormat.EEEE().format(minuteProv!.value);
+      final DeviceNotice notice = deviceNoticeProv!.value;
       final bool isDeviceActive =
           notice.name != 'empty' && notice.name != 'disconnected';
+
       return SizedBox(
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height * 0.32,
@@ -41,11 +42,15 @@ class Pillbox extends StatelessWidget {
                           ?.copyWith(color: const Color(0xFF03012C))),
                 ),
                 BinColumn(
-                    isDeviceActive: isDeviceActive,
+                    isDeviceActive: isDeviceActive && deviceProv.value != null,
                     isToday:
                         day.toUpperCase() == currentDayOfWeek.toUpperCase(),
-                    dayStatus: deviceProv.value!.bins[dayIndex],
-                    nightStatus: deviceProv.value!.bins[nightIndex]),
+                    dayStatus: deviceProv.value != null
+                        ? deviceProv.value!.bins[dayIndex]
+                        : BinStatus.DISABLED,
+                    nightStatus: deviceProv.value != null
+                        ? deviceProv.value!.bins[nightIndex]
+                        : BinStatus.DISABLED),
               ],
             );
           }).toList(),
