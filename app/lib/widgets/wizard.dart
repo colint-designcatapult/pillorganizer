@@ -40,11 +40,11 @@ class WizardStepBodyDelegate extends StatelessWidget {
                   ),
                   child: Align(
                       child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (provisionningProgress.step != 3)
                         Padding(
-                            padding: const EdgeInsets.only(top: 34, bottom: 70),
+                            padding: EdgeInsets.only(
+                                top: 34, bottom: title != null ? 36 : 70),
                             child: _buildTransition(
                                 context: context,
                                 child: WizardProgressBar(
@@ -94,7 +94,7 @@ class WizardStepBodyDelegate extends StatelessWidget {
         child: Text(text,
             key: ValueKey<String>(text),
             style: style,
-            textAlign: TextAlign.left));
+            textAlign: TextAlign.center));
   }
 }
 
