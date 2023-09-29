@@ -100,6 +100,14 @@ flutter:
   assets:
     - lib/assets/noun-open-box-1485434.svg
     - lib/assets/package-svgrepo-com.svg
+    - lib/assets/SVG/moon.svg
+    - lib/assets/SVG/sun.svg
+    - lib/assets/SVG/moonWhite.svg
+    - lib/assets/SVG/sunWhite.svg
+    - lib/assets/SVG/greenlight.svg
+    - lib/assets/SVG/redlight.svg
+    - lib/assets/SVG/offlight.svg
+    - lib/assets/SVG/cancelIcon.svg
     - lib/assets/provision-plug-in.png
     - lib/assets/base_device.png
     - lib/assets/base_bin_sprite.png

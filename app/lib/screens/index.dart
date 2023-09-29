@@ -3,6 +3,7 @@ import 'package:app/api/medication.dart';
 import 'package:app/provider/scroll_provider.dart';
 import 'package:app/screens/modals/device_selector_modal.dart';
 import 'package:app/widgets/mini_device.dart';
+import 'package:app/widgets/pillbox/bin_container.dart';
 import 'package:app/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
@@ -22,10 +23,11 @@ import '../widgets/device_icon.dart';
 import '../widgets/medication_icon.dart';
 import '../widgets/time_of_day_scaffold.dart';
 import 'device_settings/medication/medication_entry_wizard.dart';
+import '../widgets/pillbox/pill_box.dart';
 import 'modals/edit_schedule_modal.dart';
 import 'my_account/my_account.dart';
 
-const double sidePadQ = 32.0;
+const double sidePadQ = 22.0;
 const EdgeInsets sidePad = EdgeInsets.symmetric(horizontal: sidePadQ);
 
 class BLEAutoSuppress extends StatefulWidget {
@@ -116,7 +118,7 @@ class IndexAppBar extends StatelessWidget {
                     ],
                   ),
                   IconButton(
-                    icon: Icon(Icons.account_circle),
+                    icon: const Icon(Icons.account_circle),
                     onPressed: () {
                       Navigator.of(context).push(MyAccountPage.route(context));
                     },
@@ -400,7 +402,7 @@ class MiniDeviceArea extends StatelessWidget {
                       padding: const EdgeInsets.all(8.0),
                       child: IconTheme(
                         data: IconThemeData(color: Theme.of(context).hintColor),
-                        child: Row(
+                        child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -528,7 +530,7 @@ class DeviceNoticeArea extends StatelessWidget {
                       return TextButton.icon(
                           onPressed: loading ? null : () => _reload(prov),
                           icon: loading
-                              ? SizedBox(
+                              ? const SizedBox(
                                   child: CircularProgressIndicator(),
                                   height: 16.0,
                                   width: 16.0)
@@ -750,11 +752,11 @@ class IndexPage extends StatelessWidget {
             SliverToBoxAdapter(
               child: Padding(
                 padding: sidePad.copyWith(top: 16.0),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 6.0),
                       child: Row(
                         children: [
                           DeviceListSelector(),
@@ -763,7 +765,7 @@ class IndexPage extends StatelessWidget {
                         ],
                       ),
                     ),
-                    MiniDeviceArea()
+                    Pillbox()
                   ],
                 ),
               ),
