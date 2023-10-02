@@ -130,10 +130,10 @@ class MyApp extends StatelessWidget {
                     )),
                 primaryColor: const Color(0xff206b8b),
                 secondaryHeaderColor: const Color(0xFFBFD2DB),
-                fontFamily: 'Roboto',
+                fontFamily: 'Poppins',
                 textTheme: const TextTheme(
                     titleLarge: TextStyle(
-                      fontFamily: 'Roboto Slab',
+                      fontFamily: 'Poppins',
                       fontWeight: FontWeight.w700,
                       fontSize: 24,
                     ),
@@ -143,11 +143,11 @@ class MyApp extends StatelessWidget {
                       fontSize: 20,
                     ),
                     titleSmall: TextStyle(
-                      fontFamily: 'Roboto Slab',
+                      fontFamily: 'Poppins',
                       fontWeight: FontWeight.w400,
                       fontSize: 16,
                     ),
-                    labelLarge: TextStyle(fontFamily: 'Roboto', fontSize: 18),
+                    labelLarge: TextStyle(fontFamily: 'Poppins', fontSize: 18),
                     bodySmall: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 14,

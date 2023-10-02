@@ -48,7 +48,7 @@ class PostSetupWizard extends StatelessWidget {
             canGoNext: canGoNext,
             child: const Expanded(
                 child: Padding(
-              padding: EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(20.0),
               child: SingleChildScrollView(
                   physics: AlwaysScrollableScrollPhysics(),
                   child: ScheduleEntry()),
