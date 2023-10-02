@@ -42,7 +42,7 @@ class PostSetupWizard extends StatelessWidget {
             onBackPressed: () => Navigator.of(context)
                 .pushNamedAndRemoveUntil('/', (route) => false),
             onNextPressed: () =>
-                Navigator.of(context).push(MedicationEntryStep.route(context)),
+                Navigator.of(context).push(NotificationStep.route(context)),
             onSkipPressed: () =>
                 Navigator.of(context).push(CreateAccountStep.route(context)),
             canGoNext: canGoNext,
@@ -53,6 +53,95 @@ class PostSetupWizard extends StatelessWidget {
                   physics: AlwaysScrollableScrollPhysics(),
                   child: ScheduleEntry()),
             )));
+      },
+    );
+  }
+}
+
+class NotificationStep extends StatelessWidget {
+  const NotificationStep({super.key});
+
+  static Route<NotificationStep> route(context) => platformPageRoute(
+      context: context, builder: (_) => const NotificationStep());
+
+  @override
+  Widget build(BuildContext context) {
+    ProvisionningProgress provisionningProgress = ProvisionningProgress(2, 2);
+    return Consumer<SelectedDeviceProvider>(
+      builder: (context, selectedDeviceProvider, child) {
+        bool canGoNext = selectedDeviceProvider.isUpdatedNotificationCalled;
+
+        void toggleNotifications() {
+          var sdp = Provider.of<SelectedDeviceProvider>(context, listen: false);
+          sdp.updateNotifications(!(sdp.device?.notifications ?? false));
+        }
+
+        return WizardStep(
+            provisionningProgress: provisionningProgress,
+            title: 'Reminders',
+            subtext:
+                'Set up reminders to ensure you stay on track with your medication schedule.',
+            onBackPressed: () => Navigator.of(context).pop(),
+            onNextPressed: () =>
+                Navigator.of(context).push(MedicationEntryStep.route(context)),
+            onSkipPressed: () =>
+                Navigator.of(context).push(CreateAccountStep.route(context)),
+            canGoNext: canGoNext,
+            height: 550,
+            child: Expanded(
+                child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Column(
+                            mainAxisSize: MainAxisSize.max,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Notification preferences:',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleSmall
+                                      ?.copyWith(fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 26),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Switch(
+                                    value: Provider.of<SelectedDeviceProvider>(
+                                                context)
+                                            .device
+                                            ?.notifications ??
+                                        false,
+                                    onChanged: (bool value) {
+                                      toggleNotifications();
+                                    },
+                                    activeTrackColor: const Color(0xff708F72),
+                                    thumbIcon: MaterialStateProperty
+                                        .resolveWith<Icon?>(
+                                      (Set<MaterialState> states) {
+                                        if (states
+                                            .contains(MaterialState.selected)) {
+                                          return const Icon(Icons.check,
+                                              color: Color(0xff708F72));
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Flexible(
+                                    child: Text(
+                                      'Send reminder notifications to your phone',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ])))));
       },
     );
   }
@@ -73,7 +162,7 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
 
   @override
   Widget build(BuildContext context) {
-    ProvisionningProgress provisionningProgress = ProvisionningProgress(2, 2);
+    ProvisionningProgress provisionningProgress = ProvisionningProgress(2, 3);
     void onNext() {
       var currentUser =
           Provider.of<AuthenticationProvider>(context, listen: false)
