@@ -147,6 +147,7 @@ flutter:
     - lib/assets/SVG/DEV_SYM_PM.svg
     - lib/assets/SVG/PencilSimpleLine.svg
     - lib/assets/SVG/Globe.svg
+    - lib/assets/SVG/User.svg
   fonts:
     - family: Roboto Slab
       fonts:

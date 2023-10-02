@@ -11,6 +11,7 @@ import 'package:app/widgets/wizard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
 
@@ -257,49 +258,56 @@ class CreateAccountStep extends StatelessWidget {
         create: (_) => UserRegistrationProvider(),
         builder: (context, up) {
           return WizardStep(
-            title: 'Create Account',
-            subtext: 'Create a CabiNET account to unlock additional features.',
-            provisionningProgress: provisionningProgress,
-            onBackPressed: () => Navigator.of(context).pop(),
-            canGoNext: false,
-            onSkipPressed: () => Navigator.of(context)
-                .pushNamedAndRemoveUntil('/index', (route) => false),
-            child: BasicForm(
-              onSubmit: () => _submit(context),
-              future: Provider.of<UserRegistrationProvider>(context).future,
-              children: [
-                BasicPageTextFormField(
-                  labelText: 'Email',
-                  validator: Validatorless.multiple([
-                    Validatorless.email('Not a valid email'),
-                    Validatorless.required('Enter an email')
-                  ]),
-                  onSaved: (val) {
-                    context.read<UserRegistrationProvider>().updateEmail(val);
-                  },
+              height: 550,
+              icon: SvgPicture.asset('lib/assets/SVG/User.svg'),
+              subtext:
+                  'Create an account in order to access your data anytime, anywhere.',
+              provisionningProgress: provisionningProgress,
+              onBackPressed: () => Navigator.of(context).pop(),
+              canGoNext: false,
+              onSkipPressed: () => Navigator.of(context)
+                  .pushNamedAndRemoveUntil('/index', (route) => false),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: BasicForm(
+                  onSubmit: () => _submit(context),
+                  future: Provider.of<UserRegistrationProvider>(context).future,
+                  buttonText: 'Create account',
+                  children: [
+                    BasicPageTextFormField(
+                      labelText: 'Email',
+                      validator: Validatorless.multiple([
+                        Validatorless.email('Not a valid email'),
+                        Validatorless.required('Enter an email')
+                      ]),
+                      onSaved: (val) {
+                        context
+                            .read<UserRegistrationProvider>()
+                            .updateEmail(val);
+                      },
+                    ),
+                    BasicPageTextFormField(
+                      labelText: 'Password',
+                      validator: Validatorless.multiple([
+                        Validatorless.between(6, 48,
+                            "Passwords must be between 6 and 32 characters")
+                      ]),
+                      obscureText: true,
+                      textInputAction: TextInputAction.done,
+                      onSaved: (val) {
+                        context
+                            .read<UserRegistrationProvider>()
+                            .updatePassword(val);
+                      },
+                      onFieldSubmitted: (val) {
+                        context
+                            .read<UserRegistrationProvider>()
+                            .updatePassword(val);
+                      },
+                    ),
+                  ],
                 ),
-                BasicPageTextFormField(
-                  labelText: 'Password',
-                  validator: Validatorless.multiple([
-                    Validatorless.between(
-                        6, 48, "Passwords must be between 6 and 32 characters")
-                  ]),
-                  obscureText: true,
-                  textInputAction: TextInputAction.done,
-                  onSaved: (val) {
-                    context
-                        .read<UserRegistrationProvider>()
-                        .updatePassword(val);
-                  },
-                  onFieldSubmitted: (val) {
-                    context
-                        .read<UserRegistrationProvider>()
-                        .updatePassword(val);
-                  },
-                ),
-              ],
-            ),
-          );
+              ));
         });
   }
 
@@ -312,7 +320,8 @@ class CreateAccountStep extends StatelessWidget {
     }).then((value) {
       if (value) {
         SchedulerBinding.instance.addPostFrameCallback((_) {
-          Navigator.pop(context);
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil('/index', (route) => false);
         });
       }
     });

@@ -48,7 +48,7 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
                 ),
                 Padding(
                   padding: const EdgeInsets.only(top: 36),
-                  child: BasicForm(
+                  child: BasicFormContainer(
                     titleText: 'Sign In',
                     subtitleText:
                         'Welcome back! Please Sign In to your account.',

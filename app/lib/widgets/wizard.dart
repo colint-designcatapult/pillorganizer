@@ -7,11 +7,13 @@ class WizardStepBodyDelegate extends StatelessWidget {
       {super.key,
       required this.provisionningProgress,
       this.title,
+      this.icon,
       this.subtext,
       this.child});
 
   final ProvisionningProgress provisionningProgress;
   final String? title;
+  final Widget? icon;
   final String? subtext;
   final Widget? child;
 
@@ -41,22 +43,30 @@ class WizardStepBodyDelegate extends StatelessWidget {
                   child: Align(
                       child: Column(
                     children: [
-                      if (provisionningProgress.step != 3)
-                        Padding(
-                            padding: EdgeInsets.only(
-                                top: 34, bottom: title != null ? 36 : 70),
-                            child: _buildTransition(
-                                context: context,
-                                child: WizardProgressBar(
-                                    provisionningProgress:
-                                        provisionningProgress))),
+                      provisionningProgress.step != 3
+                          ? Padding(
+                              padding: EdgeInsets.only(
+                                  top: 34, bottom: title != null ? 36 : 70),
+                              child: _buildTransition(
+                                  context: context,
+                                  child: WizardProgressBar(
+                                      provisionningProgress:
+                                          provisionningProgress)))
+                          : const SizedBox(
+                              height: 40,
+                            ),
                       if (title != null)
                         Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: _buildAnimatedText(
                                 context: context,
                                 style: Theme.of(context).textTheme.titleMedium,
-                                text: title!)),
+                                text: title)),
+                      if (icon != null)
+                        Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: _buildTransition(
+                                context: context, child: icon)),
                       if (subtext != null)
                         Padding(
                             padding: const EdgeInsets.only(
@@ -231,14 +241,15 @@ class WizardStep extends StatelessWidget {
                       height: height,
                       child: WizardStepBodyDelegate(
                         title: title,
+                        icon: icon,
                         provisionningProgress: provisionningProgress,
                         subtext: subtext,
                         child: child,
                       ))
                   : Expanded(
-                      //height: MediaQuery.of(context).size.height * 0.73,
                       child: WizardStepBodyDelegate(
                       title: title,
+                      icon: icon,
                       provisionningProgress: provisionningProgress,
                       subtext: subtext,
                       child: child,
