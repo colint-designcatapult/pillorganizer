@@ -1,8 +1,9 @@
 import 'package:app/api/device.dart';
+import 'package:app/navigation/tab_navigator.dart';
 import 'package:app/provider/medication_provider.dart';
 import 'package:app/provider/time_provider.dart';
 import 'package:app/screens/first_launch.dart';
-import 'package:app/screens/index.dart';
+import 'package:app/screens/tab/index.dart';
 import 'package:app/screens/post_setup_wizard.dart';
 import 'package:app/service/credential_manager.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -91,7 +92,7 @@ class MyApp extends StatelessWidget {
                     },
                   );
                 },
-                '/index': (context) => const IndexPage(),
+                '/index': (context) => const TabNavigator(),
                 '/post_setup': (context) => const PostSetupWizard()
               },
               supportedLocales: const [Locale('en')],
