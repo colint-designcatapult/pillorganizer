@@ -155,6 +155,18 @@ class MyApp extends StatelessWidget {
                       fontFamily: 'Poppins',
                       fontSize: 18,
                       fontWeight: FontWeight.w600),
+                  displaySmall: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500),
+                  displayMedium: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500),
+                  displayLarge: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 32,
+                      fontWeight: FontWeight.w500),
                   labelLarge: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 20,
@@ -171,18 +183,6 @@ class MyApp extends StatelessWidget {
                       fontFamily: 'Poppins',
                       fontSize: 20,
                       fontWeight: FontWeight.w400),
-                  displaySmall: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500),
-                  displayMedium: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500),
-                  displayLarge: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 32,
-                      fontWeight: FontWeight.w500),
                 ),
               ),
               navigatorObservers: [routeObserver],

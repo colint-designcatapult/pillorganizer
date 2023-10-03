@@ -96,45 +96,33 @@ class DeviceStatusIcon extends StatelessWidget {
 }
 
 class BinIcon extends StatelessWidget {
-  final String? text;
   final DayPeriod dayPeriod;
   final Color? color;
-  final double size;
-  const BinIcon(
-      {super.key,
-      this.text,
-      required this.dayPeriod,
-      this.color,
-      this.size = 32.0});
+  const BinIcon({super.key, required this.dayPeriod, this.color});
 
-  factory BinIcon.forBin({required int bin, Color? color, double size = 32.0}) {
+  factory BinIcon.forBin({required int bin, Color? color}) {
     return BinIcon(
-      text: BinService.binLabel(bin),
       dayPeriod: BinService.binDayPeriod(bin),
-      size: size,
       color: color,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    Color? c = color ?? Theme.of(context).iconTheme.color;
-    String icon =
-        "lib/assets/256w/DEV_SYM_${dayPeriod == DayPeriod.am ? 'AM' : 'PM'}.png";
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
+    String dayPeriodString = dayPeriod == DayPeriod.am ? 'AM' : 'PM';
+    String icon = "lib/assets/256w/DEV_SYM_$dayPeriodString.png";
+    return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Image.asset(icon, color: c, width: size, height: size),
-        if (text != null)
-          Text(
-            text!,
-            style: TextStyle(
-                color: c,
-                fontSize: (3.0 * size) / 5,
-                fontWeight: FontWeight.w700),
-          )
+        Image.asset(icon,
+            color: const Color(0xFF03012C), width: 24, height: 24),
+        const SizedBox(
+          width: 8,
+        ),
+        Text(
+          dayPeriodString,
+          style: Theme.of(context).textTheme.titleSmall,
+        )
       ],
     );
   }
