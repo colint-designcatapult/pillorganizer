@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:app/provider/authentication_provider.dart';
 import 'package:app/screens/auth/login.dart';
-import 'package:app/screens/tab/index.dart';
+import 'package:app/screens/index.dart';
 import 'package:app/screens/provision.dart';
 import 'package:flutter/material.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
@@ -133,7 +133,7 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
 
   Future<bool> _handleAuthSuccess(bool status) async {
     if (status) {
-      Navigator.of(context).pushReplacementNamed("/index");
+      Navigator.of(context).pushReplacement(IndexPage.route(context));
     }
     return status;
   }

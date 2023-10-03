@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
-import '../tab/index.dart';
+import '../index.dart';
 import '../provision.dart';
 
 class LaunchPageLogin extends StatefulWidget {
@@ -163,7 +163,7 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
 
     setState(() {
       _loginFuture!.then((_) {
-        Navigator.of(context).pushReplacementNamed("/index");
+        Navigator.of(context).pushReplacement(IndexPage.route(context));
       }).catchError((err) {
         if (err is ProblemJsonException) {
           _showErrorDialog(

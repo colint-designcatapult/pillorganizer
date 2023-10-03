@@ -146,15 +146,6 @@ flutter:
     - lib/assets/SVG/DEV_SYM_PM.svg
     - lib/assets/SVG/PencilSimpleLine.svg
     - lib/assets/SVG/Globe.svg
-    - lib/assets/SVG/tabs/house-filled.svg
-    - lib/assets/SVG/tabs/house-outline.svg
-    - lib/assets/SVG/tabs/settings-filled.svg
-    - lib/assets/SVG/tabs/settings-outline.svg
-    - lib/assets/SVG/tabs/pill-filled.svg
-    - lib/assets/SVG/tabs/pill-outline.svg
-    - lib/assets/SVG/tabs/user-filled.svg
-    - lib/assets/SVG/tabs/user-outline.svg
-
   fonts:
     - family: Roboto Slab
       fonts:

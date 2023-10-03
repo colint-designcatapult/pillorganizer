@@ -2,6 +2,8 @@ import 'package:app/api/api.dart';
 import 'package:app/api/medication.dart';
 import 'package:app/provider/scroll_provider.dart';
 import 'package:app/screens/modals/device_selector_modal.dart';
+import 'package:app/widgets/mini_device.dart';
+import 'package:app/widgets/pillbox/bin_container.dart';
 import 'package:app/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
@@ -9,24 +11,68 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../api/device.dart';
 
-import '../../platform/ble_auto_supress.dart';
-import '../../provider/device_connection_status_provider.dart';
-import '../../provider/device_notice_provider.dart';
-import '../../provider/medication_provider.dart';
-import '../../provider/selected_device_provider.dart';
-import '../../provider/time_provider.dart';
-import '../../widgets/device_icon.dart';
-import '../../widgets/medication_icon.dart';
-import '../../widgets/time_of_day_scaffold.dart';
-import '../device_settings/medication/medication_entry_wizard.dart';
-import '../../widgets/pillbox/pill_box.dart';
-import '../modals/edit_schedule_modal.dart';
-import '../my_account/my_account.dart';
+import '../api/device.dart';
+import '../main.dart';
+import '../provider/device_connection_status_provider.dart';
+import '../provider/device_notice_provider.dart';
+import '../provider/medication_provider.dart';
+import '../provider/selected_device_provider.dart';
+import '../provider/time_provider.dart';
+import '../widgets/device_icon.dart';
+import '../widgets/medication_icon.dart';
+import '../widgets/time_of_day_scaffold.dart';
+import 'device_settings/medication/medication_entry_wizard.dart';
+import '../widgets/pillbox/pill_box.dart';
+import 'modals/edit_schedule_modal.dart';
+import 'my_account/my_account.dart';
 
 const double sidePadQ = 22.0;
 const EdgeInsets sidePad = EdgeInsets.symmetric(horizontal: sidePadQ);
+
+class BLEAutoSuppress extends StatefulWidget {
+  const BLEAutoSuppress({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<BLEAutoSuppress> createState() => BLEAutoSuppressState();
+}
+
+// Implement RouteAware in a widget's state and subscribe it to the RouteObserver.
+class BLEAutoSuppressState extends State<BLEAutoSuppress> with RouteAware {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPushNext() {
+    //Provider.of<DeviceBluetoothProvider>(context, listen: false).suppress();
+  }
+
+  @override
+  void didPopNext() {
+    // Covering route was popped off the navigator.
+    //Provider.of<DeviceBluetoothProvider>(context, listen: false).unsuppress();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    //Provider.of<DeviceBluetoothProvider>(context, listen: false).unsuppress();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
 
 class IndexAppBar extends StatelessWidget {
   IndexAppBar({super.key});
@@ -292,6 +338,110 @@ class DeviceSettingsButton extends StatelessWidget {
           );
         }).toList();
       },
+    );
+  }
+}
+
+class MiniDeviceArea extends StatelessWidget {
+  const MiniDeviceArea({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshablePlaceholder(
+        notifier: Provider.of<DeviceStateProvider>(context),
+        preferData: true,
+        builder: (context, prov, loading) {
+          double opacity =
+              context.watch<DeviceConnectionStatusProvider>().value ==
+                      DeviceConnectionStatus.online
+                  ? 1
+                  : 0.3;
+          if (loading) {
+            return Column(
+              children: [
+                AspectRatio(
+                  aspectRatio: 1.4,
+                  child: Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                        color: Colors.white),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 16.0, horizontal: 96.0),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                        borderRadius: BorderRadius.all(Radius.circular(16.0)),
+                        color: Colors.white),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: SizedBox(width: 96, height: 24),
+                    ),
+                  ),
+                )
+              ],
+            );
+          } else {
+            return Column(
+              children: [
+                Opacity(
+                    opacity: opacity,
+                    child: MiniDevice(status: prov.value!.bins)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 16.0, horizontal: 96.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(16.0)),
+                        border: Border.all(
+                            color: Theme.of(context).highlightColor)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: IconTheme(
+                        data: IconThemeData(color: Theme.of(context).hintColor),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.wifi),
+                            Icon(Icons.bluetooth_disabled),
+                            Icon(Icons.battery_unknown)
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              ],
+            );
+          }
+        });
+  }
+}
+
+class DosePeriodMedication extends StatelessWidget {
+  final DosePeriod period;
+  final ScheduledMedication? medication;
+  const DosePeriodMedication(
+      {super.key, required this.medication, required this.period});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          if (medication != null) ...[
+            MedicationIcon.fromMed(medication!, 32.0),
+            Text('${medication!.name}')
+          ]
+        ],
+      ),
     );
   }
 }
