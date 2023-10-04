@@ -146,7 +146,7 @@ class _PillShapeSelectorState extends State<PillShapeSelector> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('Choose a Shape', style: Theme.of(context).textTheme.titleSmall),
+        Text('Choose a Shape', style: Theme.of(context).textTheme.bodyMedium),
         GridView.count(
             crossAxisCount: 3,
             shrinkWrap: true,
@@ -231,7 +231,7 @@ class MedicationColorSelector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('Choose a Color', style: Theme.of(context).textTheme.titleSmall),
+        Text('Choose a Color', style: Theme.of(context).textTheme.bodyMedium),
         GridView.count(
           crossAxisCount: 4,
           shrinkWrap: true,

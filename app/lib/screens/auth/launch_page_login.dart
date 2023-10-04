@@ -87,7 +87,7 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
                           padding: const EdgeInsets.only(top: 20),
                           child: Text(
                             "or",
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            style: Theme.of(context).textTheme.displaySmall,
                           ),
                         ),
                         Padding(
@@ -137,7 +137,7 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
           return PlatformAlertDialog(
               content: Text(
                 message,
-                style: Theme.of(context).textTheme.bodyLarge,
+                style: Theme.of(context).textTheme.labelLarge,
               ),
               actions: [
                 PlatformDialogAction(

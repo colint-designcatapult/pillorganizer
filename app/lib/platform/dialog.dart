@@ -8,7 +8,7 @@ Future<void> showAlertDialog(BuildContext context, String message) {
         return PlatformAlertDialog(
             content: Text(
               message,
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: Theme.of(context).textTheme.labelLarge,
             ),
             actions: [
               PlatformDialogAction(
