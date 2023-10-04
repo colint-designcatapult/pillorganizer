@@ -3,10 +3,11 @@ import 'package:app/api/medication.dart';
 import 'package:app/provider/scroll_provider.dart';
 import 'package:app/screens/modals/device_selector_modal.dart';
 import 'package:app/widgets/mini_device.dart';
-import 'package:app/widgets/pillbox/bin_container.dart';
 import 'package:app/widgets/shimmer_placeholder.dart';
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
@@ -448,30 +449,49 @@ class DosePeriodMedication extends StatelessWidget {
 
 class CircularBinStatusIndicator extends StatelessWidget {
   final BinStatus status;
-  const CircularBinStatusIndicator({super.key, required this.status});
+  final DeviceNotice deviceStatus;
+  const CircularBinStatusIndicator(
+      {super.key, required this.status, required this.deviceStatus});
 
   @override
   Widget build(BuildContext context) {
     Color color;
+    Color border;
+
     switch (status) {
       case BinStatus.TAKEN:
       case BinStatus.TAKE_NOW:
-        color = Colors.green;
+        color = const Color(0xFF7CAC7B);
+        border = const Color(0xFF4D7B50);
         break;
       case BinStatus.MISSED:
-        color = Colors.red;
+        color = const Color(0xFFD45C5C);
+        border = const Color(0xFF7A2C2C);
         break;
       default:
-        color = Theme.of(context).hintColor;
+        color = const Color(0xFF798290);
+        border = const Color(0xFF434747);
     }
-    bool filled = (status == BinStatus.TAKEN || status == BinStatus.MISSED);
+
     return Container(
-      height: 16.0,
-      width: 16.0,
-      decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: filled ? color : Colors.transparent,
-          border: filled ? null : Border.all(color: color, width: 4.0)),
+      height: 20,
+      width: 20,
+      decoration:
+          status != BinStatus.DISABLED && deviceStatus != DeviceNotice.empty
+              ? BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: color,
+                  border: Border.all(color: border, width: 3),
+                )
+              : null,
+      child: Visibility(
+          visible: status == BinStatus.DISABLED ||
+              deviceStatus == DeviceNotice.empty,
+          child: SvgPicture.asset(
+            'lib/assets/SVG/cancelIcon.svg',
+            height: 20,
+            width: 20,
+          )),
     );
   }
 }
@@ -561,11 +581,12 @@ class DosePeriodArea extends StatelessWidget {
     return Selector<DeviceStateProvider, List<DosePeriod>?>(
       selector: (_, prov) => prov.value?.dosePeriods,
       builder: (_, list, __) {
+        List<DosePeriod>? reversedList = list?.reversed.toList();
         return SliverList.builder(
           itemBuilder: (BuildContext context, int index) {
-            return _buildPanel(context, list?[index]);
+            return _buildPanel(context, reversedList?[index]);
           },
-          itemCount: list?.length ?? 0,
+          itemCount: reversedList?.length ?? 0,
         );
       },
     );
@@ -574,43 +595,109 @@ class DosePeriodArea extends StatelessWidget {
   Widget _buildPanel(context, DosePeriod? period) {
     Color? color = Theme.of(context).indicatorColor;
     var medProv = Provider.of<MedicationsProvider>(context);
+    var deviceNoticeProv = Provider.of<DeviceNoticeProvider>(context);
     return Padding(
-      padding: sidePad.copyWith(top: 16.0, bottom: 16.0),
+      padding: sidePad.copyWith(top: 28.0, bottom: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              BinIcon.forBin(bin: period!.binID, color: color),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  _buildTimeString(context, period),
-                  style: Theme.of(context).textTheme.displayMedium,
-                ),
-              ),
-              const Expanded(child: Divider()),
-            ],
-          ),
+          Padding(
+              padding: const EdgeInsets.fromLTRB(4, 0, 0, 20),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  BinIcon.forBin(bin: period!.binID, color: color),
+                  Text(
+                    _buildTimeString(context, period),
+                    style: Theme.of(context).textTheme.displaySmall,
+                  ),
+                ],
+              )),
           if (period.medicationIDs.isNotEmpty) ...[
             ...period.medicationIDs
-                .map((e) => _buildMed(context, period, medProv.byID(e)))
+                .map((e) => _buildMed(
+                    context, period, medProv.byID(e), deviceNoticeProv))
                 .toList(growable: false),
           ] else ...[
-            Padding(
-              padding: EdgeInsets.all(32.0),
-              child: Text(AppLocalizations.of(context)!.noticeNoMeds),
-            )
+            GestureDetector(
+                onTap: () => Navigator.of(context)
+                        .push(NewMedicationWizardPage.route(
+                            context,
+                            Provider.of<SelectedDeviceProvider>(context,
+                                    listen: false)
+                                .device!
+                                .deviceID))
+                        .then((value) {
+                      Provider.of<MedicationsProvider>(context, listen: false)
+                          .refresh();
+                    }),
+                child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: const Color(0xFFF8F8FA),
+                    ),
+                    child: DottedBorder(
+                      borderType: BorderType.RRect,
+                      color: Theme.of(context).primaryColor,
+                      strokeWidth: 2,
+                      dashPattern: const <double>[4, 4],
+                      radius: const Radius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.add),
+                            const SizedBox(width: 4),
+                            Text(
+                              AppLocalizations.of(context)!.addPills,
+                              style: Theme.of(context).textTheme.labelSmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                    )))
           ],
-          TextButton.icon(
-              icon: Icon(Icons.add),
-              label: Text(AppLocalizations.of(context)!.actionAddMed),
-              onPressed: () {
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMed(context, DosePeriod period, ScheduledMedication? med,
+      DeviceNoticeProvider deviceNoticeProv) {
+    if (med != null) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Container(
+            height: 80,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F6F5),
+              borderRadius: BorderRadius.circular(8.0),
+              border: Border.all(
+                color: const Color(0xFF206B8B),
+                width: 2.0,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: ListTile(
+              leading: MedicationIcon.fromMed(med, 44.0),
+              title: Text(med.name),
+              subtitle: Text(_buildSubtitle(context, period, deviceNoticeProv)),
+              trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                CircularBinStatusIndicator(
+                    status: period.status,
+                    deviceStatus: deviceNoticeProv.value),
+                const SizedBox(
+                  width: 10,
+                ),
+              ]),
+              onTap: () {
                 Navigator.of(context)
-                    .push(NewMedicationWizardPage.route(
+                    .push(EditMedicationWizardPage.route(
                         context,
+                        med,
                         Provider.of<SelectedDeviceProvider>(context,
                                 listen: false)
                             .device!
@@ -619,68 +706,68 @@ class DosePeriodArea extends StatelessWidget {
                   Provider.of<MedicationsProvider>(context, listen: false)
                       .refresh();
                 });
-              })
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMed(context, DosePeriod period, ScheduledMedication? med) {
-    if (med != null) {
-      return Card(
-        child: ListTile(
-          leading: MedicationIcon.fromMed(med, 32.0),
-          title: Text('${med.name}'),
-          subtitle: Text(_buildSubtitle(context, period)),
-          trailing: CircularBinStatusIndicator(status: period.status),
-          onTap: () {
-            Navigator.of(context)
-                .push(EditMedicationWizardPage.route(
-                    context,
-                    med,
-                    Provider.of<SelectedDeviceProvider>(context, listen: false)
-                        .device!
-                        .deviceID))
-                .then((value) {
-              Provider.of<MedicationsProvider>(context, listen: false)
-                  .refresh();
-            });
-          },
-        ),
+              },
+            )),
       );
     } else {
-      return Card(
-        child: ShimmerPlaceholder(
-          loading: true,
-          builder: (BuildContext context, bool loading) {
-            return ListTile(
-              leading: Container(
-                decoration:
-                    BoxDecoration(shape: BoxShape.circle, color: Colors.white),
-                height: 32.0,
-                width: 32.0,
-              ),
-              title: Container(width: 120.0, height: 32.0, color: Colors.white),
-            );
-          },
-        ),
-      );
+      return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: SizedBox(
+            height: 80,
+            child: Container(
+                height: 80,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F6F5),
+                  borderRadius: BorderRadius.circular(8.0),
+                  border: Border.all(
+                    color: const Color(0xFF206B8B),
+                    width: 2.0,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: ShimmerPlaceholder(
+                  loading: true,
+                  builder: (BuildContext context, bool loading) {
+                    return ListTile(
+                      leading: Container(
+                        decoration: const BoxDecoration(
+                            shape: BoxShape.circle, color: Colors.white),
+                        height: 44.0,
+                        width: 44.0,
+                      ),
+                      title:
+                          Container(width: 70, height: 40, color: Colors.white),
+                      trailing: Container(
+                        decoration: const BoxDecoration(
+                            shape: BoxShape.circle, color: Colors.white),
+                        height: 20,
+                        width: 20,
+                      ),
+                    );
+                  },
+                )),
+          ));
     }
   }
 
-  String _buildSubtitle(context, DosePeriod period) {
+  String _buildSubtitle(
+      context, DosePeriod period, DeviceNoticeProvider deviceNoticeProv) {
     final fm = DateFormat.jm();
     if (period.scheduledTime == null) {
       return "";
     }
     String format = fm.format(period.scheduledTime!);
-
-    if (period.status == BinStatus.PENDING) {
-      return AppLocalizations.of(context)!.doseTakeAt(format);
+    if (period.status == BinStatus.DISABLED ||
+        deviceNoticeProv.value == DeviceNotice.empty) {
+      return AppLocalizations.of(context)!.doseRefill;
     } else if (period.status == BinStatus.TAKEN) {
       return AppLocalizations.of(context)!.doseTakenAt(format);
     } else if (period.status == BinStatus.TAKE_NOW) {
       return AppLocalizations.of(context)!.doseTakeNow;
+    } else if (period.status == BinStatus.PENDING) {
+      return AppLocalizations.of(context)!.doseTakeAt;
+    } else if (period.status == BinStatus.MISSED) {
+      return AppLocalizations.of(context)!.missedAt(format);
     } else {
       return '';
     }
@@ -744,36 +831,43 @@ class IndexPage extends StatelessWidget {
         refreshable: Provider.of<DeviceStateProvider>(context),
         refreshInterval: const Duration(seconds: 3),
         child: TimeOfDayScaffold(
-            child: CustomScrollView(
-          controller: context
-              .select<ScrollProvider, ScrollController>((p) => p.controller),
-          slivers: [
-            IndexAppBar(),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: sidePad.copyWith(top: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 6.0),
-                      child: Row(
-                        children: [
-                          DeviceListSelector(),
-                          Spacer(),
-                          DeviceSettingsButton()
-                        ],
+            child: Container(
+                color: const Color(0xFFF1F6F5),
+                child: CustomScrollView(
+                  controller: context.select<ScrollProvider, ScrollController>(
+                      (p) => p.controller),
+                  slivers: [
+                    IndexAppBar(),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: sidePad.copyWith(top: 16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 6.0),
+                              child: Row(
+                                children: [
+                                  DeviceListSelector(),
+                                  Spacer(),
+                                  DeviceSettingsButton()
+                                ],
+                              ),
+                            ),
+                            Pillbox()
+                          ],
+                        ),
                       ),
                     ),
-                    Pillbox()
+                    const DeviceNoticeArea(),
+                    const SliverToBoxAdapter(
+                      child: SizedBox(
+                        height: 12.0,
+                      ),
+                    ),
+                    const DosePeriodArea(),
                   ],
-                ),
-              ),
-            ),
-            DeviceNoticeArea(),
-            DosePeriodArea(),
-          ],
-        )),
+                ))),
       )),
     );
   }

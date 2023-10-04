@@ -17,29 +17,9 @@ class BinService {
     "Sun PM",
     "Sun AM"
   ];
-  static const List<String> binIDLabels = [
-    "M",
-    "M",
-    "T",
-    "T",
-    "W",
-    "W",
-    "T",
-    "T",
-    "F",
-    "F",
-    "S",
-    "S",
-    "S",
-    "S"
-  ];
 
   static String binName(int binID) {
     return binIDNames[binID];
-  }
-
-  static String binLabel(int binID) {
-    return binIDLabels[binID];
   }
 
   static DayPeriod binDayPeriod(int binID) {
