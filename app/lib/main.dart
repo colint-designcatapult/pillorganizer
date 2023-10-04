@@ -132,38 +132,58 @@ class MyApp extends StatelessWidget {
                 secondaryHeaderColor: const Color(0xFFBFD2DB),
                 fontFamily: 'Poppins',
                 textTheme: const TextTheme(
-                    titleLarge: TextStyle(
+                  titleLarge: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 24,
+                  ),
+                  titleMedium: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                  ),
+                  titleSmall: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                  labelSmall: TextStyle(
                       fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 24,
-                    ),
-                    titleMedium: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
-                      fontSize: 20,
-                    ),
-                    titleSmall: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w400,
                       fontSize: 16,
-                    ),
-                    labelLarge: TextStyle(fontFamily: 'Poppins', fontSize: 18),
-                    bodySmall: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400),
-                    bodyMedium: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500),
-                    displayLarge: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 32,
-                        fontWeight: FontWeight.w700),
-                    bodyLarge: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600)),
+                      fontWeight: FontWeight.w600),
+                  labelMedium: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600),
+                  labelLarge: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600),
+                  bodySmall: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400),
+                  bodyMedium: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400),
+                  bodyLarge: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 20,
+                      fontWeight: FontWeight.w400),
+                  displaySmall: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500),
+                  displayMedium: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500),
+                  displayLarge: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 32,
+                      fontWeight: FontWeight.w500),
+                ),
               ),
               navigatorObservers: [routeObserver],
             ),

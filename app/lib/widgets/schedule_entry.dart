@@ -29,15 +29,12 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
             Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text('Time Setup:',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700))),
+                    style: Theme.of(context).textTheme.titleSmall)),
             Padding(
                 padding: const EdgeInsets.only(bottom: 22),
                 child: Text(
                     'Select the time when you\'d like to be reminded to take your pills.',
-                    style: Theme.of(context).textTheme.titleSmall)),
+                    style: Theme.of(context).textTheme.bodySmall)),
             Row(
               children: [
                 Expanded(
@@ -56,12 +53,9 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
             Padding(
                 padding: const EdgeInsets.only(bottom: 8, top: 36),
                 child: Text('Timezone:',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700))),
+                    style: Theme.of(context).textTheme.titleSmall)),
             Text('Select the time zone your pill organizer should use.',
-                style: Theme.of(context).textTheme.titleSmall),
+                style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(
               height: 8,
             ),
@@ -114,10 +108,8 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(dayPeriod == DayPeriod.am ? "AM" : "PM",
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.w700)),
+                                  style:
+                                      Theme.of(context).textTheme.titleMedium),
                               const SizedBox(
                                 width: 12,
                               ),
@@ -242,14 +234,14 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const SizedBox(height: 16),
           Text('Select manual time zone:',
-              style: Theme.of(context).textTheme.titleSmall),
+              style: Theme.of(context).textTheme.bodySmall),
           ListTile(
             title: Text(
                 _buildTimeZoneName(
                     Provider.of<SelectedDeviceProvider>(context, listen: false)
                         .device
                         ?.timezone),
-                style: Theme.of(context).textTheme.bodyMedium),
+                style: Theme.of(context).textTheme.displaySmall),
             leading: SvgPicture.asset(
               'lib/assets/SVG/Globe.svg',
               width: 24,
@@ -271,7 +263,7 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const SizedBox(height: 16),
           Text("You will be reminded of this when you change countries.",
-              style: Theme.of(context).textTheme.titleSmall),
+              style: Theme.of(context).textTheme.bodySmall),
         ]),
     ]);
   }

@@ -55,10 +55,7 @@ class WizardStepBodyDelegate extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: _buildAnimatedText(
                                 context: context,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w700),
+                                style: Theme.of(context).textTheme.titleMedium,
                                 text: title!)),
                       if (subtext != null)
                         Padding(
@@ -216,12 +213,15 @@ class WizardStep extends StatelessWidget {
                     Text(
                       "STEP ${provisionningProgress.step} / 3",
                       textAlign: TextAlign.left,
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: Theme.of(context).textTheme.displaySmall,
                     ),
                     Text(
                       provisionningProgress.getTitle(),
                       textAlign: TextAlign.left,
-                      style: Theme.of(context).textTheme.displayLarge,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(fontSize: 32),
                     ),
                   ],
                 ),
@@ -310,7 +310,7 @@ class WizardStep extends StatelessWidget {
                               width: 8,
                             ),
                             Text('Back',
-                                style: Theme.of(context).textTheme.bodyMedium),
+                                style: Theme.of(context).textTheme.bodySmall),
                           ],
                         ),
                       ),

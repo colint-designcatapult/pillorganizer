@@ -28,7 +28,10 @@ class BasicPage extends StatelessWidget {
                   ),
                   if (title != null)
                     DefaultTextStyle.merge(
-                      style: Theme.of(context).textTheme.labelLarge,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(fontSize: 18),
                       child: title!,
                     ),
                 ],
@@ -158,7 +161,7 @@ class _BasicFormState extends State<BasicForm> {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             widget.titleText ?? '',
-                            style: Theme.of(context).textTheme.titleMedium,
+                            style: Theme.of(context).textTheme.labelLarge,
                             textAlign: TextAlign.left,
                           )),
                       Align(
@@ -168,7 +171,7 @@ class _BasicFormState extends State<BasicForm> {
                               top: 8, bottom: 22, right: 0),
                           child: Text(
                             widget.subtitleText ?? '',
-                            style: Theme.of(context).textTheme.bodySmall,
+                            style: Theme.of(context).textTheme.displaySmall,
                           ),
                         ),
                       ),
@@ -260,7 +263,7 @@ class BasicPageTextFormField extends StatelessWidget {
           validator: validator,
           onSaved: onSaved,
           onFieldSubmitted: _onFieldSubmitted(context),
-          style: Theme.of(context).textTheme.labelLarge,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 18),
           textInputAction: textInputAction,
           decoration: InputDecoration(
               border: const OutlineInputBorder(), labelText: labelText),

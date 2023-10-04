@@ -177,7 +177,7 @@ class DeviceListSelector extends StatelessWidget {
                           builder: (_, selectedDevice, __) {
                         return Text(
                           '${selectedDevice.device?.name}',
-                          style: Theme.of(context).textTheme.labelLarge,
+                          style: Theme.of(context).textTheme.displayMedium,
                         );
                       }),
                     ),
@@ -588,7 +588,7 @@ class DosePeriodArea extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
                   _buildTimeString(context, period),
-                  style: Theme.of(context).textTheme.labelLarge,
+                  style: Theme.of(context).textTheme.displayMedium,
                 ),
               ),
               const Expanded(child: Divider()),

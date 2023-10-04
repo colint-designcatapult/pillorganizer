@@ -61,7 +61,7 @@ class _LoginPageState extends State<LoginPage> {
           return PlatformAlertDialog(
               content: Text(
                 message,
-                style: Theme.of(context).textTheme.bodyLarge,
+                style: Theme.of(context).textTheme.labelLarge,
               ),
               actions: [
                 PlatformDialogAction(

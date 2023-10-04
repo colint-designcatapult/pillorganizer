@@ -70,7 +70,7 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
                                       textAlign: TextAlign.center,
                                       style: Theme.of(context)
                                           .textTheme
-                                          .bodyMedium
+                                          .displaySmall
                                           ?.copyWith(color: Colors.white)))),
                           Padding(
                             padding: const EdgeInsets.only(top: 32, bottom: 24),
@@ -90,7 +90,7 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
                                   child: Text('Set up a new device',
                                       style: Theme.of(context)
                                           .textTheme
-                                          .bodyMedium
+                                          .displaySmall
                                           ?.copyWith(
                                               color: Theme.of(context)
                                                   .primaryColor))),
@@ -113,7 +113,7 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
                                 child: Text('Sign in',
                                     style: Theme.of(context)
                                         .textTheme
-                                        .bodyMedium
+                                        .displaySmall
                                         ?.copyWith(color: Colors.white))),
                           ),
                         ],
