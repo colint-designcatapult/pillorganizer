@@ -48,6 +48,57 @@ class BasicPage extends StatelessWidget {
   }
 }
 
+class BasicFormContainer extends StatelessWidget {
+  const BasicFormContainer(
+      {super.key,
+      this.buttonText,
+      this.titleText,
+      this.subtitleText,
+      required this.children,
+      this.future,
+      this.onSubmit,
+      this.hasButton = true});
+
+  final bool hasButton;
+  final String? buttonText;
+  final String? titleText;
+  final String? subtitleText;
+  final Future? future;
+  final VoidCallback? onSubmit;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+        width: double.infinity,
+        child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 32, 20, 24),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.all(Radius.circular(16)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color.fromRGBO(0, 0, 0, 0.10),
+                      offset: Offset(4.0, 4.0),
+                      blurRadius: 10.0,
+                      spreadRadius: 0.0,
+                    ),
+                  ],
+                ),
+                child: BasicForm(
+                  hasButton: hasButton,
+                  buttonText: buttonText,
+                  titleText: titleText,
+                  subtitleText: subtitleText,
+                  future: future,
+                  onSubmit: onSubmit,
+                  children: children,
+                ))));
+  }
+}
+
 class BasicForm extends StatefulWidget {
   const BasicForm(
       {super.key,
@@ -135,92 +186,68 @@ class _BasicFormState extends State<BasicForm> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-        width: double.infinity,
-        child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-                padding: const EdgeInsets.fromLTRB(20, 32, 20, 24),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.all(Radius.circular(16)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color.fromRGBO(0, 0, 0, 0.10),
-                      offset: Offset(4.0, 4.0),
-                      blurRadius: 10.0,
-                      spreadRadius: 0.0,
-                    ),
-                  ],
+    return Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          if (widget.titleText != null)
+            Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  widget.titleText!,
+                  style: Theme.of(context).textTheme.labelLarge,
+                  textAlign: TextAlign.left,
+                )),
+          if (widget.subtitleText != null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 22, right: 0),
+                child: Text(
+                  widget.subtitleText!,
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
-                child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            widget.titleText ?? '',
-                            style: Theme.of(context).textTheme.labelLarge,
-                            textAlign: TextAlign.left,
-                          )),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                          padding: const EdgeInsets.only(
-                              top: 8, bottom: 22, right: 0),
-                          child: Text(
-                            widget.subtitleText ?? '',
-                            style: Theme.of(context).textTheme.displaySmall,
-                          ),
-                        ),
-                      ),
-                      Form(
-                        key: _formKey,
-                        child: FormSubmitCallback(
-                          callback: _onSubmit,
-                          child: Column(
-                            children: [
-                              const SizedBox(
-                                height: 15,
-                              ),
-                              ...widget.children,
-                              const SizedBox(
-                                height: 15,
-                              ),
-                              SizedBox(
-                                  width: double.infinity,
-                                  height: 48,
-                                  child: FutureBuilder(
-                                      future: widget.future,
-                                      builder: (context, snapshot) {
-                                        return OutlinedButton(
-                                            onPressed: _onPressed(snapshot),
-                                            style: OutlinedButton.styleFrom(
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          8.0),
-                                                ),
-                                                padding:
-                                                    const EdgeInsets.all(12),
-                                                backgroundColor:
-                                                    const Color(0xff043C4D),
-                                                foregroundColor: Colors.white,
-                                                disabledForegroundColor:
-                                                    Colors.white,
-                                                disabledBackgroundColor:
-                                                    Theme.of(context)
-                                                        .primaryColor
-                                                        .withAlpha(127)),
-                                            child:
-                                                _buildButtonContents(snapshot));
-                                      })),
-                            ],
-                          ),
-                        ),
-                      )
-                    ]))));
+              ),
+            ),
+          Form(
+            key: _formKey,
+            child: FormSubmitCallback(
+              callback: _onSubmit,
+              child: Column(
+                children: [
+                  const SizedBox(
+                    height: 15,
+                  ),
+                  ...widget.children,
+                  const SizedBox(
+                    height: 15,
+                  ),
+                  SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: FutureBuilder(
+                          future: widget.future,
+                          builder: (context, snapshot) {
+                            return OutlinedButton(
+                                onPressed: _onPressed(snapshot),
+                                style: OutlinedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                    padding: const EdgeInsets.all(12),
+                                    backgroundColor: const Color(0xff043C4D),
+                                    foregroundColor: Colors.white,
+                                    disabledForegroundColor: Colors.white,
+                                    disabledBackgroundColor: Theme.of(context)
+                                        .primaryColor
+                                        .withAlpha(127)),
+                                child: _buildButtonContents(snapshot));
+                          })),
+                ],
+              ),
+            ),
+          )
+        ]);
   }
 }
 

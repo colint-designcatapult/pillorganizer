@@ -26,7 +26,7 @@ class _LoginPageState extends State<LoginPage> {
         bgColor: const Color(0xFFBFD2DB),
         child: Padding(
             padding: const EdgeInsets.only(top: 35),
-            child: BasicForm(
+            child: BasicFormContainer(
               titleText: 'Sign In',
               subtitleText: 'Sign In to your account for better experience.',
               buttonText: 'Continue',

@@ -79,7 +79,6 @@ class _ProvisionPageState extends State<ProvisionPage>
               return WizardStep(
                 height: 400,
                 provisionningProgress: provisionningProgress,
-                icon: _buildIcon(data),
                 title: _buildTitle(data),
                 subtext: _buildSubtitle(data),
                 onBackPressed: () => Navigator.of(context).pop(),
@@ -135,18 +134,6 @@ class _ProvisionPageState extends State<ProvisionPage>
             .pushReplacement(ProvisionSelectWifiPage.route(context, state));
       }
     });
-  }
-
-  Widget _buildIcon(data) {
-    if (data.item2 != null) {
-      return Icon(Icons.close, color: Theme.of(context).errorColor);
-    } else if (data.item1 == ProvisionStage.scanning_ble) {
-      return const Icon(Icons.phonelink_ring);
-    } else if (data.item1 == ProvisionStage.scanning_wifi) {
-      return const Icon(Icons.bluetooth_searching);
-    } else {
-      return const Icon(Icons.question_mark);
-    }
   }
 
   String _buildTitle(data) {
@@ -263,7 +250,6 @@ class ProvisionSelectWifiPage extends StatelessWidget {
           builder: (_, data, __) {
             return WizardStep(
               provisionningProgress: provisionningProgress,
-              icon: const Icon(Icons.wifi),
               title: AppLocalizations.of(context)!.provSelectWifi,
               subtext: AppLocalizations.of(context)!.provSelectWifiSubtitle,
               onBackPressed: () => Navigator.of(context).pop(),
@@ -401,7 +387,6 @@ class ProvisionConnectingPage extends StatelessWidget {
               return WizardStep(
                 height: 400,
                 provisionningProgress: provisionningProgress,
-                icon: _buildIcon(context, data),
                 title: _buildTitle(data),
                 subtext: _buildSubtitle(data),
                 footer: _buildFooter(context, data),
@@ -476,18 +461,6 @@ class ProvisionConnectingPage extends StatelessWidget {
     } else {
       return ErrorInfoBox(error: state.error);
     }*/
-  }
-
-  Widget _buildIcon(context, data) {
-    if (data.item2 != null) {
-      return Icon(Icons.close, color: Theme.of(context).colorScheme.error);
-    } else if (data.item1 == ProvisionStage.finalizing) {
-      return const Icon(Icons.cloud_sync);
-    } else if (data.item1 == ProvisionStage.complete) {
-      return Icon(Icons.check_circle, color: Colors.green[700]);
-    } else {
-      return const Icon(Icons.question_mark);
-    }
   }
 
   String _buildTitle(data) {
