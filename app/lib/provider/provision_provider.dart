@@ -127,6 +127,14 @@ class ProvisionProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> _setServerUrl() async {
+    var res = await _flutterEspBleProvPlugin.customEndpoint(_state.deviceName!,
+        _popKey, "server-url", hex.decode(AppApi.base()) as Uint8List);
+    if (res == null) {
+      return Future.error("Could not set server url");
+    }
+  }
+
   Future<void> _setOobKey(Uint8List key) async {
     var res = await _flutterEspBleProvPlugin.customEndpoint(
         _state.deviceName!, _popKey, "provision-key", key);
@@ -159,7 +167,7 @@ class ProvisionProvider extends ChangeNotifier {
         ProvisionStart(serialNo: sn, deviceClass: AppApi.deviceClass()));
     _state = _state.copyWith(provisionID: prov.id, serialNo: sn);
     notifyListeners();
-
+    await _setServerUrl();
     await _setOobKey(hex.decode(prov.oobKey) as Uint8List);
     return await Future.delayed(const Duration(seconds: 3));
   }
