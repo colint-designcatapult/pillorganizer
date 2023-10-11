@@ -77,7 +77,7 @@ class _ProvisionPageState extends State<ProvisionPage>
                 Tuple3(prov.state.stage, prov.state.error, prov.state.progress),
             builder: (_, data, __) {
               return WizardStep(
-                height: 400,
+                height: data.item2 != null ? null : 400,
                 provisionningProgress: provisionningProgress,
                 title: _buildTitle(data),
                 subtext: _buildSubtitle(data),
@@ -103,14 +103,13 @@ class _ProvisionPageState extends State<ProvisionPage>
 
   Widget _buildBody(data) {
     if (data.item2 != null) {
-      return SliverToBoxAdapter(
-          child: Column(
-        children: [
-          Padding(
+      return Expanded(
+          child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40.0),
-              child: ErrorInfoBox(error: data.item2)),
-        ],
-      ));
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: ErrorInfoBox(error: data.item2),
+              )));
     } else {
       return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -385,7 +384,7 @@ class ProvisionConnectingPage extends StatelessWidget {
             selector: (_, prov) => Tuple2(prov.state.stage, prov.state.error),
             builder: (_, data, __) {
               return WizardStep(
-                height: 400,
+                height: data.item2 != null ? null : 400,
                 provisionningProgress: provisionningProgress,
                 title: _buildTitle(data),
                 subtext: _buildSubtitle(data),
@@ -419,11 +418,13 @@ class ProvisionConnectingPage extends StatelessWidget {
 
   Widget _buildBody(context, data) {
     if (data.item1 == ProvisionStage.failed || data.item2 != null) {
-      return SliverToBoxAdapter(
+      return Expanded(
           child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40.0),
-        child: ErrorInfoBox(error: data.item2),
-      ));
+              padding: const EdgeInsets.symmetric(horizontal: 40.0),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: ErrorInfoBox(error: data.item2),
+              )));
     } else {
       return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
