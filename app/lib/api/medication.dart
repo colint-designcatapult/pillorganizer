@@ -10,19 +10,19 @@ part 'medication.freezed.dart';
 
 enum MedicationShape {
   capsule,
-  diamond,
+  // diamond,
   doubleCircle,
-  heptagon,
+  // heptagon,
   hexagon,
-  octagon,
-  oval,
+  // octagon,
+  // oval,
   pentagon,
-  rectangle,
+  //rectangle,
   round,
-  semicircle,
+  // semicircle,
   square,
   tear,
-  trapezoid,
+  // trapezoid,
   triangle;
 
   final bool isEmpty = false;
@@ -33,32 +33,32 @@ extension MedicationShapeExtension on MedicationShape {
     switch (this) {
       case MedicationShape.capsule:
         return 'CAPSULE';
-      case MedicationShape.diamond:
-        return 'DIAMOND';
+      // case MedicationShape.diamond:
+      //   return 'DIAMOND';
       case MedicationShape.doubleCircle:
         return 'DOUBLE_CIRCLE';
-      case MedicationShape.heptagon:
-        return 'HEPTAGON';
+      // case MedicationShape.heptagon:
+      //   return 'HEPTAGON';
       case MedicationShape.hexagon:
         return 'HEXAGON';
-      case MedicationShape.octagon:
-        return 'OCTAGON';
-      case MedicationShape.oval:
-        return 'OVAL';
+      // case MedicationShape.octagon:
+      //   return 'OCTAGON';
+      // case MedicationShape.oval:
+      //   return 'OVAL';
       case MedicationShape.pentagon:
         return 'PENTAGON';
-      case MedicationShape.rectangle:
-        return 'RECTANGLE';
+      // case MedicationShape.rectangle:
+      //   return 'RECTANGLE';
       case MedicationShape.round:
         return 'ROUND';
-      case MedicationShape.semicircle:
-        return 'SEMICIRCLE';
+      // case MedicationShape.semicircle:
+      //   return 'SEMICIRCLE';
       case MedicationShape.square:
         return 'SQUARE';
       case MedicationShape.tear:
         return 'TEAR';
-      case MedicationShape.trapezoid:
-        return 'TRAPEZOID';
+      // case MedicationShape.trapezoid:
+      //   return 'TRAPEZOID';
       case MedicationShape.triangle:
         return 'TRIANGLE';
     }
@@ -68,32 +68,32 @@ extension MedicationShapeExtension on MedicationShape {
     switch (this) {
       case MedicationShape.capsule:
         return 'Capsule';
-      case MedicationShape.diamond:
-        return 'Diamond';
+      // case MedicationShape.diamond:
+      //   return 'Diamond';
       case MedicationShape.doubleCircle:
         return 'Double circle';
-      case MedicationShape.heptagon:
-        return 'Heptagon';
+      // case MedicationShape.heptagon:
+      //   return 'Heptagon';
       case MedicationShape.hexagon:
         return 'Hexagon';
-      case MedicationShape.octagon:
-        return 'Octagon';
-      case MedicationShape.oval:
-        return 'Oval';
+      // case MedicationShape.octagon:
+      //   return 'Octagon';
+      // case MedicationShape.oval:
+      //   return 'Oval';
       case MedicationShape.pentagon:
         return 'Pentagon';
-      case MedicationShape.rectangle:
-        return 'Rectangle';
+      // case MedicationShape.rectangle:
+      //   return 'Rectangle';
       case MedicationShape.round:
         return 'Round';
-      case MedicationShape.semicircle:
-        return 'Semicircle';
+      // case MedicationShape.semicircle:
+      //   return 'Semicircle';
       case MedicationShape.square:
         return 'Square';
       case MedicationShape.tear:
         return 'Tear';
-      case MedicationShape.trapezoid:
-        return 'Trapezoid';
+      // case MedicationShape.trapezoid:
+      //   return 'Trapezoid';
       case MedicationShape.triangle:
         return 'Triangle';
     }
@@ -103,32 +103,32 @@ extension MedicationShapeExtension on MedicationShape {
     switch (name) {
       case 'CAPSULE':
         return MedicationShape.capsule;
-      case 'DIAMOND':
-        return MedicationShape.diamond;
+      // case 'DIAMOND':
+      //   return MedicationShape.diamond;
       case 'DOUBLE_CIRCLE':
         return MedicationShape.doubleCircle;
-      case 'HEPTAGON':
-        return MedicationShape.heptagon;
+      // case 'HEPTAGON':
+      //   return MedicationShape.heptagon;
       case 'HEXAGON':
         return MedicationShape.hexagon;
-      case 'OCTAGON':
-        return MedicationShape.octagon;
-      case 'OVAL':
-        return MedicationShape.oval;
+      // case 'OCTAGON':
+      //   return MedicationShape.octagon;
+      // case 'OVAL':
+      //   return MedicationShape.oval;
       case 'PENTAGON':
         return MedicationShape.pentagon;
-      case 'RECTANGLE':
-        return MedicationShape.rectangle;
+      // case 'RECTANGLE':
+      //   return MedicationShape.rectangle;
       case 'ROUND':
         return MedicationShape.round;
-      case 'SEMICIRCLE':
-        return MedicationShape.semicircle;
+      // case 'SEMICIRCLE':
+      //   return MedicationShape.semicircle;
       case 'SQUARE':
         return MedicationShape.square;
       case 'TEAR':
         return MedicationShape.tear;
-      case 'TRAPEZOID':
-        return MedicationShape.trapezoid;
+      // case 'TRAPEZOID':
+      //   return MedicationShape.trapezoid;
       case 'TRIANGLE':
         return MedicationShape.triangle;
       default:

@@ -1,5 +1,6 @@
 import 'package:app/api/medication.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class MedicationIcon extends StatelessWidget {
   const MedicationIcon(
@@ -24,62 +25,36 @@ class MedicationIcon extends StatelessWidget {
       child: Center(
         child: Stack(children: [
           Center(
-            child: Image.asset(_assetColor(),
-                width: size * _sizeModifier(),
-                color: color ?? Theme.of(context).iconTheme.color),
-          ),
-          Center(child: Image.asset(_assetFG(), width: size * _sizeModifier())),
+              child: SvgPicture.asset(_iconAssets(),
+                  colorFilter: ColorFilter.mode(
+                      color ?? Theme.of(context).iconTheme.color!,
+                      BlendMode.modulate))),
         ]),
       ),
     );
   }
 
-  String _assetFG() {
+//Will need more icons and to have every MedicationShape icons
+  String _iconAssets() {
     switch (shape) {
+      case MedicationShape.hexagon:
+        return "lib/assets/SVG/pills/hexagon.svg";
+      case MedicationShape.round:
+        return 'lib/assets/SVG/pills/round.svg';
+      case MedicationShape.triangle:
+        return "lib/assets/SVG/pills/triangle.svg";
+      case MedicationShape.doubleCircle:
+        return "lib/assets/SVG/pills/doubleCircle.svg";
+      case MedicationShape.tear:
+        return "lib/assets/SVG/pills/tear.svg";
+      case MedicationShape.square:
+        return "lib/assets/SVG/pills/square.svg";
+      case MedicationShape.pentagon:
+        return "lib/assets/SVG/pills/pentagon.svg";
       case MedicationShape.capsule:
-        return "lib/assets/meds/CAPSULE_FG.png";
-      case MedicationShape.diamond:
-        return "lib/assets/meds/DIAMOND_FG.png";
-      case MedicationShape.oval:
-        return "lib/assets/meds/OVAL_FG.png";
-      case MedicationShape.rectangle:
-        return "lib/assets/meds/RECTANGLE_FG.png";
-      case MedicationShape.round:
-        return "lib/assets/meds/ROUND_FG.png";
-      case MedicationShape.square:
-        return "lib/assets/meds/SQUARE_FG.png";
+        return 'lib/assets/SVG/pills/capsule.svg';
       default:
-        return "lib/assets/meds/UNK_FG.png";
-    }
-  }
-
-  String _assetColor() {
-    switch (shape) {
-      case MedicationShape.capsule:
-        return "lib/assets/meds/CAPSULE_COLOR.png";
-      case MedicationShape.diamond:
-        return "lib/assets/meds/DIAMOND_COLOR.png";
-      case MedicationShape.oval:
-        return "lib/assets/meds/OVAL_COLOR.png";
-      case MedicationShape.rectangle:
-        return "lib/assets/meds/RECTANGLE_COLOR.png";
-      case MedicationShape.round:
-        return "lib/assets/meds/ROUND_COLOR.png";
-      case MedicationShape.square:
-        return "lib/assets/meds/SQUARE_COLOR.png";
-      default:
-        return "lib/assets/meds/UNK_COLOR.png";
-    }
-  }
-
-  double _sizeModifier() {
-    switch (shape) {
-      case MedicationShape.square:
-        return 0.75;
-      case MedicationShape.round:
-        return 0.75;
-      default:
-        return 1;
+        return "lib/assets/SVG/pills/capsule.svg";
     }
   }
 }
@@ -99,28 +74,23 @@ class HorizontalPillShapeSelectorOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: GestureDetector(
-        onTap: () => onTap(shape),
-        child: Container(
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(10)),
-              color: const Color.fromARGB(16, 0, 0, 0),
-              border: selected
-                  ? Border.all(color: Theme.of(context).hintColor, width: 2.0)
-                  : const Border()),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              MedicationIcon(size: 64, shape: shape, color: color),
-              Text(
-                '${shape.displayName}',
-                overflow: TextOverflow.ellipsis,
-              )
-            ],
-          ),
+    return GestureDetector(
+      onTap: () => onTap(shape),
+      child: Container(
+        height: 56,
+        width: 56,
+        decoration: BoxDecoration(
+            borderRadius: const BorderRadius.all(Radius.circular(8)),
+            color: const Color.fromARGB(16, 0, 0, 0),
+            border: selected
+                ? Border.all(color: Theme.of(context).primaryColor, width: 2.0)
+                : const Border()),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            MedicationIcon(size: 40, shape: shape, color: color),
+          ],
         ),
       ),
     );
@@ -146,9 +116,17 @@ class _PillShapeSelectorState extends State<PillShapeSelector> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('Choose a Shape', style: Theme.of(context).textTheme.bodyMedium),
+        Text('Shape',
+            style: Theme.of(context)
+                .textTheme
+                .displayLarge
+                ?.copyWith(fontSize: 28)),
+        const SizedBox(height: 12),
         GridView.count(
-            crossAxisCount: 3,
+            crossAxisCount: 4,
+            childAspectRatio: 1,
+            crossAxisSpacing: 28,
+            mainAxisSpacing: 28,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             children: [
@@ -182,28 +160,27 @@ class MedicationColorSelectorColor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: GestureDetector(
-        onTap: () => onTap(color),
-        child: Container(
-          decoration: BoxDecoration(
-              borderRadius: const BorderRadius.all(Radius.circular(64)),
-              color: color,
-              border: Border.all(
-                  color: selected
-                      ? Theme.of(context).hintColor
-                      : Theme.of(context).shadowColor,
-                  width: 2),
-              boxShadow: [
-                BoxShadow(
-                    offset: Offset.fromDirection(1),
-                    blurRadius: 1,
-                    color: Colors.black.withAlpha(100),
-                    spreadRadius: 1)
-              ]),
-          child: icon,
+    return GestureDetector(
+      onTap: () => onTap(color),
+      child: Container(
+        height: 56,
+        width: 56,
+        decoration: BoxDecoration(
+          borderRadius: const BorderRadius.all(Radius.circular(8)),
+          color: color,
+          border: selected
+              ? Border.all(
+                  color: Theme.of(context).primaryColor,
+                  width: 4,
+                )
+              : icon != null
+                  ? Border.all(
+                      color: Theme.of(context).secondaryHeaderColor,
+                      width: 2,
+                    )
+                  : null,
         ),
+        child: icon,
       ),
     );
   }
@@ -231,9 +208,17 @@ class MedicationColorSelector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('Choose a Color', style: Theme.of(context).textTheme.bodyMedium),
+        Text('Color',
+            style: Theme.of(context)
+                .textTheme
+                .displayLarge
+                ?.copyWith(fontSize: 28)),
+        const SizedBox(height: 12),
         GridView.count(
           crossAxisCount: 4,
+          childAspectRatio: 1,
+          crossAxisSpacing: 28,
+          mainAxisSpacing: 28,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           children: [

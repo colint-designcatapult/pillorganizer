@@ -1,3 +1,4 @@
+import 'package:app/screens/modals/add_new_pills_modal.dart';
 import 'package:flutter/material.dart';
 
 class PillsScreen extends StatelessWidget {
@@ -6,18 +7,20 @@ class PillsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      backgroundColor: Color(0xFFC3D1DA),
-      body: SafeArea(
-        child: Center(
-          child: Text(
-            'My Pills',
-            style: TextStyle(
-              fontSize: 28.0,
-              fontWeight: FontWeight.bold,
+        backgroundColor: Color(0xFFC3D1DA),
+        body: SafeArea(
+          child: Column(children: [
+            Center(
+              child: Text(
+                'My Pills',
+                style: TextStyle(
+                  fontSize: 28.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
-    );
+            AddNewPillModal()
+          ]),
+        ));
   }
 }

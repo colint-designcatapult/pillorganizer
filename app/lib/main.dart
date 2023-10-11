@@ -15,7 +15,6 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/data/latest.dart' as tz;
-
 import 'provider/authentication_provider.dart';
 import 'firebase_options.dart';
 import 'provider/schedule_provider.dart';

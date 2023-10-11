@@ -69,6 +69,14 @@ class NewMedicationProvider with ChangeNotifier {
     });
   }
 
+  bool canComplete() {
+    return _state.assignedDispenseTimes?.isEmpty == false &&
+        _state.color != null &&
+        _state.name != null &&
+        _state.name!.isNotEmpty &&
+        _state.shape != null;
+  }
+
   void toggleDispenseTime(int dispenseID) {
     Set<int> newSet = {...?state.assignedDispenseTimes};
     if (newSet.contains(dispenseID)) {

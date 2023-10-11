@@ -47,6 +47,8 @@ PODS:
     - Flutter
   - flutter_local_notifications (0.0.1):
     - Flutter
+  - flutter_native_timezone (0.0.1):
+    - Flutter
   - flutter_secure_storage (6.0.0):
     - Flutter
   - flutter_timezone (0.0.1):
@@ -94,6 +96,7 @@ DEPENDENCIES:
   - flutter_blue_plus (from `.symlinks/plugins/flutter_blue_plus/ios`)
   - flutter_esp_ble_prov (from `.symlinks/plugins/flutter_esp_ble_prov/ios`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
+  - flutter_native_timezone (from `.symlinks/plugins/flutter_native_timezone/ios`)
   - flutter_secure_storage (from `.symlinks/plugins/flutter_secure_storage/ios`)
   - flutter_timezone (from `.symlinks/plugins/flutter_timezone/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
@@ -127,6 +130,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_esp_ble_prov/ios"
   flutter_local_notifications:
     :path: ".symlinks/plugins/flutter_local_notifications/ios"
+  flutter_native_timezone:
+    :path: ".symlinks/plugins/flutter_native_timezone/ios"
   flutter_secure_storage:
     :path: ".symlinks/plugins/flutter_secure_storage/ios"
   flutter_timezone:
@@ -149,6 +154,7 @@ SPEC CHECKSUMS:
   flutter_blue_plus: 316ac8d1179789616d2c148e8a03c37720e63933
   flutter_esp_ble_prov: a18fa58626e98c50e663a3d054dd99b9dde6b84d
   flutter_local_notifications: 0c0b1ae97e741e1521e4c1629a459d04b9aec743
+  flutter_native_timezone: 5f05b2de06c9776b4cc70e1839f03de178394d22
   flutter_secure_storage: 23fc622d89d073675f2eaa109381aefbcf5a49be
   flutter_timezone: ffb07bdad3c6276af8dada0f11978d8a1f8a20bb
   GoogleDataTransport: 54dee9d48d14580407f8f5fbf2f496e92437a2f2

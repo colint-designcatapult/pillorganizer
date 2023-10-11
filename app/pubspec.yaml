@@ -110,6 +110,14 @@ flutter:
     - lib/assets/SVG/redlight.svg
     - lib/assets/SVG/offlight.svg
     - lib/assets/SVG/cancelIcon.svg
+    - lib/assets/SVG/pills/hexagon.svg
+    - lib/assets/SVG/pills/round.svg
+    - lib/assets/SVG/pills/triangle.svg
+    - lib/assets/SVG/pills/doubleCircle.svg
+    - lib/assets/SVG/pills/tear.svg
+    - lib/assets/SVG/pills/square.svg
+    - lib/assets/SVG/pills/pentagon.svg
+    - lib/assets/SVG/pills/capsule.svg
     - lib/assets/provision-plug-in.png
     - lib/assets/base_device.png
     - lib/assets/base_bin_sprite.png
