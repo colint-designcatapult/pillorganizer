@@ -26,10 +26,11 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).primaryColor,
+      resizeToAvoidBottomInset: true,
       body: Center(
-        child: Column(
+        child: SingleChildScrollView(
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           mainAxisSize: MainAxisSize.max,
           children: [
             Padding(
@@ -42,6 +43,7 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
                     ?.copyWith(color: Colors.white),
               ),
             ),
+            const SizedBox(height: 34),
             Image.asset(
               'lib/assets/main-icon.png',
             ),
@@ -125,7 +127,7 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
                   },
                 ))
           ],
-        ),
+        )),
       ),
     );
   }
@@ -166,9 +168,16 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
   }
 
   void _login() {
-    showMaterialModalBottomSheet<bool>(
+    showModalBottomSheet<bool>(
         context: context,
-        builder: (context) => LoginPage()).then((bool? result) {
+        isScrollControlled: true,
+        elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(16),
+          ),
+        ),
+        builder: (context) => const LoginPage()).then((bool? result) {
       if (result != null) {
         _handleAuthSuccess(result);
       }

@@ -14,6 +14,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
   Future<void>? _loginFuture;
   String? username;
   String? password;
@@ -21,37 +22,168 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BasicPage(
-        title: const Text('Sign in to CabiNET'),
-        bgColor: const Color(0xFFBFD2DB),
-        child: Padding(
-            padding: const EdgeInsets.only(top: 35),
-            child: BasicFormContainer(
-              titleText: 'Sign In',
-              subtitleText: 'Sign In to your account for better experience.',
-              buttonText: 'Continue',
-              onSubmit: _submitForm,
-              future: _loginFuture,
-              children: [
-                BasicPageTextFormField(
-                  labelText: 'Email',
-                  validator: Validatorless.multiple([
-                    if (!useAnon) Validatorless.email('Not a valid email'),
-                    Validatorless.required('Enter an email')
-                  ]),
-                  autofocus: true,
-                  onSaved: (val) => username = val,
+    const navFooterHeight = 72.0;
+    return SizedBox(
+        height: MediaQuery.of(context).size.height * 0.8,
+        child: Form(
+            key: _formKey,
+            child: Stack(children: [
+              CustomScrollView(slivers: [
+                SliverAppBar(
+                  floating: false,
+                  pinned: true,
+                  elevation: 0,
+                  scrolledUnderElevation: 0,
+                  backgroundColor: const Color(0xFFFBFCFF),
+                  leading: null,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(16),
+                    ),
+                  ),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.black),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
                 ),
-                BasicPageTextFormField(
-                  labelText: 'Password',
-                  validator: Validatorless.required('Enter your password'),
-                  onFieldSubmitted: (value) => _submitForm(),
-                  onSaved: (val) => password = val,
-                  textInputAction: TextInputAction.done,
-                  obscureText: true,
-                ),
-              ],
-            )));
+                SliverToBoxAdapter(
+                    child: SizedBox(
+                        height: 690,
+                        child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 36),
+                            child: Column(children: [
+                              Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    'Sign In',
+                                    style:
+                                        Theme.of(context).textTheme.labelLarge,
+                                    textAlign: TextAlign.left,
+                                  )),
+                              Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                        top: 8, bottom: 22, right: 0),
+                                    child: Text(
+                                      'Sign In to your account for better experience.',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium,
+                                    ),
+                                  )),
+                              const SizedBox(
+                                height: 24,
+                              ),
+                              BasicPageTextFormField(
+                                labelText: 'Email',
+                                validator: Validatorless.multiple([
+                                  if (!useAnon)
+                                    Validatorless.email('Not a valid email'),
+                                  Validatorless.required('Enter an email')
+                                ]),
+                                onSaved: (val) => username = val,
+                              ),
+                              BasicPageTextFormField(
+                                labelText: 'Password',
+                                validator: Validatorless.required(
+                                    'Enter your password'),
+                                onFieldSubmitted: (value) => _onSubmit(),
+                                onSaved: (val) => password = val,
+                                textInputAction: TextInputAction.done,
+                                obscureText: true,
+                              ),
+                            ])))),
+              ]),
+              Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    height: navFooterHeight,
+                    color: const Color(0xFFFBFCFF),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => Navigator.of(context).pop(),
+                            child: SizedBox(
+                              height: navFooterHeight,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.arrow_back,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(
+                                    width: 8,
+                                  ),
+                                  Text('Back',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: SizedBox(
+                              width: double.infinity,
+                              height: navFooterHeight,
+                              child: FutureBuilder(
+                                  future: _loginFuture,
+                                  builder: (context, snapshot) {
+                                    return GestureDetector(
+                                      onTap: _onPressed(snapshot),
+                                      child: Container(
+                                        height: navFooterHeight,
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).primaryColor,
+                                          borderRadius: const BorderRadius.only(
+                                            topLeft: Radius.circular(32),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text('Sign In',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleSmall
+                                                    ?.copyWith(
+                                                        color: Colors.white)),
+                                            const SizedBox(
+                                              width: 8,
+                                            ),
+                                            const Icon(
+                                              Icons.arrow_forward,
+                                              size: 24,
+                                              color: Colors.white,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  })),
+                        ),
+                      ],
+                    ),
+                  )),
+            ])));
+  }
+
+  VoidCallback? _onPressed(AsyncSnapshot snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return null;
+    } else {
+      return () => _onSubmit();
+    }
   }
 
   void _showErrorDialog(String message) {
@@ -72,6 +204,14 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ]);
         });
+  }
+
+  void _onSubmit() {
+    if (_formKey.currentState?.validate() ?? false) {
+      _formKey.currentState?.save();
+      _submitForm();
+    }
+    ;
   }
 
   void _submitForm() {
