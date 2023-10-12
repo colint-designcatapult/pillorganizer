@@ -24,9 +24,10 @@ class Pillbox extends StatelessWidget {
           notice.name != 'empty' && notice.name != 'disconnected';
 
       return SizedBox(
-        width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height * 0.32,
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween, // Add this line
+
           children: daysOfWeek.asMap().entries.map((entry) {
             final nightIndex = entry.key * 2;
             final day = entry.value;

@@ -174,9 +174,9 @@ class DeviceRepository {
     NumberFormat formatter = NumberFormat("00");
     String iso = '${date.year}-${formatter.format(date.month)}'
         '-${formatter.format(date.day)}';
-    return client
-        .stateDate(deviceID, iso)
-        .then((value) => DeviceState.fromDTO(value));
+    return client.stateDate(deviceID, iso).then((value) {
+      return DeviceState.fromDTO(value);
+    });
   }
 
   Future<DeviceUser> update(int deviceID,
