@@ -96,3 +96,5 @@ fabric.properties
 /hivemq_ext/target/
 /hivemq_ext/hivemq_ext/
 /hivemq_ext/hivemq_ext-1.0-SNAPSHOT-distribution.zip
+
+*.env

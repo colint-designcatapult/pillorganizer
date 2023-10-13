@@ -6,6 +6,7 @@ import 'package:app/service/time_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:retrofit/retrofit.dart';
@@ -16,12 +17,7 @@ part 'api.g.dart';
 
 class AppApi {
   static String base() {
-    // used to switch between API servers depending on config
-    if (kReleaseMode) {
-      return "https://jctbackend.herokuapp.com/api/v1";
-    } else {
-      return "https://jctbackend.herokuapp.com/api/v1";
-    }
+    return dotenv.env['API_URL'] ?? 'https://jctbackend.herokuapp.com/api/v1';
   }
 
   static String deviceClass() {

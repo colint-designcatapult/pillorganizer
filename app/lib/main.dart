@@ -3,7 +3,6 @@ import 'package:app/navigation/tab_navigator.dart';
 import 'package:app/provider/medication_provider.dart';
 import 'package:app/provider/time_provider.dart';
 import 'package:app/screens/first_launch.dart';
-import 'package:app/screens/tab/index.dart';
 import 'package:app/screens/post_setup_wizard.dart';
 import 'package:app/service/credential_manager.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -20,6 +19,7 @@ import 'firebase_options.dart';
 import 'provider/schedule_provider.dart';
 import 'provider/selected_device_provider.dart';
 import 'screens/auth/launch_page_login.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -35,7 +35,7 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   tz.initializeTimeZones();
-
+  await dotenv.load();
   runApp(const MyApp());
 }
 

@@ -48,10 +48,10 @@ android {
 
     signingConfigs {
         release {
-            storeFile file('brendan.jks')
-            storePassword ANDROID_STORE_PASSWORD
-            keyAlias 'brendan'
-            keyPassword ANDROID_KEY_PASSWORD
+            storeFile file('thirdbridge.jks')
+            storePassword 'Secret12345'
+            keyAlias 'tbkey'
+            keyPassword 'Secret12345'
         }
     }
 

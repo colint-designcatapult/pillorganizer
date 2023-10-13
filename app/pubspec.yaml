@@ -70,6 +70,7 @@ dependencies:
   dio: ^5.3.3
   flutter_native_timezone: ^1.0.7
   dotted_border: ^2.1.0
+  flutter_dotenv: ^5.1.0
 
 dev_dependencies:
   flutter_test:
@@ -100,6 +101,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - .env
     - lib/assets/noun-open-box-1485434.svg
     - lib/assets/package-svgrepo-com.svg
     - lib/assets/SVG/moon.svg
