@@ -21,7 +21,6 @@ import '../../provider/selected_device_provider.dart';
 import '../../provider/time_provider.dart';
 import '../../widgets/device_icon.dart';
 import '../../widgets/medication_icon.dart';
-import '../../widgets/time_of_day_scaffold.dart';
 import '../device_settings/medication/medication_entry_wizard.dart';
 import '../../widgets/pillbox/pill_box.dart';
 import '../modals/edit_schedule_modal.dart';
@@ -683,44 +682,43 @@ class IndexPage extends StatelessWidget {
           child: AutoRefresh(
         refreshable: Provider.of<DeviceStateProvider>(context),
         refreshInterval: const Duration(seconds: 3),
-        child: TimeOfDayScaffold(
-            child: Container(
-                color: const Color(0xFFF1F6F5),
-                child: CustomScrollView(
-                  controller: context.select<ScrollProvider, ScrollController>(
-                      (p) => p.controller),
-                  slivers: [
-                    IndexAppBar(),
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: sidePad.copyWith(top: 16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 6.0),
-                              child: Row(
-                                children: [
-                                  DeviceListSelector(),
-                                  Spacer(),
-                                  DeviceSettingsButton()
-                                ],
-                              ),
-                            ),
-                            Pillbox()
-                          ],
+        child: Container(
+            color: const Color(0xFFF1F6F5),
+            child: CustomScrollView(
+              controller: context.select<ScrollProvider, ScrollController>(
+                  (p) => p.controller),
+              slivers: [
+                IndexAppBar(),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: sidePad.copyWith(top: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 6.0),
+                          child: Row(
+                            children: [
+                              DeviceListSelector(),
+                              Spacer(),
+                              DeviceSettingsButton()
+                            ],
+                          ),
                         ),
-                      ),
+                        Pillbox()
+                      ],
                     ),
-                    const DeviceNoticeArea(),
-                    const SliverToBoxAdapter(
-                      child: SizedBox(
-                        height: 12.0,
-                      ),
-                    ),
-                    const DosePeriodArea(),
-                  ],
-                ))),
+                  ),
+                ),
+                const DeviceNoticeArea(),
+                const SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 12.0,
+                  ),
+                ),
+                const DosePeriodArea(),
+              ],
+            )),
       )),
     );
   }
