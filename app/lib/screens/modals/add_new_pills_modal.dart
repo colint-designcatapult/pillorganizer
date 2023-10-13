@@ -14,7 +14,6 @@ class AddNewPillModal extends StatefulWidget {
 
 class _AddNewPillModalState extends State<AddNewPillModal> {
   bool showNewMedications = false;
-  static const navFooterHeight = 72.0;
 
   @override
   Widget build(BuildContext context) {
@@ -40,8 +39,27 @@ class _AddNewPillModalState extends State<AddNewPillModal> {
               builder: (context) {
                 return StatefulBuilder(
                     builder: (BuildContext context, StateSetter setState) {
-                  return _buildModalContent(
-                      context, setState, newMedicationProvider);
+                  return NewMedicationModal(
+                    newMedicationProvider: newMedicationProvider,
+                    onBack: () => {
+                      if (showNewMedications)
+                        {
+                          setState(() {
+                            showNewMedications = false;
+                          })
+                        }
+                      else
+                        {Navigator.of(context).pop()}
+                    },
+                    onNext: showNewMedications,
+                    child: showNewMedications
+                        ? const NewMedications()
+                        : AddNewPills(
+                            onAddMedicationClick: () => setState(() {
+                              showNewMedications = true;
+                            }),
+                          ),
+                  );
                 });
               }).whenComplete(() {
             setState(() {
@@ -52,9 +70,24 @@ class _AddNewPillModalState extends State<AddNewPillModal> {
       ),
     );
   }
+}
 
-  Widget _buildModalContent(BuildContext context, StateSetter setState,
-      NewMedicationProvider newMedicationProvider) {
+class NewMedicationModal extends StatelessWidget {
+  final NewMedicationProvider newMedicationProvider;
+  final VoidCallback onBack;
+  final bool? onNext;
+  final Widget child;
+  static const navFooterHeight = 72.0;
+
+  const NewMedicationModal(
+      {super.key,
+      required this.newMedicationProvider,
+      required this.onBack,
+      this.onNext,
+      required this.child});
+
+  @override
+  Widget build(BuildContext context) {
     return ChangeNotifierProvider<NewMedicationProvider>.value(
         value: newMedicationProvider,
         child: SizedBox(
@@ -81,15 +114,8 @@ class _AddNewPillModalState extends State<AddNewPillModal> {
                   ),
                   Expanded(
                     child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      child: showNewMedications
-                          ? const NewMedications()
-                          : AddNewPills(
-                              onAddMedicationClick: () => setState(() {
-                                showNewMedications = true;
-                              }),
-                            ),
-                    ),
+                        duration: const Duration(milliseconds: 200),
+                        child: child),
                   ),
                 ],
               ),
@@ -103,38 +129,25 @@ class _AddNewPillModalState extends State<AddNewPillModal> {
                       children: [
                         Expanded(
                           child: GestureDetector(
-                            onTap: () => {
-                              if (showNewMedications)
-                                {
-                                  setState(() {
-                                    showNewMedications = false;
-                                  })
-                                }
-                              else
-                                {Navigator.of(context).pop()}
-                            },
-                            child: SizedBox(
-                              height: navFooterHeight,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.arrow_back,
-                                    size: 24,
-                                  ),
-                                  const SizedBox(
-                                    width: 8,
-                                  ),
-                                  Text('Back',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium),
-                                ],
-                              ),
+                            onTap: onBack,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.arrow_back,
+                                  size: 24,
+                                ),
+                                const SizedBox(
+                                  width: 8,
+                                ),
+                                Text('Back',
+                                    style:
+                                        Theme.of(context).textTheme.bodyMedium),
+                              ],
                             ),
                           ),
                         ),
-                        if (showNewMedications)
+                        if (onNext == true)
                           Expanded(child: Consumer<NewMedicationProvider>(
                               builder: (context, provider, child) {
                             return GestureDetector(

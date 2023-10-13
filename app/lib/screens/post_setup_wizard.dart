@@ -1,10 +1,14 @@
 import 'package:app/api/medication.dart';
 import 'package:app/provider/authentication_provider.dart';
 import 'package:app/provider/medication_provider.dart';
+import 'package:app/provider/new_medication_provider.dart';
 import 'package:app/provider/schedule_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
+import 'package:app/screens/device_settings/medication/medication_entry_wizard.dart';
+import 'package:app/screens/modals/add_new_pills_modal.dart';
 import 'package:app/service/provisioning_service.dart';
+import 'package:app/widgets/addNewPill/new_medications.dart';
 import 'package:app/widgets/medication_icon.dart';
 import 'package:app/widgets/schedule_entry.dart';
 import 'package:app/widgets/wizard.dart';
@@ -19,7 +23,6 @@ import '../api/api.dart';
 import '../models/user.dart';
 import '../platform/dialog.dart';
 import '../widgets/basic_page.dart';
-import 'device_settings/medication/medication_entry_wizard.dart';
 
 class PostSetupWizard extends StatelessWidget {
   const PostSetupWizard({super.key});
@@ -135,7 +138,7 @@ class NotificationStep extends StatelessWidget {
                                       'Send reminder notifications to your phone',
                                       style: Theme.of(context)
                                           .textTheme
-                                          .titleSmall,
+                                          .bodyMedium,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -188,38 +191,186 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
         padding: const EdgeInsets.only(left: 32.0, right: 32.0, bottom: 32.0),
         child: Consumer<MedicationsProvider>(
           builder: (context, prov, _) {
-            return Column(mainAxisSize: MainAxisSize.max, children: [
-              if ((prov.value?.isNotEmpty ?? false)) ...[
-                ...prov.value!
-                    .map((e) => _buildMedCard(context, e))
-                    .toList(growable: false),
-              ] else ...[
-                const Text('You don\'t have any medications entered yet.')
-              ],
-              TextButton.icon(
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Medication'),
-                  onPressed: () {
-                    Navigator.of(context)
-                        .push(NewMedicationWizardPage.route(
-                            context,
-                            Provider.of<SelectedDeviceProvider>(context,
-                                    listen: false)
-                                .device!
-                                .deviceID,
-                            onComplete: () => setState(() {
-                                  canGoNext = true;
-                                })))
-                        .then((value) {
-                      Provider.of<MedicationsProvider>(context, listen: false)
-                          .refresh();
-                    });
-                  })
+            return Column(children: [
+              GestureDetector(
+                  onTap: () => _addNewPill(prov),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 20, horizontal: 18),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.edit,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Add Pill Manually",
+                            style: Theme.of(context)
+                                .textTheme
+                                .displaySmall
+                                ?.copyWith(color: Colors.white),
+                          )
+                        ]),
+                  )),
+              const SizedBox(
+                height: 16,
+              ),
+              if (prov.value?.isNotEmpty ?? false)
+                GestureDetector(
+                    onTap: () => _showMyPills(prov),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 20, horizontal: 18),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                            color: const Color(0xFF206B8B), width: 1),
+                        color: Colors.white,
+                      ),
+                      child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SvgPicture.asset('lib/assets/SVG/Pill.svg',
+                                colorFilter: const ColorFilter.mode(
+                                    Color(0xFF206B8B), BlendMode.srcIn)),
+                            const SizedBox(width: 8),
+                            Text(
+                              "My Pills",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .displaySmall
+                                  ?.copyWith(color: const Color(0xFF206B8B)),
+                            )
+                          ]),
+                    )),
             ]);
           },
         ),
       ),
     );
+  }
+
+  void _addNewPill(MedicationsProvider prov) {
+    final newMedicationProvider = NewMedicationProvider(
+      Provider.of<SelectedDeviceProvider>(context, listen: false)
+          .device!
+          .deviceID,
+    );
+    showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: const Color(0xFFFBFCFF),
+        elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(16),
+          ),
+        ),
+        builder: (context) => NewMedicationModal(
+            newMedicationProvider: newMedicationProvider,
+            onBack: () => Navigator.of(context).pop(),
+            onNext: true,
+            child: const NewMedications())).whenComplete(() {
+      prov.refresh();
+    });
+  }
+
+  void _showMyPills(MedicationsProvider prov) {
+    double navFootBarHeight = 72;
+    showModalBottomSheet<bool>(
+        context: context,
+        isScrollControlled: true,
+        elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(16),
+          ),
+        ),
+        builder: (context) => SizedBox(
+            height: MediaQuery.of(context).size.height * 0.9,
+            child: Stack(children: [
+              Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        IconButton(
+                          icon: const Icon(
+                            Icons.close,
+                            size: 32,
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    ),
+                    Text('My pills',
+                        style: Theme.of(context).textTheme.titleMedium),
+                    Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                        child: Text(
+                            "Here's a quick overview of all the pills you've added.",
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyMedium)),
+                    Expanded(
+                        child: SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: Column(
+                                mainAxisSize: MainAxisSize.max,
+                                children: [
+                                  ...prov.value!
+                                      .map((e) => _buildMedCard(context, e))
+                                      .toList(growable: false)
+                                ]))),
+                    SizedBox(
+                      height: navFootBarHeight,
+                    )
+                  ])),
+              Align(
+                  alignment: Alignment.bottomCenter,
+                  child: GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      height: navFootBarHeight,
+                      color: const Color(0xFF206B8B),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.arrow_back,
+                                  size: 24,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(
+                                  width: 8,
+                                ),
+                                Text('Back',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(color: Colors.white)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )),
+            ])));
   }
 
   Widget _buildMedCard(context, ScheduledMedication med) {

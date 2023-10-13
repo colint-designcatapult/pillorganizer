@@ -259,7 +259,8 @@ class WizardStep extends StatelessWidget {
                     alignment: Alignment.bottomCenter,
                     child: Padding(
                       padding: const EdgeInsets.only(
-                        top: 100,
+                        top: 8,
+                        bottom: navFooterHeight,
                       ),
                       child: AnimatedSwitcher(
                           duration: const Duration(milliseconds: 350),
@@ -275,19 +276,8 @@ class WizardStep extends StatelessWidget {
                               child: child,
                             );
                           },
-                          child: Container(
+                          child: SizedBox(
                             width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).scaffoldBackgroundColor,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
-                                  spreadRadius: 1,
-                                  blurRadius: 3,
-                                  offset: const Offset(0, -3),
-                                ),
-                              ],
-                            ),
                             child: Padding(
                               padding: const EdgeInsets.all(20),
                               child: footer!,

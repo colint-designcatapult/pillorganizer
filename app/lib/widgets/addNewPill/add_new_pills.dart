@@ -24,7 +24,7 @@ class AddNewPills extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(context)
                 .textTheme
-                .titleSmall
+                .bodyMedium
                 ?.copyWith(color: const Color(0xFF03012C)),
           ),
           const SizedBox(height: 44),
