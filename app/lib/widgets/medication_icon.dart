@@ -26,6 +26,9 @@ class MedicationIcon extends StatelessWidget {
         child: Stack(children: [
           Center(
               child: SvgPicture.asset(_iconAssets(),
+                  width: size,
+                  height: size,
+                  fit: BoxFit.cover,
                   colorFilter: ColorFilter.mode(
                       color ?? Theme.of(context).iconTheme.color!,
                       BlendMode.modulate))),

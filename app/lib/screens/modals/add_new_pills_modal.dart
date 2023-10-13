@@ -24,7 +24,26 @@ class _AddNewPillModalState extends State<AddNewPillModal> {
     );
     return Center(
       child: ElevatedButton(
-        child: const Text('Add new medication'),
+        style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).primaryColor,
+            minimumSize: const Size(170, 72),
+            shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(40),
+                    bottomLeft: Radius.circular(40)))),
+        child: Row(
+          children: [
+            const Icon(Icons.add, size: 24, color: Colors.white),
+            const SizedBox(
+              width: 8,
+            ),
+            Text('Add new',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(color: Colors.white))
+          ],
+        ),
         onPressed: () {
           showModalBottomSheet(
               context: context,

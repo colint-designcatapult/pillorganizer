@@ -1,15 +1,13 @@
-import 'package:app/api/medication.dart';
 import 'package:app/provider/authentication_provider.dart';
 import 'package:app/provider/medication_provider.dart';
 import 'package:app/provider/new_medication_provider.dart';
 import 'package:app/provider/schedule_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
-import 'package:app/screens/device_settings/medication/medication_entry_wizard.dart';
 import 'package:app/screens/modals/add_new_pills_modal.dart';
 import 'package:app/service/provisioning_service.dart';
 import 'package:app/widgets/addNewPill/new_medications.dart';
-import 'package:app/widgets/medication_icon.dart';
+import 'package:app/widgets/medication_card.dart';
 import 'package:app/widgets/schedule_entry.dart';
 import 'package:app/widgets/wizard.dart';
 import 'package:flutter/material.dart';
@@ -162,7 +160,7 @@ class MedicationEntryStep extends StatefulWidget {
 }
 
 class _MedicationEntryStepState extends State<MedicationEntryStep> {
-  bool canGoNext = false;
+  bool canGoNext = true;
 
   @override
   Widget build(BuildContext context) {
@@ -329,7 +327,11 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
                                 mainAxisSize: MainAxisSize.max,
                                 children: [
                                   ...prov.value!
-                                      .map((e) => _buildMedCard(context, e))
+                                      .map((e) => MedicationCard(
+                                            med: e,
+                                            backgroundColor:
+                                                const Color(0xFFF1F3F6),
+                                          ))
                                       .toList(growable: false)
                                 ]))),
                     SizedBox(
@@ -371,28 +373,6 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
                     ),
                   )),
             ])));
-  }
-
-  Widget _buildMedCard(context, ScheduledMedication med) {
-    return Card(
-      elevation: 1,
-      child: ListTile(
-        leading: MedicationIcon.fromMed(med, 32.0),
-        title: Text(med.name),
-        onTap: () {
-          Navigator.of(context)
-              .push(EditMedicationWizardPage.route(
-                  context,
-                  med,
-                  Provider.of<SelectedDeviceProvider>(context, listen: false)
-                      .device!
-                      .deviceID))
-              .then((value) {
-            Provider.of<MedicationsProvider>(context, listen: false).refresh();
-          });
-        },
-      ),
-    );
   }
 }
 

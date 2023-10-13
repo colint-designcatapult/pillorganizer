@@ -533,7 +533,10 @@ class DosePeriodArea extends StatelessWidget {
             alignment: Alignment.center,
             child: ListTile(
               leading: MedicationIcon.fromMed(med, 44.0),
-              title: Text(med.name),
+              title: Text(
+                med.name,
+                overflow: TextOverflow.ellipsis,
+              ),
               subtitle: Text(_buildSubtitle(context, period, deviceNoticeProv)),
               trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                 CircularBinStatusIndicator(

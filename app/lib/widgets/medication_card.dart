@@ -1,0 +1,86 @@
+import 'package:app/api/medication.dart';
+import 'package:app/widgets/medication_icon.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+class MedicationCard extends StatelessWidget {
+  final ScheduledMedication med;
+  final Color backgroundColor;
+
+  const MedicationCard(
+      {super.key, required this.med, this.backgroundColor = Colors.white});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+        padding: const EdgeInsets.only(bottom: 20),
+        child: Container(
+            height: 80,
+            padding: const EdgeInsets.fromLTRB(20, 18, 12, 18),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: backgroundColor,
+            ),
+            child: Row(
+              children: [
+                MedicationIcon.fromMed(med, 54),
+                const SizedBox(
+                  width: 18,
+                ),
+                Expanded(
+                    child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(med.name,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.labelSmall)
+                            ]))),
+                const SizedBox(
+                  width: 4,
+                ),
+                if (med.dispenseTimes
+                    .any((time) => time.period == DayPeriod.pm))
+                  Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SvgPicture.asset(
+                          'lib/assets/SVG/DEV_SYM_PM.svg',
+                          width: 18,
+                          height: 18,
+                        ),
+                        const SizedBox(
+                          height: 4,
+                        ),
+                        Text("PM",
+                            style: Theme.of(context).textTheme.bodySmall),
+                      ]),
+                if (med.dispenseTimes
+                        .any((time) => time.period == DayPeriod.am) &&
+                    med.dispenseTimes
+                        .any((time) => time.period == DayPeriod.pm))
+                  const SizedBox(width: 12),
+                if (med.dispenseTimes
+                    .any((time) => time.period == DayPeriod.am))
+                  Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SvgPicture.asset(
+                          'lib/assets/SVG/DEV_SYM_AM.svg',
+                          width: 18,
+                          height: 18,
+                        ),
+                        const SizedBox(
+                          height: 4,
+                        ),
+                        Text("AM",
+                            style: Theme.of(context).textTheme.bodySmall),
+                      ]),
+                const SizedBox(
+                  width: 32,
+                ),
+              ],
+            )));
+  }
+}

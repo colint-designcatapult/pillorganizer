@@ -43,7 +43,7 @@ class WizardStepBodyDelegate extends StatelessWidget {
                   child: Align(
                       child: Column(
                     children: [
-                      provisionningProgress.step != 3
+                      provisionningProgress.stage != 3
                           ? Padding(
                               padding: EdgeInsets.only(
                                   top: 34, bottom: title != null ? 36 : 70),
@@ -112,7 +112,7 @@ class WizardProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    int selectedStage = provisionningProgress.stage - 1;
+    int selectedStep = provisionningProgress.step - 1;
     var iconList = provisionningProgress.getIconList();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 36),
@@ -124,13 +124,13 @@ class WizardProgressBar extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                color: selectedStage == i
+                color: selectedStep == i
                     ? Theme.of(context).primaryColor
                     : Theme.of(context).secondaryHeaderColor,
               ),
               child: SvgPicture.asset(
                 colorFilter: ColorFilter.mode(
-                  selectedStage == i ? Colors.white : Colors.black,
+                  selectedStep == i ? Colors.white : Colors.black,
                   BlendMode.srcIn,
                 ),
                 iconList[i],
@@ -147,7 +147,7 @@ class WizardProgressBar extends StatelessWidget {
                     width: 36,
                     color: Theme.of(context).secondaryHeaderColor,
                   ),
-                  if (selectedStage > i)
+                  if (selectedStep > i)
                     Container(
                       height: 20,
                       width: 20,
@@ -317,7 +317,7 @@ class WizardStep extends StatelessWidget {
                       ),
                     ),
                   ),
-                  provisionningProgress.step == 1
+                  provisionningProgress.stage == 1
                       ? const Expanded(
                           child: SizedBox(),
                         )
