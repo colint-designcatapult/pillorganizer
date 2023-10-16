@@ -2,6 +2,7 @@ import 'package:app/api/device.dart';
 import 'package:app/navigation/tab_navigator.dart';
 import 'package:app/provider/medication_provider.dart';
 import 'package:app/provider/time_provider.dart';
+import 'package:app/provider/user_registration_provider.dart';
 import 'package:app/screens/first_launch.dart';
 import 'package:app/screens/post_setup_wizard.dart';
 import 'package:app/service/credential_manager.dart';
@@ -49,6 +50,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => AuthenticationProvider(),
         ),
+        ChangeNotifierProvider<UserRegistrationProvider>(
+            create: (_) => UserRegistrationProvider()),
         ChangeNotifierProvider<DeviceListProvider>.value(
             value: deviceRepo.deviceListProvider),
         ChangeNotifierProxyProvider<DeviceListProvider, SelectedDeviceProvider>(

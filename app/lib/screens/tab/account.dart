@@ -1,6 +1,5 @@
-import 'package:app/provider/medication_provider.dart';
-import 'package:app/screens/modals/add_new_pills_modal.dart';
-import 'package:app/widgets/medication_card.dart';
+import 'package:app/models/user.dart';
+import 'package:app/screens/auth/register.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:provider/provider.dart';
@@ -12,47 +11,77 @@ class AccountScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var authProvider = Provider.of<AuthenticationProvider>(context);
+    var user = authProvider.currentUser;
+
+    void register() {
+      showModalBottomSheet<bool>(
+          context: context,
+          isScrollControlled: true,
+          elevation: 0,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(16),
+            ),
+          ),
+          builder: (context) => const RegisterPage());
+    }
+
     return Scaffold(
-        backgroundColor: const Color(0xFFBFD2DB),
-        body: SafeArea(
+      backgroundColor: const Color(0xFFBFD2DB),
+      body: SafeArea(
           child: Padding(
               padding: const EdgeInsets.only(top: 75),
               child: SingleChildScrollView(
-                  child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                    Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Text(
-                          'Account Settings',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(fontSize: 32),
-                        )),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Column(children: [
-                        Row(
-                          children: [
-                            SquareButton(
-                              color: const Color(0xFF7A2C2C),
-                              icon: PhosphorIcons.power_fill,
-                              label: "Sign Out",
-                              onPressed: () {
-                                Provider.of<AuthenticationProvider>(context,
-                                        listen: false)
-                                    .signOut(context);
-                              },
-                            )
-                          ],
-                        )
-                      ]),
-                    )
-                  ]))),
-        ));
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(
+                            'Account Settings',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(fontSize: 32),
+                          )),
+                      const SizedBox(height: 8),
+                      Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: GridView.count(
+                            crossAxisCount: 2,
+                            childAspectRatio: 1,
+                            crossAxisSpacing: 24,
+                            mainAxisSpacing: 24,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            children: [
+                              if (user is User)
+                                SquareButton(
+                                  color: const Color(0xFF7A2C2C),
+                                  icon: PhosphorIcons.power_fill,
+                                  label: "Sign Out",
+                                  onPressed: () {
+                                    Provider.of<AuthenticationProvider>(context,
+                                            listen: false)
+                                        .signOut(context);
+                                  },
+                                ),
+                              if (user is AnonymousUser)
+                                SquareButton(
+                                  color: const Color(0xFF043C4D),
+                                  icon: PhosphorIcons.user_fill,
+                                  label: "Create account",
+                                  onPressed: () {
+                                    register();
+                                  },
+                                )
+                            ],
+                          ))
+                    ]),
+              ))),
+    );
   }
 }
 
@@ -79,14 +108,13 @@ class SquareButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 20.0),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: const BorderRadius.all(
-              Radius.circular(4.0)), // Rounded square border radius
+          borderRadius: const BorderRadius.all(Radius.circular(4.0)),
           boxShadow: [
             BoxShadow(
               color: Colors.grey.withOpacity(0.3),
               spreadRadius: 1,
               blurRadius: 4,
-              offset: Offset(2, 2),
+              offset: const Offset(2, 2),
             ),
           ],
         ),
@@ -98,7 +126,7 @@ class SquareButton extends StatelessWidget {
               size: 56.0,
               color: color,
             ),
-            SizedBox(height: 20.0),
+            const SizedBox(height: 20.0),
             Text(label,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.displaySmall?.copyWith(

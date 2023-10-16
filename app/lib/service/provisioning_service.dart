@@ -1,14 +1,14 @@
 class ProvisionningProgress {
-  final int stage;
   final int step;
+  final int stage;
 
   ProvisionningProgress(
-    this.stage,
     this.step,
+    this.stage,
   );
 
   String getTitle() {
-    switch (stage) {
+    switch (step) {
       case 1:
         return 'Device Setup';
       case 2:
@@ -21,7 +21,7 @@ class ProvisionningProgress {
   }
 
   List<String> getIconList() {
-    if (stage == 1) {
+    if (step == 1) {
       return [
         'lib/assets/SVG/Bluetooth.svg',
         'lib/assets/SVG/WifiHigh.svg',

@@ -276,7 +276,7 @@ class BasicPageTextFormField extends StatelessWidget {
     } else {
       return (val) {
         onFieldSubmitted!(val);
-        if (FormSubmitCallback.of(context).callback != null) {
+        if (FormSubmitCallback.maybeOf(context) != null) {
           FormSubmitCallback.of(context).callback!();
         }
       };
