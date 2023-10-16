@@ -30,11 +30,12 @@
 			}
 		}
 	},
-	"noticeDisconnected": "Can't connect to your pill organizer.",
+	"noticeDisconnected": "Can't connect to device.",
 	"noticeDisconnectedSubtitle": "Please ensure your pill organizer is powered and nearby.",
-	"noticeEmpty": "Your pill organizer is empty.",
-	"noticeEmptySubtitle": "Please reload your pill organizer with a week's worth of pills and then press the button below.",
-	"noticeEmptyAction": "Pills Reloaded",
+	"noticeDisconnectedAction": "Reconnect",
+	"noticeEmpty": "Organizer Empty?",
+	"noticeEmptySubtitle": "Let's kickstart the week by refilling your organizer.",
+	"noticeEmptyAction": "Fill Now",
 	"noticeNoMeds": "You don't have any medications entered.",
 	"actionAddMed": "Add Medication",
 	"doseRefill": "Not filled",

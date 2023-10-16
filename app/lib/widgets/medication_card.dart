@@ -32,10 +32,14 @@ class MedicationCard extends StatelessWidget {
                         alignment: Alignment.centerLeft,
                         child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(med.name,
                                   overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.labelSmall)
+                                  style:
+                                      Theme.of(context).textTheme.labelSmall),
+                              Text("Everyday",
+                                  style: Theme.of(context).textTheme.bodySmall)
                             ]))),
                 const SizedBox(
                   width: 4,

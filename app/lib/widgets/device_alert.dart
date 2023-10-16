@@ -1,0 +1,122 @@
+import 'package:app/widgets/button_icon.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
+
+import '../api/device.dart';
+
+class DeviceAlert extends StatelessWidget {
+  final DeviceNotice notice;
+  final Function onReload;
+  final Future<void>? Function() reloadFuture;
+
+  const DeviceAlert({
+    Key? key,
+    required this.notice,
+    required this.onReload,
+    required this.reloadFuture,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    if (notice != DeviceNotice.none) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 10.0),
+        child: _buildNotice(context, notice),
+      );
+    } else {
+      return Container();
+    }
+  }
+
+  Widget _buildNotice(BuildContext context, DeviceNotice notice) {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(4.0),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 6.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _getTitle(notice, context),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: Colors.black,
+                          ),
+                    ),
+                    Text(
+                      _getDescription(notice, context),
+                      style: Theme.of(context).textTheme.bodySmall,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            ButtonIcon(
+              isDisabled: notice == DeviceNotice.disconnected,
+              icon: _getIcon(notice),
+              label: _getAction(notice, context),
+              onPressed: () => onReload(),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getTitle(DeviceNotice notice, BuildContext context) {
+    switch (notice) {
+      case DeviceNotice.disconnected:
+        return AppLocalizations.of(context)!.noticeDisconnected;
+      case DeviceNotice.empty:
+        return AppLocalizations.of(context)!.noticeEmpty;
+      default:
+        return '';
+    }
+  }
+
+  String _getDescription(DeviceNotice notice, BuildContext context) {
+    switch (notice) {
+      case DeviceNotice.disconnected:
+        return AppLocalizations.of(context)!.noticeDisconnectedSubtitle;
+      case DeviceNotice.empty:
+        return AppLocalizations.of(context)!.noticeEmptySubtitle;
+      default:
+        return '';
+    }
+  }
+
+  Icon _getIcon(DeviceNotice notice) {
+    switch (notice) {
+      case DeviceNotice.disconnected:
+        return const Icon(PhosphorIcons.plugs_bold,
+            color: Colors.black, size: 20);
+      case DeviceNotice.empty:
+        return const Icon(PhosphorIcons.pill_bold,
+            color: Colors.black, size: 20);
+      default:
+        return const Icon(PhosphorIcons.pill_bold,
+            color: Colors.black, size: 20);
+    }
+  }
+
+  String _getAction(DeviceNotice notice, BuildContext context) {
+    switch (notice) {
+      case DeviceNotice.disconnected:
+        return AppLocalizations.of(context)!.noticeDisconnectedAction;
+      case DeviceNotice.empty:
+        return AppLocalizations.of(context)!.noticeEmptyAction;
+      default:
+        return "";
+    }
+  }
+}

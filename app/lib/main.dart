@@ -112,7 +112,7 @@ class MyApp extends StatelessWidget {
                     color: Color(0xff206b8b),
                     iconTheme: IconThemeData(color: Colors.white),
                     titleTextStyle: TextStyle(
-                        fontFamily: 'Roboto Slab',
+                        fontFamily: 'Poppins',
                         fontWeight: FontWeight.w600,
                         fontSize: 24,
                         color: Colors.white),

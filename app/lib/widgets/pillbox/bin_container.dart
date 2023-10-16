@@ -27,8 +27,8 @@ class BinContainer extends StatelessWidget {
     String binStatusIconPath = getBinStatusIcon(status, isDeviceActive);
 
     return Container(
-      // 104 is the padding on each side of the pillbox and the padding between the column
-      width: (MediaQuery.of(context).size.width - 104) / 7,
+      // 108 is the padding on each side of the pillbox and the padding between the column
+      width: (MediaQuery.of(context).size.width - 108) / 7,
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(8.0),
