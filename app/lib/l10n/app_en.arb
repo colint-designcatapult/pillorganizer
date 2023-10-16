@@ -11,6 +11,7 @@
 	"provConConnecting": "Bluetooth Connection",
 	"provConSearching": "Searching bluetooth",
 	"provConConnectingSubtitle": "Your phone is connecting to your pill organizer. Keep your phone close.",
+	"provConSelectingSubtitle": "Select your Bluetooth device from the list below.",
 	"genericError": "Error",
 	"provConSearchingSubtitle": "Hold your phone close to your pill organizer as your phone searches it.",
 	"provErrConGenericSubtitle": "There was a problem connecting to your pill organizer.",

@@ -22,6 +22,7 @@ mixin _$ProvisionState {
   Object? get error => throw _privateConstructorUsedError;
   String? get deviceName => throw _privateConstructorUsedError;
   List<WifiEntry>? get wifiNetworks => throw _privateConstructorUsedError;
+  List<String>? get bluetoothList => throw _privateConstructorUsedError;
   String? get ssid => throw _privateConstructorUsedError;
   String? get wifiPassword => throw _privateConstructorUsedError;
   String? get serialNo => throw _privateConstructorUsedError;
@@ -47,6 +48,7 @@ abstract class $ProvisionStateCopyWith<$Res> {
       Object? error,
       String? deviceName,
       List<WifiEntry>? wifiNetworks,
+      List<String>? bluetoothList,
       String? ssid,
       String? wifiPassword,
       String? serialNo,
@@ -74,6 +76,7 @@ class _$ProvisionStateCopyWithImpl<$Res, $Val extends ProvisionState>
     Object? error = freezed,
     Object? deviceName = freezed,
     Object? wifiNetworks = freezed,
+    Object? bluetoothList = freezed,
     Object? ssid = freezed,
     Object? wifiPassword = freezed,
     Object? serialNo = freezed,
@@ -103,6 +106,10 @@ class _$ProvisionStateCopyWithImpl<$Res, $Val extends ProvisionState>
           ? _value.wifiNetworks
           : wifiNetworks // ignore: cast_nullable_to_non_nullable
               as List<WifiEntry>?,
+      bluetoothList: freezed == bluetoothList
+          ? _value.bluetoothList
+          : bluetoothList // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
       ssid: freezed == ssid
           ? _value.ssid
           : ssid // ignore: cast_nullable_to_non_nullable
@@ -146,6 +153,7 @@ abstract class _$$_ProvisionStateCopyWith<$Res>
       Object? error,
       String? deviceName,
       List<WifiEntry>? wifiNetworks,
+      List<String>? bluetoothList,
       String? ssid,
       String? wifiPassword,
       String? serialNo,
@@ -171,6 +179,7 @@ class __$$_ProvisionStateCopyWithImpl<$Res>
     Object? error = freezed,
     Object? deviceName = freezed,
     Object? wifiNetworks = freezed,
+    Object? bluetoothList = freezed,
     Object? ssid = freezed,
     Object? wifiPassword = freezed,
     Object? serialNo = freezed,
@@ -200,6 +209,10 @@ class __$$_ProvisionStateCopyWithImpl<$Res>
           ? _value._wifiNetworks
           : wifiNetworks // ignore: cast_nullable_to_non_nullable
               as List<WifiEntry>?,
+      bluetoothList: freezed == bluetoothList
+          ? _value._bluetoothList
+          : bluetoothList // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
       ssid: freezed == ssid
           ? _value.ssid
           : ssid // ignore: cast_nullable_to_non_nullable
@@ -240,13 +253,15 @@ class _$_ProvisionState
       this.error,
       this.deviceName,
       final List<WifiEntry>? wifiNetworks,
+      final List<String>? bluetoothList,
       this.ssid,
       this.wifiPassword,
       this.serialNo,
       this.provisionID,
       this.deviceID,
       this.completionETA})
-      : _wifiNetworks = wifiNetworks;
+      : _wifiNetworks = wifiNetworks,
+        _bluetoothList = bluetoothList;
 
   @override
   @JsonKey()
@@ -269,6 +284,16 @@ class _$_ProvisionState
     return EqualUnmodifiableListView(value);
   }
 
+  final List<String>? _bluetoothList;
+  @override
+  List<String>? get bluetoothList {
+    final value = _bluetoothList;
+    if (value == null) return null;
+    if (_bluetoothList is EqualUnmodifiableListView) return _bluetoothList;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
   @override
   final String? ssid;
   @override
@@ -284,7 +309,7 @@ class _$_ProvisionState
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'ProvisionState(stage: $stage, progress: $progress, future: $future, error: $error, deviceName: $deviceName, wifiNetworks: $wifiNetworks, ssid: $ssid, wifiPassword: $wifiPassword, serialNo: $serialNo, provisionID: $provisionID, deviceID: $deviceID, completionETA: $completionETA)';
+    return 'ProvisionState(stage: $stage, progress: $progress, future: $future, error: $error, deviceName: $deviceName, wifiNetworks: $wifiNetworks, bluetoothList: $bluetoothList, ssid: $ssid, wifiPassword: $wifiPassword, serialNo: $serialNo, provisionID: $provisionID, deviceID: $deviceID, completionETA: $completionETA)';
   }
 
   @override
@@ -298,6 +323,7 @@ class _$_ProvisionState
       ..add(DiagnosticsProperty('error', error))
       ..add(DiagnosticsProperty('deviceName', deviceName))
       ..add(DiagnosticsProperty('wifiNetworks', wifiNetworks))
+      ..add(DiagnosticsProperty('bluetoothList', bluetoothList))
       ..add(DiagnosticsProperty('ssid', ssid))
       ..add(DiagnosticsProperty('wifiPassword', wifiPassword))
       ..add(DiagnosticsProperty('serialNo', serialNo))
@@ -364,6 +390,7 @@ abstract class _ProvisionState implements ProvisionState {
       final Object? error,
       final String? deviceName,
       final List<WifiEntry>? wifiNetworks,
+      final List<String>? bluetoothList,
       final String? ssid,
       final String? wifiPassword,
       final String? serialNo,
@@ -383,6 +410,8 @@ abstract class _ProvisionState implements ProvisionState {
   String? get deviceName;
   @override
   List<WifiEntry>? get wifiNetworks;
+  @override
+  List<String>? get bluetoothList;
   @override
   String? get ssid;
   @override

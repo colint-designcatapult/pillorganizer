@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:app/api/api.dart';
 import 'package:app/api/provision.dart';
@@ -30,13 +31,15 @@ class ProvisionProvider extends ChangeNotifier {
   }
 
   Future<ProvisionState> _scanWifi() async {
-    var res = await _flutterEspBleProvPlugin.scanWifiNetworks(
-        _state.deviceName!, _popKey);
-
+    String deviceName = _state.deviceName!;
+    var res =
+        await _flutterEspBleProvPlugin.scanWifiNetworks(deviceName, _popKey);
     var list = res.map((e) => WifiEntry.fromMap(e)).toList(growable: false);
 
-    _state =
-        _state.copyWith(wifiNetworks: list, stage: ProvisionStage.select_wifi);
+    _state = _state.copyWith(
+        deviceName: deviceName,
+        wifiNetworks: list,
+        stage: ProvisionStage.select_wifi);
     notifyListeners();
     return _state;
   }
@@ -58,6 +61,83 @@ class ProvisionProvider extends ChangeNotifier {
         .whenComplete(() {
       _timer?.cancel();
     });
+  }
+
+  Future<ProvisionState> rescanBluetooth() {
+    _state = _state.copyWith(
+        stage: ProvisionStage.scanning_ble,
+        wifiNetworks: null,
+        future: scanBluetooth().onError((err, st) {
+          debugPrintStack(stackTrace: st, label: 'Rescan error: $err');
+          _state = _state.copyWith(error: err);
+          notifyListeners();
+          return Future.error(err!);
+        }),
+        progress: null,
+        error: null);
+    notifyListeners();
+    return _state.future!;
+  }
+
+  Future<ProvisionState> _scanBluetooth() async {
+    for (int i = 0; i < 5; i++) {
+      List<String> devices =
+          await _flutterEspBleProvPlugin.scanBleDevices(_prefix);
+      debugPrint("Found devices: ${devices.join(" ")}");
+      if (devices.length == 1) {
+        _state = _state.copyWith(
+            stage: ProvisionStage.scanning_wifi,
+            deviceName: devices.first,
+            progress: null,
+            error: null);
+        notifyListeners();
+        return scanWifi();
+      } else if (devices.isNotEmpty) {
+        _state = _state.copyWith(
+            bluetoothList: devices,
+            stage: ProvisionStage.select_ble,
+            progress: null,
+            error: null);
+        notifyListeners();
+        return _state;
+      }
+    }
+    return Future.error(TimeoutException('No devices found after 5 attempts'));
+  }
+
+  Future<ProvisionState> scanBluetooth() async {
+    _state = _state.copyWith(
+        future: _scanBluetooth().onError((err, st) {
+          debugPrintStack(stackTrace: st, label: 'Start error: $err');
+          _state = _state.copyWith(error: err);
+          notifyListeners();
+          return Future.error(err!);
+        }),
+        progress: null,
+        error: null);
+    notifyListeners();
+    return _state.future!;
+  }
+
+  Future<ProvisionState> _selectBluetooth(String device) async {
+    _state = _state.copyWith(
+        stage: ProvisionStage.scanning_wifi, deviceName: device);
+    notifyListeners();
+    return scanWifi();
+  }
+
+  Future<ProvisionState> selectBluetooth(String device) {
+    _state = _state.copyWith(
+        future: _selectBluetooth(device).onError((err, st) {
+          debugPrintStack(stackTrace: st, label: 'Start error: $err');
+          _state = _state.copyWith(error: err);
+          notifyListeners();
+          return Future.error(err!);
+        }),
+        progress: null,
+        error: null);
+    notifyListeners();
+    return _state.future!;
   }
 
   Future<ProvisionState> _startProvisioning() async {
@@ -127,9 +207,18 @@ class ProvisionProvider extends ChangeNotifier {
     }
   }
 
+  String extractHost(String apiUrl) {
+    Uri uri = Uri.parse(apiUrl);
+    return uri.host;
+  }
+
   Future<void> _setServerUrl() async {
-    var res = await _flutterEspBleProvPlugin.customEndpoint(_state.deviceName!,
-        _popKey, "server-url", hex.decode(AppApi.base()) as Uint8List);
+    var res = await _flutterEspBleProvPlugin.customEndpoint(
+        _state.deviceName!,
+        _popKey,
+        "server-url",
+        hex.decode(hex.encode(utf8.encode(extractHost(AppApi.base()))))
+            as Uint8List);
     if (res == null) {
       return Future.error("Could not set server url");
     }

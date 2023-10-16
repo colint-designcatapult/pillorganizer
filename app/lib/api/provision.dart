@@ -6,6 +6,7 @@ part 'provision.freezed.dart';
 
 enum ProvisionStage {
   scanning_ble,
+  select_ble,
   scanning_wifi,
   select_wifi,
   provisioning_wifi,
@@ -23,6 +24,7 @@ class ProvisionState with _$ProvisionState {
       Object? error,
       String? deviceName,
       List<WifiEntry>? wifiNetworks,
+      List<String>? bluetoothList,
       String? ssid,
       String? wifiPassword,
       String? serialNo,

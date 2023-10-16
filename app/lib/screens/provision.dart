@@ -59,6 +59,7 @@ class ProvisionPage extends StatefulWidget {
 
 class _ProvisionPageState extends State<ProvisionPage>
     with TickerProviderStateMixin {
+  bool scanningWifi = false;
   @override
   Widget build(BuildContext context) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(1, 1);
@@ -66,7 +67,12 @@ class _ProvisionPageState extends State<ProvisionPage>
       create: (context) {
         final prov = ProvisionProvider(initialState: widget.initialState);
         if (widget.initialState == null) {
-          _startProvisioning(context, prov);
+          prov.scanBluetooth().then((state) {
+            if (state.deviceName != null && context.mounted) {
+              Navigator.of(context).pushReplacement(
+                  ProvisionSelectWifiPage.route(context, state));
+            }
+          });
         }
         return prov;
       },
@@ -77,7 +83,11 @@ class _ProvisionPageState extends State<ProvisionPage>
                 Tuple3(prov.state.stage, prov.state.error, prov.state.progress),
             builder: (_, data, __) {
               return WizardStep(
-                height: data.item2 != null ? null : 400,
+                height: data.item2 != null
+                    ? null
+                    : data.item1 == ProvisionStage.select_ble
+                        ? 600
+                        : 400,
                 provisionningProgress: provisionningProgress,
                 title: _buildTitle(data),
                 subtext: _buildSubtitle(data),
@@ -87,21 +97,21 @@ class _ProvisionPageState extends State<ProvisionPage>
                         child:
                             Text(AppLocalizations.of(context)!.genericTryAgain),
                         onPressed: () {
-                          _startProvisioning(
-                              context,
-                              Provider.of<ProvisionProvider>(context,
-                                  listen: false));
+                          Provider.of<ProvisionProvider>(context, listen: false)
+                              .rescanBluetooth();
                         },
                       )
                     : null,
-                child: _buildBody(data),
+                child: _buildBody(data,
+                    Provider.of<ProvisionProvider>(context, listen: false)),
               );
             });
       },
     );
   }
 
-  Widget _buildBody(data) {
+  Widget _buildBody(
+      Tuple3<ProvisionStage, Object?, double?> data, ProvisionProvider prov) {
     if (data.item2 != null) {
       return Expanded(
           child: Padding(
@@ -110,7 +120,7 @@ class _ProvisionPageState extends State<ProvisionPage>
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: ErrorInfoBox(error: data.item2),
               )));
-    } else {
+    } else if (data.item1 == ProvisionStage.scanning_ble) {
       return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Align(
@@ -123,16 +133,56 @@ class _ProvisionPageState extends State<ProvisionPage>
                   minHeight: 12,
                 )),
           ));
+    } else if (data.item1 == ProvisionStage.select_ble && !scanningWifi) {
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            ...prov.state.bluetoothList!
+                .map((e) => _buildBleCard(context, e, prov))
+                .toList(growable: false),
+            TextButton(
+              onPressed: () {
+                prov.rescanBluetooth();
+              },
+              child: const Text('Rescan Bluetooth'),
+            ),
+            const SizedBox(
+              height: 35,
+            )
+          ],
+        ),
+      );
+    } else {
+      return const Center(child: CircularProgressIndicator());
     }
   }
 
-  void _startProvisioning(context, prov) {
-    prov.startProvisioning().then((state) {
-      if (state.error == null && context.mounted) {
-        Navigator.of(context)
-            .pushReplacement(ProvisionSelectWifiPage.route(context, state));
-      }
-    });
+  Widget _buildBleCard(context, String entry, ProvisionProvider prov) {
+    Widget? subtitle;
+
+    return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Card(
+          elevation: 1,
+          child: ListTile(
+            leading: const Icon(Icons.bluetooth),
+            title: Text(entry),
+            subtitle: subtitle,
+            onTap: () {
+              setState(() {
+                scanningWifi = true;
+              });
+              prov.selectBluetooth(entry).then((state) {
+                if (context.mounted) {
+                  Navigator.of(context).pushReplacement(
+                      ProvisionSelectWifiPage.route(context, state));
+                }
+              });
+            },
+          ),
+        ));
   }
 
   String _buildTitle(data) {
@@ -140,7 +190,9 @@ class _ProvisionPageState extends State<ProvisionPage>
       return AppLocalizations.of(context)!.provErrConGeneric;
     } else if (data.item1 == ProvisionStage.scanning_ble) {
       return AppLocalizations.of(context)!.provConSearching;
-    } else if (data.item1 == ProvisionStage.scanning_wifi) {
+    } else if (data.item1 == ProvisionStage.scanning_wifi || scanningWifi) {
+      return AppLocalizations.of(context)!.provConConnecting;
+    } else if (data.item1 == ProvisionStage.select_ble) {
       return AppLocalizations.of(context)!.provConConnecting;
     } else {
       return AppLocalizations.of(context)!.genericError;
@@ -152,8 +204,10 @@ class _ProvisionPageState extends State<ProvisionPage>
       return AppLocalizations.of(context)!.provErrConGenericSubtitle;
     } else if (data.item1 == ProvisionStage.scanning_ble) {
       return AppLocalizations.of(context)!.provConSearchingSubtitle;
-    } else if (data.item1 == ProvisionStage.scanning_wifi) {
+    } else if (data.item1 == ProvisionStage.scanning_wifi || scanningWifi) {
       return AppLocalizations.of(context)!.provConConnectingSubtitle;
+    } else if (data.item1 == ProvisionStage.select_ble) {
+      return AppLocalizations.of(context)!.provConSelectingSubtitle;
     } else {
       return AppLocalizations.of(context)!.genericError;
     }
