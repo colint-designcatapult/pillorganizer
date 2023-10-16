@@ -10,7 +10,7 @@ class PillsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: const Color(0xFFC3D1DA),
+        backgroundColor: const Color(0xFFBFD2DB),
         body: SafeArea(
           child: Padding(
               padding: const EdgeInsets.only(top: 75),
@@ -29,18 +29,41 @@ class PillsScreen extends StatelessWidget {
                           )),
                       AddNewPillModal(),
                     ]),
-                const SizedBox(height: 32),
-                Expanded(child:
-                    Consumer<MedicationsProvider>(builder: (context, prov, _) {
-                  return SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: Column(mainAxisSize: MainAxisSize.max, children: [
-                        ...prov.value!
-                            .map((e) => MedicationCard(med: e))
-                            .toList(growable: false)
-                      ]));
-                })),
+                Expanded(
+                  child: ShaderMask(
+                    shaderCallback: (Rect bounds) {
+                      return const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: <Color>[
+                          Colors.purple,
+                          Colors.transparent,
+                          Colors.transparent,
+                          Colors.white,
+                        ],
+                        stops: <double>[0.0, 0.1, 0.9, 1.0],
+                      ).createShader(bounds);
+                    },
+                    blendMode: BlendMode.dstOut,
+                    child: Consumer<MedicationsProvider>(
+                      builder: (context, prov, _) {
+                        if (prov.value == null) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+                        return ListView.builder(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 40),
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          itemCount: prov.value!.length,
+                          itemBuilder: (context, index) {
+                            return MedicationCard(med: prov.value![index]);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 72),
               ])),
         ));
