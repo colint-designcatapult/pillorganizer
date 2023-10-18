@@ -2,9 +2,11 @@ import 'package:app/api/api.dart';
 import 'package:app/api/medication.dart';
 import 'package:app/provider/scroll_provider.dart';
 import 'package:app/screens/modals/device_selector_modal.dart';
+import 'package:app/widgets/basic_page.dart';
 import 'package:app/widgets/shimmer_placeholder.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
@@ -174,105 +176,18 @@ class DeviceSettingsItem extends StatelessWidget {
   }
 }
 
-class ChangeDeviceNameDialog extends StatefulWidget {
-  const ChangeDeviceNameDialog({super.key});
-
-  @override
-  State<StatefulWidget> createState() => _ChangeDeviceNameDialogState();
-}
-
-class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
-  final formKey = GlobalKey<FormState>();
-  bool enableOK = false;
-  String? value;
-
-  @override
-  Widget build(BuildContext context) {
-    return PlatformAlertDialog(
-      title: Text('Enter a name'),
-      content: Form(
-        key: formKey,
-        child: Consumer<SelectedDeviceProvider>(
-          builder: (_, provider, child) {
-            return PlatformTextFormField(
-              textInputAction: TextInputAction.done,
-              autofocus: true,
-              initialValue: provider.device?.name,
-              validator: Validatorless.required("Name is required"),
-              onChanged: _checkForm,
-              onEditingComplete: _onSubmit,
-            );
-          },
-        ),
-      ),
-      actions: <Widget>[
-        PlatformDialogAction(
-          child: PlatformText('Cancel'),
-          onPressed: () => Navigator.of(context).pop(null),
-        ),
-        PlatformDialogAction(
-          child: PlatformText('OK'),
-          onPressed: enableOK ? _onSubmit : null,
-        ),
-      ],
-    );
-  }
-
-  void _onSubmit() async {
-    _save().then((value) => Navigator.of(context).pop());
-  }
-
-  Future<void> _save() async {
-    if (value != null) {
-      await Provider.of<SelectedDeviceProvider>(context, listen: false)
-          .updateName(value!);
-    }
-  }
-
-  void _checkForm(String val) {
-    value = val;
-    setState(() {
-      enableOK = val.isNotEmpty;
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    //_checkForm();
-  }
-}
-
-void changeName(context) {
-  showPlatformDialog<String?>(
-    context: context,
-    builder: (_) => const ChangeDeviceNameDialog(),
-  );
-}
-
 void editSchedule(context) {
   showEditScheduleModal(context);
 }
 
 class DeviceSettings {
-  static const DeviceSettingsItem rename = DeviceSettingsItem(
-    onSelected: changeName,
-    title: "Rename",
-    icon: Icon(Icons.edit),
-  );
   static const DeviceSettingsItem changeTimezone = DeviceSettingsItem(
       onSelected: editSchedule,
       title: "Edit Schedule",
       icon: Icon(Icons.alarm));
-  static const DeviceSettingsItem deviceInfo = DeviceSettingsItem(
-      onSelected: changeName,
-      title: "Device Info",
-      icon: Icon(Icons.info_outline));
 
   static const List<DeviceSettingsItem> choices = <DeviceSettingsItem>[
-    rename,
     changeTimezone,
-    //deviceInfo
   ];
 }
 
@@ -372,8 +287,8 @@ class DeviceNoticeArea extends StatelessWidget {
     if (notice == DeviceNotice.disconnected) {
       return Card(
         child: ListTile(
-          contentPadding: EdgeInsets.all(16.0),
-          leading: Icon(Icons.warning),
+          contentPadding: const EdgeInsets.all(16.0),
+          leading: const Icon(Icons.warning),
           title: Text(AppLocalizations.of(context)!.noticeDisconnected),
           subtitle:
               Text(AppLocalizations.of(context)!.noticeDisconnectedSubtitle),
@@ -384,8 +299,8 @@ class DeviceNoticeArea extends StatelessWidget {
         child: Column(
           children: [
             ListTile(
-              contentPadding: EdgeInsets.all(16.0),
-              leading: Icon(Icons.calendar_view_week_outlined),
+              contentPadding: const EdgeInsets.all(16.0),
+              leading: const Icon(Icons.calendar_view_week_outlined),
               title: Text(AppLocalizations.of(context)!.noticeEmpty),
               subtitle: Text(AppLocalizations.of(context)!.noticeEmptySubtitle),
             ),
@@ -405,7 +320,7 @@ class DeviceNoticeArea extends StatelessWidget {
                                   child: CircularProgressIndicator(),
                                   height: 16.0,
                                   width: 16.0)
-                              : Icon(Icons.check),
+                              : const Icon(Icons.check),
                           label: Text(
                               AppLocalizations.of(context)!.noticeEmptyAction));
                     }),
@@ -448,7 +363,7 @@ class DosePeriodArea extends StatelessWidget {
     var medProv = Provider.of<MedicationsProvider>(context);
     var deviceNoticeProv = Provider.of<DeviceNoticeProvider>(context);
     return Padding(
-      padding: EdgeInsets.only(top: 28.0, bottom: 16.0),
+      padding: const EdgeInsets.only(top: 28.0, bottom: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
