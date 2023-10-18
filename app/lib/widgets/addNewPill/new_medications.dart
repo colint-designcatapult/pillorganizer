@@ -36,7 +36,7 @@ class _NewMedicationsState extends State<NewMedications> {
       ),
       side: selected
           ? BorderSide(color: Theme.of(context).primaryColor, width: 2)
-          : BorderSide.none,
+          : const BorderSide(color: Color(0xFFF1F2F6), width: 2),
       onPressed: () {
         provider.toggleDispenseTime(time.id!);
       },
@@ -69,7 +69,7 @@ class _NewMedicationsState extends State<NewMedications> {
     return Consumer<NewMedicationProvider>(builder: (context, provider, child) {
       return SingleChildScrollView(
           child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 48),
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.start,

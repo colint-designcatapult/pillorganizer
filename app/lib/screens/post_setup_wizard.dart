@@ -71,11 +71,9 @@ class NotificationStep extends StatelessWidget {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(2, 2);
     return Consumer<SelectedDeviceProvider>(
       builder: (context, selectedDeviceProvider, child) {
-        bool canGoNext = selectedDeviceProvider.isUpdatedNotificationCalled;
-
         void toggleNotifications() {
-          var sdp = Provider.of<SelectedDeviceProvider>(context, listen: false);
-          sdp.updateNotifications(!(sdp.device?.notifications ?? false));
+          selectedDeviceProvider.updateNotifications(
+              !(selectedDeviceProvider.device?.notifications ?? false));
         }
 
         return WizardStep(
@@ -86,9 +84,7 @@ class NotificationStep extends StatelessWidget {
             onBackPressed: () => Navigator.of(context).pop(),
             onNextPressed: () =>
                 Navigator.of(context).push(MedicationEntryStep.route(context)),
-            onSkipPressed: () =>
-                Navigator.of(context).push(CreateAccountStep.route(context)),
-            canGoNext: canGoNext,
+            canGoNext: true,
             height: 550,
             child: Expanded(
                 child: Padding(
@@ -160,8 +156,6 @@ class MedicationEntryStep extends StatefulWidget {
 }
 
 class _MedicationEntryStepState extends State<MedicationEntryStep> {
-  bool canGoNext = true;
-
   @override
   Widget build(BuildContext context) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(2, 3);
@@ -172,7 +166,8 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
       if (currentUser is AnonymousUser) {
         Navigator.of(context).push(CreateAccountStep.route(context));
       } else {
-        Navigator.of(context).pop();
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil("/index", (route) => false);
       }
     }
 
@@ -184,7 +179,7 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
       onBackPressed: () => Navigator.of(context).pop(),
       onNextPressed: onNext,
       onSkipPressed: onNext,
-      canGoNext: canGoNext,
+      canGoNext: true,
       child: Padding(
         padding: const EdgeInsets.only(left: 32.0, right: 32.0, bottom: 32.0),
         child: Consumer<MedicationsProvider>(
@@ -257,11 +252,10 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
   }
 
   void _addNewPill(MedicationsProvider prov) {
-    final newMedicationProvider = NewMedicationProvider(
-      Provider.of<SelectedDeviceProvider>(context, listen: false)
-          .device!
-          .deviceID,
-    );
+    final device =
+        Provider.of<SelectedDeviceProvider>(context, listen: false).device;
+    final newMedicationProvider =
+        NewMedicationProvider(device!.deviceID, () => prov.update(device));
     showModalBottomSheet(
         context: context,
         isScrollControlled: true,

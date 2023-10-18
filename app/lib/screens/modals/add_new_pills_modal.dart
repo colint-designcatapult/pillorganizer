@@ -6,8 +6,9 @@ import 'package:app/widgets/addNewPill/new_medications.dart';
 import 'package:provider/provider.dart';
 
 class AddNewPillModal extends StatefulWidget {
-  const AddNewPillModal({super.key});
+  const AddNewPillModal({super.key, required this.onAdd});
 
+  final VoidCallback onAdd;
   @override
   _AddNewPillModalState createState() => _AddNewPillModalState();
 }
@@ -18,10 +19,10 @@ class _AddNewPillModalState extends State<AddNewPillModal> {
   @override
   Widget build(BuildContext context) {
     final newMedicationProvider = NewMedicationProvider(
-      Provider.of<SelectedDeviceProvider>(context, listen: false)
-          .device!
-          .deviceID,
-    );
+        Provider.of<SelectedDeviceProvider>(context, listen: false)
+            .device!
+            .deviceID,
+        () => widget.onAdd());
     return Center(
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(

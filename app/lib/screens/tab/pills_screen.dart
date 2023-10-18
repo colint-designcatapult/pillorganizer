@@ -1,11 +1,23 @@
 import 'package:app/provider/medication_provider.dart';
+import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/modals/add_new_pills_modal.dart';
 import 'package:app/widgets/medication_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class PillsScreen extends StatelessWidget {
+class PillsScreen extends StatefulWidget {
   const PillsScreen({super.key});
+
+  @override
+  State<PillsScreen> createState() => _PillsScreenState();
+}
+
+class _PillsScreenState extends State<PillsScreen> {
+  void _addNewPillUpdate() {
+    final medicationsProvider = context.read<MedicationsProvider>();
+    medicationsProvider.update(
+        Provider.of<SelectedDeviceProvider>(context, listen: false).device);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,10 +27,10 @@ class PillsScreen extends StatelessWidget {
           child: Padding(
               padding: const EdgeInsets.only(top: 75),
               child: Column(children: [
-                const Row(
+                Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Padding(
+                      const Padding(
                           padding: EdgeInsets.only(left: 24),
                           child: Text(
                             'My Pills',
@@ -27,7 +39,11 @@ class PillsScreen extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                             ),
                           )),
-                      AddNewPillModal(),
+                      if (Provider.of<SelectedDeviceProvider>(context,
+                                  listen: false)
+                              .device !=
+                          null)
+                        AddNewPillModal(onAdd: () => _addNewPillUpdate()),
                     ]),
                 Expanded(
                   child: ShaderMask(

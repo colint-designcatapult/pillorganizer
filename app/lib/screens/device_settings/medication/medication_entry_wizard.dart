@@ -323,7 +323,10 @@ class NewMedicationWizardPage extends StatelessWidget {
           child: (const Text('New Medication')),
         )),
         body: ChangeNotifierProvider<NewMedicationProvider>(
-          create: (context) => NewMedicationProvider(deviceID),
+          create: (context) => NewMedicationProvider(
+            deviceID,
+            onComplete,
+          ),
           builder: (context, _) => AnimatedSwitcher(
             switchInCurve: Curves.easeOut,
             reverseDuration: const Duration(seconds: 0),

@@ -7,8 +7,9 @@ class NewMedicationProvider with ChangeNotifier {
   VoidCallback? _onComplete;
   late NewMedicationState _state;
   NewMedicationState get state => _state;
-  NewMedicationProvider(int deviceID) {
+  NewMedicationProvider(int deviceID, VoidCallback? onComplete) {
     _state = NewMedicationState(deviceID: deviceID);
+    _onComplete = onComplete;
   }
 
   NewMedicationProvider.fromExisting(int deviceID, ScheduledMedication med) {
