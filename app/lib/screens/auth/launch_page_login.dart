@@ -68,7 +68,8 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
                         labelText: 'Password',
                         validator:
                             Validatorless.required('Enter your password'),
-                        onFieldSubmitted: (value) => _submitForm(),
+                        onFieldSubmitted: (value) =>
+                            (), //To trigger the form submit function
                         onSaved: (val) => password = val,
                         textInputAction: TextInputAction.done,
                         obscureText: true,
@@ -160,20 +161,15 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
           prov.logInAnonymous(id: int.parse(username!), secret: password!);
     }
 
-    setState(() {
-      _loginFuture!.then((_) {
-        Navigator.of(context)
-            .pushNamedAndRemoveUntil("/index", (route) => false);
-      }).catchError((err) {
-        if (err is ProblemJsonException) {
-          _showErrorDialog(
-              'There was a problem signing you in: ${err.problem}');
-        } else {
-          _showErrorDialog(
-              'There was a problem signing you in: ${err.toString()}');
-        }
-        return null;
-      });
+    _loginFuture!.then((_) {
+      Navigator.of(context).pushNamedAndRemoveUntil("/index", (route) => false);
+    }).catchError((err) {
+      if (err is ProblemJsonException) {
+        _showErrorDialog('There was a problem signing you in: ${err.problem}');
+      } else {
+        _showErrorDialog(
+            'There was a problem signing you in: ${err.toString()}');
+      }
     });
   }
 }
