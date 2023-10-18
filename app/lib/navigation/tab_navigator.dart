@@ -76,7 +76,7 @@ class _TabNavigatorState extends State<TabNavigator> {
             Positioned(
               left: 20,
               right: 20,
-              bottom: 22,
+              bottom: 24,
               child: CustomTabBar(
                 currentIndex: _currentIndex,
                 onTabSelected: (int index) {
