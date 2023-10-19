@@ -31,6 +31,8 @@ class AuthenticationProvider with ChangeNotifier {
       if (!await checkAuthStatus()) {
         throw 'Authentication failed';
       }
+    }).catchError((error) {
+      throw ('The email or password is incorrect');
     });
   }
 
