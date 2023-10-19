@@ -1,5 +1,4 @@
 import 'package:app/provider/selected_device_provider.dart';
-import 'package:app/screens/provision.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
@@ -82,14 +81,6 @@ class DeviceSelectorModal extends StatelessWidget {
                   const DeviceListHeader(child: Text('Other Devices')),
                   ...otherDevices
                 ],
-                const DeviceListHeader(child: Text('New Device')),
-                ListTile(
-                  title: const Text('Set Up a New Device'),
-                  leading: const Icon(Icons.add_to_home_screen),
-                  onTap: () {
-                    startProvisioning(context);
-                  },
-                )
               ],
             );
           },

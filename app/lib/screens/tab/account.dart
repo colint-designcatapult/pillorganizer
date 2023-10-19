@@ -1,5 +1,6 @@
 import 'package:app/models/user.dart';
 import 'package:app/screens/auth/register.dart';
+import 'package:app/screens/provision.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:provider/provider.dart';
@@ -57,6 +58,14 @@ class AccountScreen extends StatelessWidget {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             children: [
+                              SquareButton(
+                                color: const Color(0xFF043C4D),
+                                icon: PhosphorIcons.plus_circle_fill,
+                                label: "Add new device",
+                                onPressed: () {
+                                  startProvisioning(context);
+                                },
+                              ),
                               if (user is User)
                                 SquareButton(
                                   color: const Color(0xFF7A2C2C),
@@ -76,7 +85,7 @@ class AccountScreen extends StatelessWidget {
                                   onPressed: () {
                                     register();
                                   },
-                                )
+                                ),
                             ],
                           ))
                     ]),
@@ -105,7 +114,7 @@ class SquareButton extends StatelessWidget {
       child: Container(
         width: 150,
         height: 150,
-        padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 20.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: const BorderRadius.all(Radius.circular(4.0)),
@@ -119,19 +128,25 @@ class SquareButton extends StatelessWidget {
           ],
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
+            const SizedBox(height: 14),
             Icon(
               icon,
               size: 56.0,
               color: color,
             ),
-            const SizedBox(height: 20.0),
-            Text(label,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      color: color,
-                    ))
+            const SizedBox(height: 8),
+            SizedBox(
+                height: 48,
+                child: Align(
+                    alignment: Alignment.center,
+                    child: Text(label,
+                        textAlign: TextAlign.center,
+                        style:
+                            Theme.of(context).textTheme.displaySmall?.copyWith(
+                                  color: color,
+                                )))),
           ],
         ),
       ),

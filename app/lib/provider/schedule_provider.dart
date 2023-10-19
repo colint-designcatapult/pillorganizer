@@ -22,6 +22,7 @@ class ScheduleProvider with ChangeNotifier {
     if (selected != null) {
       load(selected.deviceID);
     }
+    isUpdatedTimeCalled = false;
     return this;
   }
 

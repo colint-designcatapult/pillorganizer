@@ -28,6 +28,18 @@ class PostSetupWizard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(2, 1);
+    void onSkip() {
+      var currentUser =
+          Provider.of<AuthenticationProvider>(context, listen: false)
+              .currentUser;
+      if (currentUser is AnonymousUser) {
+        Navigator.of(context).push(MedicationEntryStep.route(context));
+      } else {
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil("/index", (route) => false);
+      }
+    }
+
     return Consumer2<ScheduleProvider, SelectedDeviceProvider>(
       builder: (context, scheduleProvider, selectedDeviceProvider, child) {
         bool isUpdatedTimeCalled = scheduleProvider.isUpdatedTimeCalled;
@@ -45,8 +57,7 @@ class PostSetupWizard extends StatelessWidget {
                 .pushNamedAndRemoveUntil('/', (route) => false),
             onNextPressed: () =>
                 Navigator.of(context).push(NotificationStep.route(context)),
-            onSkipPressed: () =>
-                Navigator.of(context).push(CreateAccountStep.route(context)),
+            onSkipPressed: () => onSkip(),
             canGoNext: canGoNext,
             child: const Expanded(
                 child: Padding(
@@ -69,6 +80,7 @@ class NotificationStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(2, 2);
+
     return Consumer<SelectedDeviceProvider>(
       builder: (context, selectedDeviceProvider, child) {
         void toggleNotifications() {
