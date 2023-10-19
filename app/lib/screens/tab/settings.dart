@@ -1,8 +1,12 @@
+import 'package:app/platform/dialog.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
+import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
+import '../../platform/dialog.dart';
 
+import '../../widgets/device_rename_modal.dart';
 import '../../widgets/schedule_entry.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -10,6 +14,13 @@ class SettingsScreen extends StatefulWidget {
 
   @override
   _SettingsScreenState createState() => _SettingsScreenState();
+}
+
+void changeName(context) {
+  showDialog(
+    context: context,
+    builder: (_) => const ChangeDeviceNameDialog(),
+  );
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
@@ -33,6 +44,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       margin: const EdgeInsets.only(left: 24.0, bottom: 8.0),
                       child: Text(
                         prov.device!.name,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 32.0,
                           fontWeight: FontWeight.bold,
@@ -45,13 +57,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         children: [
                           _buildButton(
                               "Change Name", PhosphorIcons.pencil_simple, () {
-                            print("Change name");
+                            changeName(context);
                           }, context),
                           const SizedBox(width: 20.0),
                           _buildButton("Delete", PhosphorIcons.trash_simple,
-                              () {
-                            print("Delete device");
-                          }, context),
+                              () {}, context),
                         ],
                       ),
                     ),

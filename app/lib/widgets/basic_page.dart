@@ -258,6 +258,7 @@ class BasicPageTextFormField extends StatelessWidget {
   final FormFieldSetter<String>? onSaved;
   final bool autofocus;
   final ValueChanged<String>? onFieldSubmitted;
+  final ValueChanged<String>? onChanged;
   final bool obscureText;
 
   const BasicPageTextFormField(
@@ -268,6 +269,7 @@ class BasicPageTextFormField extends StatelessWidget {
       this.onSaved,
       this.autofocus = false,
       this.onFieldSubmitted,
+      this.onChanged,
       this.obscureText = false});
 
   ValueChanged<String>? _onFieldSubmitted(context) {
@@ -291,6 +293,7 @@ class BasicPageTextFormField extends StatelessWidget {
           autofocus: autofocus,
           validator: validator,
           onSaved: onSaved,
+          onChanged: onChanged,
           onFieldSubmitted: _onFieldSubmitted(context),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 18),
           textInputAction: textInputAction,
