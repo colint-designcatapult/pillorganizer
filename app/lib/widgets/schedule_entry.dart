@@ -38,15 +38,13 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
             Row(
               children: [
                 Expanded(
-                  child: _buildTimeBlock(
-                      schedProv, DayPeriod.am, schedProv.schedule?.am),
+                  child: _buildTimeBlock(DayPeriod.am, schedProv.schedule?.am),
                 ),
                 const SizedBox(
                   width: 20,
                 ),
                 Expanded(
-                  child: _buildTimeBlock(
-                      schedProv, DayPeriod.pm, schedProv.schedule?.pm),
+                  child: _buildTimeBlock(DayPeriod.pm, schedProv.schedule?.pm),
                 ),
               ],
             ),
@@ -69,58 +67,66 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
     );
   }
 
-  Widget _buildTimeBlock(
-      ScheduleProvider prov, DayPeriod dayPeriod, DispenseTime? entry) {
-    return FutureBuilder(
-      future: prov.future,
-      builder: (context, snapshot) {
-        return ShimmerPlaceholder(
-          loading: !snapshot.hasData,
-          builder: (context, loading) {
-            return GestureDetector(
-                onTap: () {
-                  showTimePicker(
-                    initialTime: entry?.time ?? TimeOfDay.now(),
-                    context: context,
-                    initialEntryMode: TimePickerEntryMode.input,
-                  ).then((value) {
-                    if (value != null) {
-                      Provider.of<ScheduleProvider>(context, listen: false)
-                          .updateTime(dayPeriod, value);
-                    }
-                  });
-                },
-                child: Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: const Color(0xFFE8EFF4),
-                        width: 1.0,
+  Widget _buildTimeBlock(DayPeriod dayPeriod, DispenseTime? entry) {
+    return GestureDetector(
+        onTap: () {
+          showTimePicker(
+            initialTime: entry?.time ?? TimeOfDay.now(),
+            context: context,
+            initialEntryMode: TimePickerEntryMode.input,
+          ).then((value) {
+            if (value != null) {
+              Provider.of<ScheduleProvider>(context, listen: false)
+                  .updateTime(dayPeriod, value);
+            }
+          });
+        },
+        child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: const Color(0xFFE8EFF4),
+                width: 1.0,
+              ),
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              children: [
+                Container(
+                  color: const Color(0xFFE8EFF4),
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(dayPeriod == DayPeriod.am ? "AM" : "PM",
+                          style: Theme.of(context).textTheme.titleMedium),
+                      const SizedBox(
+                        width: 12,
                       ),
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
+                      SvgPicture.asset(
+                        dayPeriod == DayPeriod.am
+                            ? 'lib/assets/SVG/DEV_SYM_AM.svg'
+                            : 'lib/assets/SVG/DEV_SYM_PM.svg',
+                        width: 24,
+                        height: 24,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8.0),
+                Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          color: const Color(0xFFE8EFF4),
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(dayPeriod == DayPeriod.am ? "AM" : "PM",
-                                  style:
-                                      Theme.of(context).textTheme.titleMedium),
-                              const SizedBox(
-                                width: 12,
-                              ),
-                              SvgPicture.asset(
-                                dayPeriod == DayPeriod.am
-                                    ? 'lib/assets/SVG/DEV_SYM_AM.svg'
-                                    : 'lib/assets/SVG/DEV_SYM_PM.svg',
-                                width: 24,
-                                height: 24,
-                              ),
-                            ],
+                        Text(
+                          entry != null
+                              ? entry.time
+                                  .format(context)
+                                  .replaceAll(RegExp(r'[APap][Mm]$'), '')
+                              : 'Tap to set time',
+                          style: const TextStyle(
+                            fontSize: 18.0,
                           ),
                         ),
                         const SizedBox(width: 8.0),
@@ -142,16 +148,14 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
                                   SvgPicture.asset(
                                       'lib/assets/SVG/PencilSimpleLine.svg'),
                                   const SizedBox(width: 4),
-                                  if (entry != null) const Text('Edit')
+                                  const Text('Edit')
                                 ])
                               ],
                             )),
                       ],
-                    )));
-          },
-        );
-      },
-    );
+                    )),
+              ],
+            )));
   }
 }
 

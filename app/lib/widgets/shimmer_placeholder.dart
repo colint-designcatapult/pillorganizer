@@ -1,13 +1,18 @@
 import 'package:app/api/api.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ShimmerPlaceholder extends StatelessWidget {
   final Widget Function(BuildContext, bool) builder;
   final bool loading;
+  final Color? baseColor;
+  final Color? highlightColor;
   const ShimmerPlaceholder(
-      {super.key, required this.builder, this.loading = false});
+      {super.key,
+      required this.builder,
+      this.baseColor,
+      this.highlightColor,
+      this.loading = false});
 
   @override
   Widget build(BuildContext context) {
@@ -19,8 +24,8 @@ class ShimmerPlaceholder extends StatelessWidget {
       child: loading
           ? Shimmer.fromColors(
               key: ValueKey<bool>(loading),
-              baseColor: const Color(0xFF053C4D),
-              highlightColor: const Color(0xFF06425B),
+              baseColor: baseColor ?? Theme.of(context).colorScheme.primary,
+              highlightColor: highlightColor ?? const Color(0xff2680A6),
               child: builder(context, loading),
             )
           : builder(context, loading),
