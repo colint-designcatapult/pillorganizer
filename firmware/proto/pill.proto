@@ -2,7 +2,6 @@ syntax = "proto3";
 import "nanopb.proto";
 
 option java_package = "jct.pillorganizer.proto";
-
 // V1 messages
 
 enum BinStatus {
