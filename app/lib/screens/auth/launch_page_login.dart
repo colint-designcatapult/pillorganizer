@@ -23,6 +23,7 @@ class LaunchPageLogin extends StatefulWidget {
 }
 
 class _LaunchPageLoginState extends State<LaunchPageLogin> {
+  Future<bool>? _checkAuthFuture;
   Future<void>? _loginFuture;
   String? username;
   String? password;
@@ -35,95 +36,149 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
     return Scaffold(
       backgroundColor: const Color(0xFFBFD2DB),
       body: SingleChildScrollView(
-        padding: EdgeInsets.only(top: topSize),
-        child: SizedBox(
-            height: MediaQuery.of(context).size.height - topSize,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  'CabiNET',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 36),
-                  child: BasicFormContainer(
-                    titleText: 'Sign In',
-                    subtitleText:
-                        'Welcome back! Please Sign In to your account.',
-                    buttonText: 'Sign In',
-                    onSubmit: _submitForm,
-                    future: _loginFuture,
-                    children: [
-                      BasicPageTextFormField(
-                        labelText: 'Email',
-                        validator: Validatorless.multiple([
-                          if (!useAnon)
-                            Validatorless.email('Not a valid email'),
-                          Validatorless.required('Enter an email')
-                        ]),
-                        onSaved: (val) => username = val,
-                      ),
-                      BasicPageTextFormField(
-                        labelText: 'Password',
-                        validator:
-                            Validatorless.required('Enter your password'),
-                        onFieldSubmitted: (value) =>
-                            (), //To trigger the form submit function
-                        onSaved: (val) => password = val,
-                        textInputAction: TextInputAction.done,
-                        obscureText: true,
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 20),
-                          child: Text(
-                            "or",
-                            style: Theme.of(context).textTheme.displaySmall,
+          padding: EdgeInsets.only(top: topSize),
+          child: FutureBuilder<bool>(
+              future: _checkAuthFuture,
+              builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+                if (snapshot.hasData ||
+                    snapshot.hasError ||
+                    snapshot.connectionState == ConnectionState.done) {
+                  return SizedBox(
+                      height: MediaQuery.of(context).size.height - topSize,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            'CabiNET',
+                            style: Theme.of(context).textTheme.titleLarge,
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
-                          child: SizedBox(
-                            width: double.infinity,
-                            height: 48,
-                            child: OutlinedButton(
-                              onPressed: () {
-                                _startOOBE();
-                              },
-                              style: OutlinedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 36),
+                            child: BasicFormContainer(
+                              titleText: 'Sign In',
+                              subtitleText:
+                                  'Welcome back! Please Sign In to your account.',
+                              buttonText: 'Sign In',
+                              onSubmit: _submitForm,
+                              future: _loginFuture,
+                              children: [
+                                BasicPageTextFormField(
+                                  labelText: 'Email',
+                                  validator: Validatorless.multiple([
+                                    if (!useAnon)
+                                      Validatorless.email('Not a valid email'),
+                                    Validatorless.required('Enter an email')
+                                  ]),
+                                  onSaved: (val) => username = val,
                                 ),
-                                side: const BorderSide(
-                                    width: 1, color: Color(0xff03012C)),
-                              ),
-                              child: Text(
-                                'Set up a new device',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(color: const Color(0xff03012C)),
+                                BasicPageTextFormField(
+                                  labelText: 'Password',
+                                  validator: Validatorless.required(
+                                      'Enter your password'),
+                                  onFieldSubmitted: (value) =>
+                                      (), //To trigger the form submit function
+                                  onSaved: (val) => password = val,
+                                  textInputAction: TextInputAction.done,
+                                  obscureText: true,
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.bottomCenter,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 20),
+                                    child: Text(
+                                      "or",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .displaySmall,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                        24, 12, 24, 40),
+                                    child: SizedBox(
+                                      width: double.infinity,
+                                      height: 48,
+                                      child: OutlinedButton(
+                                        onPressed: () {
+                                          _startOOBE();
+                                        },
+                                        style: OutlinedButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8.0),
+                                          ),
+                                          side: const BorderSide(
+                                              width: 1,
+                                              color: Color(0xff03012C)),
+                                        ),
+                                        child: Text(
+                                          'Set up a new device',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.copyWith(
+                                                  color:
+                                                      const Color(0xff03012C)),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
+                        ],
+                      ));
+                } else {
+                  return SizedBox(
+                      height: MediaQuery.of(context).size.height - topSize,
+                      child: const Align(
+                        alignment: Alignment.center,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            )),
-      ),
+                      ));
+                }
+              })),
     );
+  }
+
+  Future<bool> _handleAuthSuccess(bool status) async {
+    if (status) {
+      Navigator.of(context).pushNamedAndRemoveUntil("/index", (route) => false);
+    }
+    return status;
+  }
+
+  bool _handleAuthFailure(Exception err) {
+    setState(() {
+      _checkAuthFuture = Future.error(err);
+    });
+    return false;
+  }
+
+  void _checkAuthStatus() {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      try {
+        var future = Provider.of<AuthenticationProvider>(context, listen: false)
+            .checkAuthStatus()
+            .then((value) => _handleAuthSuccess(value))
+            .catchError((err) => _handleAuthFailure(err));
+
+        setState(() {
+          _checkAuthFuture = future;
+        });
+      } on Exception catch (e) {
+        _handleAuthFailure(e);
+      }
+    });
   }
 
   void _startOOBE() {
@@ -171,5 +226,12 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
             'There was a problem signing you in: ${err.toString()}');
       }
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    print("YOO");
+    _checkAuthStatus();
   }
 }
