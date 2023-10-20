@@ -133,7 +133,7 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
                                   entry != null
                                       ? entry.time.format(context).replaceAll(
                                           RegExp(r'[APap][Mm]$'), '')
-                                      : 'Tap to set time',
+                                      : 'Set time',
                                   style: const TextStyle(
                                     fontSize: 18.0,
                                   ),
@@ -142,7 +142,7 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
                                   SvgPicture.asset(
                                       'lib/assets/SVG/PencilSimpleLine.svg'),
                                   const SizedBox(width: 4),
-                                  const Text('Edit')
+                                  if (entry != null) const Text('Edit')
                                 ])
                               ],
                             )),

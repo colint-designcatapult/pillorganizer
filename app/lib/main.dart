@@ -1,4 +1,5 @@
 import 'package:app/api/device.dart';
+import 'package:app/navigation/provision_navigator.dart';
 import 'package:app/navigation/tab_navigator.dart';
 import 'package:app/provider/medication_provider.dart';
 import 'package:app/provider/time_provider.dart';
@@ -94,6 +95,7 @@ class MyApp extends StatelessWidget {
                     },
                   );
                 },
+                '/provision': (context) => const ProvisionNavigator(),
                 '/index': (context) => const TabNavigator(),
                 '/post_setup': (context) => const PostSetupWizard()
               },

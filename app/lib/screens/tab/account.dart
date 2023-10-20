@@ -1,6 +1,6 @@
 import 'package:app/models/user.dart';
+import 'package:app/navigation/provision_navigator.dart';
 import 'package:app/screens/auth/register.dart';
-import 'package:app/screens/provision.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:provider/provider.dart';

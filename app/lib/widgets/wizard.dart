@@ -298,21 +298,24 @@ class WizardStep extends StatelessWidget {
                   Expanded(
                     child: GestureDetector(
                       onTap: onBackPressed,
-                      child: SizedBox(
-                        height: navFooterHeight,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.arrow_back,
-                              size: 24,
-                            ),
-                            const SizedBox(
-                              width: 8,
-                            ),
-                            Text('Back',
-                                style: Theme.of(context).textTheme.bodySmall),
-                          ],
+                      child: Container(
+                        color: Colors.transparent,
+                        child: SizedBox(
+                          height: navFooterHeight,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.arrow_back,
+                                size: 24,
+                              ),
+                              const SizedBox(
+                                width: 8,
+                              ),
+                              Text('Back',
+                                  style: Theme.of(context).textTheme.bodySmall),
+                            ],
+                          ),
                         ),
                       ),
                     ),

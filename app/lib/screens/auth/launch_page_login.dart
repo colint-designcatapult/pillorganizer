@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
-import '../provision.dart';
+import 'package:app/navigation/provision_navigator.dart';
 
 class LaunchPageLogin extends StatefulWidget {
   const LaunchPageLogin({Key? key}) : super(key: key);

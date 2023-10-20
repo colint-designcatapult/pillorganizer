@@ -140,37 +140,6 @@ class ProvisionProvider extends ChangeNotifier {
     return _state.future!;
   }
 
-  Future<ProvisionState> _startProvisioning() async {
-    for (int i = 0; i < 5; i++) {
-      List<String> devices =
-          await _flutterEspBleProvPlugin.scanBleDevices(_prefix);
-      debugPrint("Found devices: ${devices.join(" ")}");
-      if (devices.isNotEmpty) {
-        _state = _state.copyWith(
-          stage: ProvisionStage.scanning_wifi,
-          deviceName: devices.first,
-        );
-        notifyListeners();
-        return scanWifi();
-      }
-    }
-    return Future.error(TimeoutException('No devices found after 5 attempts'));
-  }
-
-  Future<ProvisionState> startProvisioning() {
-    _state = _state.copyWith(
-        future: _startProvisioning().onError((err, st) {
-          debugPrintStack(stackTrace: st, label: 'Start error: $err');
-          _state = _state.copyWith(error: err);
-          notifyListeners();
-          return Future.error(err!);
-        }),
-        progress: null,
-        error: null);
-    notifyListeners();
-    return _state.future!;
-  }
-
   Future<ProvisionState> rescanNetworks() {
     _state = _state.copyWith(
         stage: ProvisionStage.scanning_wifi,
@@ -256,7 +225,7 @@ class ProvisionProvider extends ChangeNotifier {
         ProvisionStart(serialNo: sn, deviceClass: AppApi.deviceClass()));
     _state = _state.copyWith(provisionID: prov.id, serialNo: sn);
     notifyListeners();
-    await _setServerUrl();
+    //await _setServerUrl();
     await _setOobKey(hex.decode(prov.oobKey) as Uint8List);
     return await Future.delayed(const Duration(seconds: 3));
   }

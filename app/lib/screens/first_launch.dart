@@ -1,10 +1,9 @@
 import 'dart:async';
 
+import 'package:app/navigation/provision_navigator.dart';
 import 'package:app/provider/authentication_provider.dart';
 import 'package:app/screens/auth/login.dart';
-import 'package:app/screens/provision.dart';
 import 'package:flutter/material.dart';
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:provider/provider.dart';
 
 class FirstLaunchPage extends StatefulWidget {
