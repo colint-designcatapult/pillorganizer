@@ -1,9 +1,14 @@
+import 'package:app/api/medication.dart';
+import 'package:app/provider/medication_provider.dart';
 import 'package:app/provider/new_medication_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:app/widgets/addNewPill/add_new_pills.dart';
-import 'package:app/widgets/addNewPill/new_medications.dart';
+import 'package:app/widgets/addNewPill/medication_card_entry.dart';
+import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:provider/provider.dart';
+
+import '../../api/api.dart';
 
 class AddNewPillModal extends StatefulWidget {
   const AddNewPillModal({super.key, required this.onAdd});
@@ -59,7 +64,7 @@ class _AddNewPillModalState extends State<AddNewPillModal> {
               builder: (context) {
                 return StatefulBuilder(
                     builder: (BuildContext context, StateSetter setState) {
-                  return NewMedicationModal(
+                  return MedicationModal(
                     newMedicationProvider: newMedicationProvider,
                     onBack: () => {
                       if (showNewMedications)
@@ -73,7 +78,7 @@ class _AddNewPillModalState extends State<AddNewPillModal> {
                     },
                     onNext: showNewMedications,
                     child: showNewMedications
-                        ? const NewMedications()
+                        ? const MedicationCardEntry()
                         : AddNewPills(
                             onAddMedicationClick: () => setState(() {
                               showNewMedications = true;
@@ -92,18 +97,20 @@ class _AddNewPillModalState extends State<AddNewPillModal> {
   }
 }
 
-class NewMedicationModal extends StatelessWidget {
+class MedicationModal extends StatelessWidget {
   final NewMedicationProvider newMedicationProvider;
   final VoidCallback onBack;
   final bool? onNext;
+  final int? medicationID;
   final Widget child;
   static const navFooterHeight = 72.0;
 
-  const NewMedicationModal(
+  const MedicationModal(
       {super.key,
       required this.newMedicationProvider,
       required this.onBack,
       this.onNext,
+      this.medicationID,
       required this.child});
 
   @override
@@ -118,8 +125,28 @@ class NewMedicationModal extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisAlignment: medicationID != null
+                          ? MainAxisAlignment.spaceBetween
+                          : MainAxisAlignment.end,
                       children: [
+                        if (medicationID != null)
+                          IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: () {
+                                client
+                                    .deleteMedication(
+                                        Provider.of<SelectedDeviceProvider>(
+                                                context,
+                                                listen: false)
+                                            .device!
+                                            .deviceID,
+                                        medicationID!)
+                                    .then((_) {
+                                  if (context.mounted) {
+                                    Navigator.of(context).pop();
+                                  }
+                                });
+                              }),
                         IconButton(
                           icon: const Icon(
                             Icons.close,
@@ -128,7 +155,7 @@ class NewMedicationModal extends StatelessWidget {
                           onPressed: () {
                             Navigator.of(context).pop();
                           },
-                        ),
+                        )
                       ],
                     ),
                   ),
@@ -189,15 +216,20 @@ class NewMedicationModal extends StatelessWidget {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(
-                                      Icons.add,
+                                    Icon(
+                                      medicationID != null
+                                          ? PhosphorIcons.check
+                                          : PhosphorIcons.plus,
                                       size: 24,
                                       color: Colors.white,
                                     ),
                                     const SizedBox(
                                       width: 8,
                                     ),
-                                    Text('Add to list',
+                                    Text(
+                                        medicationID != null
+                                            ? 'Save'
+                                            : 'Add to list',
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodyMedium

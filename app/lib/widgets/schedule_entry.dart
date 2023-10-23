@@ -115,7 +115,7 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
                 ),
                 const SizedBox(width: 8.0),
                 Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -129,29 +129,12 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
                             fontSize: 18.0,
                           ),
                         ),
-                        const SizedBox(width: 8.0),
-                        Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  entry != null
-                                      ? entry.time.format(context).replaceAll(
-                                          RegExp(r'[APap][Mm]$'), '')
-                                      : 'Set time',
-                                  style: const TextStyle(
-                                    fontSize: 18.0,
-                                  ),
-                                ),
-                                Row(children: [
-                                  SvgPicture.asset(
-                                      'lib/assets/SVG/PencilSimpleLine.svg'),
-                                  const SizedBox(width: 4),
-                                  const Text('Edit')
-                                ])
-                              ],
-                            )),
+                        Row(children: [
+                          SvgPicture.asset(
+                              'lib/assets/SVG/PencilSimpleLine.svg'),
+                          const SizedBox(width: 4),
+                          const Text('Edit')
+                        ])
                       ],
                     )),
               ],

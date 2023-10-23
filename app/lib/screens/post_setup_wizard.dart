@@ -6,7 +6,7 @@ import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
 import 'package:app/screens/modals/add_new_pills_modal.dart';
 import 'package:app/service/provisioning_service.dart';
-import 'package:app/widgets/addNewPill/new_medications.dart';
+import 'package:app/widgets/addNewPill/medication_card_entry.dart';
 import 'package:app/widgets/medication_card.dart';
 import 'package:app/widgets/schedule_entry.dart';
 import 'package:app/widgets/wizard.dart';
@@ -278,11 +278,11 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
             top: Radius.circular(16),
           ),
         ),
-        builder: (context) => NewMedicationModal(
+        builder: (context) => MedicationModal(
             newMedicationProvider: newMedicationProvider,
             onBack: () => Navigator.of(context).pop(),
             onNext: true,
-            child: const NewMedications())).whenComplete(() {
+            child: const MedicationCardEntry())).whenComplete(() {
       prov.refresh();
     });
   }
