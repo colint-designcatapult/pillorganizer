@@ -386,7 +386,7 @@ class EditMedicationWizardPage extends StatelessWidget {
         ),
         body: ChangeNotifierProvider<NewMedicationProvider>(
           create: (context) =>
-              NewMedicationProvider.fromExisting(deviceID, existing),
+              NewMedicationProvider.fromExisting(deviceID, existing, () {}),
           builder: (context, _) => AnimatedSwitcher(
             switchInCurve: Curves.easeOut,
             reverseDuration: const Duration(seconds: 0),

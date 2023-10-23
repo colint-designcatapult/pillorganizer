@@ -1,6 +1,8 @@
 import 'package:app/api/api.dart';
 import 'package:app/api/medication.dart';
+import 'package:app/provider/new_medication_provider.dart';
 import 'package:app/provider/scroll_provider.dart';
+import 'package:app/screens/modals/add_new_pills_modal.dart';
 import 'package:app/screens/modals/device_selector_modal.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:app/widgets/shimmer_placeholder.dart';
@@ -21,6 +23,7 @@ import '../../provider/device_notice_provider.dart';
 import '../../provider/medication_provider.dart';
 import '../../provider/selected_device_provider.dart';
 import '../../provider/time_provider.dart';
+import '../../widgets/addNewPill/medication_card_entry.dart';
 import '../../widgets/device_icon.dart';
 import '../../widgets/medication_icon.dart';
 
@@ -433,50 +436,71 @@ class DosePeriodArea extends StatelessWidget {
 
   Widget _buildMed(context, DosePeriod period, ScheduledMedication? med,
       DeviceNoticeProvider deviceNoticeProv) {
+    final deviceID = Provider.of<SelectedDeviceProvider>(context, listen: false)
+        .device!
+        .deviceID;
+
+    void onComplete() {
+      final medicationsProvider =
+          Provider.of<MedicationsProvider>(context, listen: false);
+      medicationsProvider.update(
+          Provider.of<SelectedDeviceProvider>(context, listen: false).device);
+    }
+
     if (med != null) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Container(
-            height: 80,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F6F5),
-              borderRadius: BorderRadius.circular(8.0),
-              border: Border.all(
-                color: const Color(0xFF206B8B),
-                width: 2.0,
-              ),
-            ),
-            alignment: Alignment.center,
-            child: ListTile(
-              leading: MedicationIcon.fromMed(med, 44.0),
-              title: Text(
-                med.name,
-                overflow: TextOverflow.ellipsis,
-              ),
-              subtitle: Text(_buildSubtitle(context, period, deviceNoticeProv)),
-              trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                CircularBinStatusIndicator(
-                    status: period.status,
-                    deviceStatus: deviceNoticeProv.value),
-                const SizedBox(
-                  width: 10,
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Container(
+                height: 80,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F6F5),
+                  borderRadius: BorderRadius.circular(8.0),
+                  border: Border.all(
+                    color: const Color(0xFF206B8B),
+                    width: 2.0,
+                  ),
                 ),
-              ]),
-              onTap: () {
-                Navigator.of(context)
-                    .push(EditMedicationWizardPage.route(
-                        context,
-                        med,
-                        Provider.of<SelectedDeviceProvider>(context,
-                                listen: false)
-                            .device!
-                            .deviceID))
-                    .then((value) {
-                  Provider.of<MedicationsProvider>(context, listen: false)
-                      .refresh();
-                });
-              },
-            )),
+                alignment: Alignment.center,
+                child: ListTile(
+                  leading: MedicationIcon.fromMed(med, 44.0),
+                  title: Text(
+                    med.name,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle:
+                      Text(_buildSubtitle(context, period, deviceNoticeProv)),
+                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                    CircularBinStatusIndicator(
+                        status: period.status,
+                        deviceStatus: deviceNoticeProv.value),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                  ]),
+                  onTap: () {
+                    showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: const Color(0xFFFBFCFF),
+                        elevation: 0,
+                        builder: (context) {
+                          return MedicationModal(
+                              medicationID: med.id,
+                              newMedicationProvider:
+                                  NewMedicationProvider.fromExisting(
+                                      deviceID, med, onComplete),
+                              onBack: () {
+                                Navigator.of(context).pop();
+                              },
+                              onNext: true,
+                              child: const MedicationCardEntry());
+                        });
+                  },
+                )),
+          ),
+        ],
       );
     } else {
       return Padding(

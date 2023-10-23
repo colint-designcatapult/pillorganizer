@@ -7,14 +7,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
-class NewMedications extends StatefulWidget {
-  const NewMedications({super.key});
+class MedicationCardEntry extends StatefulWidget {
+  const MedicationCardEntry({super.key});
 
   @override
-  _NewMedicationsState createState() => _NewMedicationsState();
+  _MedicationCardEntryState createState() => _MedicationCardEntryState();
 }
 
-class _NewMedicationsState extends State<NewMedications> {
+class _MedicationCardEntryState extends State<MedicationCardEntry> {
   Widget _buildDose(context, DispenseTime time, Set<int>? checked,
       NewMedicationProvider provider, String imageUrl) {
     bool selected = checked?.contains(time.id) ?? false;
@@ -67,6 +67,8 @@ class _NewMedicationsState extends State<NewMedications> {
   @override
   Widget build(BuildContext context) {
     return Consumer<NewMedicationProvider>(builder: (context, provider, child) {
+      final isEditing =
+          provider.state.name != null && provider.state.name!.isNotEmpty;
       return SingleChildScrollView(
           child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 32),
@@ -76,7 +78,7 @@ class _NewMedicationsState extends State<NewMedications> {
           children: <Widget>[
             Center(
               child: Text(
-                "New Medication",
+                isEditing ? "Edit medication" : "New Medication",
                 style: Theme.of(context)
                     .textTheme
                     .titleLarge
@@ -84,14 +86,15 @@ class _NewMedicationsState extends State<NewMedications> {
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              'Enter the new medication details for easy recognition and management.',
-              textAlign: TextAlign.center,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: const Color(0xFF03012C)),
-            ),
+            if (!isEditing)
+              Text(
+                'Enter the new medication details for easy recognition and management.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: const Color(0xFF03012C)),
+              ),
             const SizedBox(height: 36),
             Text(
               "Name",

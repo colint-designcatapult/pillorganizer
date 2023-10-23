@@ -12,7 +12,9 @@ class NewMedicationProvider with ChangeNotifier {
     _onComplete = onComplete;
   }
 
-  NewMedicationProvider.fromExisting(int deviceID, ScheduledMedication med) {
+  NewMedicationProvider.fromExisting(
+      int deviceID, ScheduledMedication med, VoidCallback? onComplete) {
+    _onComplete = onComplete;
     _state = NewMedicationState(
         existing: med,
         deviceID: deviceID,
