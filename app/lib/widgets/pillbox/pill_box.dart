@@ -26,8 +26,7 @@ class Pillbox extends StatelessWidget {
       return SizedBox(
         height: MediaQuery.of(context).size.height * 0.32,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween, // Add this line
-
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: daysOfWeek.asMap().entries.map((entry) {
             final nightIndex = entry.key * 2;
             final day = entry.value;
@@ -43,7 +42,8 @@ class Pillbox extends StatelessWidget {
                           ?.copyWith(color: const Color(0xFF03012C))),
                 ),
                 BinColumn(
-                    isDeviceActive: isDeviceActive && deviceProv.value != null,
+                    isDeviceLoading: deviceProv.value == null,
+                    isDeviceActive: isDeviceActive,
                     isToday:
                         day.toUpperCase() == currentDayOfWeek.toUpperCase(),
                     dayStatus: deviceProv.value != null

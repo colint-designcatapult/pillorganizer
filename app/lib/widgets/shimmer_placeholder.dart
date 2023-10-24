@@ -7,12 +7,15 @@ class ShimmerPlaceholder extends StatelessWidget {
   final bool loading;
   final Color? baseColor;
   final Color? highlightColor;
+  final ShimmerDirection? direction;
+
   const ShimmerPlaceholder(
       {super.key,
       required this.builder,
       this.baseColor,
       this.highlightColor,
-      this.loading = false});
+      this.loading = false,
+      this.direction});
 
   @override
   Widget build(BuildContext context) {
@@ -26,8 +29,8 @@ class ShimmerPlaceholder extends StatelessWidget {
               key: ValueKey<bool>(loading),
               baseColor: baseColor ?? Theme.of(context).colorScheme.primary,
               highlightColor: highlightColor ?? const Color(0xff2680A6),
-              child: builder(context, loading),
-            )
+              direction: direction ?? ShimmerDirection.ltr,
+              child: builder(context, loading))
           : builder(context, loading),
     );
   }

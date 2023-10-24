@@ -1,10 +1,12 @@
+import 'package:app/api/device.dart';
 import 'package:app/models/user.dart';
 import 'package:app/navigation/provision_navigator.dart';
 import 'package:app/screens/auth/register.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:provider/provider.dart';
-
+import 'package:app/screens/modals/device_selector_modal.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../provider/authentication_provider.dart';
 
 class AccountScreen extends StatelessWidget {
@@ -14,6 +16,8 @@ class AccountScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     var authProvider = Provider.of<AuthenticationProvider>(context);
     var user = authProvider.currentUser;
+    var numberOfDevices =
+        Provider.of<DeviceListProvider>(context, listen: false).value?.length;
 
     void register() {
       showModalBottomSheet<bool>(
@@ -84,6 +88,17 @@ class AccountScreen extends StatelessWidget {
                                   label: "Create account",
                                   onPressed: () {
                                     register();
+                                  },
+                                ),
+                              if (numberOfDevices != null &&
+                                  numberOfDevices > 1)
+                                SquareButton(
+                                  color: const Color(0xFF043C4D),
+                                  icon: PhosphorIcons.arrows_clockwise,
+                                  label: AppLocalizations.of(context)!
+                                      .switchDevice,
+                                  onPressed: () {
+                                    showDeviceSelectorModal(context);
                                   },
                                 ),
                             ],

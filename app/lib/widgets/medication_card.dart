@@ -24,10 +24,7 @@ class MedicationCard extends StatelessWidget {
         .deviceID;
 
     void onComplete() {
-      final medicationsProvider =
-          Provider.of<MedicationsProvider>(context, listen: false);
-      medicationsProvider.update(
-          Provider.of<SelectedDeviceProvider>(context, listen: false).device);
+      Provider.of<MedicationsProvider>(context, listen: false).refresh();
     }
 
     return GestureDetector(

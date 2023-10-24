@@ -231,7 +231,6 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
   @override
   void initState() {
     super.initState();
-    print("YOO");
     _checkAuthStatus();
   }
 }

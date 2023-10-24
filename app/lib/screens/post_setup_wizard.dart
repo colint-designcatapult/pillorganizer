@@ -278,11 +278,11 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
         ),
         builder: (context) => ChangeNotifierProvider<NewMedicationProvider>(
             create: (context) => NewMedicationProvider(
-                device!.deviceID,
-                () => MedicationModal(
-                    onBack: () => Navigator.of(context).pop(),
-                    onNext: true,
-                    child: const MedicationCardEntry())))).whenComplete(() {
+                device!.deviceID, () => prov.update(device)),
+            builder: (context, _) => MedicationModal(
+                onBack: () => Navigator.of(context).pop(),
+                onNext: true,
+                child: const MedicationCardEntry()))).whenComplete(() {
       prov.refresh();
     });
   }
@@ -298,87 +298,89 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
             top: Radius.circular(16),
           ),
         ),
-        builder: (context) => SizedBox(
-            height: MediaQuery.of(context).size.height * 0.9,
-            child: Stack(children: [
-              Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        IconButton(
-                          icon: const Icon(
-                            Icons.close,
-                            size: 32,
-                          ),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
-                    ),
-                    Text('My pills',
-                        style: Theme.of(context).textTheme.titleMedium),
-                    Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                        child: Text(
-                            "Here's a quick overview of all the pills you've added.",
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyMedium)),
-                    Expanded(
-                        child: SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                children: [
-                                  ...prov.value!
-                                      .map((e) => MedicationCard(
-                                            med: e,
-                                            backgroundColor:
-                                                const Color(0xFFF1F3F6),
-                                          ))
-                                      .toList(growable: false)
-                                ]))),
-                    SizedBox(
-                      height: navFootBarHeight,
-                    )
-                  ])),
-              Align(
-                  alignment: Alignment.bottomCenter,
-                  child: GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Container(
-                      height: navFootBarHeight,
-                      color: const Color(0xFF206B8B),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.arrow_back,
-                                  size: 24,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(
-                                  width: 8,
-                                ),
-                                Text('Back',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleSmall
-                                        ?.copyWith(color: Colors.white)),
-                              ],
+        builder: (context) => ValueListenableBuilder(
+            valueListenable: prov,
+            builder: (context, indicatorEnabled, child) => SizedBox(
+                height: MediaQuery.of(context).size.height * 0.9,
+                child: Stack(children: [
+                  Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            IconButton(
+                              icon: const Icon(
+                                Icons.close,
+                                size: 32,
+                              ),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
                             ),
+                          ],
+                        ),
+                        Text('My pills',
+                            style: Theme.of(context).textTheme.titleMedium),
+                        Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                            child: Text(
+                                "Here's a quick overview of all the pills you've added.",
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodyMedium)),
+                        Expanded(
+                            child: SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                child: Column(
+                                    mainAxisSize: MainAxisSize.max,
+                                    children: [
+                                      ...prov.value!
+                                          .map((e) => MedicationCard(
+                                                med: e,
+                                                backgroundColor:
+                                                    const Color(0xFFF1F3F6),
+                                              ))
+                                          .toList(growable: false)
+                                    ]))),
+                        SizedBox(
+                          height: navFootBarHeight,
+                        )
+                      ])),
+                  Align(
+                      alignment: Alignment.bottomCenter,
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Container(
+                          height: navFootBarHeight,
+                          color: const Color(0xFF206B8B),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.arrow_back,
+                                      size: 24,
+                                      color: Colors.white,
+                                    ),
+                                    const SizedBox(
+                                      width: 8,
+                                    ),
+                                    Text('Back',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleSmall
+                                            ?.copyWith(color: Colors.white)),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                  )),
-            ])));
+                        ),
+                      )),
+                ]))));
   }
 }
 

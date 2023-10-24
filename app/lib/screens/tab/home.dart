@@ -96,28 +96,13 @@ class HomeScreen extends StatelessWidget {
                                   return Text(
                                     DateFormat('EEEE, d MMMM')
                                         .format(minuteProvider.value),
-                                    style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600),
+                                    style:
+                                        Theme.of(context).textTheme.labelLarge,
                                   );
                                 },
                               ),
                             ),
                           ),
-                          const SliverToBoxAdapter(
-                              child: Padding(
-                            padding: EdgeInsets.only(bottom: 20.0),
-                            child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(children: [
-                                    DeviceListSelector(),
-                                    Spacer(),
-                                    DeviceSettingsButton(),
-                                  ])
-                                ]),
-                          )),
                           SliverToBoxAdapter(child: Pillbox()),
                           const DosePeriodArea(),
                         ],
