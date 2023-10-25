@@ -1,4 +1,3 @@
-import 'package:app/api/device.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:provider/provider.dart';
@@ -22,7 +21,7 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.all(20),
+      insetPadding: const EdgeInsets.all(24),
       child: Form(
         key: _formKey,
         child: FormSubmitCallback(
@@ -49,13 +48,9 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
                     ),
                   ],
                 ),
-                const Column(
-                  children: [
-                    Icon(
-                      PhosphorIcons.hard_drives,
-                      size: 48,
-                    ),
-                  ],
+                const Icon(
+                    PhosphorIcons.hard_drives,
+                    size: 48,
                 ),
                 const SizedBox(height: 8),
                 Text(

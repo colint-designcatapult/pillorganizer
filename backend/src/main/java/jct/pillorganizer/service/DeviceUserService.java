@@ -36,15 +36,28 @@ public class DeviceUserService {
     }
 
     /**
+     * Removes the device_user link
+     * @param userID the user id
+     * @param deviceID the device to remove
+     */
+    public void removeDeviceFromUser(long userID, long deviceID) {
+        if(doesUserBelongToDevice(userID, deviceID)) {
+            repository.softDelete(userID, deviceID);
+        }
+        else {
+            throw new IllegalArgumentException("User is not linked to deviceId");
+        }
+    }
+
+    /**
      * Checks if a user is added to a specific device.
      * @param user the user to test membership
      * @param device the device to see whether the user is related to it or not
      * @return true if the user is related to the device
      */
     public boolean doesUserBelongToDevice(BaseUser user, Device device) {
-        return repository.countByUserAndDevice(user, device) != 0;
+        return repository.countByUserAndDeviceAndDeletedFalse(user, device) != 0;
     }
-
     /**
      * Checks if a user is added to a specific device.
      * @param userID the user ID to test membership
@@ -52,7 +65,7 @@ public class DeviceUserService {
      * @return true if the user is related to the device
      */
     public boolean doesUserBelongToDevice(long userID, long deviceID) {
-        return repository.countByUserIDAndDeviceID(userID, deviceID) != 0;
+        return repository.countByUserIDAndDeviceIDAndDeletedFalse(userID, deviceID) != 0;
     }
 
 

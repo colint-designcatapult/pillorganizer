@@ -8,11 +8,5 @@ import reactor.core.publisher.Mono;
 
 @Repository
 public interface DeviceUserAsyncRepository extends ReactorCrudRepository<DeviceUser, Long> {
-
-    Mono<DeviceUser> findByUserIDAndDeviceID(long user, long device);
-
-    Mono<Device> retrieveDeviceByUserIDAndDeviceID(long userID, long deviceID);
-
-
-
+    Mono<Device> retrieveDeviceByUserIDAndDeviceIDAndDeletedFalse(long userID, long deviceID);
 }

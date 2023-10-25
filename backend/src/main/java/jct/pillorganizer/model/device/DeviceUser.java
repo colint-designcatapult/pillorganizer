@@ -3,7 +3,6 @@ package jct.pillorganizer.model.device;
 import jct.pillorganizer.model.user.BaseUser;
 import lombok.Getter;
 import lombok.Setter;
-
 import javax.persistence.*;
 
 /**
@@ -50,6 +49,9 @@ public class DeviceUser {
 
     @Column(name = "notification_token")
     private String notificationToken;
+
+    @Column(name = "deleted")
+    private boolean deleted = false;
 
 
 }

@@ -87,7 +87,7 @@ public class AuthService {
      * @return a Mono wrapping a future device
      */
     public Mono<Device> accessDeviceAsync(long deviceID) {
-        return asyncRepository.retrieveDeviceByUserIDAndDeviceID(getUserID(), deviceID);
+        return asyncRepository.retrieveDeviceByUserIDAndDeviceIDAndDeletedFalse(getUserID(), deviceID);
     }
 
     /**
@@ -102,7 +102,7 @@ public class AuthService {
             return deviceRepository.findById(deviceID)
                     .orElseThrow(() -> new RuntimeException("Device ID does not exist"));
         } else {
-            return deviceUserRepository.retrieveDeviceByUserIDAndDeviceID(getUserID(), deviceID)
+            return deviceUserRepository.retrieveDeviceByUserIDAndDeviceIDAndDeletedFalse(getUserID(), deviceID)
                     .orElseThrow(() -> new AuthenticationException("No access"));
         }
     }

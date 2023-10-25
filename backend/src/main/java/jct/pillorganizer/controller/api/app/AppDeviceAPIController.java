@@ -22,6 +22,7 @@ import jct.pillorganizer.proto.Pill;
 import jct.pillorganizer.repo.*;
 import jct.pillorganizer.service.DeviceProvisionService;
 import jct.pillorganizer.service.DeviceStateService;
+import jct.pillorganizer.service.DeviceUserService;
 import lombok.extern.flogger.Flogger;
 import org.zalando.problem.Problem;
 
@@ -70,6 +71,9 @@ public class AppDeviceAPIController {
     @Inject
     DeviceStateService deviceStateService;
 
+    @Inject
+    DeviceUserService deviceUserService;
+
 
     @Operation(summary = "Lists devices that the user has access to")
     @Get("/list")
@@ -92,6 +96,14 @@ public class AppDeviceAPIController {
         } else {
             return deviceUserRepository.findByUserID(authService.getUserID());
         }
+    }
+
+    @Operation(summary = "Soft deletes the device user link")
+    @Delete("/{id}")
+    @Secured(SecurityRule.IS_AUTHENTICATED)
+    public HttpResponse<?> removeDeviceFromUser(@QueryValue long id) {
+        deviceUserService.removeDeviceFromUser(authService.getUserID(), id);
+        return  HttpResponse.ok();
     }
 
     @Operation(summary = "Initiates provisioning")
@@ -154,7 +166,7 @@ public class AppDeviceAPIController {
     public DeviceUserDTO setDeviceSettings(@DeviceABAC(idType = DeviceABACIDType.DEVICE) @PathVariable("id") long deviceID,
                                                  @Body UpdateDeviceUserSettings dto) {
         long userID = authService.getUserID();
-        var devUser = deviceUserRepository.findByUserIDAndDeviceID(userID, deviceID);
+        var devUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userID, deviceID);
 
         if(dto.deviceName().isPresent()) {
             deviceRepository.update(deviceID, dto.deviceName().get());

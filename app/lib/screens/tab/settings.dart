@@ -1,5 +1,6 @@
 import 'package:app/platform/dialog.dart';
 import 'package:app/provider/selected_device_provider.dart';
+import 'package:app/widgets/remove_device_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
@@ -20,6 +21,13 @@ void changeName(context) {
   showDialog(
     context: context,
     builder: (_) => const ChangeDeviceNameDialog(),
+  );
+}
+
+void deleteDevice(context) {
+  showDialog(
+    context: context,
+    builder: (_) => const RemoveDeviceDialog(),
   );
 }
 
@@ -61,7 +69,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           }, context),
                           const SizedBox(width: 20.0),
                           _buildButton("Delete", PhosphorIcons.trash_simple,
-                              () {}, context),
+                              () {
+                            deleteDevice(context);
+                          }, context),
                         ],
                       ),
                     ),
