@@ -57,5 +57,6 @@
 				"type": "String"
 			}
 		}
-	}
+	},
+	"switchDevice": "Switch device"
 }

@@ -1,11 +1,5 @@
 import 'package:app/api/api.dart';
-import 'package:app/api/medication.dart';
-import 'package:app/provider/new_medication_provider.dart';
 import 'package:app/provider/scroll_provider.dart';
-import 'package:app/screens/modals/add_new_pills_modal.dart';
-import 'package:app/screens/modals/device_selector_modal.dart';
-import 'package:app/widgets/shimmer_placeholder.dart';
-import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -17,13 +11,9 @@ import '../../api/device.dart';
 import '../../platform/ble_auto_supress.dart';
 import '../../provider/device_connection_status_provider.dart';
 import '../../provider/device_notice_provider.dart';
-import '../../provider/medication_provider.dart';
 import '../../provider/selected_device_provider.dart';
 import '../../provider/time_provider.dart';
-import '../../widgets/addNewPill/medication_card_entry.dart';
-import '../../widgets/device_icon.dart';
 import '../../widgets/dose_period_area.dart';
-import '../../widgets/medication_icon.dart';
 
 import '../../widgets/pillbox/pill_box.dart';
 import '../modals/edit_schedule_modal.dart';
@@ -90,67 +80,6 @@ class IndexAppBar extends StatelessWidget {
   }
 }
 
-class DeviceListSelector extends StatelessWidget {
-  const DeviceListSelector({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<DeviceListProvider>(
-      builder: (_, prov, __) {
-        return RefreshablePlaceholder(
-          notifier: prov,
-          builder: (context, _, loading) {
-            if (loading) {
-              return Row(
-                children: [
-                  Container(
-                      height: 48,
-                      width: 48,
-                      decoration: const BoxDecoration(
-                          color: Color(0xFF473D3D), shape: BoxShape.circle)),
-                  const SizedBox(width: 12.0),
-                  Container(width: 120.0, height: 16.0, color: Colors.white),
-                ],
-              );
-            } else {
-              return GestureDetector(
-                onTap: () {
-                  showDeviceSelectorModal(context);
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Consumer<DeviceConnectionStatusProvider>(
-                      builder: (_, prov, __) {
-                        return DeviceStatusIcon(
-                          size: 48.0,
-                          status: prov.value,
-                        );
-                      },
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 12.0, right: 4.0),
-                      child: Consumer<SelectedDeviceProvider>(
-                          builder: (_, selectedDevice, __) {
-                        return Text(
-                          '${selectedDevice.device?.name}',
-                          style: Theme.of(context).textTheme.displayMedium,
-                        );
-                      }),
-                    ),
-                    const Icon(Icons.expand_more)
-                  ],
-                ),
-              );
-            }
-          },
-        );
-      },
-    );
-  }
-}
-
 class DeviceSettingsItem extends StatelessWidget {
   final void Function(BuildContext) onSelected;
   final String title;
@@ -178,39 +107,6 @@ class DeviceSettingsItem extends StatelessWidget {
 
 void editSchedule(context) {
   showEditScheduleModal(context);
-}
-
-class DeviceSettings {
-  static const DeviceSettingsItem changeTimezone = DeviceSettingsItem(
-      onSelected: editSchedule,
-      title: "Edit Schedule",
-      icon: Icon(Icons.alarm));
-
-  static const List<DeviceSettingsItem> choices = <DeviceSettingsItem>[
-    changeTimezone,
-  ];
-}
-
-class DeviceSettingsButton extends StatelessWidget {
-  const DeviceSettingsButton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return PopupMenuButton<DeviceSettingsItem>(
-      icon: const Icon(Icons.settings),
-      onSelected: (choice) {
-        choice.onSelected(context);
-      },
-      itemBuilder: (BuildContext context) {
-        return DeviceSettings.choices.map((choice) {
-          return PopupMenuItem<DeviceSettingsItem>(
-            value: choice,
-            child: choice,
-          );
-        }).toList();
-      },
-    );
-  }
 }
 
 class CircularBinStatusIndicator extends StatelessWidget {
@@ -400,19 +296,7 @@ class IndexPage extends StatelessWidget {
                         padding: sidePad.copyWith(top: 16.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 6.0),
-                              child: Row(
-                                children: [
-                                  DeviceListSelector(),
-                                  Spacer(),
-                                  DeviceSettingsButton()
-                                ],
-                              ),
-                            ),
-                            Pillbox()
-                          ],
+                          children: [Pillbox()],
                         ),
                       ),
                     ),

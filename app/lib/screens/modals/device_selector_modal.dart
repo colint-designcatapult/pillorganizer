@@ -39,7 +39,7 @@ class DeviceListEntry extends StatelessWidget {
         onTap: () {
           Provider.of<SelectedDeviceProvider>(context, listen: false)
               .selectDevice(device);
-          Navigator.of(context).pop(device);
+          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
         },
       ),
     );
