@@ -13,7 +13,7 @@ public class FirmwareService {
      * @return latest version of the CabiNET firmware, as an integer.
      */
     public int getLatestVersion() {
-        return 22;
+        return 26;
     }
 
 }

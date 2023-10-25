@@ -1,6 +1,7 @@
 name: backend
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - "master"
@@ -56,6 +57,7 @@ jobs:
   push-to-heroku-staging:
     name: Push image to Heroku Staging
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
     needs: build-with-maven
     steps:
       - name: Download Docker Image
@@ -69,7 +71,6 @@ jobs:
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          docker images
           heroku container:login
           docker tag backend registry.heroku.com/cabinet-staging/web
           docker push registry.heroku.com/cabinet-staging/web
@@ -81,6 +82,12 @@ jobs:
     needs: build-with-maven
     if: github.event.pull_request.merged == true
     steps:
+      - name: Download Docker Image
+        uses: actions/download-artifact@v2
+        with:
+          name: backend-image
+      - name: Load Docker Image
+        run: docker load -i backend.tar
       - name: Login to Heroku
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
