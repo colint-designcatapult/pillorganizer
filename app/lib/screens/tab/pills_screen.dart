@@ -14,9 +14,7 @@ class PillsScreen extends StatefulWidget {
 
 class _PillsScreenState extends State<PillsScreen> {
   void _addNewPillUpdate() {
-    final medicationsProvider = context.read<MedicationsProvider>();
-    medicationsProvider.update(
-        Provider.of<SelectedDeviceProvider>(context, listen: false).device);
+    Provider.of<MedicationsProvider>(context, listen: false).refresh();
   }
 
   @override

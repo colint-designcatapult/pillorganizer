@@ -1,7 +1,9 @@
 import 'package:app/api/api.dart';
 import 'package:app/api/medication.dart';
-import 'package:app/screens/device_settings/medication/medication_entry_wizard.dart';
+import 'package:app/models/medication_entry_wizard.dart';
 import 'package:flutter/material.dart';
+
+enum NewMedicationStage { name, appearance, schedule }
 
 class NewMedicationProvider with ChangeNotifier {
   VoidCallback? _onComplete;
@@ -40,18 +42,6 @@ class NewMedicationProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void nextStage() {
-    _state =
-        state.copyWith(stage: NewMedicationStage.values[state.stage.index + 1]);
-    notifyListeners();
-  }
-
-  void previousStage() {
-    _state =
-        state.copyWith(stage: NewMedicationStage.values[state.stage.index - 1]);
-    notifyListeners();
-  }
-
   void complete(context) {
     client
         .saveMedication(
@@ -62,6 +52,20 @@ class NewMedicationProvider with ChangeNotifier {
                 shape: _state.shape?.internalName,
                 color: _state.color?.value,
                 dispenseTimes: _state.assignedDispenseTimes))
+        .then((value) {
+      if (context.mounted) {
+        if (_onComplete != null) {
+          _onComplete!();
+        }
+        Navigator.of(context).pop();
+      }
+      notifyListeners();
+    });
+  }
+
+  void delete(context) {
+    client
+        .deleteMedication(_state.deviceID, _state.existing!.id!)
         .then((value) {
       if (context.mounted) {
         if (_onComplete != null) {
@@ -94,20 +98,4 @@ class NewMedicationProvider with ChangeNotifier {
   final Key nameKey = UniqueKey();
   final Key appearanceKey = UniqueKey();
   final Key scheduleKey = UniqueKey();
-
-  Widget buildWidgetForState({VoidCallback? onComplete}) {
-    _onComplete = onComplete;
-    if (state.name == null || state.stage == NewMedicationStage.name) {
-      return NewMedicationWizardNameStage(key: nameKey);
-    } else if (state.shape == null ||
-        state.color == null ||
-        state.stage == NewMedicationStage.appearance) {
-      return NewMedicationWizardAppearanceStage(key: appearanceKey);
-    } else if (state.stage == NewMedicationStage.schedule ||
-        (state.assignedDispenseTimes?.isEmpty ?? true)) {
-      return NewMedicationWizardScheduleStage(key: scheduleKey);
-    } else {
-      return const Text('over');
-    }
-  }
 }

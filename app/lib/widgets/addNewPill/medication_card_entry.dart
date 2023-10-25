@@ -8,7 +8,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 class MedicationCardEntry extends StatefulWidget {
-  const MedicationCardEntry({super.key});
+  const MedicationCardEntry({
+    super.key,
+  });
 
   @override
   _MedicationCardEntryState createState() => _MedicationCardEntryState();
@@ -67,8 +69,7 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
   @override
   Widget build(BuildContext context) {
     return Consumer<NewMedicationProvider>(builder: (context, provider, child) {
-      final isEditing =
-          provider.state.name != null && provider.state.name!.isNotEmpty;
+      final isEditing = provider.state.existing != null;
       return SingleChildScrollView(
           child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 32),
@@ -105,27 +106,28 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
             ),
             const SizedBox(height: 8),
             TextFormField(
-              initialValue: provider.state.name,
-              inputFormatters: [
-                LengthLimitingTextInputFormatter(32),
-              ],
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: const Color(0xFFF1F3F6),
-                enabledBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFFBFD2DB), width: 2),
+                initialValue: provider.state.name,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(32),
+                ],
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: const Color(0xFFF1F3F6),
+                  enabledBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFFBFD2DB), width: 2),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-              textInputAction: TextInputAction.next,
-              onChanged: (val) {
-                provider.updateName(val);
-              },
-            ),
+                onChanged: (val) {
+                  provider.updateName(val);
+                },
+                onFieldSubmitted: (val) {
+                  provider.updateName(val);
+                }),
             const SizedBox(height: 36),
             Column(
               children: [

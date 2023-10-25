@@ -266,8 +266,6 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
   void _addNewPill(MedicationsProvider prov) {
     final device =
         Provider.of<SelectedDeviceProvider>(context, listen: false).device;
-    final newMedicationProvider =
-        NewMedicationProvider(device!.deviceID, () => prov.update(device));
     showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -278,11 +276,13 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
             top: Radius.circular(16),
           ),
         ),
-        builder: (context) => MedicationModal(
-            newMedicationProvider: newMedicationProvider,
-            onBack: () => Navigator.of(context).pop(),
-            onNext: true,
-            child: const MedicationCardEntry())).whenComplete(() {
+        builder: (context) => ChangeNotifierProvider<NewMedicationProvider>(
+            create: (context) => NewMedicationProvider(
+                device!.deviceID,
+                () => MedicationModal(
+                    onBack: () => Navigator.of(context).pop(),
+                    onNext: true,
+                    child: const MedicationCardEntry())))).whenComplete(() {
       prov.refresh();
     });
   }

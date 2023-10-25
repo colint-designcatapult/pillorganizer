@@ -8,6 +8,7 @@ import '../../api/api.dart';
 import '../../api/device.dart';
 import '../../platform/ble_auto_supress.dart';
 import '../../provider/device_notice_provider.dart';
+import '../../widgets/dose_period_area.dart';
 import '../../widgets/pillbox/pill_box.dart';
 import 'index.dart';
 
