@@ -13,6 +13,7 @@
 	"changeDeviceName": "Changer le nom de l'appareil",
 	"changeDeviceNamePrompt": "Veuillez entrer ci-dessous le nouveau nom désiré pour l'appareil:",
 	"changeName": "Changer le nom",
+	"changePassword": "Changer le mot de passe",
 	"color": "Couleur",
 	"connectionProblem": "Problème de connexion",
 	"connectionProblemSubtitle": "Un problème est survenu pendant la configuration de votre pilulier",

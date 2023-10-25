@@ -1,30 +1,59 @@
-import 'package:app/api/api.dart';
-import 'package:app/platform/dialog.dart';
 import 'package:app/provider/authentication_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
+import 'package:app/screens/auth/recover_password.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-class RegisterPage extends StatefulWidget {
-  const RegisterPage({Key? key}) : super(key: key);
+class ChangePassword extends StatefulWidget {
+  const ChangePassword({Key? key}) : super(key: key);
 
   @override
-  State<RegisterPage> createState() => _RegisterPageState();
+  State<ChangePassword> createState() => _ChangePasswordState();
 }
 
-class _RegisterPageState extends State<RegisterPage> {
-  final _formKey = GlobalKey<FormState>();
+class _ChangePasswordState extends State<ChangePassword> {
+  bool showForgotPassword = false;
 
   @override
   Widget build(BuildContext context) {
-    const navFooterHeight = 72.0;
+    return showForgotPassword
+        ? RecoverPassword(
+            onBack: () => setState(() {
+              showForgotPassword = false;
+            }),
+          )
+        : ChangePasswordModal(
+            gotoForgotPassword: () => setState(() {
+              showForgotPassword = true;
+            }),
+          );
+  }
+}
 
-    return ChangeNotifierProvider<UserRegistrationProvider>(
-        create: (_) => UserRegistrationProvider(),
+class ChangePasswordModal extends StatefulWidget {
+  final VoidCallback gotoForgotPassword;
+
+  const ChangePasswordModal({
+    super.key,
+    required this.gotoForgotPassword,
+  });
+  @override
+  State<ChangePasswordModal> createState() => _ChangePasswordModalState();
+}
+
+class _ChangePasswordModalState extends State<ChangePasswordModal> {
+  static const navFooterHeight = 72.0;
+  final _formKey = GlobalKey<FormState>();
+  String? currentPassword;
+  String? newPassword;
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider<AuthenticationProvider>(
+        create: (_) => AuthenticationProvider(),
         child: SizedBox(
             height: MediaQuery.of(context).size.height * 0.8,
             child: Form(
@@ -68,8 +97,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   Align(
                                       alignment: Alignment.centerLeft,
                                       child: Text(
-                                        AppLocalizations.of(context)!
-                                            .createAccount,
+                                        'Change Password',
                                         style: Theme.of(context)
                                             .textTheme
                                             .labelLarge,
@@ -81,8 +109,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                         padding: const EdgeInsets.only(
                                             top: 8, bottom: 22, right: 0),
                                         child: Text(
-                                          AppLocalizations.of(context)!
-                                              .createAccountSubtitle,
+                                          'Please enter your current password in order to set up a new one.',
                                           style: Theme.of(context)
                                               .textTheme
                                               .bodyMedium,
@@ -92,39 +119,42 @@ class _RegisterPageState extends State<RegisterPage> {
                                     height: 24,
                                   ),
                                   BasicPageTextFormField(
-                                    labelText:
-                                        AppLocalizations.of(context)!.email,
+                                    labelText: 'Current Password',
                                     validator: Validatorless.multiple([
-                                      Validatorless.email(
-                                          AppLocalizations.of(context)!
-                                              .emailNotValid),
-                                      Validatorless.required(
-                                          AppLocalizations.of(context)!
-                                              .emailRequired)
+                                      Validatorless.between(6, 48,
+                                          "Passwords must be between 6 and 32 characters")
                                     ]),
-                                    onSaved: (val) => context
-                                        .read<UserRegistrationProvider>()
-                                        .updateEmail(val),
+                                    onSaved: (val) => currentPassword = val,
                                   ),
                                   BasicPageTextFormField(
-                                    labelText:
-                                        AppLocalizations.of(context)!.password,
+                                    labelText: 'New Password',
                                     validator: Validatorless.multiple([
-                                      Validatorless.between(
-                                          6,
-                                          48,
-                                          AppLocalizations.of(context)!
-                                              .passwordLengthValidation)
+                                      Validatorless.between(6, 48,
+                                          "Passwords must be between 6 and 32 characters")
                                     ]),
                                     obscureText: true,
                                     textInputAction: TextInputAction.done,
-                                    onSaved: (val) => context
-                                        .read<UserRegistrationProvider>()
-                                        .updatePassword(val),
+                                    onSaved: (val) => newPassword = val,
                                     onFieldSubmitted: (val) {
                                       _onSubmit(context);
                                     },
-                                  )
+                                  ),
+                                  Align(
+                                      alignment: Alignment.bottomRight,
+                                      child: GestureDetector(
+                                          onTap: widget.gotoForgotPassword,
+                                          child: Text('Forgot password?',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .labelSmall
+                                                  ?.copyWith(
+                                                      color: const Color(
+                                                          0xFF206B8B),
+                                                      decoration: TextDecoration
+                                                          .underline,
+                                                      decorationColor:
+                                                          const Color(
+                                                              0xFF206B8B))))),
                                 ])))),
                   ]),
                   Align(
@@ -150,7 +180,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                       const SizedBox(
                                         width: 8,
                                       ),
-                                      Text(AppLocalizations.of(context)!.back,
+                                      Text('Back',
                                           style: Theme.of(context)
                                               .textTheme
                                               .titleSmall),
@@ -165,7 +195,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                   height: navFooterHeight,
                                   child: FutureBuilder(
                                       future: context
-                                          .read<UserRegistrationProvider>()
+                                          .read<
+                                              UserRegistrationProvider>() //j'imagine tu va creer une new provider? sinon ca peut etre delete>()
                                           .future,
                                       builder: (context, snapshot) {
                                         return GestureDetector(
@@ -184,10 +215,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                               mainAxisAlignment:
                                                   MainAxisAlignment.center,
                                               children: [
-                                                Text(
-                                                    AppLocalizations.of(
-                                                            context)!
-                                                        .signUp,
+                                                Text('Save',
                                                     style: Theme.of(context)
                                                         .textTheme
                                                         .titleSmall
@@ -219,40 +247,9 @@ class _RegisterPageState extends State<RegisterPage> {
       _formKey.currentState?.save();
       _submit(context);
     }
-    ;
   }
 
   void _submit(context) {
-    var prov = Provider.of<UserRegistrationProvider>(context, listen: false);
-    var authProv = Provider.of<AuthenticationProvider>(context, listen: false);
-    _register(prov, authProv).catchError((err) {
-      _handleError(context, err);
-      return false;
-    }).then((value) {
-      if (value) {
-        SchedulerBinding.instance.addPostFrameCallback((_) {
-          Navigator.pop(context);
-        });
-      }
-    });
-  }
-
-  Future<bool> _register(
-      UserRegistrationProvider prov, AuthenticationProvider authProv) async {
-    await prov.register();
-    await authProv.logIn(
-        username: prov.model.email, password: prov.model.password);
-    return true;
-  }
-
-  void _handleError(context, err) {
-    debugPrint(err.toString());
-    if (err is ProblemJsonException) {
-      showAlertDialog(
-          context, AppLocalizations.of(context)!.genericProblem(err.problem));
-    } else {
-      showAlertDialog(context,
-          AppLocalizations.of(context)!.genericProblem(err.toString()));
-    }
+    //CHANGE PASSWORD
   }
 }

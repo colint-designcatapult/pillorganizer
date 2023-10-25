@@ -13,6 +13,7 @@
 	"changeDeviceName": "Change device name",
 	"changeDeviceNamePrompt": "Please enter the desired new device name right below:",
 	"changeName": "Change Name",
+	"changePassword": "Change Password",
 	"color": "Color",
 	"connectionProblem": "Connection Problem",
 	"connectionProblemSubtitle": "There was a problem setting up your pill organizer.",
