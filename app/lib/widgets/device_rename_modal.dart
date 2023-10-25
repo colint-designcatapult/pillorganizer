@@ -108,8 +108,11 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
                                 child: Text(
                                   AppLocalizations.of(context)!.genericCancel,
                                   textAlign: TextAlign.center,
-                                  style:
-                                      const TextStyle(color: Color(0xFF206B8B)),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .displaySmall
+                                      ?.copyWith(
+                                          color: const Color(0xFF206B8B)),
                                 ))),
                       )),
                       const SizedBox(width: 12),
