@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../provider/selected_device_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class DeviceInfoHeader extends StatelessWidget {
   const DeviceInfoHeader({Key? key}) : super(key: key);
@@ -14,7 +15,9 @@ class DeviceInfoHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(selectedDevice.device?.name ?? "Loading ...",
+              Text(
+                  selectedDevice.device?.name ??
+                      AppLocalizations.of(context)!.loadingState,
                   style: const TextStyle(
                       color: Colors.white,
                       fontSize: 24,

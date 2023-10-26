@@ -47,7 +47,8 @@ class ProvisionSelectWifiPage extends StatelessWidget {
                         onPressed: () {
                           prov.rescanNetworks();
                         },
-                        child: const Text('Rescan Networks'),
+                        child:
+                            Text(AppLocalizations.of(context)!.provRescanWifi),
                       ),
                       const SizedBox(
                         height: 35,
@@ -153,7 +154,8 @@ class _PasswordEntryModal extends State<PasswordEntryModal> {
     return Form(
       key: formKey,
       child: PlatformAlertDialog(
-          title: Text("Enter password for '${widget.wifiEntry.name}'"),
+          title: Text(AppLocalizations.of(context)!
+              .provEnterWifiPassword(widget.wifiEntry.name)),
           content: PlatformTextFormField(
             obscureText: true,
             autofocus: true,

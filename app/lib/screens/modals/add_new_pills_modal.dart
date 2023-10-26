@@ -1,5 +1,6 @@
 import 'package:app/provider/new_medication_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
+import 'package:app/widgets/addNewPill/add_new_pills.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:app/widgets/addNewPill/medication_card_entry.dart';
@@ -40,7 +41,7 @@ class _AddNewPillModalState extends State<AddNewPillModal> {
                 const SizedBox(
                   width: 8,
                 ),
-                Text('Add new',
+                Text(AppLocalizations.of(context)!.addNew,
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
@@ -64,18 +65,26 @@ class _AddNewPillModalState extends State<AddNewPillModal> {
                           return ChangeNotifierProvider<NewMedicationProvider>(
                               create: (context) => newMedicationProvider,
                               builder: (context, _) => MedicationModal(
-                                  onBack: () => {
-                                        if (showNewMedications)
-                                          {
-                                            setState(() {
-                                              showNewMedications = false;
-                                            })
-                                          }
-                                        else
-                                          {Navigator.of(context).pop()}
-                                      },
-                                  onNext: showNewMedications,
-                                  child: const MedicationCardEntry()));
+                                    onBack: () => {
+                                      if (showNewMedications)
+                                        {
+                                          setState(() {
+                                            showNewMedications = false;
+                                          })
+                                        }
+                                      else
+                                        {Navigator.of(context).pop()}
+                                    },
+                                    onNext: showNewMedications,
+                                    child: showNewMedications
+                                        ? const MedicationCardEntry()
+                                        : AddNewPills(
+                                            onAddMedicationClick: () =>
+                                                setState(() {
+                                              showNewMedications = true;
+                                            }),
+                                          ),
+                                  ));
                         });
                       }).whenComplete(() {
                     setState(() {
@@ -229,7 +238,7 @@ class MedicationModal extends StatelessWidget {
                             const SizedBox(
                               width: 8,
                             ),
-                            Text('Back',
+                            Text(AppLocalizations.of(context)!.back,
                                 style: Theme.of(context).textTheme.bodyMedium),
                           ],
                         ),
@@ -272,8 +281,9 @@ class MedicationModal extends StatelessWidget {
                                   ),
                                   Text(
                                       medicationID != null
-                                          ? 'Save'
-                                          : 'Add to list',
+                                          ? AppLocalizations.of(context)!.save
+                                          : AppLocalizations.of(context)!
+                                              .addToList,
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodyMedium

@@ -8,6 +8,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CreateAccountPage extends StatelessWidget {
   const CreateAccountPage({Key? key}) : super(key: key);
@@ -22,18 +23,20 @@ class CreateAccountPage extends StatelessWidget {
     return ChangeNotifierProvider<UserRegistrationProvider>(
         create: (_) => UserRegistrationProvider(),
         child: BasicPage(
-          title: const Text('Create CabiNET Account'),
+          title: Text(AppLocalizations.of(context)!.createAccount),
           child: Builder(builder: (context) {
             return BasicForm(
-              buttonText: 'Continue',
+              buttonText: AppLocalizations.of(context)!.genericContinue,
               onSubmit: () => _submit(context),
               future: Provider.of<UserRegistrationProvider>(context).future,
               children: [
                 BasicPageTextFormField(
-                  labelText: 'Email',
+                  labelText: AppLocalizations.of(context)!.email,
                   validator: Validatorless.multiple([
-                    Validatorless.email('Not a valid email'),
-                    Validatorless.required('Enter an email')
+                    Validatorless.email(
+                        AppLocalizations.of(context)!.emailNotValid),
+                    Validatorless.required(
+                        AppLocalizations.of(context)!.emailRequired)
                   ]),
                   autofocus: true,
                   onSaved: (val) {
@@ -41,10 +44,10 @@ class CreateAccountPage extends StatelessWidget {
                   },
                 ),
                 BasicPageTextFormField(
-                  labelText: 'Password',
+                  labelText: AppLocalizations.of(context)!.password,
                   validator: Validatorless.multiple([
-                    Validatorless.between(
-                        6, 48, "Passwords must be between 6 and 32 characters")
+                    Validatorless.between(6, 48,
+                        AppLocalizations.of(context)!.passwordLengthValidation)
                   ]),
                   obscureText: true,
                   textInputAction: TextInputAction.done,
@@ -91,9 +94,11 @@ class CreateAccountPage extends StatelessWidget {
   void _handleError(context, err) {
     debugPrint(err.toString());
     if (err is ProblemJsonException) {
-      showAlertDialog(context, 'There was a problem: ${err.problem}');
+      showAlertDialog(
+          context, AppLocalizations.of(context)!.genericProblem(err.problem));
     } else {
-      showAlertDialog(context, 'There was a problem: ${err.toString()}');
+      showAlertDialog(context,
+          AppLocalizations.of(context)!.genericProblem(err.toString()));
     }
   }
 }

@@ -45,8 +45,8 @@ class ProvisionConnectingPage extends StatelessWidget {
           return WizardStep(
             height: data.item2 != null ? null : 400,
             provisionningProgress: provisionningProgress,
-            title: _buildTitle(data),
-            subtext: _buildSubtitle(data),
+            title: _buildTitle(data, context),
+            subtext: _buildSubtitle(data, context),
             footer: _buildFooter(context, data, initConnection),
             onBackPressed: () =>
                 Navigator.of(context, rootNavigator: true).pop(),
@@ -99,12 +99,13 @@ class ProvisionConnectingPage extends StatelessWidget {
                             const BorderRadius.all(Radius.circular(32)),
                         child: LinearProgressIndicator(
                           value: prov.state.progress,
-                          semanticsLabel: 'Progress',
+                          semanticsLabel:
+                              AppLocalizations.of(context)!.progress,
                           minHeight: 12,
                         )),
                     const SizedBox(height: 14),
-                    Text('Estimated time: '
-                        '${(prov.state.completionETA?.inMinutes ?? 0) + 1} min.')
+                    Text(
+                        '${AppLocalizations.of(context)!.estimatedTime} ${(prov.state.completionETA?.inMinutes ?? 0) + 1} min.')
                   ],
                 );
               } else {
@@ -122,28 +123,27 @@ class ProvisionConnectingPage extends StatelessWidget {
     }*/
   }
 
-  String _buildTitle(data) {
+  String _buildTitle(data, context) {
     if (data.item2 != null) {
-      return "Connection Problem";
+      return AppLocalizations.of(context)!.connectionProblem;
     } else if (data.item1 == ProvisionStage.finalizing) {
-      return "Finishing Setup";
+      return AppLocalizations.of(context)!.finishingSetup;
     } else if (data.item1 == ProvisionStage.complete) {
-      return "Setup Complete";
+      return AppLocalizations.of(context)!.setupComplete;
     } else {
-      return "Error";
+      return AppLocalizations.of(context)!.genericError;
     }
   }
 
-  String _buildSubtitle(data) {
+  String _buildSubtitle(data, context) {
     if (data.item2 != null) {
-      return "There was a problem setting up your pill organizer.";
+      return AppLocalizations.of(context)!.connectionProblemSubtitle;
     } else if (data.item1 == ProvisionStage.finalizing) {
-      return "Please wait a few minutes for your pill organizer to "
-          "finish initial setup.";
+      return AppLocalizations.of(context)!.finishingSetupSubtitle;
     } else if (data.item1 == ProvisionStage.complete) {
-      return "Your pill organizer is now ready to use.";
+      return AppLocalizations.of(context)!.setupCompleteSubtitle;
     } else {
-      return "Error";
+      return AppLocalizations.of(context)!.genericError;
     }
   }
 }

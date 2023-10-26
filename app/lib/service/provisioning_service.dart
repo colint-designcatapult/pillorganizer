@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 class ProvisionningProgress {
   final int step;
   final int stage;
@@ -7,14 +10,14 @@ class ProvisionningProgress {
     this.stage,
   );
 
-  String getTitle() {
+  String getTitle(BuildContext context) {
     switch (step) {
       case 1:
-        return 'Device Setup';
+        return AppLocalizations.of(context)!.deviceSetup;
       case 2:
-        return 'Preferences';
+        return AppLocalizations.of(context)!.preferences;
       case 3:
-        return 'Create an account';
+        return AppLocalizations.of(context)!.createAnAccount;
       default:
         return '';
     }

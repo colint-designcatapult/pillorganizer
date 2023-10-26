@@ -4,13 +4,13 @@ import 'package:app/widgets/device_alert.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../api/api.dart';
 import '../../api/device.dart';
 import '../../platform/ble_auto_supress.dart';
 import '../../provider/device_notice_provider.dart';
 import '../../widgets/dose_period_area.dart';
 import '../../widgets/pillbox/pill_box.dart';
-import 'index.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -94,8 +94,12 @@ class HomeScreen extends StatelessWidget {
                               child: Consumer<MinuteBasedTimeProvider>(
                                 builder: (context, minuteProvider, child) {
                                   return Text(
-                                    DateFormat('EEEE, d MMMM')
-                                        .format(minuteProvider.value),
+                                    AppLocalizations.of(context)!.localeName ==
+                                            'fr'
+                                        ? DateFormat('EEEE, d MMMM', 'fr')
+                                            .format(minuteProvider.value)
+                                        : DateFormat('EEEE, d MMMM', 'en')
+                                            .format(minuteProvider.value),
                                     style:
                                         Theme.of(context).textTheme.labelLarge,
                                   );

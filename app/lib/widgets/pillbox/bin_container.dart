@@ -35,7 +35,7 @@ class BinContainer extends StatelessWidget {
         border: isDeviceActive
             ? null
             : Border.all(
-                color: Color(0xFF206B8B),
+                color: const Color(0xFF206B8B),
                 width: 1.5,
               ),
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class BasicPage extends StatelessWidget {
   const BasicPage({super.key, required this.child, this.title, this.bgColor});
@@ -157,7 +158,7 @@ class _BasicFormState extends State<BasicForm> {
           child: CircularProgressIndicator(color: Colors.white));
     } else {
       return Text(
-        widget.buttonText ?? 'Continue',
+        widget.buttonText ?? AppLocalizations.of(context)!.genericContinue,
         style: Theme.of(context)
             .textTheme
             .bodyMedium

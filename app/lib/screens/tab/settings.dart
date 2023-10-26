@@ -1,11 +1,9 @@
-import 'package:app/platform/dialog.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/widgets/remove_device_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
-import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
-import '../../platform/dialog.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../widgets/device_rename_modal.dart';
 import '../../widgets/schedule_entry.dart';
@@ -63,13 +61,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       margin: const EdgeInsets.only(left: 24.0, bottom: 32.0),
                       child: Row(
                         children: [
-                          _buildButton(
-                              "Change Name", PhosphorIcons.pencil_simple, () {
+                          _buildButton(AppLocalizations.of(context)!.changeName,
+                              PhosphorIcons.pencil_simple, () {
                             changeName(context);
                           }, context),
                           const SizedBox(width: 20.0),
-                          _buildButton("Delete", PhosphorIcons.trash_simple,
-                              () {
+                          _buildButton(AppLocalizations.of(context)!.delete,
+                              PhosphorIcons.trash_simple, () {
                             deleteDevice(context);
                           }, context),
                         ],
@@ -103,7 +101,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                                   PhosphorIcons.timer),
                                               value: 0,
                                               label: Text(
-                                                'Time settings',
+                                                AppLocalizations.of(context)!
+                                                    .timeSettings,
                                                 style: Theme.of(context)
                                                     .textTheme
                                                     .bodySmall
@@ -116,7 +115,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                                 .bell_simple_ringing),
                                             value: 1,
                                             label: Text(
-                                              'Notifications',
+                                              AppLocalizations.of(context)!
+                                                  .notifications,
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .bodySmall
@@ -199,10 +199,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildButton(String text, IconData iconData, void Function() onPressed,
       BuildContext context) {
-    Color textColor =
-        text == 'Delete' ? const Color(0XFFA11106) : const Color(0XFF03012C);
-    Color underlineColor =
-        text == 'Delete' ? const Color(0XFFA11106) : const Color(0XFF03012C);
+    Color textColor = text == AppLocalizations.of(context)!.delete
+        ? const Color(0XFFA11106)
+        : const Color(0XFF03012C);
+    Color underlineColor = text == AppLocalizations.of(context)!.delete
+        ? const Color(0XFFA11106)
+        : const Color(0XFF03012C);
 
     TextStyle? textStyle = Theme.of(context).textTheme.displaySmall?.copyWith(
           decoration: TextDecoration.combine([
@@ -244,7 +246,7 @@ class NotificationsSettings extends StatelessWidget {
         mainAxisSize: MainAxisSize.max,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Notification preferences:',
+          Text(AppLocalizations.of(context)!.notificationPreferences,
               style: Theme.of(context)
                   .textTheme
                   .titleSmall
@@ -274,7 +276,7 @@ class NotificationsSettings extends StatelessWidget {
               const SizedBox(width: 16),
               Flexible(
                 child: Text(
-                  'Send reminder notifications to your phone',
+                  AppLocalizations.of(context)!.notificationReminder,
                   style: Theme.of(context).textTheme.bodyMedium,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,

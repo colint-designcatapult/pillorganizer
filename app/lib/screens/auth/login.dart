@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -59,7 +60,7 @@ class _LoginPageState extends State<LoginPage> {
                               Align(
                                   alignment: Alignment.centerLeft,
                                   child: Text(
-                                    'Sign In',
+                                    AppLocalizations.of(context)!.signInPrompt,
                                     style:
                                         Theme.of(context).textTheme.labelLarge,
                                     textAlign: TextAlign.left,
@@ -70,7 +71,8 @@ class _LoginPageState extends State<LoginPage> {
                                     padding: const EdgeInsets.only(
                                         top: 8, bottom: 22, right: 0),
                                     child: Text(
-                                      'Sign In to your account for better experience.',
+                                      AppLocalizations.of(context)!
+                                          .signInSubtitle,
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodyMedium,
@@ -80,18 +82,24 @@ class _LoginPageState extends State<LoginPage> {
                                 height: 24,
                               ),
                               BasicPageTextFormField(
-                                labelText: 'Email',
+                                labelText: AppLocalizations.of(context)!.email,
                                 validator: Validatorless.multiple([
                                   if (!useAnon)
-                                    Validatorless.email('Not a valid email'),
-                                  Validatorless.required('Enter an email')
+                                    Validatorless.email(
+                                        AppLocalizations.of(context)!
+                                            .emailNotValid),
+                                  Validatorless.required(
+                                      AppLocalizations.of(context)!
+                                          .emailRequired)
                                 ]),
                                 onSaved: (val) => username = val,
                               ),
                               BasicPageTextFormField(
-                                labelText: 'Password',
+                                labelText:
+                                    AppLocalizations.of(context)!.password,
                                 validator: Validatorless.required(
-                                    'Enter your password'),
+                                    AppLocalizations.of(context)!
+                                        .passwordRequired),
                                 onFieldSubmitted: (value) => _onSubmit(),
                                 onSaved: (val) => password = val,
                                 textInputAction: TextInputAction.done,
@@ -122,7 +130,7 @@ class _LoginPageState extends State<LoginPage> {
                                   const SizedBox(
                                     width: 8,
                                   ),
-                                  Text('Back',
+                                  Text(AppLocalizations.of(context)!.back,
                                       style: Theme.of(context)
                                           .textTheme
                                           .titleSmall),
@@ -152,7 +160,9 @@ class _LoginPageState extends State<LoginPage> {
                                           mainAxisAlignment:
                                               MainAxisAlignment.center,
                                           children: [
-                                            Text('Sign In',
+                                            Text(
+                                                AppLocalizations.of(context)!
+                                                    .signInPrompt,
                                                 style: Theme.of(context)
                                                     .textTheme
                                                     .titleSmall
@@ -197,7 +207,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               actions: [
                 PlatformDialogAction(
-                  child: const Text('OK'),
+                  child: Text(AppLocalizations.of(context)!.genericOK),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
@@ -231,10 +241,10 @@ class _LoginPageState extends State<LoginPage> {
           .catchError((err) {
         if (err is ProblemJsonException) {
           _showErrorDialog(
-              'There was a problem signing you in: ${err.problem}');
+              AppLocalizations.of(context)!.signInError(err.problem));
         } else {
           _showErrorDialog(
-              'There was a problem signing you in: ${err.toString()}');
+              AppLocalizations.of(context)!.signInError(err.toString()));
         }
       });
     });

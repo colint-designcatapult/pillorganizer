@@ -1,7 +1,9 @@
+import 'package:app/api/device.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../provider/selected_device_provider.dart';
 import 'basic_page.dart';
@@ -49,19 +51,19 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
                   ],
                 ),
                 const Icon(
-                    PhosphorIcons.hard_drives,
-                    size: 48,
+                  PhosphorIcons.hard_drives,
+                  size: 48,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "Change device name",
+                  AppLocalizations.of(context)!.changeDeviceName,
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
                 const SizedBox(height: 8),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Text(
-                    "Please enter the desired new device name right below:",
+                    AppLocalizations.of(context)!.changeDeviceNamePrompt,
                     style: Theme.of(context).textTheme.bodySmall,
                     textAlign: TextAlign.center,
                   ),
@@ -74,13 +76,13 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
                                   listen: false)
                               .device
                               ?.name ??
-                          "Device name",
+                          AppLocalizations.of(context)!.deviceName,
                       onChanged: (newName) {
                         value = newName;
                       },
                       onFieldSubmitted: (newName) => (value = newName),
-                      validator:
-                          Validatorless.required("A device name is required")),
+                      validator: Validatorless.required(
+                          AppLocalizations.of(context)!.deviceNameRequired)),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
@@ -101,12 +103,13 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
                                 width: 1.0,
                               ),
                             ),
-                            child: const Align(
+                            child: Align(
                                 alignment: Alignment.center,
                                 child: Text(
-                                  "Cancel",
+                                  AppLocalizations.of(context)!.genericCancel,
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: Color(0xFF206B8B)),
+                                  style:
+                                      const TextStyle(color: Color(0xFF206B8B)),
                                 ))),
                       )),
                       const SizedBox(width: 12),
@@ -127,7 +130,7 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
                             ),
                             child: Align(
                                 alignment: Alignment.center,
-                                child: Text("Save",
+                                child: Text(AppLocalizations.of(context)!.save,
                                     textAlign: TextAlign.center,
                                     style: Theme.of(context)
                                         .textTheme

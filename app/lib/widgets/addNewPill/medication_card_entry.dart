@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class MedicationCardEntry extends StatefulWidget {
   const MedicationCardEntry({
@@ -61,7 +62,7 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
             child: _buildDose(context, sched.pm!, checked, provider,
                 'lib/assets/SVG/moon.svg')),
       if (sched.am == null && sched.pm == null)
-        const Text('Please set medication times in device settings')
+        Text(AppLocalizations.of(context)!.setMedicationTime),
     ];
   }
 
@@ -79,7 +80,9 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
           children: <Widget>[
             Center(
               child: Text(
-                isEditing ? "Edit medication" : "New Medication",
+                isEditing
+                    ? AppLocalizations.of(context)!.editMedication
+                    : AppLocalizations.of(context)!.newMedication,
                 style: Theme.of(context)
                     .textTheme
                     .titleLarge
@@ -89,7 +92,7 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
             const SizedBox(height: 8),
             if (!isEditing)
               Text(
-                'Enter the new medication details for easy recognition and management.',
+                AppLocalizations.of(context)!.newMedicationSubtitle,
                 textAlign: TextAlign.center,
                 style: Theme.of(context)
                     .textTheme
@@ -98,7 +101,7 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
               ),
             const SizedBox(height: 36),
             Text(
-              "Name",
+              AppLocalizations.of(context)!.name,
               style: Theme.of(context)
                   .textTheme
                   .displayLarge
@@ -149,7 +152,7 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
             ),
             const SizedBox(height: 36),
             Text(
-              "Time",
+              AppLocalizations.of(context)!.time,
               style: Theme.of(context)
                   .textTheme
                   .displayLarge

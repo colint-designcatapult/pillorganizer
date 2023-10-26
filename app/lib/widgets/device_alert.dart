@@ -54,7 +54,7 @@ class DeviceAlert extends StatelessWidget {
                     Text(
                       _getDescription(notice, context),
                       style: Theme.of(context).textTheme.bodySmall,
-                      maxLines: 2,
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],

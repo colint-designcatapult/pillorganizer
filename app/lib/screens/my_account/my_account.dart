@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:settings_ui/settings_ui.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../models/user.dart';
 
@@ -26,7 +27,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
     var user = authProvider.currentUser;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Account')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.myAccount)),
       body: SettingsList(
         sections: [
           if (user is User) ...[
@@ -34,7 +35,7 @@ class _MyAccountPageState extends State<MyAccountPage> {
               title: Text('${user.email}'),
               tiles: [
                 SettingsTile(
-                  title: const Text('Sign out'),
+                  title: Text(AppLocalizations.of(context)!.signOut),
                   leading: const Icon(Icons.logout_outlined),
                   onPressed: (context) {
                     authProvider.signOut(context);
@@ -45,10 +46,10 @@ class _MyAccountPageState extends State<MyAccountPage> {
           ],
           if (user is AnonymousUser) ...[
             SettingsSection(
-              title: const Text('Not signed in'),
+              title: Text(AppLocalizations.of(context)!.notSignedIn),
               tiles: [
                 SettingsTile(
-                  title: const Text('Create Account'),
+                  title: Text(AppLocalizations.of(context)!.createAccount),
                   leading: const Icon(Icons.person_add_alt),
                   onPressed: (context) {
                     Navigator.of(context)
@@ -58,19 +59,6 @@ class _MyAccountPageState extends State<MyAccountPage> {
               ],
             ),
           ],
-          SettingsSection(
-            title: const Text('Engineering'),
-            tiles: [
-              SettingsTile(
-                title: const Text('Force sign out (engineering only)'),
-                leading: const Icon(Icons.warning_amber),
-                onPressed: (context) {
-                  Provider.of<AuthenticationProvider>(context, listen: false)
-                      .signOut(context);
-                },
-              )
-            ],
-          ),
         ],
       ),
     );

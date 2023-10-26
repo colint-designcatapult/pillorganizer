@@ -6,6 +6,7 @@ import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
 import 'package:app/navigation/provision_navigator.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class LaunchPageLogin extends StatefulWidget {
   const LaunchPageLogin({Key? key}) : super(key: key);
@@ -49,32 +50,41 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                            'CabiNET',
+                            AppLocalizations.of(context)!.appName,
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           Padding(
                             padding: const EdgeInsets.only(top: 36),
                             child: BasicFormContainer(
-                              titleText: 'Sign In',
-                              subtitleText:
-                                  'Welcome back! Please Sign In to your account.',
-                              buttonText: 'Sign In',
+                              titleText:
+                                  AppLocalizations.of(context)!.signInPrompt,
+                              subtitleText: AppLocalizations.of(context)!
+                                  .signInBackSubtitle,
+                              buttonText:
+                                  AppLocalizations.of(context)!.signInAction,
                               onSubmit: _submitForm,
                               future: _loginFuture,
                               children: [
                                 BasicPageTextFormField(
-                                  labelText: 'Email',
+                                  labelText:
+                                      AppLocalizations.of(context)!.email,
                                   validator: Validatorless.multiple([
                                     if (!useAnon)
-                                      Validatorless.email('Not a valid email'),
-                                    Validatorless.required('Enter an email')
+                                      Validatorless.email(
+                                          AppLocalizations.of(context)!
+                                              .emailNotValid),
+                                    Validatorless.required(
+                                        AppLocalizations.of(context)!
+                                            .emailRequired)
                                   ]),
                                   onSaved: (val) => username = val,
                                 ),
                                 BasicPageTextFormField(
-                                  labelText: 'Password',
+                                  labelText:
+                                      AppLocalizations.of(context)!.password,
                                   validator: Validatorless.required(
-                                      'Enter your password'),
+                                      AppLocalizations.of(context)!
+                                          .passwordRequired),
                                   onFieldSubmitted: (value) =>
                                       (), //To trigger the form submit function
                                   onSaved: (val) => password = val,
@@ -93,7 +103,7 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
                                   Padding(
                                     padding: const EdgeInsets.only(top: 20),
                                     child: Text(
-                                      "or",
+                                      AppLocalizations.of(context)!.or,
                                       style: Theme.of(context)
                                           .textTheme
                                           .displaySmall,
@@ -119,7 +129,8 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
                                               color: Color(0xff03012C)),
                                         ),
                                         child: Text(
-                                          'Set up a new device',
+                                          AppLocalizations.of(context)!
+                                              .deviceNewSetup,
                                           style: Theme.of(context)
                                               .textTheme
                                               .bodyMedium
@@ -196,7 +207,7 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
               ),
               actions: [
                 PlatformDialogAction(
-                  child: const Text('OK'),
+                  child: Text(AppLocalizations.of(context)!.genericOK),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
@@ -220,10 +231,11 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
       Navigator.of(context).pushNamedAndRemoveUntil("/index", (route) => false);
     }).catchError((err) {
       if (err is ProblemJsonException) {
-        _showErrorDialog('There was a problem signing you in: ${err.problem}');
+        _showErrorDialog(
+            AppLocalizations.of(context)!.signInError(err.problem));
       } else {
         _showErrorDialog(
-            'There was a problem signing you in: ${err.toString()}');
+            AppLocalizations.of(context)!.signInError(err.toString()));
       }
     });
   }

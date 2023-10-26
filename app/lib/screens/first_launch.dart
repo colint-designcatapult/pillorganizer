@@ -5,6 +5,7 @@ import 'package:app/provider/authentication_provider.dart';
 import 'package:app/screens/auth/login.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class FirstLaunchPage extends StatefulWidget {
   const FirstLaunchPage({super.key});
@@ -35,7 +36,7 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
             Padding(
               padding: const EdgeInsets.only(top: topPadding),
               child: Text(
-                'CabiNET',
+                AppLocalizations.of(context)!.appName,
                 style: Theme.of(context)
                     .textTheme
                     .titleLarge
@@ -66,7 +67,8 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 20),
                                   child: Text(
-                                      'Welcome to CabiNET! Choose between the options below:',
+                                      AppLocalizations.of(context)!
+                                          .welcomeCabinetLong,
                                       textAlign: TextAlign.center,
                                       style: Theme.of(context)
                                           .textTheme
@@ -87,7 +89,9 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
                                     ),
                                     backgroundColor: Colors.white,
                                   ),
-                                  child: Text('Set up a new device',
+                                  child: Text(
+                                      AppLocalizations.of(context)!
+                                          .deviceNewSetup,
                                       style: Theme.of(context)
                                           .textTheme
                                           .displaySmall
@@ -110,7 +114,8 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
                                   side: const BorderSide(
                                       width: 1.0, color: Colors.white),
                                 ),
-                                child: Text('Sign in',
+                                child: Text(
+                                    AppLocalizations.of(context)!.signInAction,
                                     style: Theme.of(context)
                                         .textTheme
                                         .displaySmall

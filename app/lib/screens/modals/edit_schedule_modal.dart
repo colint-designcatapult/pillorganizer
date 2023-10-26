@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../api/device.dart';
 import '../../platform/bottom_modal.dart';
@@ -12,7 +13,7 @@ class DeviceSelectorModal extends StatelessWidget {
   Widget build(BuildContext context) {
     return PlatformScaffold(
       appBar: PlatformAppBar(
-        title: const Text('Edit Schedule'),
+        title: Text(AppLocalizations.of(context)!.editSchedule),
         automaticallyImplyLeading: false,
       ),
       material: (_, __) => MaterialScaffoldData(extendBody: false),

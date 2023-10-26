@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({Key? key}) : super(key: key);
@@ -61,7 +62,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                   Align(
                                       alignment: Alignment.centerLeft,
                                       child: Text(
-                                        'Create account',
+                                        AppLocalizations.of(context)!
+                                            .createAccount,
                                         style: Theme.of(context)
                                             .textTheme
                                             .labelLarge,
@@ -73,7 +75,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                         padding: const EdgeInsets.only(
                                             top: 8, bottom: 22, right: 0),
                                         child: Text(
-                                          'Create a CabiNET account in order to access your data anytime, anywhere.',
+                                          AppLocalizations.of(context)!
+                                              .createAccountSubtitle,
                                           style: Theme.of(context)
                                               .textTheme
                                               .bodyMedium,
@@ -83,20 +86,29 @@ class _RegisterPageState extends State<RegisterPage> {
                                     height: 24,
                                   ),
                                   BasicPageTextFormField(
-                                    labelText: 'Email',
+                                    labelText:
+                                        AppLocalizations.of(context)!.email,
                                     validator: Validatorless.multiple([
-                                      Validatorless.email('Not a valid email'),
-                                      Validatorless.required('Enter an email')
+                                      Validatorless.email(
+                                          AppLocalizations.of(context)!
+                                              .emailNotValid),
+                                      Validatorless.required(
+                                          AppLocalizations.of(context)!
+                                              .emailRequired)
                                     ]),
                                     onSaved: (val) => context
                                         .read<UserRegistrationProvider>()
                                         .updateEmail(val),
                                   ),
                                   BasicPageTextFormField(
-                                    labelText: 'Password',
+                                    labelText:
+                                        AppLocalizations.of(context)!.password,
                                     validator: Validatorless.multiple([
-                                      Validatorless.between(6, 48,
-                                          "Passwords must be between 6 and 32 characters")
+                                      Validatorless.between(
+                                          6,
+                                          48,
+                                          AppLocalizations.of(context)!
+                                              .passwordLengthValidation)
                                     ]),
                                     obscureText: true,
                                     textInputAction: TextInputAction.done,
@@ -132,7 +144,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                       const SizedBox(
                                         width: 8,
                                       ),
-                                      Text('Back',
+                                      Text(AppLocalizations.of(context)!.back,
                                           style: Theme.of(context)
                                               .textTheme
                                               .titleSmall),
@@ -166,7 +178,10 @@ class _RegisterPageState extends State<RegisterPage> {
                                               mainAxisAlignment:
                                                   MainAxisAlignment.center,
                                               children: [
-                                                Text('Sign Up',
+                                                Text(
+                                                    AppLocalizations.of(
+                                                            context)!
+                                                        .signUp,
                                                     style: Theme.of(context)
                                                         .textTheme
                                                         .titleSmall
@@ -227,9 +242,11 @@ class _RegisterPageState extends State<RegisterPage> {
   void _handleError(context, err) {
     debugPrint(err.toString());
     if (err is ProblemJsonException) {
-      showAlertDialog(context, 'There was a problem: ${err.problem}');
+      showAlertDialog(
+          context, AppLocalizations.of(context)!.genericProblem(err.problem));
     } else {
-      showAlertDialog(context, 'There was a problem: ${err.toString()}');
+      showAlertDialog(context,
+          AppLocalizations.of(context)!.genericProblem(err.toString()));
     }
   }
 }

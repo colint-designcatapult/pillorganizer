@@ -1,6 +1,7 @@
 import 'package:app/api/medication.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class MedicationIcon extends StatelessWidget {
   const MedicationIcon(
@@ -119,7 +120,7 @@ class _PillShapeSelectorState extends State<PillShapeSelector> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('Shape',
+        Text(AppLocalizations.of(context)!.shape,
             style: Theme.of(context)
                 .textTheme
                 .displayLarge
@@ -211,7 +212,7 @@ class MedicationColorSelector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('Color',
+        Text(AppLocalizations.of(context)!.color,
             style: Theme.of(context)
                 .textTheme
                 .displayLarge

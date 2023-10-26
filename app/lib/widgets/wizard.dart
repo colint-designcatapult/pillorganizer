@@ -1,6 +1,7 @@
 import 'package:app/service/provisioning_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class WizardStepBodyDelegate extends StatelessWidget {
   const WizardStepBodyDelegate(
@@ -221,12 +222,12 @@ class WizardStep extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "STEP ${provisionningProgress.step} / 3",
+                      "${AppLocalizations.of(context)!.step} ${provisionningProgress.step} / 3",
                       textAlign: TextAlign.left,
                       style: Theme.of(context).textTheme.displaySmall,
                     ),
                     Text(
-                      provisionningProgress.getTitle(),
+                      provisionningProgress.getTitle(context),
                       textAlign: TextAlign.left,
                       style: Theme.of(context)
                           .textTheme
@@ -312,7 +313,7 @@ class WizardStep extends StatelessWidget {
                               const SizedBox(
                                 width: 8,
                               ),
-                              Text('Back',
+                              Text(AppLocalizations.of(context)!.back,
                                   style: Theme.of(context).textTheme.bodySmall),
                             ],
                           ),
@@ -338,7 +339,10 @@ class WizardStep extends StatelessWidget {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text(canGoNext ? "Next" : 'Skip',
+                                  Text(
+                                      canGoNext
+                                          ? AppLocalizations.of(context)!.next
+                                          : AppLocalizations.of(context)!.skip,
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodyMedium

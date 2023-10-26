@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
-import 'package:provider/provider.dart';
-import 'package:validatorless/validatorless.dart';
-
-import '../provider/selected_device_provider.dart';
-import 'basic_page.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class RemoveDeviceDialog extends StatefulWidget {
   const RemoveDeviceDialog({super.key});
@@ -47,7 +43,7 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Removing Device',
+                AppLocalizations.of(context)!.removingDevice,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: const Color(
                       0XFF7A2C2C,
@@ -58,7 +54,7 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Text(
-                  "Are you sure ? To access it again, you'll need to set it up again.",
+                  AppLocalizations.of(context)!.removingDeviceConfirmation,
                   style: Theme.of(context)
                       .textTheme
                       .bodySmall
@@ -84,12 +80,12 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
                             width: 1.0,
                           ),
                         ),
-                        child: const Align(
+                        child: Align(
                             alignment: Alignment.center,
                             child: Text(
-                              "Back",
+                              AppLocalizations.of(context)!.back,
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: Color(0xFF206B8B)),
+                              style: const TextStyle(color: Color(0xFF206B8B)),
                             ))),
                   )),
                   const SizedBox(width: 12),
@@ -110,7 +106,7 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
                         ),
                         child: Align(
                             alignment: Alignment.center,
-                            child: Text("Remove",
+                            child: Text(AppLocalizations.of(context)!.remove,
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context)
                                     .textTheme

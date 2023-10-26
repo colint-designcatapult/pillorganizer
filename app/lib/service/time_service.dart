@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:timezone/standalone.dart' as tz;
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 enum DayOfWeek {
   monday,
@@ -31,60 +32,22 @@ extension DayOfWeekExtension on DayOfWeek {
     }
   }
 
-  String get displayName {
+  String displayName(BuildContext context) {
     switch (this) {
       case DayOfWeek.monday:
-        return 'Monday';
+        return AppLocalizations.of(context)!.monday;
       case DayOfWeek.tuesday:
-        return 'Tuesday';
+        return AppLocalizations.of(context)!.tuesday;
       case DayOfWeek.wednesday:
-        return 'Wednesday';
+        return AppLocalizations.of(context)!.wednesday;
       case DayOfWeek.thursday:
-        return 'Thursday';
+        return AppLocalizations.of(context)!.thursday;
       case DayOfWeek.friday:
-        return 'Friday';
+        return AppLocalizations.of(context)!.friday;
       case DayOfWeek.saturday:
-        return 'Saturday';
+        return AppLocalizations.of(context)!.saturday;
       case DayOfWeek.sunday:
-        return 'Sunday';
-    }
-  }
-
-  String get deviceLetter {
-    switch (this) {
-      case DayOfWeek.monday:
-        return 'M';
-      case DayOfWeek.tuesday:
-        return 'T';
-      case DayOfWeek.wednesday:
-        return 'W';
-      case DayOfWeek.thursday:
-        return 'T';
-      case DayOfWeek.friday:
-        return 'F';
-      case DayOfWeek.saturday:
-        return 'S';
-      case DayOfWeek.sunday:
-        return 'S';
-    }
-  }
-
-  String get shortName {
-    switch (this) {
-      case DayOfWeek.monday:
-        return 'Mon';
-      case DayOfWeek.tuesday:
-        return 'Tue';
-      case DayOfWeek.wednesday:
-        return 'Wed';
-      case DayOfWeek.thursday:
-        return 'Thu';
-      case DayOfWeek.friday:
-        return 'Fri';
-      case DayOfWeek.saturday:
-        return 'Sat';
-      case DayOfWeek.sunday:
-        return 'Sun';
+        return AppLocalizations.of(context)!.sunday;
     }
   }
 

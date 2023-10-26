@@ -25,17 +25,8 @@ class _ErrorInfoBoxState extends State<ErrorInfoBox> {
   Widget build(BuildContext context) {
     return MarkdownBody(
       shrinkWrap: true,
-      data: '### Troubleshooting Tips\nWe\'re sorry you are having trouble '
-          'setting up your pill organizer. Try the following troubleshooting '
-          'tips and try again:\n- All lights on the pill organizer should be '
-          '*flashing green*. If your organizer is not flashing green, press and'
-          ' hold the **reset button** for 3 seconds (see manual for details).\n'
-          '- If your organizer is still not flashing green, ensure the included '
-          'power cable is properly plugged in. If it is already plugged in, try '
-          'unplugging it and plugging it back in.\n- If your phone asks you if '
-          'you\'d like to pair to a device, accept.\n- If your phone prompts '
-          'you for permission to access Bluetooth or your location, accept.'
-          '\n\n**Error Details**\n\n*${widget.error?.toString()}*',
+      data: AppLocalizations.of(context)!
+          .genericErrorInfoText(widget.error?.toString() ?? ''),
     );
   }
 }
@@ -131,7 +122,7 @@ class _ProvisionPageState extends State<ProvisionPage>
                 borderRadius: const BorderRadius.all(Radius.circular(32)),
                 child: LinearProgressIndicator(
                   value: data.item3,
-                  semanticsLabel: 'Progress',
+                  semanticsLabel: AppLocalizations.of(context)!.progress,
                   minHeight: 12,
                 )),
           ));
@@ -150,7 +141,8 @@ class _ProvisionPageState extends State<ProvisionPage>
                   onPressed: () {
                     prov.rescanBluetooth();
                   },
-                  child: const Text('Rescan Bluetooth'),
+                  child:
+                      Text(AppLocalizations.of(context)!.provRescanBluetooth),
                 ),
                 const SizedBox(
                   height: 35,

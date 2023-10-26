@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class AddNewPills extends StatelessWidget {
   final Function() onAddMedicationClick;
@@ -12,7 +13,7 @@ class AddNewPills extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
           Text(
-            "Add Medications",
+            AppLocalizations.of(context)!.addMedications,
             style: Theme.of(context)
                 .textTheme
                 .titleLarge
@@ -20,7 +21,7 @@ class AddNewPills extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Enter in the medications you take so your pill organizer can remind you.',
+            AppLocalizations.of(context)!.addMedicationsSubtitle,
             textAlign: TextAlign.center,
             style: Theme.of(context)
                 .textTheme
@@ -44,7 +45,7 @@ class AddNewPills extends StatelessWidget {
                         vertical: 20, horizontal: 18),
                   ),
                   child: Text(
-                    "Add Pill Manually",
+                    AppLocalizations.of(context)!.addPillManually,
                     style: Theme.of(context)
                         .textTheme
                         .bodyMedium

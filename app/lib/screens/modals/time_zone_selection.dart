@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/standalone.dart' as tz;
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../service/time_service.dart';
 
@@ -47,7 +48,7 @@ class TimeZoneSelectionModal extends StatelessWidget {
         builder: (BuildContext context, Widget? v) {
           return Scaffold(
               appBar: AppBar(
-                title: const Text('Time Zone'),
+                title: Text(AppLocalizations.of(context)!.genericTimezone),
               ),
               body: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -63,7 +64,8 @@ class TimeZoneSelectionModal extends StatelessWidget {
                                     listen: false)
                                 .filter(val);
                           },
-                          placeholder: 'Search time zones',
+                          placeholder:
+                              AppLocalizations.of(context)!.searchTimezones,
                           autofocus: true,
                         );
                       },
@@ -80,7 +82,8 @@ class TimeZoneSelectionModal extends StatelessWidget {
                               ),
                               filled: true,
                               prefixIcon: const Icon(Icons.search),
-                              hintText: 'Search time zones'),
+                              hintText: AppLocalizations.of(context)!
+                                  .searchTimezones),
                           autofocus: true,
                         );
                       },

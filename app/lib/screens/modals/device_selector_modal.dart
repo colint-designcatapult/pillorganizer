@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../api/device.dart';
 import '../../platform/bottom_modal.dart';
@@ -53,7 +54,7 @@ class DeviceSelectorModal extends StatelessWidget {
   Widget build(BuildContext context) {
     return PlatformScaffold(
       appBar: PlatformAppBar(
-        title: const Text('Switch Pill Organizers'),
+        title: Text(AppLocalizations.of(context)!.switchPillOrganizers),
         automaticallyImplyLeading: false,
       ),
       material: (_, __) => MaterialScaffoldData(),
@@ -74,11 +75,13 @@ class DeviceSelectorModal extends StatelessWidget {
               controller: ModalScrollController.of(context),
               children: [
                 if (yourDevices.isNotEmpty) ...[
-                  const DeviceListHeader(child: Text('My Devices')),
+                  DeviceListHeader(
+                      child: Text(AppLocalizations.of(context)!.myDevices)),
                   ...yourDevices
                 ],
                 if (otherDevices.isNotEmpty) ...[
-                  const DeviceListHeader(child: Text('Other Devices')),
+                  DeviceListHeader(
+                      child: Text(AppLocalizations.of(context)!.otherDevices)),
                   ...otherDevices
                 ],
               ],

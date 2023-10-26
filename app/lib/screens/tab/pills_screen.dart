@@ -4,6 +4,7 @@ import 'package:app/screens/modals/add_new_pills_modal.dart';
 import 'package:app/widgets/medication_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class PillsScreen extends StatefulWidget {
   const PillsScreen({super.key});
@@ -28,11 +29,11 @@ class _PillsScreenState extends State<PillsScreen> {
                 Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Padding(
-                          padding: EdgeInsets.only(left: 24),
+                      Padding(
+                          padding: const EdgeInsets.only(left: 24),
                           child: Text(
-                            'My Pills',
-                            style: TextStyle(
+                            AppLocalizations.of(context)!.myPills,
+                            style: const TextStyle(
                               fontSize: 32.0,
                               fontWeight: FontWeight.bold,
                             ),

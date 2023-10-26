@@ -7,6 +7,7 @@ import 'package:app/screens/tab/pills_screen.dart';
 import 'package:app/screens/tab/settings.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../api/device.dart';
 import '../provider/device_connection_status_provider.dart';
@@ -95,7 +96,7 @@ class _TabNavigatorState extends State<TabNavigator> {
                         'lib/assets/SVG/tabs/house-filled.svg',
                         height: 24,
                       ),
-                      label: 'Home',
+                      label: AppLocalizations.of(context)!.tabHome,
                       isSelected: _currentIndex == 0,
                       onTap: () {
                         setState(() {
@@ -114,7 +115,7 @@ class _TabNavigatorState extends State<TabNavigator> {
                         'lib/assets/SVG/tabs/pill-filled.svg',
                         height: 24,
                       ),
-                      label: 'My Pills',
+                      label: AppLocalizations.of(context)!.tabPills,
                       isSelected: _currentIndex == 1,
                       onTap: () {
                         setState(() {
@@ -133,7 +134,7 @@ class _TabNavigatorState extends State<TabNavigator> {
                         'lib/assets/SVG/tabs/settings-filled.svg',
                         height: 24,
                       ),
-                      label: 'Settings',
+                      label: AppLocalizations.of(context)!.tabSettings,
                       isSelected: _currentIndex == 2,
                       onTap: () {
                         setState(() {
@@ -152,7 +153,7 @@ class _TabNavigatorState extends State<TabNavigator> {
                         'lib/assets/SVG/tabs/user-filled.svg',
                         height: 24,
                       ),
-                      label: 'Account',
+                      label: AppLocalizations.of(context)!.tabAccount,
                       isSelected: _currentIndex == 3,
                       onTap: () {
                         setState(() {

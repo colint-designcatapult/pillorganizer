@@ -45,7 +45,7 @@ class AccountScreen extends StatelessWidget {
                       Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: Text(
-                            'Account Settings',
+                            AppLocalizations.of(context)!.accountSettings,
                             style: Theme.of(context)
                                 .textTheme
                                 .titleLarge
@@ -65,7 +65,8 @@ class AccountScreen extends StatelessWidget {
                               SquareButton(
                                 color: const Color(0xFF043C4D),
                                 icon: PhosphorIcons.plus_circle_fill,
-                                label: "Add new device",
+                                label:
+                                    AppLocalizations.of(context)!.addNewDevice,
                                 onPressed: () {
                                   startProvisioning(context);
                                 },
@@ -74,7 +75,7 @@ class AccountScreen extends StatelessWidget {
                                 SquareButton(
                                   color: const Color(0xFF7A2C2C),
                                   icon: PhosphorIcons.power_fill,
-                                  label: "Sign Out",
+                                  label: AppLocalizations.of(context)!.signOut,
                                   onPressed: () {
                                     Provider.of<AuthenticationProvider>(context,
                                             listen: false)
@@ -85,7 +86,8 @@ class AccountScreen extends StatelessWidget {
                                 SquareButton(
                                   color: const Color(0xFF043C4D),
                                   icon: PhosphorIcons.user_fill,
-                                  label: "Create account",
+                                  label: AppLocalizations.of(context)!
+                                      .createAccount,
                                   onPressed: () {
                                     register();
                                   },
@@ -129,7 +131,7 @@ class SquareButton extends StatelessWidget {
       child: Container(
         width: 150,
         height: 150,
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: const BorderRadius.all(Radius.circular(4.0)),

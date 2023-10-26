@@ -2,13 +2,13 @@ import 'package:app/api/schedule.dart';
 import 'package:app/provider/schedule_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/modals/time_zone_selection.dart';
-import 'package:app/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import '../service/time_service.dart';
 import 'package:timezone/standalone.dart' as tz;
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ScheduleEntry extends StatefulWidget {
   const ScheduleEntry({super.key});
@@ -28,12 +28,11 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
           children: [
             Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Text('Time Setup:',
+                child: Text(AppLocalizations.of(context)!.timeSetup,
                     style: Theme.of(context).textTheme.titleSmall)),
             Padding(
                 padding: const EdgeInsets.only(bottom: 22),
-                child: Text(
-                    'Select the time when you\'d like to be reminded to take your pills.',
+                child: Text(AppLocalizations.of(context)!.timeSetupSubtitle,
                     style: Theme.of(context).textTheme.bodySmall)),
             Row(
               children: [
@@ -50,9 +49,9 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
             ),
             Padding(
                 padding: const EdgeInsets.only(bottom: 8, top: 36),
-                child: Text('Timezone:',
+                child: Text(AppLocalizations.of(context)!.timezone,
                     style: Theme.of(context).textTheme.titleSmall)),
-            Text('Select the time zone your pill organizer should use.',
+            Text(AppLocalizations.of(context)!.timezoneSubtitle,
                 style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(
               height: 8,
@@ -115,7 +114,9 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
                 ),
                 const SizedBox(width: 8.0),
                 Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
+                    padding: AppLocalizations.of(context)!.localeName == 'fr'
+                        ? const EdgeInsets.fromLTRB(4, 16, 4, 16)
+                        : const EdgeInsets.fromLTRB(14, 16, 14, 16),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -124,16 +125,15 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
                               ? entry.time
                                   .format(context)
                                   .replaceAll(RegExp(r'[APap][Mm]$'), '')
-                              : 'Tap to set time',
-                          style: const TextStyle(
-                            fontSize: 18.0,
-                          ),
+                              : AppLocalizations.of(context)!.setTime,
+                          style: Theme.of(context).textTheme.labelSmall,
                         ),
                         Row(children: [
                           SvgPicture.asset(
                               'lib/assets/SVG/PencilSimpleLine.svg'),
                           const SizedBox(width: 4),
-                          const Text('Edit')
+                          Text(AppLocalizations.of(context)!.edit,
+                              style: Theme.of(context).textTheme.bodySmall)
                         ])
                       ],
                     )),
@@ -176,14 +176,18 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
           Expanded(
               child: SegmentedButton(
             selectedIcon: const Icon(Icons.check_sharp),
-            segments: const <ButtonSegment>[
+            segments: <ButtonSegment>[
               ButtonSegment(
                 value: 0,
-                label: Text('Manual'),
+                label: Text(
+                  AppLocalizations.of(context)!.manual,
+                ),
               ),
               ButtonSegment(
                 value: 1,
-                label: Text('Automatic'),
+                label: Text(
+                  AppLocalizations.of(context)!.automatic,
+                ),
               ),
             ],
             selected: {selectedButtonIndex},
@@ -220,7 +224,7 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
       if (selectedButtonIndex == 0)
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const SizedBox(height: 16),
-          Text('Select manual time zone:',
+          Text(AppLocalizations.of(context)!.selectManualTimezone,
               style: Theme.of(context).textTheme.bodySmall),
           ListTile(
             title: Text(
@@ -249,7 +253,7 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
       if (selectedButtonIndex == 1)
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const SizedBox(height: 16),
-          Text("You will be reminded of this when you change countries.",
+          Text(AppLocalizations.of(context)!.timezoneChangeReminder,
               style: Theme.of(context).textTheme.bodySmall),
         ]),
     ]);

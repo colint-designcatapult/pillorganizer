@@ -9,11 +9,11 @@ import 'package:provider/provider.dart';
 
 class Pillbox extends StatelessWidget {
   static TimeService timeService = TimeService();
-  final List<String> daysOfWeek =
-      DayOfWeek.values.map((e) => e.displayName.toString()).toList();
-  Pillbox({super.key});
+  const Pillbox({super.key});
   @override
   Widget build(BuildContext context) {
+    final List<String> daysOfWeek =
+        DayOfWeek.values.map((e) => e.displayName(context).toString()).toList();
     return Consumer3<DeviceStateProvider, MinuteBasedTimeProvider,
             DeviceNoticeProvider>(
         builder: (context, deviceProv, minuteProv, deviceNoticeProv, _) {

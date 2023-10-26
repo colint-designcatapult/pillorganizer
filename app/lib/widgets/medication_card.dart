@@ -9,6 +9,7 @@ import '../provider/new_medication_provider.dart';
 import '../provider/selected_device_provider.dart';
 import '../screens/modals/add_new_pills_modal.dart';
 import 'addNewPill/medication_card_entry.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class MedicationCard extends StatelessWidget {
   final ScheduledMedication med;
@@ -73,7 +74,7 @@ class MedicationCard extends StatelessWidget {
                                     overflow: TextOverflow.ellipsis,
                                     style:
                                         Theme.of(context).textTheme.labelSmall),
-                                Text("Everyday",
+                                Text(AppLocalizations.of(context)!.everyday,
                                     style:
                                         Theme.of(context).textTheme.bodySmall)
                               ]))),

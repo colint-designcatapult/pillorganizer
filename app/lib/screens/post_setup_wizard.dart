@@ -16,6 +16,7 @@ import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../api/api.dart';
 import '../models/user.dart';
@@ -50,9 +51,8 @@ class PostSetupWizard extends StatelessWidget {
 
         return WizardStep(
             provisionningProgress: provisionningProgress,
-            title: 'Welcome to CabiNET!',
-            subtext:
-                'Complete these final steps to set up your pill organizer.',
+            title: AppLocalizations.of(context)!.welcomeCabinet,
+            subtext: AppLocalizations.of(context)!.postSetupSubtitle,
             onBackPressed: () => Navigator.of(context)
                 .pushNamedAndRemoveUntil('/', (route) => false),
             onNextPressed: () =>
@@ -90,9 +90,8 @@ class NotificationStep extends StatelessWidget {
 
         return WizardStep(
             provisionningProgress: provisionningProgress,
-            title: 'Reminders',
-            subtext:
-                'Set up reminders to ensure you stay on track with your medication schedule.',
+            title: AppLocalizations.of(context)!.reminders,
+            subtext: AppLocalizations.of(context)!.remindersSubtitle,
             onBackPressed: () => Navigator.of(context).pop(),
             onNextPressed: () =>
                 Navigator.of(context).push(MedicationEntryStep.route(context)),
@@ -107,7 +106,8 @@ class NotificationStep extends StatelessWidget {
                             mainAxisSize: MainAxisSize.max,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Notification preferences:',
+                              Text(
+                                  '${AppLocalizations.of(context)!.notificationPreferences}:',
                                   style: Theme.of(context)
                                       .textTheme
                                       .titleSmall
@@ -141,7 +141,8 @@ class NotificationStep extends StatelessWidget {
                                   const SizedBox(width: 16),
                                   Flexible(
                                     child: Text(
-                                      'Send reminder notifications to your phone',
+                                      AppLocalizations.of(context)!
+                                          .notificationReminder,
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodyMedium,
@@ -185,9 +186,8 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
 
     return WizardStep(
       provisionningProgress: provisionningProgress,
-      title: 'Add Medications',
-      subtext:
-          'Enter in the medications you take so your pill organizer can remind you.',
+      title: AppLocalizations.of(context)!.addMedications,
+      subtext: AppLocalizations.of(context)!.addMedicationsSubtitle,
       onBackPressed: () => Navigator.of(context).pop(),
       onNextPressed: onNext,
       onSkipPressed: onNext,
@@ -216,7 +216,7 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            "Add Pill Manually",
+                            AppLocalizations.of(context)!.addPillManually,
                             style: Theme.of(context)
                                 .textTheme
                                 .displaySmall
@@ -248,7 +248,7 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
                                     Color(0xFF206B8B), BlendMode.srcIn)),
                             const SizedBox(width: 8),
                             Text(
-                              "My Pills",
+                              AppLocalizations.of(context)!.myPills,
                               style: Theme.of(context)
                                   .textTheme
                                   .displaySmall
@@ -320,12 +320,12 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
                             ),
                           ],
                         ),
-                        Text('My pills',
+                        Text(AppLocalizations.of(context)!.myPills,
                             style: Theme.of(context).textTheme.titleMedium),
                         Padding(
                             padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
                             child: Text(
-                                "Here's a quick overview of all the pills you've added.",
+                                AppLocalizations.of(context)!.pillsOverview,
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.bodyMedium)),
                         Expanded(
@@ -368,7 +368,7 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
                                     const SizedBox(
                                       width: 8,
                                     ),
-                                    Text('Back',
+                                    Text(AppLocalizations.of(context)!.back,
                                         style: Theme.of(context)
                                             .textTheme
                                             .titleSmall
@@ -399,8 +399,7 @@ class CreateAccountStep extends StatelessWidget {
           return WizardStep(
               height: 550,
               icon: SvgPicture.asset('lib/assets/SVG/User.svg'),
-              subtext:
-                  'Create an account in order to access your data anytime, anywhere.',
+              subtext: AppLocalizations.of(context)!.createAccountSubtitle,
               provisionningProgress: provisionningProgress,
               onBackPressed: () => Navigator.of(context).pop(),
               canGoNext: false,
@@ -411,13 +410,15 @@ class CreateAccountStep extends StatelessWidget {
                 child: BasicForm(
                   onSubmit: () => _submit(context),
                   future: Provider.of<UserRegistrationProvider>(context).future,
-                  buttonText: 'Create account',
+                  buttonText: AppLocalizations.of(context)!.createAccount,
                   children: [
                     BasicPageTextFormField(
-                      labelText: 'Email',
+                      labelText: AppLocalizations.of(context)!.email,
                       validator: Validatorless.multiple([
-                        Validatorless.email('Not a valid email'),
-                        Validatorless.required('Enter an email')
+                        Validatorless.email(
+                            AppLocalizations.of(context)!.emailNotValid),
+                        Validatorless.required(
+                            AppLocalizations.of(context)!.emailRequired)
                       ]),
                       onSaved: (val) {
                         context
@@ -426,10 +427,13 @@ class CreateAccountStep extends StatelessWidget {
                       },
                     ),
                     BasicPageTextFormField(
-                      labelText: 'Password',
+                      labelText: AppLocalizations.of(context)!.password,
                       validator: Validatorless.multiple([
-                        Validatorless.between(6, 48,
-                            "Passwords must be between 6 and 32 characters")
+                        Validatorless.between(
+                            6,
+                            48,
+                            AppLocalizations.of(context)!
+                                .passwordLengthValidation)
                       ]),
                       obscureText: true,
                       textInputAction: TextInputAction.done,
@@ -477,9 +481,11 @@ class CreateAccountStep extends StatelessWidget {
   void _handleError(context, err) {
     debugPrint(err.toString());
     if (err is ProblemJsonException) {
-      showAlertDialog(context, 'There was a problem: ${err.problem}');
+      showAlertDialog(
+          context, AppLocalizations.of(context)!.genericProblem(err.problem));
     } else {
-      showAlertDialog(context, 'There was a problem: ${err.toString()}');
+      showAlertDialog(context,
+          AppLocalizations.of(context)!.genericProblem(err.toString()));
     }
   }
 }
