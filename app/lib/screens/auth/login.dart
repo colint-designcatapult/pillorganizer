@@ -168,7 +168,7 @@ class _LoginPageState extends State<LoginPage> {
                                           children: [
                                             Text(
                                                 AppLocalizations.of(context)!
-                                                    .signInPrompt,
+                                                    .signInConfirm,
                                                 style: Theme.of(context)
                                                     .textTheme
                                                     .titleSmall

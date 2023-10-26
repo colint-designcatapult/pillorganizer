@@ -1,11 +1,13 @@
+import 'package:app/api/api.dart';
+import 'package:app/platform/dialog.dart';
 import 'package:app/provider/authentication_provider.dart';
-import 'package:app/provider/user_registration_provider.dart';
 import 'package:app/screens/auth/recover_password.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ChangePassword extends StatefulWidget {
   const ChangePassword({Key? key}) : super(key: key);
@@ -97,7 +99,8 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                   Align(
                                       alignment: Alignment.centerLeft,
                                       child: Text(
-                                        'Change Password',
+                                        AppLocalizations.of(context)!
+                                            .changePassword,
                                         style: Theme.of(context)
                                             .textTheme
                                             .labelLarge,
@@ -109,7 +112,8 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                         padding: const EdgeInsets.only(
                                             top: 8, bottom: 22, right: 0),
                                         child: Text(
-                                          'Please enter your current password in order to set up a new one.',
+                                          AppLocalizations.of(context)!
+                                              .changePasswordSubtitle,
                                           style: Theme.of(context)
                                               .textTheme
                                               .bodyMedium,
@@ -119,18 +123,26 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                     height: 24,
                                   ),
                                   BasicPageTextFormField(
-                                    labelText: 'Current Password',
+                                    labelText: AppLocalizations.of(context)!
+                                        .currentPassword,
                                     validator: Validatorless.multiple([
-                                      Validatorless.between(6, 48,
-                                          "Passwords must be between 6 and 32 characters")
+                                      Validatorless.between(
+                                          6,
+                                          48,
+                                          AppLocalizations.of(context)!
+                                              .passwordLengthValidation)
                                     ]),
                                     onSaved: (val) => currentPassword = val,
                                   ),
                                   BasicPageTextFormField(
-                                    labelText: 'New Password',
+                                    labelText: AppLocalizations.of(context)!
+                                        .newPassword,
                                     validator: Validatorless.multiple([
-                                      Validatorless.between(6, 48,
-                                          "Passwords must be between 6 and 32 characters")
+                                      Validatorless.between(
+                                          6,
+                                          48,
+                                          AppLocalizations.of(context)!
+                                              .passwordLengthValidation)
                                     ]),
                                     obscureText: true,
                                     textInputAction: TextInputAction.done,
@@ -139,7 +151,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                       _onSubmit(context);
                                     },
                                   ),
-                                  Align(
+                                  /*Align(
                                       alignment: Alignment.bottomRight,
                                       child: GestureDetector(
                                           onTap: widget.gotoForgotPassword,
@@ -154,7 +166,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                                           .underline,
                                                       decorationColor:
                                                           const Color(
-                                                              0xFF206B8B))))),
+                                                              0xFF206B8B))))),*/
                                 ])))),
                   ]),
                   Align(
@@ -180,7 +192,9 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                       const SizedBox(
                                         width: 8,
                                       ),
-                                      Text('Back',
+                                      Text(
+                                          AppLocalizations.of(context)!
+                                              .changeDeviceName,
                                           style: Theme.of(context)
                                               .textTheme
                                               .titleSmall),
@@ -195,8 +209,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                   height: navFooterHeight,
                                   child: FutureBuilder(
                                       future: context
-                                          .read<
-                                              UserRegistrationProvider>() //j'imagine tu va creer une new provider? sinon ca peut etre delete>()
+                                          .read<AuthenticationProvider>()
                                           .future,
                                       builder: (context, snapshot) {
                                         return GestureDetector(
@@ -215,7 +228,10 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                               mainAxisAlignment:
                                                   MainAxisAlignment.center,
                                               children: [
-                                                Text('Save',
+                                                Text(
+                                                    AppLocalizations.of(
+                                                            context)!
+                                                        .save,
                                                     style: Theme.of(context)
                                                         .textTheme
                                                         .titleSmall
@@ -249,7 +265,36 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
     }
   }
 
-  void _submit(context) {
-    //CHANGE PASSWORD
+  void _submit(BuildContext context) {
+    var authProv = Provider.of<AuthenticationProvider>(context, listen: false);
+    _changePassword(authProv, currentPassword!, newPassword!).then((value) {
+      if (value) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          showAlertDialog(
+                  context, AppLocalizations.of(context)!.passwordChangedSuccess)
+              .then((value) => Navigator.pop(context));
+        });
+      }
+    }).catchError((err) {
+      _handleError(context, err);
+    });
+  }
+
+  Future<bool> _changePassword(AuthenticationProvider authProv,
+      String currentPassword, String newPassword) async {
+    await authProv.changePassword(
+        currentPassword: currentPassword, newPassword: newPassword);
+    return true;
+  }
+
+  void _handleError(context, err) {
+    debugPrint(err.toString());
+    if (err is ProblemJsonException) {
+      showAlertDialog(
+          context, AppLocalizations.of(context)!.genericProblem(err.problem));
+    } else {
+      showAlertDialog(context,
+          AppLocalizations.of(context)!.genericProblem(err.toString()));
+    }
   }
 }

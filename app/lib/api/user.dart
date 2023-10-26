@@ -21,6 +21,14 @@ class UserService {
       await client.register(registration.toDTO());
     }
   }
+
+  Future<void> changePassword(UserChangePasswordDTO creds) async {
+    if (await credentialManager.isAnonUser() == false) {
+      await client.changePassword(creds).catchError((error) {
+        throw ('The password does not match');
+      });
+    }
+  }
 }
 
 final UserService userService = UserService();

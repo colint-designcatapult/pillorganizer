@@ -85,6 +85,14 @@ class CredentialManager {
     await storage.write(key: KEY_USER_PASS, value: password);
   }
 
+  Future<void> updatePasswordCreds(String password) async {
+    String? userEmail = await storage.read(key: KEY_USER_EMAIL);
+
+    credentialPair = CredentialPair(
+        id: userEmail!, secret: password, type: CredentialType.USER);
+    await storage.write(key: KEY_USER_PASS, value: password);
+  }
+
   Future<void> updateAnonymousCreds(AnonymousCredentialsDTO creds) async {
     String idStr = creds.id.toString();
     credentialPair = CredentialPair(

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:app/api/user.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -14,6 +15,9 @@ enum AuthenticationState { unknown, unauthenticated, anonymous, authenticated }
 class AuthenticationProvider with ChangeNotifier {
   BaseUser? get currentUser => _user;
   BaseUser? _user;
+
+  Future<void> _future = Future.value();
+  Future<void> get future => _future;
 
   Future<void> logIn({
     required String username,
@@ -64,6 +68,17 @@ class AuthenticationProvider with ChangeNotifier {
       notifyListeners();
       Navigator.of(context).pushNamedAndRemoveUntil("/", (route) => false);
     });
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    var creds = UserChangePasswordDTO(
+        currentPassword: currentPassword, newPassword: newPassword);
+
+    _future = userService.changePassword(creds);
+    return _future;
   }
 
   Future<bool> checkAuthStatus() {

@@ -65,6 +65,9 @@ abstract class RestClient {
   @POST("/user/register")
   Future<UserDTO> register(@Body() UserRegistrationDTO reg);
 
+  @PUT("user/change_password")
+  Future<void> changePassword(@Body() UserChangePasswordDTO reg);
+
   @GET("/device/list")
   Future<List<DeviceUserDTO>> listMyDevices();
 
@@ -221,6 +224,16 @@ class UserRegistrationDTO {
 
   UserRegistrationDTO({required this.email, required this.password});
   Map<String, dynamic> toJson() => _$UserRegistrationDTOToJson(this);
+}
+
+@JsonSerializable()
+class UserChangePasswordDTO {
+  final String currentPassword;
+  final String newPassword;
+
+  UserChangePasswordDTO(
+      {required this.currentPassword, required this.newPassword});
+  Map<String, dynamic> toJson() => _$UserChangePasswordDTOToJson(this);
 }
 
 @JsonSerializable()

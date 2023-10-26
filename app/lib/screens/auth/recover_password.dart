@@ -1,8 +1,9 @@
-import 'package:app/provider/user_registration_provider.dart';
+import 'package:app/provider/authentication_provider.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class RecoverPassword extends StatefulWidget {
   final VoidCallback onBack;
@@ -87,7 +88,8 @@ class RecoverPasswordPrompt extends StatelessWidget {
                               Align(
                                   alignment: Alignment.centerLeft,
                                   child: Text(
-                                    'Password Recovery',
+                                    AppLocalizations.of(context)!
+                                        .passwordRecovery,
                                     style:
                                         Theme.of(context).textTheme.labelLarge,
                                     textAlign: TextAlign.left,
@@ -101,7 +103,8 @@ class RecoverPasswordPrompt extends StatelessWidget {
                                     padding: const EdgeInsets.only(
                                         top: 8, bottom: 22, right: 0),
                                     child: Text(
-                                      'Click below to have the recovery link sent to your email.',
+                                      AppLocalizations.of(context)!
+                                          .sendRecoveryLinkSubtitle,
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodyMedium,
@@ -112,7 +115,9 @@ class RecoverPasswordPrompt extends StatelessWidget {
                               ),
                               GestureDetector(
                                   onTap: gotoRecoveryInput,
-                                  child: Text('Send Recovery Link',
+                                  child: Text(
+                                      AppLocalizations.of(context)!
+                                          .sendRecoveryLink,
                                       style: Theme.of(context)
                                           .textTheme
                                           .labelSmall
@@ -144,7 +149,7 @@ class RecoverPasswordPrompt extends StatelessWidget {
                         const SizedBox(
                           width: 8,
                         ),
-                        Text('Back',
+                        Text(AppLocalizations.of(context)!.changeDeviceName,
                             style: Theme.of(context)
                                 .textTheme
                                 .titleSmall
@@ -221,7 +226,8 @@ class _RecoverPasswordInputState extends State<RecoverPasswordInput> {
                                   Align(
                                       alignment: Alignment.centerLeft,
                                       child: Text(
-                                        'Password Recovery',
+                                        AppLocalizations.of(context)!
+                                            .passwordRecovery,
                                         style: Theme.of(context)
                                             .textTheme
                                             .labelLarge,
@@ -233,7 +239,8 @@ class _RecoverPasswordInputState extends State<RecoverPasswordInput> {
                                         padding: const EdgeInsets.only(
                                             top: 8, bottom: 22, right: 0),
                                         child: Text(
-                                          'Please enter the code you received in order to set up a new password.',
+                                          AppLocalizations.of(context)!
+                                              .passwordRecoverySubtitle,
                                           style: Theme.of(context)
                                               .textTheme
                                               .bodyMedium,
@@ -243,22 +250,32 @@ class _RecoverPasswordInputState extends State<RecoverPasswordInput> {
                                     height: 24,
                                   ),
                                   BasicPageTextFormField(
-                                    labelText: 'Current Password',
+                                    labelText: AppLocalizations.of(context)!
+                                        .currentPassword,
                                     validator: Validatorless.multiple([
                                       Validatorless.required(
-                                          'Enter the current password'),
-                                      Validatorless.between(6, 48,
-                                          "Passwords must be between 6 and 32 characters")
+                                          AppLocalizations.of(context)!
+                                              .passwordRequired),
+                                      Validatorless.between(
+                                          6,
+                                          48,
+                                          AppLocalizations.of(context)!
+                                              .passwordLengthValidation)
                                     ]),
                                     onSaved: (val) => currentPassword = val,
                                   ),
                                   BasicPageTextFormField(
-                                    labelText: 'New Password',
+                                    labelText: AppLocalizations.of(context)!
+                                        .newPassword,
                                     validator: Validatorless.multiple([
                                       Validatorless.required(
-                                          'Enter the new password'),
-                                      Validatorless.between(6, 48,
-                                          "Passwords must be between 6 and 32 characters")
+                                          AppLocalizations.of(context)!
+                                              .passwordRequired),
+                                      Validatorless.between(
+                                          6,
+                                          48,
+                                          AppLocalizations.of(context)!
+                                              .passwordLengthValidation)
                                     ]),
                                     obscureText: true,
                                     textInputAction: TextInputAction.done,
@@ -292,7 +309,9 @@ class _RecoverPasswordInputState extends State<RecoverPasswordInput> {
                                 const SizedBox(
                                   width: 8,
                                 ),
-                                Text('Back',
+                                Text(
+                                    AppLocalizations.of(context)!
+                                        .changeDeviceName,
                                     style:
                                         Theme.of(context).textTheme.titleSmall),
                               ],
@@ -307,8 +326,7 @@ class _RecoverPasswordInputState extends State<RecoverPasswordInput> {
                                 height: navFooterHeight,
                                 child: FutureBuilder(
                                     future: context
-                                        .read<
-                                            UserRegistrationProvider>() //j'imagine tu va creer une new provider? sinon ca peut etre delete
+                                        .read<AuthenticationProvider>()
                                         .future,
                                     builder: (context, snapshot) {
                                       return Container(
@@ -323,7 +341,9 @@ class _RecoverPasswordInputState extends State<RecoverPasswordInput> {
                                           mainAxisAlignment:
                                               MainAxisAlignment.center,
                                           children: [
-                                            Text('Save',
+                                            Text(
+                                                AppLocalizations.of(context)!
+                                                    .save,
                                                 style: Theme.of(context)
                                                     .textTheme
                                                     .titleSmall

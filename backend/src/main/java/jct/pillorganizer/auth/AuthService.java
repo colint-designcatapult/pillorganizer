@@ -60,8 +60,7 @@ public class AuthService {
          } else {
              byte[] newPasswordHash = hashPassword(newPassword.toCharArray());
              user.setPasswordHash(newPasswordHash);
-             Mono<User> hello = userRepo.update(user);
-             hello.block().getPasswordHash();
+             userRepo.update(user);
          }
     }
     private boolean checkPassword(byte[] hash, char[] password) {

@@ -12,8 +12,11 @@ import javax.validation.constraints.Size;
 @Serdeable.Deserializable
 @Valid
 public class ChangePasswordDTO {
-    @Size(min = 6, max = 32)
+    private static final int MIN_PASSWORD_LENGTH = 6;
+    private static final int MAX_PASSWORD_LENGTH = 32;
+
+    @Size(min = MIN_PASSWORD_LENGTH, max = MAX_PASSWORD_LENGTH)
     private String currentPassword;
-    @Size(min = 6, max = 32)
+    @Size(min = MIN_PASSWORD_LENGTH, max = MAX_PASSWORD_LENGTH)
     private String newPassword;
 }
