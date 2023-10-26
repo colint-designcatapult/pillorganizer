@@ -346,6 +346,8 @@ class _$_ProvisionState
                 other.deviceName == deviceName) &&
             const DeepCollectionEquality()
                 .equals(other._wifiNetworks, _wifiNetworks) &&
+            const DeepCollectionEquality()
+                .equals(other._bluetoothList, _bluetoothList) &&
             (identical(other.ssid, ssid) || other.ssid == ssid) &&
             (identical(other.wifiPassword, wifiPassword) ||
                 other.wifiPassword == wifiPassword) &&
@@ -368,6 +370,7 @@ class _$_ProvisionState
       const DeepCollectionEquality().hash(error),
       deviceName,
       const DeepCollectionEquality().hash(_wifiNetworks),
+      const DeepCollectionEquality().hash(_bluetoothList),
       ssid,
       wifiPassword,
       serialNo,

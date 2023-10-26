@@ -6,6 +6,7 @@ import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import '../../api/device.dart';
 import '../../widgets/device_rename_modal.dart';
 import '../../widgets/schedule_entry.dart';
 
@@ -35,6 +36,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    var numberOfDevices =
+        Provider.of<DeviceListProvider>(context, listen: false).value?.length;
     return Consumer<SelectedDeviceProvider>(
       builder: (context, prov, _) {
         return Scaffold(

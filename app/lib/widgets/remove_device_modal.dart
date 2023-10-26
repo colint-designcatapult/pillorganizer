@@ -1,6 +1,11 @@
+import 'package:app/platform/dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:app/api/device.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:provider/provider.dart';
+
+import '../provider/selected_device_provider.dart';
 
 class RemoveDeviceDialog extends StatefulWidget {
   const RemoveDeviceDialog({super.key});
@@ -92,7 +97,7 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
                   Expanded(
                       child: GestureDetector(
                     onTap: () {
-                      print("Remove device");
+                      _onDelete();
                     },
                     child: Container(
                         height: 44,
@@ -122,5 +127,15 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
         ),
       ),
     );
+  }
+
+  void _onDelete() {
+    Provider.of<SelectedDeviceProvider>(context, listen: false)
+        .removeDevice(context)
+        .then((_) =>
+            Provider.of<DeviceListProvider>(context, listen: false).refresh())
+        .catchError((error) {
+      showAlertDialog(context, "There was an error while removing the device.");
+    });
   }
 }
