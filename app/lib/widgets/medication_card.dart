@@ -1,6 +1,7 @@
 import 'package:app/api/medication.dart';
 import 'package:app/widgets/medication_icon.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
@@ -72,8 +73,11 @@ class MedicationCard extends StatelessWidget {
                               children: [
                                 Text(med.name,
                                     overflow: TextOverflow.ellipsis,
-                                    style:
-                                        Theme.of(context).textTheme.labelSmall),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
+                                            fontWeight: FontWeight.w700)),
                                 Text(AppLocalizations.of(context)!.everyday,
                                     style:
                                         Theme.of(context).textTheme.bodySmall)
@@ -119,8 +123,9 @@ class MedicationCard extends StatelessWidget {
                               style: Theme.of(context).textTheme.bodySmall),
                         ]),
                   const SizedBox(
-                    width: 32,
+                    width: 8,
                   ),
+                  const Icon(PhosphorIcons.dots_three_vertical)
                 ],
               ))),
     );

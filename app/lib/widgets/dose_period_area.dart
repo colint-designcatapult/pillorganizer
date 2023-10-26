@@ -4,6 +4,7 @@ import 'package:app/screens/modals/add_new_pills_modal.dart';
 import 'package:app/screens/tab/index.dart';
 import 'package:app/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -86,60 +87,75 @@ class DosePeriodArea extends StatelessWidget {
     }
 
     if (med != null) {
-      return Column(
-        children: [
-          Padding(
+      return GestureDetector(
+        onTap: () {
+          showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: const Color(0xFFFBFCFF),
+              elevation: 0,
+              builder: (context) {
+                return ChangeNotifierProvider<NewMedicationProvider>(
+                    create: (context) => NewMedicationProvider.fromExisting(
+                        deviceID, med, onComplete),
+                    child: MedicationModal(
+                        medicationID: med.id,
+                        onBack: () {
+                          Navigator.of(context).pop();
+                        },
+                        onNext: true,
+                        child: const MedicationCardEntry()));
+              });
+        },
+        child: Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Container(
                 height: 80,
+                padding: const EdgeInsets.fromLTRB(18, 12, 12, 18),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F6F5),
-                  borderRadius: BorderRadius.circular(8.0),
-                  border: Border.all(
-                    color: const Color(0xFF206B8B),
-                    width: 2.0,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: ListTile(
-                  leading: MedicationIcon.fromMed(med, 44.0),
-                  title: Text(
-                    med.name,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  subtitle:
-                      Text(_buildSubtitle(context, period, deviceNoticeProv)),
-                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                    color: const Color(0xFFF1F6F5),
+                    borderRadius: BorderRadius.circular(8.0),
+                    border: Border.all(
+                      color: const Color(0xFF206B8B),
+                      width: 2.0,
+                    )),
+                child: Row(
+                  children: [
+                    MedicationIcon.fromMed(med, 54),
+                    const SizedBox(
+                      width: 18,
+                    ),
+                    Expanded(
+                        child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(med.name,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelMedium
+                                          ?.copyWith(
+                                              fontWeight: FontWeight.w600)),
+                                  Text(
+                                      _buildSubtitle(
+                                          context, period, deviceNoticeProv),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .displaySmall)
+                                ]))),
+                    const SizedBox(
+                      width: 4,
+                    ),
                     CircularBinStatusIndicator(
                         status: period.status,
                         deviceStatus: deviceNoticeProv.value),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                  ]),
-                  onTap: () {
-                    showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: const Color(0xFFFBFCFF),
-                        elevation: 0,
-                        builder: (context) {
-                          return ChangeNotifierProvider<NewMedicationProvider>(
-                              create: (context) =>
-                                  NewMedicationProvider.fromExisting(
-                                      deviceID, med, onComplete),
-                              builder: (context, _) => MedicationModal(
-                                  medicationID: med.id,
-                                  onBack: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                  onNext: true,
-                                  child: const MedicationCardEntry()));
-                        });
-                  },
-                )),
-          ),
-        ],
+                    const SizedBox(width: 2),
+                    const Icon(PhosphorIcons.dots_three_vertical)
+                  ],
+                ))),
       );
     } else {
       return Padding(

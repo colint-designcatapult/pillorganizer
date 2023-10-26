@@ -294,7 +294,7 @@ class IndexPage extends StatelessWidget {
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: sidePad.copyWith(top: 16.0),
-                        child: Column(
+                        child: const Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [Pillbox()],
                         ),
