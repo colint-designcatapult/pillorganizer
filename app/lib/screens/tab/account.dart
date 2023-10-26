@@ -2,6 +2,7 @@ import 'package:app/api/device.dart';
 import 'package:app/models/user.dart';
 import 'package:app/navigation/provision_navigator.dart';
 import 'package:app/screens/auth/register.dart';
+import 'package:app/widgets/generic_yes_no_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:provider/provider.dart';
@@ -30,6 +31,36 @@ class AccountScreen extends StatelessWidget {
             ),
           ),
           builder: (context) => const RegisterPage());
+    }
+
+    void exitApplication(BuildContext context) {
+      showDialog(
+        context: context,
+        builder: (_) => GenericYesNoModal(
+          icon: PhosphorIcons.power_fill,
+          title: AppLocalizations.of(context)!.exitApplication,
+          subtitle: AppLocalizations.of(context)!.exitApplicationSubtitle,
+          saveWidgetText: AppLocalizations.of(context)!.signOut,
+          saveWidgetAction: () =>
+              Provider.of<AuthenticationProvider>(context, listen: false)
+                  .signOut(context),
+        ),
+      );
+    }
+
+    void signout(BuildContext context) {
+      showDialog(
+        context: context,
+        builder: (_) => GenericYesNoModal(
+          icon: PhosphorIcons.power_fill,
+          title: AppLocalizations.of(context)!.signingOut,
+          subtitle: AppLocalizations.of(context)!.signingOutSubtitle,
+          saveWidgetText: AppLocalizations.of(context)!.signOut,
+          saveWidgetAction: () =>
+              Provider.of<AuthenticationProvider>(context, listen: false)
+                  .signOut(context),
+        ),
+      );
     }
 
     return Scaffold(
@@ -77,9 +108,7 @@ class AccountScreen extends StatelessWidget {
                                   icon: PhosphorIcons.power_fill,
                                   label: AppLocalizations.of(context)!.signOut,
                                   onPressed: () {
-                                    Provider.of<AuthenticationProvider>(context,
-                                            listen: false)
-                                        .signOut(context);
+                                    signout(context);
                                   },
                                 ),
                               if (user is AnonymousUser)
@@ -101,6 +130,16 @@ class AccountScreen extends StatelessWidget {
                                       .switchDevice,
                                   onPressed: () {
                                     showDeviceSelectorModal(context);
+                                  },
+                                ),
+                              if (user is AnonymousUser)
+                                SquareButton(
+                                  color: const Color(0xFF043C4D),
+                                  icon: PhosphorIcons.sign_out,
+                                  label: AppLocalizations.of(context)!
+                                      .exitApplication,
+                                  onPressed: () {
+                                    exitApplication(context);
                                   },
                                 ),
                             ],
