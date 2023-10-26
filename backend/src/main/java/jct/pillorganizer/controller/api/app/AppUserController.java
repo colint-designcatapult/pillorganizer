@@ -1,15 +1,14 @@
 package jct.pillorganizer.controller.api.app;
 
-import io.micronaut.http.annotation.Body;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.Post;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 import jct.pillorganizer.auth.AnonAuthService;
 import jct.pillorganizer.auth.AuthService;
+import jct.pillorganizer.dto.ChangePasswordDTO;
 import jct.pillorganizer.dto.UserInfoDTO;
 import jct.pillorganizer.dto.UserRegistration;
 import jct.pillorganizer.model.user.AnonymousUser;
@@ -96,6 +95,14 @@ public class AppUserController {
                     return Mono.just(number);
                 })
                 .then(userRepo.save(user));
+    }
+
+    @Operation(summary = "Change password of a logged in account")
+    @Put("/change_password")
+    @Secured(SecurityRule.IS_AUTHENTICATED)
+    public HttpResponse<?> changePassword(@Body @Valid ChangePasswordDTO passwordChange) throws IllegalAccessException {
+        authService.changePassword(passwordChange.getCurrentPassword(), passwordChange.getNewPassword());
+        return HttpResponse.ok();
     }
 
 }
