@@ -20,6 +20,8 @@
 	"createAccountSubtitle": "Create an account in order to access your data anytime, anywhere.",
 	"createAnAccount": "Create an account",
 	"delete": "Delete",
+	"deleteMedication": "Delete Medication",
+	"deleteMedicationConfirmation": "Are you sure you want to delete this medication?",
 	"deviceName": "Device name",
 	"deviceNameRequired": "A device name is required",
 	"deviceNewSetup": "Set up a new device",

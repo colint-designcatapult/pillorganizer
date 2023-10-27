@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class GenericYesNoModal extends StatelessWidget {
   final IconData icon;
@@ -87,7 +88,9 @@ class GenericYesNoModal extends StatelessWidget {
                         ),
                         child: Align(
                             alignment: Alignment.center,
-                            child: Text(cancelWidgetText ?? "Back",
+                            child: Text(
+                                cancelWidgetText ??
+                                    AppLocalizations.of(context)!.back,
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context)
                                     .textTheme

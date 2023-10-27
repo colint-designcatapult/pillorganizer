@@ -225,7 +225,7 @@ class ProvisionProvider extends ChangeNotifier {
         ProvisionStart(serialNo: sn, deviceClass: AppApi.deviceClass()));
     _state = _state.copyWith(provisionID: prov.id, serialNo: sn);
     notifyListeners();
-    //await _setServerUrl();
+    await _setServerUrl();
     await _setOobKey(hex.decode(prov.oobKey) as Uint8List);
     return await Future.delayed(const Duration(seconds: 3));
   }
