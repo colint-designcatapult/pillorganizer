@@ -3,6 +3,7 @@ import 'package:app/api/api.dart';
 import 'package:app/platform/dialog.dart';
 import 'package:app/service/time_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:collection/collection.dart';
 
@@ -59,10 +60,12 @@ class SelectedDeviceProvider with ChangeNotifier {
 
   Future<void> removeDevice(context) async {
     try {
-      await client.removeDevice(_selectedDevice!.deviceID).then((value) {
+      await client.removeDevice(_selectedDevice!.deviceID).then((value) async {
         if (context.mounted) {
-          _selectedDevice = _devices![0];
-          Navigator.of(context).pop();
+          _devices = await deviceRepo.myDevices();
+          selectDevice(_devices!.first);
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil('/index', (route) => false);
         }
       });
     } catch (error) {
