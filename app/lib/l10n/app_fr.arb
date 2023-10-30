@@ -104,6 +104,7 @@
 	"saturday": "Samedi",
 	"save": "Sauvegarder",
 	"searchTimezones": "Recherche de fuseau horaire",
+	"selectAColor": "Sélectionner une couleur",
 	"selectManualTimezone": "Sélectionner manuellement le fuseau horaire :",
 	"setMedicationTime": "Veuillez définir les heures de médicamentation dans les paramètres de l'appareil",
 	"setTime": "Définir l'heure",
