@@ -113,6 +113,7 @@
 	"saturday": "Samedi",
 	"save": "Sauvegarder",
 	"searchTimezones": "Recherche de fuseau horaire",
+	"selectAColor": "Sélectionner une couleur",
 	"selectManualTimezone": "Sélectionner manuellement le fuseau horaire :",
 	"sendRecoveryLink": "Envoyer le lien de récupération",
 	"sendRecoveryLinkSubtitle": "Cliquez ci-dessous pour que le lien de récupération soit envoyé à votre adresse courriel.",

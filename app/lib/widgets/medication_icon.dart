@@ -1,7 +1,9 @@
 import 'package:app/api/medication.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 class MedicationIcon extends StatelessWidget {
   const MedicationIcon(
@@ -234,13 +236,107 @@ class MedicationColorSelector extends StatelessWidget {
                     ))
                 .toList(growable: false),
             MedicationColorSelectorColor(
-              color: Colors.white30,
-              icon: const Icon(Icons.colorize),
-              onTap: (color) => onChange!(color),
-            )
+                color: Colors.white30,
+                icon: const Icon(PhosphorIcons.eyedropper_sample),
+                onTap: (_) => showColorPickerDialog(context))
           ],
         )
       ],
+    );
+  }
+
+  void showColorPickerDialog(BuildContext context) {
+    Color currentColor = selected!;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          child: Container(
+            height: 550,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 10),
+            child: Column(
+              children: [
+                Text(
+                  AppLocalizations.of(context)!.selectAColor,
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
+                const SizedBox(height: 20),
+                ColorPicker(
+                  pickerColor: currentColor,
+                  onColorChanged: (color) => currentColor = color,
+                  pickerAreaHeightPercent: 0.8,
+                  enableAlpha: false,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                        child: GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Container(
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFF206B8B),
+                              width: 1.0,
+                            ),
+                          ),
+                          child: Align(
+                              alignment: Alignment.center,
+                              child: Text(
+                                AppLocalizations.of(context)!.genericCancel,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .displaySmall
+                                    ?.copyWith(color: const Color(0xFF206B8B)),
+                              ))),
+                    )),
+                    const SizedBox(width: 12),
+                    Expanded(
+                        child: GestureDetector(
+                      onTap: () {
+                        onChange!(currentColor);
+                        Navigator.of(context).pop();
+                      },
+                      child: Container(
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF206B8B),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFF206B8B),
+                              width: 1.0,
+                            ),
+                          ),
+                          child: Align(
+                              alignment: Alignment.center,
+                              child: Text(AppLocalizations.of(context)!.save,
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .displaySmall
+                                      ?.copyWith(
+                                        color: Colors.white,
+                                      )))),
+                    )),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
