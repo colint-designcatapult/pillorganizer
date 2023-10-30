@@ -86,6 +86,9 @@ abstract class RestClient {
   Future<void> deleteMedication(
       @Path("id") int deviceID, @Path("med_id") int medID);
 
+  @DELETE("/device/{id}")
+  Future<void> removeDevice(@Path("id") int deviceID);
+
   @GET("/device/{id}/medication/{med_id}")
   Future<ScheduledMedicationDTO> medication(
       @Path("id") int deviceID, @Path("med_id") int medID);

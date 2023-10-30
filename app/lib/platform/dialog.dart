@@ -6,9 +6,12 @@ Future<void> showAlertDialog(BuildContext context, String message) {
       context: context,
       builder: (context) {
         return PlatformAlertDialog(
-            content: Text(
-              message,
-              style: Theme.of(context).textTheme.labelLarge,
+            content: Center(
+              child: Text(
+                message,
+                style: Theme.of(context).textTheme.labelLarge,
+                textAlign: TextAlign.center,
+              ),
             ),
             actions: [
               PlatformDialogAction(
