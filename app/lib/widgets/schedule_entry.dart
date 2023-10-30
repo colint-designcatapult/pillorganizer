@@ -115,7 +115,7 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
                 const SizedBox(width: 8.0),
                 Padding(
                     padding: AppLocalizations.of(context)!.localeName == 'fr'
-                        ? const EdgeInsets.fromLTRB(4, 16, 4, 16)
+                        ? const EdgeInsets.fromLTRB(2, 16, 2, 16)
                         : const EdgeInsets.fromLTRB(14, 16, 14, 16),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -133,6 +133,7 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
                               'lib/assets/SVG/PencilSimpleLine.svg'),
                           const SizedBox(width: 4),
                           Text(AppLocalizations.of(context)!.edit,
+                              overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodySmall)
                         ])
                       ],
