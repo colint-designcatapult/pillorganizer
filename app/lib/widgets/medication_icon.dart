@@ -237,8 +237,11 @@ class MedicationColorSelector extends StatelessWidget {
                 .toList(growable: false),
             MedicationColorSelectorColor(
                 color: Colors.white30,
+                selected: selected != null && !commonColors.contains(selected),
                 icon: const Icon(PhosphorIcons.eyedropper_sample),
-                onTap: (_) => showColorPickerDialog(context))
+                onTap: (_) {
+                  showColorPickerDialog(context);
+                })
           ],
         )
       ],
@@ -246,7 +249,7 @@ class MedicationColorSelector extends StatelessWidget {
   }
 
   void showColorPickerDialog(BuildContext context) {
-    Color currentColor = selected!;
+    Color currentColor = selected ?? const Color(0XFF206B8B);
 
     showDialog(
       context: context,
