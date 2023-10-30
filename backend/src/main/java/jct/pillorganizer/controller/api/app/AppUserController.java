@@ -1,15 +1,14 @@
 package jct.pillorganizer.controller.api.app;
 
-import io.micronaut.http.annotation.Body;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.Post;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 import jct.pillorganizer.auth.AnonAuthService;
 import jct.pillorganizer.auth.AuthService;
+import jct.pillorganizer.dto.ChangePasswordDTO;
 import jct.pillorganizer.dto.UserInfoDTO;
 import jct.pillorganizer.dto.UserRegistration;
 import jct.pillorganizer.model.user.AnonymousUser;
@@ -52,29 +51,29 @@ public class AppUserController {
 
     @Operation(summary = "Gets info about currently signed-in user")
     @Get("/me")
-    @Secured({"user", "anon"})
+    @Secured({ "user", "anon" })
     public Mono<UserInfoDTO> authenticationStatus() {
         long userID = authService.getUserID();
         return userRepo.findUserInfoDTOFromID(userID);
     }
 
-    @Operation(summary = "Upgrades an anonymous account into a standard account",
-        description = "Performs an in-place upgrade of an anonymous account into a standard account with an email and " +
-                "password. The user ID is preserved.")
+    @Operation(summary = "Upgrades an anonymous account into a standard account", description = "Performs an in-place upgrade of an anonymous account into a standard account with an email and "
+            +
+            "password. The user ID is preserved.")
     @Post("/anonymous_upgrade")
-    @Secured({"anon"})
+    @Secured({ "anon" })
     public Mono<User> upgradeAnonymous(@Body @Valid UserRegistration registration) {
         long userID = anonAuthService.getUserID();
         byte[] hash = authService.hashPassword(registration.getPassword().toCharArray());
         return userRepo.countByEmail(registration.getEmail())
                 .flatMap(number -> {
-                    if(number > 0)
+                    if (number > 0)
                         return Mono.error(Problem.builder().withTitle("A user with that email already exists").build());
                     return Mono.just(number);
                 })
                 .then(userRepo.upgradeAnonymousUser(userID, registration.getEmail(), hash))
                 .flatMap(number -> {
-                    if(number == 0)
+                    if (number == 0)
                         return Mono.error(Problem.builder().withTitle("Already a full user").build());
                     return Mono.empty();
                 })
@@ -91,11 +90,19 @@ public class AppUserController {
         user.setRole(UserRole.USER);
         return userRepo.countByEmail(registration.getEmail())
                 .flatMap(number -> {
-                    if(number > 0)
+                    if (number > 0)
                         return Mono.error(Problem.builder().withTitle("A user with that email already exists").build());
                     return Mono.just(number);
                 })
                 .then(userRepo.save(user));
+    }
+
+    @Operation(summary = "Change password of a logged in account")
+    @Put("/change_password")
+    @Secured(SecurityRule.IS_AUTHENTICATED)
+    public HttpResponse<?> changePassword(@Body @Valid ChangePasswordDTO passwordChange) throws IllegalAccessException {
+        authService.changePassword(passwordChange.getCurrentPassword(), passwordChange.getNewPassword());
+        return HttpResponse.ok();
     }
 
 }

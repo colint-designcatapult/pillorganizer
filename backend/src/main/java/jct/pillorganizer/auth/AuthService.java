@@ -1,5 +1,6 @@
 package jct.pillorganizer.auth;
 
+import com.google.api.gax.rpc.UnauthenticatedException;
 import io.micronaut.security.authentication.AuthenticationException;
 import io.micronaut.security.utils.SecurityService;
 import jakarta.inject.Inject;
@@ -10,6 +11,7 @@ import jct.pillorganizer.model.user.UserRole;
 import jct.pillorganizer.repo.DeviceRepository;
 import jct.pillorganizer.repo.DeviceUserAsyncRepository;
 import jct.pillorganizer.repo.DeviceUserRepository;
+import jct.pillorganizer.repo.UserRepository;
 import org.mindrot.jbcrypt.BCrypt;
 import reactor.core.publisher.Mono;
 
@@ -34,6 +36,9 @@ public class AuthService {
     @Inject
     DeviceRepository deviceRepository;
 
+    @Inject
+    UserRepository userRepo;
+
 
     // todo: why ascii here? check if there are any weird side effects
     private static final Charset HASH_CARSET = StandardCharsets.US_ASCII;
@@ -47,7 +52,17 @@ public class AuthService {
     public boolean checkPassword(User user, char[] password) {
         return checkPassword(user.getPasswordHash(), password);
     }
-
+    public void changePassword(String currentPassword, String newPassword) throws IllegalAccessException {
+        User user = userRepo.findById(getUserID()).block();
+        assert user != null;
+        if(!checkPassword(user.getPasswordHash(), currentPassword.toCharArray())){
+             throw new IllegalAccessException("Current password is incorrect.");
+         } else {
+             byte[] newPasswordHash = hashPassword(newPassword.toCharArray());
+             user.setPasswordHash(newPasswordHash);
+             userRepo.update(user);
+         }
+    }
     private boolean checkPassword(byte[] hash, char[] password) {
         return BCrypt.checkpw(String.valueOf(password), new String(hash, HASH_CARSET));
     }

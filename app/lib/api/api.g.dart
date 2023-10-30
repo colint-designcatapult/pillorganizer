@@ -64,6 +64,13 @@ Map<String, dynamic> _$UserRegistrationDTOToJson(
       'password': instance.password,
     };
 
+Map<String, dynamic> _$UserChangePasswordDTOToJson(
+        UserChangePasswordDTO instance) =>
+    <String, dynamic>{
+      'currentPassword': instance.currentPassword,
+      'newPassword': instance.newPassword,
+    };
+
 ProvisionStart _$ProvisionStartFromJson(Map<String, dynamic> json) =>
     ProvisionStart(
       serialNo: json['serialNo'] as String,
@@ -731,6 +738,75 @@ class _RestClient implements RestClient {
             .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
     final value = UserDTO.fromJson(_result.data!);
     return value;
+  }
+
+  @override
+  Future<void> changePassword(UserChangePasswordDTO reg) async {
+    const _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(reg.toJson());
+
+    await _dio.fetch<Map<String, dynamic>>(_setStreamType<UserDTO>(Options(
+      method: 'PUT',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/user/change_password',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
+  }
+
+  @override
+  Future<DeviceUserSettings> userSettings(int deviceID) async {
+    const _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final Map<String, dynamic>? _data = null;
+    final _result = await _dio
+        .fetch<Map<String, dynamic>>(_setStreamType<DeviceUserSettings>(Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+    )
+            .compose(
+              _dio.options,
+              '/device/${deviceID}/user_settings',
+              queryParameters: queryParameters,
+              data: _data,
+            )
+            .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
+    final value = DeviceUserSettings.fromJson(_result.data!);
+    return value;
+  }
+
+  @override
+  Future<void> notificationToken(
+    int deviceID,
+    NotificationTokenDTO dto,
+  ) async {
+    const _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(dto.toJson());
+    await _dio.fetch<void>(_setStreamType<void>(Options(
+      method: 'PUT',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/device/${deviceID}/notification_token',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
   }
 
   @override

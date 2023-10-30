@@ -1,6 +1,7 @@
 import 'package:app/api/device.dart';
 import 'package:app/models/user.dart';
 import 'package:app/navigation/provision_navigator.dart';
+import 'package:app/screens/auth/change_password.dart';
 import 'package:app/screens/auth/register.dart';
 import 'package:app/widgets/generic_yes_no_modal.dart';
 import 'package:flutter/material.dart';
@@ -63,6 +64,19 @@ class AccountScreen extends StatelessWidget {
       );
     }
 
+    void changePassword() {
+      showModalBottomSheet<bool>(
+          context: context,
+          isScrollControlled: true,
+          elevation: 0,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(16),
+            ),
+          ),
+          builder: (context) => const ChangePassword());
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFBFD2DB),
       body: SafeArea(
@@ -93,6 +107,16 @@ class AccountScreen extends StatelessWidget {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             children: [
+                              if (user is User)
+                                SquareButton(
+                                  color: const Color(0xFF043C4D),
+                                  icon: PhosphorIcons.key_fill,
+                                  label: AppLocalizations.of(context)!
+                                      .changePassword,
+                                  onPressed: () {
+                                    changePassword();
+                                  },
+                                ),
                               SquareButton(
                                 color: const Color(0xFF043C4D),
                                 icon: PhosphorIcons.plus_circle_fill,

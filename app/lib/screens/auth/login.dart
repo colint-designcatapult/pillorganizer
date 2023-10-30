@@ -43,12 +43,18 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   actions: [
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.black),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
+                    Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.close,
+                            color: Colors.black,
+                            size: 32,
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        )),
                   ],
                 ),
                 SliverToBoxAdapter(
@@ -162,7 +168,7 @@ class _LoginPageState extends State<LoginPage> {
                                           children: [
                                             Text(
                                                 AppLocalizations.of(context)!
-                                                    .signInPrompt,
+                                                    .signInConfirm,
                                                 style: Theme.of(context)
                                                     .textTheme
                                                     .titleSmall
