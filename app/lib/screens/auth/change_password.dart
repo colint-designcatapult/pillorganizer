@@ -192,9 +192,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                       const SizedBox(
                                         width: 8,
                                       ),
-                                      Text(
-                                          AppLocalizations.of(context)!
-                                              .changeDeviceName,
+                                      Text(AppLocalizations.of(context)!.back,
                                           style: Theme.of(context)
                                               .textTheme
                                               .titleSmall),
