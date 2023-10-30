@@ -1,6 +1,8 @@
 import 'package:app/provider/new_medication_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/widgets/addNewPill/add_new_pills.dart';
+import 'package:app/widgets/button_icon_text.dart';
+import 'package:app/widgets/generic_yes_no_modal.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:app/widgets/addNewPill/medication_card_entry.dart';
@@ -192,13 +194,12 @@ class MedicationModal extends StatelessWidget {
                       : MainAxisAlignment.end,
                   children: [
                     if (medicationID != null)
-                      IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () {
-                            Provider.of<NewMedicationProvider>(context,
-                                    listen: false)
-                                .delete(context);
-                          }),
+                      Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: ButtonIconText(
+                              text: AppLocalizations.of(context)!.delete,
+                              iconData: PhosphorIcons.trash_simple,
+                              onPressed: () => deleteMedication(context))),
                     IconButton(
                       icon: const Icon(
                         Icons.close,
@@ -296,5 +297,21 @@ class MedicationModal extends StatelessWidget {
                 ),
               )),
         ]));
+  }
+
+  void deleteMedication(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => GenericYesNoModal(
+          icon: PhosphorIcons.power_fill,
+          title: AppLocalizations.of(context)!.deleteMedication,
+          subtitle: AppLocalizations.of(context)!.deleteMedicationConfirmation,
+          saveWidgetText: AppLocalizations.of(context)!.delete,
+          saveWidgetAction: () {
+            Provider.of<NewMedicationProvider>(context, listen: false)
+                .delete(context);
+            Navigator.of(context).pop();
+          }),
+    );
   }
 }

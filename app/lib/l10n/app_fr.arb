@@ -20,6 +20,8 @@
 	"createAccountSubtitle": "Créer un compte pour accéder à vos données en tout temps",
 	"createAnAccount": "Create un compte",
 	"delete": "Effacer",
+	"deleteMedication": "Effacer le médicament",
+	"deleteMedicationConfirmation": "Êtes-vous certains de vouloir supprimer ce médicament?",
 	"deviceName": "Nom de l'appareil",
 	"deviceNameRequired": "Un nom est requis",
 	"deviceNewSetup": "Configurer un nouvel appareil",

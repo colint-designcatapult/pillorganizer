@@ -1,4 +1,5 @@
 import 'package:app/provider/selected_device_provider.dart';
+import 'package:app/widgets/button_icon_text.dart';
 import 'package:app/widgets/remove_device_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
@@ -61,15 +62,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       margin: const EdgeInsets.only(left: 24.0, bottom: 32.0),
                       child: Row(
                         children: [
-                          _buildButton(AppLocalizations.of(context)!.changeName,
-                              PhosphorIcons.pencil_simple, () {
-                            changeName(context);
-                          }, context),
+                          ButtonIconText(
+                              text: AppLocalizations.of(context)!.changeName,
+                              iconData: PhosphorIcons.pencil_simple,
+                              onPressed: () {
+                                changeName(context);
+                              }),
                           const SizedBox(width: 20.0),
-                          _buildButton(AppLocalizations.of(context)!.delete,
-                              PhosphorIcons.trash_simple, () {
-                            deleteDevice(context);
-                          }, context),
+                          ButtonIconText(
+                              text: AppLocalizations.of(context)!.delete,
+                              iconData: PhosphorIcons.trash_simple,
+                              onPressed: () {
+                                deleteDevice(context);
+                              }),
                         ],
                       ),
                     ),
@@ -194,38 +199,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildButton(String text, IconData iconData, void Function() onPressed,
-      BuildContext context) {
-    Color textColor = text == AppLocalizations.of(context)!.delete
-        ? const Color(0XFFA11106)
-        : const Color(0XFF03012C);
-    Color underlineColor = text == AppLocalizations.of(context)!.delete
-        ? const Color(0XFFA11106)
-        : const Color(0XFF03012C);
-
-    TextStyle? textStyle = Theme.of(context).textTheme.displaySmall?.copyWith(
-          decoration: TextDecoration.combine([
-            TextDecoration.underline,
-          ]),
-          decorationColor: underlineColor,
-          color: textColor,
-        );
-
-    return InkWell(
-      onTap: onPressed,
-      child: Row(
-        children: [
-          Icon(iconData, color: textColor),
-          const SizedBox(width: 1.0),
-          Text(
-            text,
-            style: textStyle,
-          ),
-        ],
-      ),
     );
   }
 }
