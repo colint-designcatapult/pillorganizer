@@ -26,13 +26,26 @@ class DosePeriodArea extends StatelessWidget {
     return Selector<DeviceStateProvider, List<DosePeriod>?>(
       selector: (_, prov) => prov.value?.dosePeriods,
       builder: (_, list, __) {
-        List<DosePeriod>? reversedList = list?.reversed.toList();
-        return SliverList.builder(
-          itemBuilder: (BuildContext context, int index) {
-            return _buildPanel(context, reversedList?[index]);
-          },
-          itemCount: reversedList?.length ?? 0,
-        );
+        List<DosePeriod>? reversedList = list
+            ?.where((element) => element.status != BinStatus.DISABLED)
+            .toList()
+            .reversed
+            .toList();
+        if (Provider.of<DeviceNoticeProvider>(context, listen: false).value !=
+                DeviceNotice.empty &&
+            (reversedList == null || reversedList.isEmpty)) {
+          return SliverToBoxAdapter(
+              child: Padding(
+                  padding: const EdgeInsets.only(top: 40),
+                  child: Center(child: _buildNotice(context))));
+        } else {
+          return SliverList.builder(
+            itemBuilder: (BuildContext context, int index) {
+              return _buildPanel(context, reversedList?[index]);
+            },
+            itemCount: reversedList?.length ?? 0,
+          );
+        }
       },
     );
   }
@@ -72,6 +85,45 @@ class DosePeriodArea extends StatelessWidget {
             IndexNewPills(onAdd: () => addNewPillUpdate())
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildNotice(BuildContext context) {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(4.0),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 6.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.homeNoMedTodayTitle,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: Colors.black,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      AppLocalizations.of(context)!.homeNoMedTodaySubtitle,
+                      style: Theme.of(context).textTheme.bodySmall,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

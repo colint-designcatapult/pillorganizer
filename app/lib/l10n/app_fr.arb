@@ -70,12 +70,13 @@
 	"newPassword": "Nouveau mot de passe",
 	"newMedicationSubtitle": "Entrer les détails du nouveau médicament pour une reconnaissance et une gestion faciles.",
 	"next": "Suivant",
+	"noMedicationLeft": "Il ne reste plus de médicaments pour aujourd'hui, revenez demain ou mettez à jour votre horaire.",
 	"noticeDisconnected": "Impossible de se connecter à l'appareil.",
 	"noticeDisconnectedSubtitle": "Veuillez vous assurer que votre pilulier est allumé et a proximité.",
 	"noticeDisconnectedAction": "Reconnexion",
 	"noticeEmpty": "pilulier vide?",
 	"noticeEmptySubtitle": "Commençons la semaine en remplissant votre pilulier.",
-	"noticeEmptyAction": "Remplir maintenant",
+	"noticeEmptyAction": "Remplir",
 	"noticeNoMeds": "Vous n'avez entré aucun médicament.",
 	"notifications": "Notifications",
 	"notificationPreferences": "Préférences de notification",
@@ -152,5 +153,7 @@
 	"tuesday": "Mardi",
 	"wednesday": "Mercredi",
 	"welcomeCabinet": "Bienvenue à CabiNET!",
-	"welcomeCabinetLong": "Bienvenue à CabiNET! Choisissez entre les options ci-dessous:"
+	"welcomeCabinetLong": "Bienvenue à CabiNET! Choisissez entre les options ci-dessous:",
+	"homeNoMedTodayTitle": "Plus de pilules pour aujourd'hui",
+	"homeNoMedTodaySubtitle": "Revenez demain pour voir vos prochaines doses ou modifier l'horaire."
 }

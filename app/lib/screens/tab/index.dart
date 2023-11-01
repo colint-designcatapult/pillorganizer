@@ -306,7 +306,6 @@ class IndexPage extends StatelessWidget {
                         height: 12.0,
                       ),
                     ),
-                    const DosePeriodArea(),
                   ],
                 ))),
       )),

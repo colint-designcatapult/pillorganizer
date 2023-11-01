@@ -107,8 +107,13 @@ class HomeScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-                          SliverToBoxAdapter(child: Pillbox()),
-                          const DosePeriodArea(),
+                          const SliverToBoxAdapter(child: Pillbox()),
+                          if (!hasNotice &&
+                              Provider.of<DeviceStateProvider>(context,
+                                          listen: false)
+                                      .value !=
+                                  null)
+                            const DosePeriodArea(),
                         ],
                       ),
                     ),

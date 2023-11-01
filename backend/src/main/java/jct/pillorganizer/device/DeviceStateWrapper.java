@@ -406,18 +406,20 @@ public class DeviceStateWrapper {
 
             if (DayOfWeek.DISABLED.equals(schedule.getDayOfWeek())) {
                 // If this bin is scheduled to be disabled,
-                lazyUpdateBin(state, BinStatus.DISABLED, 0);
+                lazyUpdateBin(state, BinStatus.DISABLED, dispenseLDT.toEpochSecond(ZoneOffset.UTC));
             } else if (BinStatus.TAKEN.equals(status)) {
                 // Never rebuild a taken bin
             } else if (BinStatus.MISSED.equals(status) || BinStatus.PENDING.equals(status)
                     || BinStatus.TAKE_NOW.equals(status) || BinStatus.DISABLED.equals(status)) {
                 OffsetDateTime lateThresholdTime = dispenseTime.plusMinutes(10);
 
-                // Only rebuild a missed dose if the scheduled time is after now
+                // Only rebuild a missed dose if the scheduled time is today or after now
                 if (lateThresholdTime.isAfter(ldt)) {
                     lazyUpdateBin(state, BinStatus.PENDING, dispenseLDT.toEpochSecond(ZoneOffset.UTC));
                 } else if (lateThresholdTime.isBefore(ldt) && dispenseTime.isAfter(ldt)) {
                     lazyUpdateBin(state, BinStatus.TAKE_NOW, dispenseLDT.toEpochSecond(ZoneOffset.UTC));
+                } else if (BinStatus.DISABLED.equals(status) && day == schedule.getDayOfWeek().getIntValue()) {
+                    lazyUpdateBin(state, BinStatus.DISABLED, dispenseLDT.toEpochSecond(ZoneOffset.UTC));
                 }
                 lazyUpdateBinDispenseTime(state, schedule.getDispenseTime());
             }

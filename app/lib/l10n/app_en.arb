@@ -70,6 +70,7 @@
 	"newMedicationSubtitle": "Enter the new medication details for easy recognition and management.",
 	"newPassword": "New Password",
 	"next": "Next",
+	"noMedicationLeft": "There is no medications left for today, come back tomorrow or update your schedule.",
 	"noticeDisconnected": "Can't connect to device.",
 	"noticeDisconnectedSubtitle": "Please ensure your pill organizer is powered and nearby.",
 	"noticeDisconnectedAction": "Reconnect",
@@ -152,5 +153,8 @@
 	"tuesday": "Tuesday",
 	"wednesday": "Wednesday",
 	"welcomeCabinet": "Welcome to CabiNET!",
-	"welcomeCabinetLong": "Welcome to CabiNET! Choose between the options below:"
+	"welcomeCabinetLong": "Welcome to CabiNET! Choose between the options below:",
+	"homeNoMedTodayTitle": "No more pills scheduled for today",
+	"homeNoMedTodaySubtitle": "Come back tomorrow to see your next doses, or edit schedule time."
+
 }

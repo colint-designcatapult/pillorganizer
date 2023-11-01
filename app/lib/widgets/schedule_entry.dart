@@ -126,15 +126,19 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
                                   .format(context)
                                   .replaceAll(RegExp(r'[APap][Mm]$'), '')
                               : AppLocalizations.of(context)!.setTime,
-                          style: Theme.of(context).textTheme.labelSmall,
+                          style:
+                              AppLocalizations.of(context)!.localeName == 'fr'
+                                  ? Theme.of(context).textTheme.bodySmall
+                                  : Theme.of(context).textTheme.labelSmall,
                         ),
                         Row(children: [
                           SvgPicture.asset(
                               'lib/assets/SVG/PencilSimpleLine.svg'),
                           const SizedBox(width: 4),
-                          Text(AppLocalizations.of(context)!.edit,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodySmall)
+                          if (entry != null)
+                            Text(AppLocalizations.of(context)!.edit,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall)
                         ])
                       ],
                     )),

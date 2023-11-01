@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:app/service/time_service.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class Pillbox extends StatelessWidget {
   static TimeService timeService = TimeService();
@@ -17,9 +18,10 @@ class Pillbox extends StatelessWidget {
     return Consumer3<DeviceStateProvider, MinuteBasedTimeProvider,
             DeviceNoticeProvider>(
         builder: (context, deviceProv, minuteProv, deviceNoticeProv, _) {
-      final String currentDayOfWeek =
-          DateFormat.EEEE().format(minuteProv!.value);
-      final DeviceNotice notice = deviceNoticeProv!.value;
+      final String currentDayOfWeek = DateFormat('EEEE',
+              AppLocalizations.of(context)!.localeName == 'fr' ? 'fr' : 'en')
+          .format(minuteProv.value);
+      final DeviceNotice notice = deviceNoticeProv.value;
       final bool isDeviceActive =
           notice.name != 'empty' && notice.name != 'disconnected';
 

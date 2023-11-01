@@ -1,5 +1,6 @@
 package jct.pillorganizer.service;
 
+import io.micronaut.transaction.TransactionDefinition;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.dto.SimpleScheduleDTO;
@@ -75,7 +76,6 @@ public class DeviceScheduleService {
      * @param dto a schedule DTO
      * @return a new schedule DTO that includes the new changes
      */
-    @Transactional
     public SimpleScheduleDTO updateSchedule(Device device, SimpleScheduleDTO dto) {
         DeviceBaseScheduleStrategy strat = strategyRepository.findByDevice(device)
                 .orElseGet(() -> buildDefaultSchedule(device));
@@ -164,7 +164,7 @@ public class DeviceScheduleService {
         }
     }
 
-    @Transactional
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
     void updateDeviceSchedule(Device d) {
         DeviceBaseScheduleStrategy strategy = strategyRepository.findByDevice(d)
                 .orElseThrow();
@@ -180,13 +180,10 @@ public class DeviceScheduleService {
 
     }
 
-
     @Transactional
-    SimpleScheduleDTO updateSimpleSchedule(Device d, DeviceSimpleScheduleStrategy strategy, SimpleScheduleDTO dto) {
-
-        // todo: bad bad code please fix this
-
+    SimpleScheduleDTO updateDispenseTime(Device d, DeviceSimpleScheduleStrategy strategy, SimpleScheduleDTO dto) {
         Map<Character, DeviceSimpleDispenseTime> map = new HashMap<>(2);
+
         for(DeviceBaseDispenseTime bdt : strategy.getTimes()) {
             DeviceSimpleDispenseTime dt = (DeviceSimpleDispenseTime) bdt;
             map.put(dt.getPeriod(), dt);
@@ -225,11 +222,12 @@ public class DeviceScheduleService {
             }
             pm00 = dto.pmSecondsFrom00();
         }
-
-        updateDeviceSchedule(d);
-
         return new SimpleScheduleDTO(amID, am00, pmID, pm00);
     }
 
-
+    SimpleScheduleDTO updateSimpleSchedule(Device d, DeviceSimpleScheduleStrategy strategy, SimpleScheduleDTO dto) {
+        SimpleScheduleDTO simpleScheduleDTO = updateDispenseTime( d,  strategy,  dto);
+        updateDeviceSchedule(d);
+        return simpleScheduleDTO;
+    }
 }
