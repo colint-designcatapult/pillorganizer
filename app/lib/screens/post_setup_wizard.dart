@@ -5,6 +5,7 @@ import 'package:app/provider/schedule_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
 import 'package:app/screens/modals/add_new_pills_modal.dart';
+import 'package:app/service/authentication_service.dart';
 import 'package:app/service/provisioning_service.dart';
 import 'package:app/widgets/addNewPill/medication_card_entry.dart';
 import 'package:app/widgets/medication_card.dart';
@@ -484,8 +485,10 @@ class CreateAccountStep extends StatelessWidget {
       showAlertDialog(
           context, AppLocalizations.of(context)!.genericProblem(err.problem));
     } else {
-      showAlertDialog(context,
-          AppLocalizations.of(context)!.genericProblem(err.toString()));
+      showAlertDialog(
+          context,
+          AppLocalizations.of(context)!
+              .genericProblem(authErrorMessage(context, err.toString())));
     }
   }
 }

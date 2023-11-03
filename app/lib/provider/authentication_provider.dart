@@ -33,10 +33,10 @@ class AuthenticationProvider with ChangeNotifier {
             credentialManager.updateCreds(creds.username!, creds.password!))
         .then((v) async {
       if (!await checkAuthStatus()) {
-        throw 'Authentication failed';
+        throw 'authError';
       }
     }).catchError((error) {
-      throw ('The email or password is incorrect');
+      throw ('authGenericLoginError');
     });
   }
 
@@ -57,7 +57,7 @@ class AuthenticationProvider with ChangeNotifier {
         .then((v) => credentialManager.updateAnonymousCreds(creds))
         .then((v) async {
       if (!await checkAuthStatus()) {
-        throw 'Authentication failed';
+        throw 'authError';
       }
     });
   }

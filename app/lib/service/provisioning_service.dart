@@ -39,3 +39,34 @@ class ProvisionningProgress {
     }
   }
 }
+
+class ProvisionError {
+  static const String errorServerUrl = "errorServerUrl";
+  static const String errorOobKey = "errorOobKey";
+  static const String errorSerialNumber = "errorSerialNumber";
+  static const String errorDeviceOffline = "errorDeviceOffline";
+  static const String errorContextGone = "errorContextGone";
+  static const String errorPasswordIncorrect = "errorPasswordIncorrect";
+  static const String errorNoDevicesFound = "errorNoDevicesFound";
+}
+
+String provErrorMessage(BuildContext context, String provError) {
+  switch (provError) {
+    case ProvisionError.errorServerUrl:
+      return AppLocalizations.of(context)!.provErrorServerUrl;
+    case ProvisionError.errorOobKey:
+      return AppLocalizations.of(context)!.provErrorOobKey;
+    case ProvisionError.errorSerialNumber:
+      return AppLocalizations.of(context)!.provErrorSerialNumber;
+    case ProvisionError.errorDeviceOffline:
+      return AppLocalizations.of(context)!.provErrorDeviceOffline;
+    case ProvisionError.errorContextGone:
+      return AppLocalizations.of(context)!.provErrorContextGone;
+    case ProvisionError.errorPasswordIncorrect:
+      return AppLocalizations.of(context)!.provErrorPasswordIncorrect;
+    case ProvisionError.errorNoDevicesFound:
+      return AppLocalizations.of(context)!.provErrorNoDevicesFound;
+    default:
+      return AppLocalizations.of(context)!.genericError;
+  }
+}

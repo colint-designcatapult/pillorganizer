@@ -1,5 +1,6 @@
 import 'package:app/api/api.dart';
 import 'package:app/provider/authentication_provider.dart';
+import 'package:app/service/authentication_service.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
@@ -232,10 +233,10 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
     }).catchError((err) {
       if (err is ProblemJsonException) {
         _showErrorDialog(
-            AppLocalizations.of(context)!.signInError(err.problem));
+            AppLocalizations.of(context)!.signInError('err.problem'));
       } else {
-        _showErrorDialog(
-            AppLocalizations.of(context)!.signInError(err.toString()));
+        _showErrorDialog(AppLocalizations.of(context)!
+            .signInError(authErrorMessage(context, err.toString())));
       }
     });
   }

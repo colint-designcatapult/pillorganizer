@@ -89,7 +89,7 @@ class ProvisionSelectWifiPage extends StatelessWidget {
         if (prov.state.error is TimeoutException) {
           text = AppLocalizations.of(context)!.genericTryAgain;
         } else {
-          text = prov.state.error.toString();
+          text = provErrorMessage(context, prov.state.error.toString());
         }
         subtitle = Text(
           text,

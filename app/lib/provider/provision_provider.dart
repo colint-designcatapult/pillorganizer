@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:app/api/api.dart';
 import 'package:app/api/provision.dart';
 import 'package:app/provider/authentication_provider.dart';
+import 'package:app/service/provisioning_service.dart';
 import 'package:convert/convert.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -102,7 +103,7 @@ class ProvisionProvider extends ChangeNotifier {
         return _state;
       }
     }
-    return Future.error(TimeoutException('No devices found after 5 attempts'));
+    return Future.error(TimeoutException(ProvisionError.errorNoDevicesFound));
   }
 
   Future<ProvisionState> scanBluetooth() async {
@@ -163,7 +164,7 @@ class ProvisionProvider extends ChangeNotifier {
         _state.deviceName!, _popKey, ssid, pw);
     debugPrint('Provision result: $provRes');
     if (!(provRes ?? false)) {
-      throw "Password incorrect.";
+      throw ProvisionError.errorPasswordIncorrect;
     }
     return _state;
   }
@@ -189,7 +190,7 @@ class ProvisionProvider extends ChangeNotifier {
         hex.decode(hex.encode(utf8.encode(extractHost(AppApi.base()))))
             as Uint8List);
     if (res == null) {
-      return Future.error("Could not set server url");
+      return Future.error(ProvisionError.errorServerUrl);
     }
   }
 
@@ -197,7 +198,7 @@ class ProvisionProvider extends ChangeNotifier {
     var res = await _flutterEspBleProvPlugin.customEndpoint(
         _state.deviceName!, _popKey, "provision-key", key);
     if (res == null) {
-      return Future.error("Could not set oob key");
+      return Future.error(ProvisionError.errorOobKey);
     }
   }
 
@@ -212,14 +213,14 @@ class ProvisionProvider extends ChangeNotifier {
         var prov = Provider.of<AuthenticationProvider>(context, listen: false);
         await prov.createAnonymous();
       } else {
-        return Future.error("Context gone");
+        return Future.error(ProvisionError.errorContextGone);
       }
     }
 
     var sn = await _getSerialNo();
 
     if (sn == null) {
-      return Future.error("Could not get serial number");
+      return Future.error(ProvisionError.errorSerialNumber);
     }
     var prov = await client.provisionStart(
         ProvisionStart(serialNo: sn, deviceClass: AppApi.deviceClass()));
@@ -278,8 +279,7 @@ class ProvisionProvider extends ChangeNotifier {
       }
     }
 
-    return Future.error(
-        TimeoutException("Device didn't come online after 2 minutes"));
+    return Future.error(TimeoutException(ProvisionError.errorDeviceOffline));
   }
 
   Future<ProvisionState> finalize(BuildContext context) {

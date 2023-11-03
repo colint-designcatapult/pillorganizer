@@ -2,6 +2,7 @@ import 'package:app/api/api.dart';
 import 'package:app/platform/dialog.dart';
 import 'package:app/provider/authentication_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
+import 'package:app/service/authentication_service.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -251,8 +252,10 @@ class _RegisterPageState extends State<RegisterPage> {
       showAlertDialog(
           context, AppLocalizations.of(context)!.genericProblem(err.problem));
     } else {
-      showAlertDialog(context,
-          AppLocalizations.of(context)!.genericProblem(err.toString()));
+      showAlertDialog(
+          context,
+          AppLocalizations.of(context)!
+              .genericProblem(authErrorMessage(context, err.toString())));
     }
   }
 }
