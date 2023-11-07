@@ -1,0 +1,89 @@
+import 'dart:convert';
+
+import 'package:app/api/api.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+//Read-Write chracteristic on all device that is used to communicate the bin states
+const stateBinsState = '20ded876-5bf8-06b8-354c-759dae9d26c1';
+
+class DeviceBluetoothController {
+  final FlutterBluePlus _ble = FlutterBluePlus.instance;
+  String? _target;
+  int? _deviceID;
+  BluetoothDevice? device;
+  BluetoothCharacteristic? _stateChr;
+  final int _timeoutTime = 60;
+  Function? onDisconnect;
+
+  Future<void> disconnect() async {
+    await _ble.stopScan();
+    await device?.disconnect();
+
+    device = null;
+    _stateChr = null;
+    onDisconnect?.call();
+  }
+
+  void setTarget(String deviceName, int deviceID) {
+    _target = deviceName;
+    _deviceID = deviceID;
+  }
+
+  void handleSyncData(List<int> data) {
+    String encoded = base64Encode(data);
+    client.deviceSync(_deviceID!, encoded).then((value) {
+      _stateChr?.write(base64Decode(value).toList());
+      return null;
+    }).onError((error, stackTrace) {
+      print("BLE - Err: $error");
+    });
+  }
+
+  Future<bool> find() async {
+    await Permission.location.request();
+
+    List scanResult =
+        await _ble.startScan(timeout: Duration(seconds: _timeoutTime));
+
+    for (ScanResult r in scanResult) {
+      if (r.device.name == _target) {
+        try {
+          return await connectTo(r.device);
+        } catch (e) {
+          await disconnect();
+          return false;
+        }
+      }
+    }
+    return device != null && _stateChr != null;
+  }
+
+  Future<bool> connectTo(BluetoothDevice device) async {
+    await device.connect(timeout: const Duration(seconds: 4));
+    this.device = device;
+
+    await device.clearGattCache();
+    await device.requestMtu(512);
+    List<BluetoothService> services = await device.discoverServices();
+    for (BluetoothService svc in services) {
+      for (BluetoothCharacteristic chr in svc.characteristics) {
+        if (chr.uuid.toString() == stateBinsState) {
+          _stateChr = chr;
+        }
+      }
+    }
+    sync();
+
+    return true;
+  }
+
+  Future<void> sync() async {
+    bool isBleOn = await _ble.isOn;
+    if (isBleOn) {
+      _stateChr?.read().then((value) => handleSyncData(value));
+    } else {
+      disconnect();
+    }
+  }
+}
