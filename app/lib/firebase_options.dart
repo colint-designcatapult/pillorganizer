@@ -50,21 +50,19 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBXXZsgBQ1DFZd1lUHRkgO5A-Z9-X8dlO4',
-    appId: '1:205413249135:android:1233a760d3f61942229d9a',
-    messagingSenderId: '205413249135',
-    projectId: 'jctpillorganizer',
-    storageBucket: 'jctpillorganizer.appspot.com',
+    apiKey: 'AIzaSyDrByJb8hQ1LdGUdMIjpDx5WpfjfJhWNOQ',
+    appId: '1:1091240480280:android:765f051e75baacfb3d3d6d',
+    messagingSenderId: '1091240480280',
+    projectId: 'cabinet-f7e5a',
+    storageBucket: 'cabinet-f7e5a.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyD0Tfn3oZnCecDpj2BXY0I5aXwO2uCEuWo',
-    appId: '1:205413249135:ios:e6196324bfe3c317229d9a',
-    messagingSenderId: '205413249135',
-    projectId: 'jctpillorganizer',
-    storageBucket: 'jctpillorganizer.appspot.com',
-    iosClientId:
-        '205413249135-g6s9nr09tgg3r3f1knhbbo5ve3k3n4cr.apps.googleusercontent.com',
-    iosBundleId: ' com.cabinet.pillorganizer',
+    apiKey: 'AIzaSyC2ElEQU73WB_uLwtnnYPxBY_5hNzpouSw',
+    appId: '1:1091240480280:ios:5883ad356f5c225c3d3d6d',
+    messagingSenderId: '1091240480280',
+    projectId: 'cabinet-f7e5a',
+    storageBucket: 'cabinet-f7e5a.appspot.com',
+    iosBundleId: 'ca.tb.innovation.dev.Beacons',
   );
 }
