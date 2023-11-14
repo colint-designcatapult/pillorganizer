@@ -121,8 +121,6 @@ private:
         if (event->connect.status != 0) {
             if(_control)
                 advertise();
-            else
-                ble_svc_gatt_changed(0x0001, 0xffff);
         } else {
             ESP_LOGI(TAG, "Bluetooth sync pre-emption active %p", xTaskGetCurrentTaskHandle());
             sync_preempt = true;
@@ -131,7 +129,7 @@ private:
     }
 
     int event_disconnect(ble_gap_event *event) {
-        ESP_LOGI(TAG, "disconnect; reason=%d ", event->disconnect.reason);
+        ESP_LOGI(TAG, "disconnect; reason=0x%x ", event->disconnect.reason);
 
         if(_control)
             advertise();
@@ -171,6 +169,7 @@ private:
     }
 
     int event_mtu(ble_gap_event* event) {
+        ESP_LOGI(TAG, "mtu update; channel=%d; size=%d\n", event->mtu.channel_id, event->mtu.value);
         return 0;
     }
 
@@ -238,7 +237,32 @@ private:
         ble_svc_gatt_init();
 #endif
         BLE_ERROR_CHECK(ble_gatts_count_cfg(defs));
-        BLE_ERROR_CHECK(ble_gatts_add_svcs(defs));
+
+        int ret = ble_gatts_add_svcs(defs);
+        ESP_LOGI(TAG, "ble_gatts_add_svcs with return %x\n", ret);
+
+        if(ret) //error
+        {
+            ESP_LOGI(TAG, "ble_gatts_add_svcs will retry after 10ms\n");
+            vTaskDelay(10 / portTICK_PERIOD_MS);
+            
+            ret = ble_gatts_add_svcs(defs);
+        
+            ESP_LOGI(TAG, "ble_gatts_add_svcs  2nd time with return %x\n", ret);
+
+            BLE_ERROR_CHECK(ret);
+        }
+
+        // if(ret) //error
+        // {
+        //     ESP_LOGI(TAG, "ble_gatts_add_svcs return %x at gatt.init()\n", ret);
+        //     // give the ble_gatts_add_svcs a chance before reset
+        //     // Reset GATT
+        //     int err = ble_gatts_reset();
+        //     ESP_LOGI(TAG, "Bluetooth gatts reset with return %x at gatt.init()\n", err);
+        //     ble_gatts_stop();
+        //     BLE_ERROR_CHECK(ble_gatts_add_svcs(defs));
+        // }
 
         index = 0;
         //(free_service<SVC>(index++), ...);
@@ -278,6 +302,12 @@ private:
 using PillBleGatt = BaseBleGatt<
     /*
     * Add services here
+    PillOrganizerService:
+        BinBitmaskCharacteristic, //0x26b0
+        BinSamplesCharacteristic, //0x26b1
+        BinsStateCharacteristic,  //0x26c1
+        BinEventCharacteristic,   //0x26d1
+        BinEventAckCharacteristic; //0x26d2
     */
     PillOrganizerService,
     BatteryService
@@ -303,7 +333,7 @@ public:
         set_host_callbacks();
 #endif
 
-        ESP_LOGI(TAG, "Bluetooth peripheral starting");
+        ESP_LOGI(TAG, "Bluetooth peripheral starting for wifi provision");
         gap().init();
 #if BLE_STANDALONE
         gatt().init();
@@ -316,17 +346,8 @@ public:
         // After protocomm nimble stops
         //
 
-
         // Stop advertising, in case it is still running (shouldn't be)
-        int err = ble_gap_adv_stop();
-        // Check to make sure it actually stopped
-        assert(err == BLE_HS_EALREADY || err == 0);
-
-        // Reset GATT (clear out any junk protocomm left)
-        BLE_ERROR_CHECK(ble_gatts_reset());
-
-        ble_svc_gap_init();
-        ble_svc_gatt_init();
+        ble_gap_adv_stop();
 
         // Inform our GAP code that we are taking over from protocomm
         gap().take_control_from_protocomm();
@@ -334,16 +355,33 @@ public:
         // Replace protocomm callbacks with our own
         set_host_callbacks();
 
-        //ble_gatts_stop();
+        // Reset GATT
+        int err = ble_gatts_reset();
+        ESP_LOGI(TAG, "Bluetooth gatts reset with return %x\n", err);
+
+        if(err == 0xf) //error
+        {
+            //this delay to make sure the connectivity has done
+            ESP_LOGI(TAG, "Bluetooth gatts reset will retry after 10ms\n");
+            vTaskDelay(10 / portTICK_PERIOD_MS);
+            
+            err = ble_gatts_reset();
+            
+            ESP_LOGI(TAG, "Bluetooth gatts reset 2nd time with return %x\n", err);
+            BLE_ERROR_CHECK(err);
+        }
+
+        ble_gatts_stop();
+
+        //give it some delay here before the call of new GATT Init
 
         // Initialize GATT
         gatt().init();
 
+        ble_services_changed();
+
         // Start GATT back up
         BLE_ERROR_CHECK(ble_gatts_start());
-
-        ble_svc_gatt_changed(0x0001, 0xffff);
-
 
         // Schedule hs reset, causing our reset/sync callbacks to be called
         ble_hs_sched_reset(0);
@@ -497,10 +535,12 @@ extern "C" void system_event_handler(void* event_handler_arg,
 #if BLE_STANDALONE
             xTaskCreate(task_function, "BLE", 4096, nullptr, tskIDLE_PRIORITY, &task);
 #else
+            ESP_LOGI(TAG, "Bluetooth PROVISION_COMPLETE switch to regular Bluetooth");
             BlePeripheral::get().post_protocomm();
 #endif
         } else if(event_id == SYSTEM_EVENT_PROVISION_START) {
 #if !BLE_STANDALONE
+            ESP_LOGI(TAG, "Bluetooth PROVISION_START");
             BlePeripheral::get().init();
 #endif
         }

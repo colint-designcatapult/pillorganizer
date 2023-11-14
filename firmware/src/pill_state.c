@@ -200,7 +200,7 @@ void on_bin_open_raw(bin_id_t bin)
         time_t t;
         time(&t);
 
-        ESP_LOGI(TAG, "Bin %d OPENED", bin);
+        //ESP_LOGI(TAG, "Bin %d OPENED", bin);
 
         state->open = true;
         state->time_reg = t;
@@ -217,7 +217,7 @@ void on_bin_close_raw(bin_id_t bin)
         state->open = false;
         time_t close = t, open = state->time_reg;
 
-        ESP_LOGI(TAG, "Bin %d CLOSED", bin);
+        //ESP_LOGI(TAG, "Bin %d CLOSED", bin);
 
         // Bin must be open for at least 2 seconds for it to be considered a dispense event
         if(close - open >= 2)

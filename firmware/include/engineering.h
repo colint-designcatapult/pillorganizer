@@ -16,5 +16,7 @@ void engineering_on_authenticated(uint64_t device_id);
 void engineering_print_ids();
 void engineering_logs_on();
 void engineering_logs_off();
+void engineering_toggle_leds();
+void engineering_red_leds();
 
 void engineering_restart(int delay);

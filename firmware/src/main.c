@@ -7,6 +7,7 @@
 
 #include "esp_system.h"
 #include "esp_spi_flash.h"
+#include <esp_mac.h>
 #include <esp_wifi.h>
 #include <esp_netif.h>
 #include "esp_log.h"
@@ -40,6 +41,8 @@
 
 const int OTA_START_EVENT = BIT0;
 
+/* For development only */
+/*
 static void heartbeat_task(void* arg) {
     for(;;) {
         for(int i = 0; i < FIRMWARE_REVISION; i++) {
@@ -53,6 +56,22 @@ static void heartbeat_task(void* arg) {
         esp_task_wdt_reset();
     }
 }
+*/
+
+
+
+static int enter_deep_sleep(int argc, char **argv)
+{
+    ESP_LOGI(TAG, "Enter Deep Sleep Mode");
+    vTaskDelay(pdMS_TO_TICKS(2000));
+    
+    esp_sleep_enable_ext0_wakeup(RESET_BTN, 0);
+    
+    //enter deep sleep
+    esp_deep_sleep_start();
+    return 0;
+}
+
 
 static int read_command(int argc, char **argv)
 {
@@ -78,6 +97,32 @@ static int logs_command(int argc, char **argv)
 static int ip_command(int argc, char **argv)
 {
     engineering_print_ids();
+    return 0;
+}
+
+static int led_command(int argc, char **argv)
+{    
+    engineering_red_leds();
+    return 0;
+}
+
+static int exit_command(int argc, char **argv)
+{    
+    //read firmware version 
+    printf("Firmware Version: %d, Built:%s, Date:%s, Board Rev: %d\n",
+            FIRMWARE_REVISION, FIRMWARE_BUILD, FIRMWARE_DATE, BOARD_REV);   
+
+    //toggle the leds
+    engineering_toggle_leds();
+
+    //read wifi mac
+    uint8_t mac[6];
+    esp_efuse_mac_get_default(mac);
+    printf( "MAC: %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5] ); 
+
+    //read all ADC channels
+    engineering_print_samples();
+
     return 0;
 }
 
@@ -108,12 +153,18 @@ void app_main(void)
     on_init();
 
     create_task_with_watchdog(&adc_read_task, "ADC Poll Task", 4096, NULL, 1);
-    create_task_with_watchdog(&heartbeat_task, "Heartbeat task", 2048, NULL, 1);
+    //create_task_with_watchdog(&heartbeat_task, "Heartbeat task", 2048, NULL, 1);
 
     esp_console_dev_uart_config_t uart_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
     esp_console_repl_config_t rc = ESP_CONSOLE_REPL_CONFIG_DEFAULT();
     rc.prompt = "pill>";
     esp_console_repl_t* o;
+
+    esp_console_cmd_t enter_deep_sleep_cmd = {
+        .command = "sleep",
+        .help = "Read all photoresistor values from the MUX",
+        .func = &enter_deep_sleep
+    };
 
     esp_console_cmd_t read_cmd = {
         .command = "r",
@@ -133,16 +184,32 @@ void app_main(void)
         .func = &ip_command,
     };
 
+    esp_console_cmd_t led_cmd = {
+        .command = "n",
+        .help = "toggle red and green led",
+        .func = &led_command,
+    };
+
+    esp_console_cmd_t exit_cmd = {
+        .command = "e",
+        .help = "toggle red and green led",
+        .func = &exit_command,
+    };
+
     esp_console_new_repl_uart(&uart_config, &rc, &o);
     esp_console_cmd_register(&read_cmd);
     esp_console_cmd_register(&logs_cmd);
     esp_console_cmd_register(&ip_cmd);
+    esp_console_cmd_register(&led_cmd);
+    esp_console_cmd_register(&exit_cmd);
+    esp_console_cmd_register(&enter_deep_sleep_cmd);
+
+
     //engineering_logs_off();
+    esp_console_start_repl(o);
 
     ble_init();
     wifi_init(); 
-
-    esp_console_start_repl(o);
 
     // todo: remove this
     // replace with power management

@@ -18,10 +18,13 @@
 #include "wire_codec.h"
 #include "ble.h"
 #include <esp_bt.h>
-
+#include <string.h>
 
 #define TAG "NETWORK"
 
+//Need to define Blob:
+//OOB_key
+//server-url
 
 TaskHandle_t task_handle = NULL;
 
@@ -31,11 +34,20 @@ typedef struct {
     bool registered;
     uint32_t event_ctr;
 } provision_record_t;
+
 provision_record_t provision_record = {0};
-
 char* bearer_token = NULL;
-
 #define NVS_TAG_OOB_KEY "PRECORD"
+
+typedef struct {
+    bool custom_url;
+    uint16_t  wLen;
+	uint8_t   awBuf[256];
+} __attribute__((packed)) URL_FORMAT_t;
+
+#define NVS_TAG_OTA_URL "OTAURL"
+#define DEFAUT_HOST "jctbackend.herokuapp.com"
+URL_FORMAT_t  stCustomUrl = {0};
 
 bool network_send_provision();
 
@@ -58,6 +70,59 @@ esp_err_t network_set_oob_key(const uint8_t* key, size_t len)
     ESP_LOGI(TAG, "Set OOB key exited with %d", err);
     return err;
 }
+
+static esp_err_t load_ota_host_record() {
+    //1byte true/false + 2 byte length + url string = blob size
+    esp_err_t err;
+
+    err = nvs_read_blob(NVS_TAG_OTA_URL, &stCustomUrl, sizeof(stCustomUrl));
+
+    ESP_LOGI(TAG, "Read back saved url blob size:%d\n", stCustomUrl.wLen);
+
+    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) {
+		ESP_LOGE(TAG, "Can't find url %x, len:%d\n", err, stCustomUrl.wLen);
+		return err;
+    }
+
+    ESP_LOGI(TAG, "Found saved url blob size:%d, %d\n", stCustomUrl.custom_url, stCustomUrl.wLen);
+    return err;
+}
+
+bool searchPatterns(const uint8_t *sourceString, const uint8_t *searchString) 
+{
+    char *firstPattern = strstr((const char *)sourceString, (const char *)searchString);
+
+    if (firstPattern == NULL) {
+        ESP_LOGI(TAG, "string not found.\n");
+        return false;
+    }
+
+    return true;
+}
+
+esp_err_t network_set_server_url(const uint8_t* pServerUrl, size_t len )
+{
+    esp_err_t err;
+    ESP_LOGI(TAG, "Received Url:%s, len=%d", pServerUrl, len);
+
+    //expect the app will send to the device "cabinet-staging-a663e71fb1a6.herokuapp.com"
+    if(searchPatterns(pServerUrl, (const uint8_t*)"cabinet-staging-a663e71fb1a6.herokuapp.com"))    
+    {
+        stCustomUrl.custom_url = true;
+        stCustomUrl.wLen = sizeof("cabinet-staging-a663e71fb1a6.herokuapp.com");
+        memcpy(stCustomUrl.awBuf, "cabinet-staging-a663e71fb1a6.herokuapp.com", stCustomUrl.wLen);
+        ESP_LOGI(TAG, "Copy Url:%s, len=%d\n", stCustomUrl.awBuf, stCustomUrl.wLen);
+        err = nvs_write_blob(NVS_TAG_OTA_URL, &stCustomUrl, sizeof(stCustomUrl));
+    }
+    else
+    {
+        memset(&stCustomUrl.custom_url, 0, sizeof(stCustomUrl)); //clear previous url if there is any
+        err = nvs_write_blob(NVS_TAG_OTA_URL, &stCustomUrl, sizeof(stCustomUrl));
+    }
+   
+    return err;
+}
+
 
 bool encode_oob_key(pb_ostream_t *stream, const pb_field_t *field, void * const *arg)
 {
@@ -103,10 +168,6 @@ void network_wifi_disconnect()
     engineering_stop_server();
 }*/
 
-
-
-
-
 bool decode_authorization(pb_istream_t *stream, const pb_field_iter_t *field, void **arg)
 {
     size_t auth_size = stream->bytes_left;
@@ -138,6 +199,18 @@ bool decode_authorization(pb_istream_t *stream, const pb_field_iter_t *field, vo
     return true;
 }
 
+static char *get_host_url()
+{
+    if(stCustomUrl.custom_url == true)
+    {
+        return (char *)&stCustomUrl.awBuf[0];
+    }
+    else 
+    {
+        return DEFAUT_HOST;
+    }
+
+}
 
 void network_build_base_config(esp_http_client_config_t* config, const char* path,
         esp_http_client_method_t method)
@@ -148,14 +221,15 @@ void network_build_base_config(esp_http_client_config_t* config, const char* pat
     config->timeout_ms = 10000;
 // switch between server hosted on PC and the digital ocean one
 #if 1
-    config->host                        = "jctbackend.herokuapp.com";
+    config->host                        = get_host_url();
+    //config->host                      = //"cabinet-staging-a663e71fb1a6.herokuapp.com"; //t-b suggested
     config->port                        = 443;
     config->auth_type                   = HTTP_AUTH_TYPE_NONE;
     config->transport_type              = HTTP_TRANSPORT_OVER_SSL;
     config->skip_cert_common_name_check = true;
 
 #else
-    config->host                        = "192.168.88.59";
+    config->host                        = "192.168.2.160";
     config->port                        = 8080;
     config->auth_type                   = HTTP_AUTH_TYPE_NONE;
     config->transport_type              = HTTP_TRANSPORT_OVER_TCP;
@@ -326,8 +400,6 @@ static void handle_sync_response(SyncResponse* resp) {
     ota_handle_sync(resp);
 }
 
-
-
 bool network_send_provision()
 {
     DeviceProvisionRequest req = DeviceProvisionRequest_init_zero;
@@ -402,6 +474,8 @@ void network_bin_event_task(void* parm)
             }
 
             if(registered) {
+                //if the device is provisioned and not connect to BT
+                //device will send sync data every 20seconds
                 if(!ble_has_sync_preemption()) {
                     BinEvent be = { 0 };
                     bool has_bin_event = false;
@@ -416,7 +490,7 @@ void network_bin_event_task(void* parm)
 
                     SemaphoreHandle_t sem = event_bin_queue_mutex();
                     if(xSemaphoreTake(sem, 0)) {
-                        network_send_sync();
+                        network_send_sync(); //send the data to back end every 20seconds if there is no bluetooth
                         xSemaphoreGive(sem);
                     }
                 } else {
@@ -440,16 +514,28 @@ void network_bin_event_task(void* parm)
 
 void network_init()
 {
-    esp_err_t err = load_provision_record();
-    if(ESP_ERR_NVS_NOT_FOUND == err || ESP_ERR_INVALID_SIZE == err) {
+ 
+    //read back backend url
+    esp_err_t err = load_ota_host_record();
+
+    //read back provision record
+
+    err = load_provision_record();
+
+    if(err == ESP_OK) {
+        ESP_LOGI(TAG, "Provision Record Found Using it\n");
+    }
+    else if(ESP_ERR_NVS_NOT_FOUND == err || ESP_ERR_INVALID_SIZE == err) {
         // bin schedule not persisted yet, initialize to zero & persist
+        ESP_LOGI(TAG, "ESP_ERR_NVS_NOT_FOUND or ESP_ERR_INVALID_SIZE error, reset precord");
         memset(&provision_record, 0, sizeof(provision_record));
         save_provision_record();
         //esp_restart();
     } else {
+        ESP_LOGI(TAG, "Error: %x, perform nvs factory reset", err);
+        nvs_factory_reset();
         ESP_ERROR_CHECK(err);
     }
-
     
     start_task();
 }

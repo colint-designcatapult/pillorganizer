@@ -1,9 +1,12 @@
 #include "nvs_wrapper.h"
+#include <esp_log.h>
 #include <nvs.h>
 #include <nvs_flash.h>
 #include "esp_wifi.h"
 
 #define STORAGE_NAMESPACE "storage"
+
+#define TAG "nvsw"
 
 void init_nvs()
 {
@@ -43,25 +46,40 @@ esp_err_t nvs_write_blob(const char* key, const void* value, size_t len)
 esp_err_t nvs_read_blob(const char* key, void* value, size_t len)
 {
     nvs_handle_t h;
+
+    ESP_LOGI(TAG, "nvs_read_blob with key %s", key);
+
     esp_err_t err = nvs_open(STORAGE_NAMESPACE, NVS_READONLY, &h);
     if (err != ESP_OK) 
+    {
+        ESP_LOGI(TAG, "nvs_open STORAGE_NAMESPACE error %x\n", err);
         return err;
+    }
 
     size_t reqd_size;
     err = nvs_get_blob(h, key, NULL, &reqd_size);
     if (err != ESP_OK) 
+    {
+        ESP_LOGI(TAG, "nvs_get_blob %s error %x\n", key, err);
         return err;
+    }
     
     if(reqd_size > len)
         return ESP_ERR_INVALID_SIZE;
     
     err = nvs_get_blob(h, key, value, &len);
     if (err != ESP_OK) 
+    {
+        ESP_LOGI(TAG, "nvs_get_blob %s error %x\n", key, err);
         return err;
+    }
 
     err = nvs_commit(h);
     if (err != ESP_OK)
+    {
+        ESP_LOGI(TAG, "nvs_commit error %x\n", err);
         return err;
+    }
 
     nvs_close(h);
     return ESP_OK;

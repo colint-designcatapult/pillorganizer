@@ -47,9 +47,13 @@ EngineeringRequest* engineering_request()
 
 static void engineering_set_samples(size_t voltage_count, uint32_t* voltages, uint32_t vbat_meas)
 {
+
     if(xSemaphoreTake(engr_sphr, pdMS_TO_TICKS(500)) == pdTRUE) {
+       // gpio_set_level(TP18, 1);
         data.has_vbat_meas = true;
-        data.vbat_meas = vbat_meas;
+        data.vbat_meas = voltages[14];   //mux_14 is battery input 
+
+        //vbat_meas; //vbat_meas is meaning less, no data in this variable
         
         time_t now;
         time(&now);
@@ -58,9 +62,11 @@ static void engineering_set_samples(size_t voltage_count, uint32_t* voltages, ui
         data.voltages_count = voltage_count;
         memcpy(data.voltages, voltages, voltage_count * sizeof(int32_t));
         xSemaphoreGive(engr_sphr);
+        //gpio_set_level(TP18, 0);
     } else {
         ESP_LOGW(TAG, "Could not upload samples, engineering locked?");
     }
+
 }
 
 void engineering_print_samples() {
@@ -122,14 +128,6 @@ esp_err_t get_version_handler(httpd_req_t *req)
     uint32_t free = esp_get_free_heap_size() / 1000;
     char fullstr[64];
     sprintf(fullstr, "%d (%s) %ld kb free", FIRMWARE_REVISION, espver, free);
-    httpd_resp_sendstr(req, fullstr);
-    return ESP_OK;
-}
-
-esp_err_t get_fw_version_handler(httpd_req_t *req)
-{
-    char fullstr[32];
-    sprintf(fullstr, "%d", FIRMWARE_REVISION);
     httpd_resp_sendstr(req, fullstr);
     return ESP_OK;
 }
@@ -254,14 +252,6 @@ httpd_uri_t uri_update = {
 };
 
 
-httpd_uri_t uri_fw_version = {
-    .uri      = "/fw-version",
-    .method   = HTTP_GET,
-    .handler  = get_fw_version_handler,
-    .user_ctx = NULL
-};
-
-
 
 /* Function for starting the webserver */
 httpd_handle_t start_webserver(void)
@@ -282,7 +272,6 @@ httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(server, &uri_reboot);
         httpd_register_uri_handler(server, &uri_reset);
         httpd_register_uri_handler(server, &uri_update);
-        httpd_register_uri_handler(server, &uri_fw_version);
     }
     /* If server failed to start, handle will be NULL */
     return server;
@@ -349,8 +338,10 @@ static void engineering_event_handler(void* event_handler_arg, esp_event_base_t 
                                         int32_t event_id, void* event_data) {
     if(event_base == BIN_EVENT_BASE) {
         if(event_id == BIN_EVENT_SAMPLES) {
+            //gpio_set_level(TP47,1);
             BinEventSamples* samples = (BinEventSamples*)event_data;
             engineering_set_samples(16, samples->samples, samples->vbat_meas);
+            //gpio_set_level(TP47,0);
         }
     }
 }
@@ -402,6 +393,7 @@ void engineering_print_ids()
     const wifi_info_t*  wifi_info = wifi_get_info();
     if(wifi_info) {
         int64_t hton = swap_long_l(wifi_info->sn.sn);
+        printf(" MAC Addr  : %" PRIX64 " \n", wifi_info->sn.sn);
         printf(" Serial No : %" PRIi64 " (%" PRIu64 ")\n", hton, wifi_info->sn.sn);
         printf(" Local IP4 : %d.%d.%d.%d\n", esp_ip4_addr1(&wifi_info->ip4), esp_ip4_addr2(&wifi_info->ip4), esp_ip4_addr3(&wifi_info->ip4), esp_ip4_addr4(&wifi_info->ip4));
     } else {
@@ -420,4 +412,14 @@ void engineering_logs_on()
 void engineering_logs_off()
 {
     esp_log_level_set("*", ESP_LOG_NONE);
+}
+
+void engineering_toggle_leds()
+{
+    led_set_effect(LED_EFFECT_HOLD_GREEN, 0);
+}
+
+void engineering_red_leds()
+{
+    led_set_effect(LED_EFFECT_HOLD_RED, 0);
 }

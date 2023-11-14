@@ -1,7 +1,7 @@
 #pragma once
 #include "ble.h"
 #include "event.h"
-#include "ota.h"
+#include "esp_log.h"
 
 using BinBitmaskCharacteristicUUID = BleUUID128<0xB0,0x26,0x9D,0xAE,0x9D,0x75,0x4C,0x35,0xB8,0x06,0xF8,
                                             0x5B,0x76,0xD8,0xDE,0x20>;
@@ -135,18 +135,20 @@ class BatteryLevelCharacteristic : public BaseGattCharacteristic<BatteryLevelCha
                                    public AutoEventHandler<POWER_EVENT_BASE, POWER_EVENT_BATTERY_LEVEL_CHANGE>  {
 protected:
     int read(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt* ctxt) override {
-        return ble_send(ctxt, (uint8_t)67);
+        return ble_send(ctxt, level);
     }
 
     void handle(esp_event_base_t base, int32_t id, void* event_data) override {
         if(base == POWER_EVENT_BASE) {
             if(id == POWER_EVENT_BATTERY_LEVEL_CHANGE) {
                 level = ((PowerBatteryLevelChangeEvent*)event_data)->battery_level; 
+                //ESP_LOGI("BatteryLevel", "Batt Per:%d\n", level);
                 notify();
             }
         }
     }
 
+    //to add write feature just add the function here
     bool readable() override {
         return true;
     }
@@ -163,18 +165,21 @@ class BatteryLevelStatusCharacteristic : public BaseGattCharacteristic<BatteryLe
                                          public AutoEventHandler<POWER_EVENT_BASE> {
 protected:
     BLE_STRUCT BatteryStatus {
-        bool identifier_present:1;
-        bool battery_level_present:1;
-        bool additional_status_present:1;
-        int rfu_1:5;
-        bool battery_present:1;
-        int wired_external_power_source:2;
-        int wireless_external_power_source:2;
-        int battery_charge_state:2;
-        int battery_charge_level:2;
-        int charging_type:3;
-        int charging_fault_reason:2;
-        int rfu_2:1;
+        // bool identifier_present:1;
+        // bool battery_level_present:1;
+        // bool additional_status_present:1;
+        // int rfu_1:5;
+        // bool battery_present:1;
+        // int wired_external_power_source:2;
+        // int wireless_external_power_source:2;
+        // int battery_charge_state:2;
+        // int battery_charge_level:2;
+        // int charging_type:3;
+        // int charging_fault_reason:2;
+        // int rfu_2:1;
+        uint8_t battery_present;
+        uint8_t wired_external_power_source;
+        uint8_t charging_status;
         uint8_t battery_level;
     };
     static_assert(sizeof(BatteryLevelStatusCharacteristic::BatteryStatus) == 4);
@@ -185,15 +190,21 @@ protected:
 
     void handle(esp_event_base_t base, int32_t id, void* event_data) override {
         if(base == POWER_EVENT_BASE) {
-            if(id == POWER_EVENT_STATUS_CHANGE) {
+            if(id == POWER_EVENT_PIN) {
+                ESP_LOGI("ChargerStatus", "PinSet:%x\n", *(uint8_t *)event_data);
                 PowerStatusChangeEvent* ev = (PowerStatusChangeEvent*)event_data;
                 status.battery_present              = ev->battery_present;
                 status.wired_external_power_source  = ev->plugged_in ? 1 : 0;
-                status.charging_type                = ev->charging ? 1 : 0;
+                status.charging_status              = ev->charging ? 1 : 0; //update the charging status to true/on
+                status.battery_level                = 50;
                 notify();
             } else if(id == POWER_EVENT_BATTERY_LEVEL_CHANGE) {
+                //if this update from /CHG signal that the battery is full, update the charger status is false/off
+                if(((PowerBatteryLevelChangeEvent*)event_data)->battery_level == 100 )
+                {
+                    status.charging_status              = 0;
+                }
                 status.battery_level            = ((PowerBatteryLevelChangeEvent*)event_data)->battery_level; 
-                status.battery_level_present    = 1;
                 notify();
             }
         }
@@ -211,70 +222,6 @@ private:
 };
 
 
-
 using BatteryServiceUUID = BleUUID16<0x180F>;
 using BatteryService = BaseGattService<BatteryServiceUUID, BatteryLevelCharacteristic, BatteryLevelStatusCharacteristic>;
-
-
-
-using FWUpdateCharacteristicUUID = BleUUID128<0xB0,0x26,0x9D,0xAE,0x9D,0x75,0x4C,0x35,0xB8,0x06,0xF8,
-                                            0x5B,0x76,0xD8,0xDE,0x20>;
-class FWUpdateCharacteristic : public BaseGattCharacteristic<FWUpdateCharacteristicUUID> {
-protected:
-
-    int read(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt* ctxt) override {
-        return ble_send(ctxt, last_resp);
-    }
-
-    int write(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt *ctxt) override {
-        uint8_t buffer[512];
-        uint16_t len;
-        
-        int err;
-        if((err = ble_receive(ctxt->om, 0, sizeof(buffer), buffer, &len)) != 0)
-            return 0;
-
-        size_t bw;
-        return ota_update(OTA_METHOD_BLE, buffer, len, &last_resp, sizeof(last_resp), &bw);
-    }
-
-
-    bool readable() override {
-        return true;
-    }
-    bool writable() override {
-        return true;
-    }
-
-private:
-    ota_update_response last_resp;
-};
-
-using FWVersionCharacteristicUUID = BleUUID128<0xB8,0x26,0x9D,0xAE,0x9D,0x75,0x4C,0x35,0xB8,0x06,0xF8,
-                                            0x5B,0x76,0xD8,0xDE,0x20>;
-class FWVersionCharacteristic : public BaseGattCharacteristic<FWVersionCharacteristicUUID> {
-protected:
-
-    int read(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt* ctxt) override {
-        int32_t out;
-        size_t bout;
-        ota_get_current_version(nullptr, 0, &out, sizeof(out), &bout);
-        return ble_send(ctxt, bout);
-    }
-
-
-    bool readable() override {
-        return true;
-    }
-
-private:
-    ota_update_response last_resp;
-};
-
-
-
-
-using OTAUpdateServiceUUID = BleUUID128<0xA9,0x26,0x9D,0xAE,0x9D,0x75,0x4C,0x35,0xB8,0x06,0xF8,
-                                                0x5B,0x76,0xD8,0xDE,0x20>;
-using OTAUpdateService = BaseGattService<OTAUpdateServiceUUID, FWUpdateCharacteristic, FWVersionCharacteristic>;
 

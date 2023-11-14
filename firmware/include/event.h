@@ -62,9 +62,11 @@ typedef struct _PowerStatusChangeEvent {
     bool plugged_in:1;
     bool charging:1;
 } PowerStatusChangeEvent;
+
 typedef struct _PowerBatteryLevelChangeEvent {
     uint8_t battery_level;
 } PowerBatteryLevelChangeEvent;
+
 typedef struct _PowerPinEvent {
     uint8_t pin;
 } PowerPinEvent;

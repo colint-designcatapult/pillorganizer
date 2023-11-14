@@ -3,7 +3,6 @@ extern "C" {
 #include "network.h"
 #include "pill_gpio.h"
 #include "util.h"
-#include "ota.h"
 #include "rtc_sntp.h"
 
 #include <esp_wifi.h>
@@ -15,7 +14,7 @@ extern "C" {
 #include <esp_nimble_hci.h>
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
-#include "services/gatt/ble_svc_gatt.h"
+
 }
 
 #include "event.h"
@@ -157,7 +156,7 @@ protected:
         } else {
             // Provisioning failed
             // Rebuild provisioner and try again
-            ESP_LOGW(TAG, "Provisioning reported as failed");
+            ESP_LOGW(TAG, "Provisioning reported as failed 0x%x", error);
             //this->start_provisioning();
             // currently, only restarting is supported
             esp_restart();
@@ -208,7 +207,7 @@ public:
     void event_handler(wifi_prov_cb_event_t event, void *event_data) {
         ESP_LOGI(TAG, "Handling provisioning event %d", event);
 
-        if(event == WIFI_PROV_START) {
+        if(event == WIFI_PROV_START) { //1
             event_post(SYSTEM_EVENT_BASE, SYSTEM_EVENT_PROVISION_START, nullptr, 0, pdMS_TO_TICKS(100));
 
             if(_prov_already) {
@@ -218,10 +217,7 @@ public:
                 // start flashing LEDs
                 led_set_effect(LED_EFFECT_FLASH_GREEN_AND_RED, INT_MAX);
             }
-        } else if(event == WIFI_PROV_CRED_SUCCESS) {
-            // Mark provisioning as success
-            _prov_success = true;
-        } else if(event == WIFI_PROV_CRED_FAIL) {
+        } else if(event == WIFI_PROV_CRED_FAIL) { //3
             // Mark provisioning as failure
             _prov_success = false;
             ESP_ERROR_CHECK(wifi_prov_mgr_reset_sm_state_on_failure());
@@ -229,11 +225,14 @@ public:
             // Stop after credential fail
             // Todo: never notifies BLE client
             wifi_prov_mgr_stop_provisioning();
-        } else if(event == WIFI_PROV_END) {
+        }  else if(event == WIFI_PROV_CRED_SUCCESS) { //4
+            // Mark provisioning as success
+            _prov_success = true;
+        } else if(event == WIFI_PROV_END) { //5
             // stop flashing LEDs
             led_set_effect(LED_EFFECT_NORMAL, 0);
             wifi_prov_mgr_deinit();
-        } else if(event == WIFI_PROV_DEINIT) {
+        } else if(event == WIFI_PROV_DEINIT) { //6
             ESP_LOGI(TAG, "Provision manager deinit");
             // If already provisioned, return with special error code first indicating device is already provisioned
             if(_prov_already) {
@@ -301,6 +300,7 @@ private:
                                           uint8_t **outbuf, ssize_t *outlen, void *priv_data) {
         *outlen = 6;
         *outbuf = new uint8_t[6];
+        ESP_LOGI(TAG, "Handler Get Serial %s\n!!!", *outbuf);
         return esp_efuse_mac_get_default(*outbuf);
     }
 
@@ -308,23 +308,16 @@ private:
                                           uint8_t **outbuf, ssize_t *outlen, void *priv_data) {
         *outlen = 4;
         *outbuf = new uint8_t[4];
+        ESP_LOGI(TAG, "Handler Set OOBKey %s\n!!!", inbuf);
         return network_set_oob_key(inbuf, inlen);
     }
 
-
-    static esp_err_t fw_version_handler(uint32_t session_id, const uint8_t *inbuf, ssize_t inlen,
+    static esp_err_t set_server_url_handler(uint32_t session_id, const uint8_t *inbuf, ssize_t inlen,
                                           uint8_t **outbuf, ssize_t *outlen, void *priv_data) {
+        *outlen = 4;
         *outbuf = new uint8_t[4];
-        return ota_get_current_version((void*)inbuf, inlen, *outbuf, 4, (size_t*)outlen);
+        return network_set_server_url(inbuf, inlen);
     }
-
-
-    static esp_err_t update_fw_handler(uint32_t session_id, const uint8_t *inbuf, ssize_t inlen,
-                                          uint8_t **outbuf, ssize_t *outlen, void *priv_data) {
-        *outbuf = new uint8_t[sizeof(_ota_update_response)];
-       return ota_update(OTA_METHOD_PROTOCOMM, (void*)inbuf, inlen, *outbuf, sizeof(_ota_update_response), (size_t*)outlen);
-    }
-
 
     void start_provisioning() {
         char service_name[18];
@@ -333,8 +326,8 @@ private:
 
         // todo: what to do about pop key
 
-        const char *pop = "abcd1234";
-        const char *service_key = NULL;
+        //const char *pop = "abcd1234";
+        //const char *service_key = NULL;
 
         uint8_t custom_service_uuid[] = {
             /* LSB <---------------------------------------
@@ -347,14 +340,15 @@ private:
         wifi_prov_mgr_endpoint_create("serial-no");
         wifi_prov_mgr_endpoint_create("provision-key");
 
+        //try to add the ota address during a provision
+        wifi_prov_mgr_endpoint_create("server-url");
+
         ESP_LOGI(TAG, "Provision manager started");
         ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(security, NULL, service_name, NULL));
 
         wifi_prov_mgr_endpoint_register("serial-no", get_serial_no_handler, NULL);
         wifi_prov_mgr_endpoint_register("provision-key", set_provision_key_handler, NULL);
-        wifi_prov_mgr_endpoint_register("fw-version", fw_version_handler, NULL);
-        wifi_prov_mgr_endpoint_register("update-fw", update_fw_handler, NULL);
-
+        wifi_prov_mgr_endpoint_register("server-url", set_server_url_handler, NULL);
     }
 };
 
@@ -388,7 +382,8 @@ private:
         esp_wifi_get_config(WIFI_IF_STA, &conf);
 
         ESP_LOGI(TAG, "Connecting to %s", (const char*)conf.sta.ssid);
-        ESP_LOGI(TAG, "Connect result %d", esp_wifi_connect());
+        esp_err_t status = esp_wifi_connect();
+        ESP_LOGI(TAG, "Connect result %d", status);
     }
 
     void task() {
@@ -462,10 +457,6 @@ extern "C" {
 WifiStateSupervisor WifiStateSupervisor::_instance;
 
 void WifiStateSupervisor::init() {
-    // clear out padding (otherwise reading SN will sometimes return junk)
-    _wifi_info.sn.bytes._pad[0] = 0;
-    _wifi_info.sn.bytes._pad[1] = 0;
-
     // Get MAC address and store it in wifi_info
     esp_efuse_mac_get_default(_wifi_info.sn.bytes.mac);
 
@@ -475,7 +466,6 @@ void WifiStateSupervisor::init() {
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, event_dispatcher, NULL));
 
     _wifi_handler->init();
-
 }
 
 void WifiStateSupervisor::start_provisioning() {

@@ -17,8 +17,9 @@ int ble_send_pb(ble_gatt_access_ctxt* ctxt, const pb_ostream_t& data, uint8_t* b
     return os_mbuf_append(ctxt->om, buf, data.bytes_written);
 }
 
-
+//app can read this characteristic for the sync requests
 int BinsStateCharacteristic::read(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt* ctxt) {
+    ESP_LOGI(TAG, "BinsState Char Read\n");
     if(xSemaphoreTake(event_bin_queue_mutex(), pdMS_TO_TICKS(10))) {
         build_sync();
 
@@ -36,14 +37,12 @@ int BinsStateCharacteristic::read(uint16_t conn_handle, uint16_t attr_handle, st
     }
 }
 
-
-
-
+//app can write to this characteristic for the sync responds
 int BinsStateCharacteristic::write(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt* ctxt) {
         uint8_t buffer[512];
         uint16_t len;
         SyncResponse resp = SyncResponse_init_zero;
-        
+        ESP_LOGI(TAG, "BinsState Charac Write Got: %d bytes\n", ctxt->om->om_len);
         int err;
         if((err = ble_receive(ctxt->om, 0, sizeof(buffer), buffer, &len)) != 0)
             return 0;
@@ -67,6 +66,7 @@ int BinsStateCharacteristic::write(uint16_t conn_handle, uint16_t attr_handle, s
 }
 
 void BinsStateCharacteristic::build_sync() {
+    ESP_LOGI(TAG, "build_sync got call");
     req = SyncRequest_init_default;
     encode_sync_request(&req, true);
     built = true;

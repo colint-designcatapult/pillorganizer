@@ -19,7 +19,6 @@
 
 static time_t last_attempt = 0;
 static SemaphoreHandle_t ota_semaphore = { 0 };
-static SemaphoreHandle_t ota_proto_semphr = { 0 }; 
 
 static bool ota_check_new_version(esp_app_desc_t* new_app_info) {
     ESP_LOGI(TAG, "New firmware version: %s", new_app_info->version);
@@ -203,9 +202,6 @@ void ota_handle_sync(SyncResponse* sync) {
 void ota_init() {
     ota_semaphore = xSemaphoreCreateBinary();
     xSemaphoreGive(ota_semaphore);
-
-    ota_proto_semphr = xSemaphoreCreateMutex();
-    xSemaphoreGive(ota_proto_semphr);
 }
 
 esp_err_t ota_start(ota_progress_t* prog) 
@@ -245,112 +241,4 @@ esp_err_t ota_finish(ota_progress_t* prog)
         esp_ota_set_boot_partition(prog->partition);
     }
     return err;
-}
-
-
-/* OTA Protocol */
-
-struct {
-    ota_source source;
-    time_t last_call;
-    size_t counter;
-    size_t bytesWritten;
-    ota_progress_t prog;
-    bool started;
-} ota_attempt = { 0 };
-
-esp_err_t ota_get_current_version(void* indata, size_t insize, void* outdata, size_t outbufsize, size_t* bytesWritten) {
-    if(outbufsize < sizeof(int32_t) && outdata) {
-        return ESP_ERR_NO_MEM;
-    } else {
-        int32_t* outint = (int32_t*)outdata;
-        *outint = FIRMWARE_REVISION;
-        *bytesWritten = sizeof(int32_t);
-        return ESP_OK;
-    }
-}
-
-void ota_attempt_reset() {
-    if(ota_attempt.started)
-        ota_cancel(&ota_attempt.prog);
-    memset(&ota_attempt, 0, sizeof(ota_attempt));
-}
-
-esp_err_t ota_update(ota_source source, void* indata, size_t insize, void* outdata, size_t outbufsize, size_t* bytesWritten) {
-
-    time_t currentTime;
-    time(&currentTime);
-
-    if(xSemaphoreTake(ota_proto_semphr, 0)) {
-
-        // Check if current OTA source is the requested one
-        if(ota_attempt.source > 0 && ota_attempt.source != source) {
-            xSemaphoreGive(ota_proto_semphr);
-
-            // Check if it's been more than a minute since the last time ota_update was called
-            if(difftime(currentTime, ota_attempt.last_call) > 60) {
-                // timeout the other source, and reset
-                ota_attempt_reset();
-                goto reserve;
-            } else {
-                // another OTA source is using this
-                return ESP_ERR_NOT_FINISHED;
-            }
-        } else {
-            xSemaphoreGive(ota_proto_semphr);
-        }
-    } else {
-        // Something else is using the mutex
-        return ESP_ERR_NOT_FINISHED;
-    }
-
-reserve:
-    ota_attempt.source = source;
-    ota_attempt.last_call = currentTime;
-
-    esp_err_t err;
-    ota_update_request* req = (ota_update_request*)indata;
-
-    // Check input size to make sure it has at least sizeof(ota_update) bytes
-    if(insize < sizeof(ota_update_request))
-        return ESP_ERR_INVALID_ARG;
-
-    // If the OTA hasn't been started yet, start it
-    if(!ota_attempt.started) {
-        if((err = ota_start(&ota_attempt.prog)) != ESP_OK)
-            return err;
-        ota_attempt.started = true;
-    }
-
-    // Check the counter
-    if(ota_attempt.counter != req->counter) {
-        ota_attempt_reset();
-        return ESP_ERR_INVALID_STATE;
-    }
-
-
-    void* body = req + 1;
-    size_t bodySize = insize - sizeof(ota_update_request);
-
-    // Only process the body if 
-    if(bodySize > 0) {
-        // Attempt to process the body
-        if((err = ota_upload_part(&ota_attempt.prog, body, bodySize)) != ESP_OK) {
-            ota_attempt_reset();
-            return err;
-        }
-    }
-
-    // Increment counter & bytes written
-    ota_attempt.counter++;
-    ota_attempt.bytesWritten += bodySize;
-
-    // Check if we have written all bytes
-    if(ota_attempt.bytesWritten >= req->fwsize) {
-        err = ota_finish(&ota_attempt.prog);
-        memset(&ota_attempt, 0, sizeof(ota_attempt));
-        return err;
-    }
-
-    return ESP_OK;
 }
