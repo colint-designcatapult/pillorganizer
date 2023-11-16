@@ -1,7 +1,7 @@
 import 'package:app/api/medication.dart';
 import 'package:app/provider/new_medication_provider.dart';
 import 'package:app/screens/modals/add_new_pills_modal.dart';
-import 'package:app/screens/tab/index.dart';
+import 'package:app/widgets/circular_bin_status_indicator.dart';
 import 'package:app/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
