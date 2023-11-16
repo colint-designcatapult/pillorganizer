@@ -1,9 +1,7 @@
 import 'package:app/api/device.dart';
 import 'package:app/api/api.dart';
-import 'package:app/platform/dialog.dart';
 import 'package:app/service/time_service.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:collection/collection.dart';
 

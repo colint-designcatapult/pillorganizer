@@ -1,4 +1,6 @@
+import 'package:app/provider/ble_provider.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
 import '../main.dart';
 
 class BLEAutoSuppress extends StatefulWidget {
@@ -25,20 +27,11 @@ class BLEAutoSuppressState extends State<BLEAutoSuppress> with RouteAware {
   }
 
   @override
-  void didPushNext() {
-    //Provider.of<DeviceBluetoothProvider>(context, listen: false).suppress();
-  }
-
-  @override
-  void didPopNext() {
-    // Covering route was popped off the navigator.
-    //Provider.of<DeviceBluetoothProvider>(context, listen: false).unsuppress();
-  }
-
-  @override
   void initState() {
     super.initState();
-    //Provider.of<DeviceBluetoothProvider>(context, listen: false).unsuppress();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<DeviceBluetoothProvider>(context, listen: false).unsuppress();
+    });
   }
 
   @override

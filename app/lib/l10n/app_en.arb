@@ -11,6 +11,9 @@
 	"authError": "Authentication failed",
 	"automatic": "Automatic",
 	"back": "Back",
+	"bluetoothConnected": "Bluetooth connected",
+	"bluetoothConnecting": "Bluetooth connecting...",
+	"bluetoothDisconnected": "Bluetooth disconnected",
 	"changeDeviceName": "Change device name",
 	"changeDeviceNamePrompt": "Please enter the desired new device name right below:",
 	"changeName": "Change Name",
@@ -26,6 +29,8 @@
 	"delete": "Delete",
 	"deleteMedication": "Delete Medication",
 	"deleteMedicationConfirmation": "Are you sure you want to delete this medication?",
+	"deviceInfo": "Device Information",
+	"deviceInfoSubtitle": "Here’s an overview of your device connection status.",
 	"deviceName": "Device name",
 	"deviceNameRequired": "A device name is required",
 	"deviceNewSetup": "Set up a new device",
@@ -163,7 +168,8 @@
 	"wednesday": "Wednesday",
 	"welcomeCabinet": "Welcome to CabiNET!",
 	"welcomeCabinetLong": "Welcome to CabiNET! Choose between the options below:",
+	"wirelessConnected": "Wireless connected",
+	"wirelessDisconnected": "Wireless disconnected",
 	"homeNoMedTodayTitle": "No more pills scheduled for today",
 	"homeNoMedTodaySubtitle": "Come back tomorrow to see your next doses, or edit schedule time."
-
 }

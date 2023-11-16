@@ -11,6 +11,9 @@
 	"authError": "Authentification échouée",
 	"automatic": "Automatique",
 	"back": "Retour",
+	"bluetoothConnected": "Bluetooth connecté",
+	"bluetoothConnecting": "Bluetooth en connection..",
+	"bluetoothDisconnected": "Bluetooth déconnecté",
 	"changeDeviceName": "Changer le nom de l'appareil",
 	"changeDeviceNamePrompt": "Veuillez entrer ci-dessous le nouveau nom désiré pour l'appareil:",
 	"changeName": "Changer le nom",
@@ -26,6 +29,8 @@
 	"delete": "Effacer",
 	"deleteMedication": "Effacer le médicament",
 	"deleteMedicationConfirmation": "Êtes-vous certains de vouloir supprimer ce médicament?",
+	"deviceInfo": "Information de l'appareil",
+	"deviceInfoSubtitle": "Voici un aperçu de l’état de connexion de votre appareil.",
 	"deviceName": "Nom de l'appareil",
 	"deviceNameRequired": "Un nom est requis",
 	"deviceNewSetup": "Configurer un nouvel appareil",
@@ -163,6 +168,8 @@
 	"wednesday": "Mercredi",
 	"welcomeCabinet": "Bienvenue à CabiNET!",
 	"welcomeCabinetLong": "Bienvenue à CabiNET! Choisissez entre les options ci-dessous:",
+	"wirelessConnected": "Connecté sans fil",
+	"wirelessDisconnected": "Déconnecté sans fil",
 	"homeNoMedTodayTitle": "Plus de pilules pour aujourd'hui",
 	"homeNoMedTodaySubtitle": "Revenez demain pour voir vos prochaines doses ou modifier l'horaire."
 }
