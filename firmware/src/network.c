@@ -77,15 +77,25 @@ static esp_err_t load_ota_host_record() {
 
     err = nvs_read_blob(NVS_TAG_OTA_URL, &stCustomUrl, sizeof(stCustomUrl));
 
-    ESP_LOGI(TAG, "Read back saved url blob size:%d\n", stCustomUrl.wLen);
-
-    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) {
+    if( err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND ) {
 		ESP_LOGE(TAG, "Can't find url %x, len:%d\n", err, stCustomUrl.wLen);
 		return err;
     }
+    else {
+        ESP_LOGE(TAG, "Found url %x, len:%d\n", err, stCustomUrl.wLen);
 
-    ESP_LOGI(TAG, "Found saved url blob size:%d, %d\n", stCustomUrl.custom_url, stCustomUrl.wLen);
-    return err;
+        //if the url is found and len > 0, there was correct url was set
+        if( stCustomUrl.wLen > 0) 
+        {
+            ESP_LOGI(TAG, "Found saved url blob size:%d, %d\n", stCustomUrl.custom_url, stCustomUrl.wLen);
+            return ESP_OK;
+        }
+        else 
+        {
+            //return Fail if the len  =0 meaning no URL was saved
+            return ESP_FAIL;
+        }
+    }
 }
 
 bool searchPatterns(const uint8_t *sourceString, const uint8_t *searchString) 
@@ -105,22 +115,35 @@ esp_err_t network_set_server_url(const uint8_t* pServerUrl, size_t len )
     esp_err_t err;
     ESP_LOGI(TAG, "Received Url:%s, len=%d", pServerUrl, len);
 
-    //expect the app will send to the device "cabinet-staging-a663e71fb1a6.herokuapp.com"
-    if(searchPatterns(pServerUrl, (const uint8_t*)"cabinet-staging-a663e71fb1a6.herokuapp.com"))    
+    // expect the app will only send to the device "cabinet-staging-a663e71fb1a6.herokuapp.com"
+    // or "jctbackend.herokuapp.com"
+
+    if( searchPatterns(pServerUrl, (const uint8_t*)"cabinet-staging-a663e71fb1a6.herokuapp.com") )    
     {
         stCustomUrl.custom_url = true;
         stCustomUrl.wLen = sizeof("cabinet-staging-a663e71fb1a6.herokuapp.com");
         memcpy(stCustomUrl.awBuf, "cabinet-staging-a663e71fb1a6.herokuapp.com", stCustomUrl.wLen);
         ESP_LOGI(TAG, "Copy Url:%s, len=%d\n", stCustomUrl.awBuf, stCustomUrl.wLen);
         err = nvs_write_blob(NVS_TAG_OTA_URL, &stCustomUrl, sizeof(stCustomUrl));
+        return err; //return the status of the nvs write blob either OK or FAIL to let BT endpoint checking
+    }
+    else if( searchPatterns(pServerUrl, (const uint8_t*)"jctbackend.herokuapp.com") ) 
+    {
+        stCustomUrl.custom_url = true;
+        stCustomUrl.wLen = sizeof("jctbackend.herokuapp.com");
+        memcpy(stCustomUrl.awBuf, "jctbackend.herokuapp.com", stCustomUrl.wLen);
+        ESP_LOGI(TAG, "Copy Url:%s, len=%d\n", stCustomUrl.awBuf, stCustomUrl.wLen);
+        err = nvs_write_blob(NVS_TAG_OTA_URL, &stCustomUrl, sizeof(stCustomUrl));
+        return err; //return the status of the nvs write blob either OK or FAIL to let BT endpoint checking
     }
     else
     {
+        //force clear Url to make sure there is no url else beside the 2 known ones 
         memset(&stCustomUrl.custom_url, 0, sizeof(stCustomUrl)); //clear previous url if there is any
         err = nvs_write_blob(NVS_TAG_OTA_URL, &stCustomUrl, sizeof(stCustomUrl));
+        return ESP_FAIL; //regardless of the write state still return fail since provision is not correctly done
     }
-   
-    return err;
+
 }
 
 
@@ -207,7 +230,7 @@ static char *get_host_url()
     }
     else 
     {
-        return DEFAUT_HOST;
+        return " ";//DEFAUT_HOST; //stop sending the default one to make sure the provision is correctly done
     }
 
 }
@@ -437,6 +460,8 @@ static void network_send_sync() {
     SyncRequest req = SyncRequest_init_zero;
     encode_sync_request(&req, false);
 
+    //ESP_LOGI(TAG, "Charger status %d", (uint8_t)req.engr_data.has_vbat_scaled);
+
     uint8_t buffer[512];
     pb_ostream_t ostream = pb_ostream_from_buffer(buffer, sizeof(buffer));
     pb_encode(&ostream, SyncRequest_fields, &req);
@@ -519,7 +544,6 @@ void network_init()
     esp_err_t err = load_ota_host_record();
 
     //read back provision record
-
     err = load_provision_record();
 
     if(err == ESP_OK) {
@@ -536,7 +560,8 @@ void network_init()
         nvs_factory_reset();
         ESP_ERROR_CHECK(err);
     }
-    
+
     start_task();
+
 }
 

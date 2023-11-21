@@ -3,6 +3,7 @@
 #include "pb_encode.h"
 #include "pill_state.h"
 #include "event.h"
+#include "engineering.h"
 
 bool encode_device_id(pb_ostream_t *stream, const pb_field_t *field, void * const *arg) {
     if (!pb_encode_tag_for_field(stream, field))
@@ -88,10 +89,12 @@ bool encode_queued_events_peek(pb_ostream_t *stream, const pb_field_t *field, vo
     return true;
 }
 
-
-
 void encode_sync_request(SyncRequest* req, bool peek) {
     // todo: move state function into here
+
+    // send in engineering data
+    engineering_build_sync(req);
+
     // requires private fields in pill_state.c
     state_build_sync_request(req);
 

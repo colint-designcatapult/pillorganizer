@@ -47,7 +47,8 @@ typedef struct _BinEvent {
 } BinEvent;
 typedef struct _BinEventSamples {
     uint32_t samples[16];
-    uint32_t vbat_meas;
+    uint8_t vbat_meas;
+    uint8_t vcharger_status;
 } BinEventSamples;
 
 // Power events

@@ -217,6 +217,7 @@ public:
                 // start flashing LEDs
                 led_set_effect(LED_EFFECT_FLASH_GREEN_AND_RED, INT_MAX);
             }
+
         } else if(event == WIFI_PROV_CRED_FAIL) { //3
             // Mark provisioning as failure
             _prov_success = false;
@@ -225,13 +226,16 @@ public:
             // Stop after credential fail
             // Todo: never notifies BLE client
             wifi_prov_mgr_stop_provisioning();
+
         }  else if(event == WIFI_PROV_CRED_SUCCESS) { //4
             // Mark provisioning as success
             _prov_success = true;
+
         } else if(event == WIFI_PROV_END) { //5
             // stop flashing LEDs
             led_set_effect(LED_EFFECT_NORMAL, 0);
             wifi_prov_mgr_deinit();
+
         } else if(event == WIFI_PROV_DEINIT) { //6
             ESP_LOGI(TAG, "Provision manager deinit");
             // If already provisioned, return with special error code first indicating device is already provisioned
@@ -300,22 +304,23 @@ private:
                                           uint8_t **outbuf, ssize_t *outlen, void *priv_data) {
         *outlen = 6;
         *outbuf = new uint8_t[6];
-        ESP_LOGI(TAG, "Handler Get Serial %s\n!!!", *outbuf);
+        ESP_LOGI(TAG, "Handler Get Device Serial Number\n");
         return esp_efuse_mac_get_default(*outbuf);
     }
 
     static esp_err_t set_provision_key_handler(uint32_t session_id, const uint8_t *inbuf, ssize_t inlen,
                                           uint8_t **outbuf, ssize_t *outlen, void *priv_data) {
-        *outlen = 4;
-        *outbuf = new uint8_t[4];
+        //*outlen = 4;
+        //*outbuf = new uint8_t[4];
         ESP_LOGI(TAG, "Handler Set OOBKey %s\n!!!", inbuf);
         return network_set_oob_key(inbuf, inlen);
     }
 
     static esp_err_t set_server_url_handler(uint32_t session_id, const uint8_t *inbuf, ssize_t inlen,
                                           uint8_t **outbuf, ssize_t *outlen, void *priv_data) {
-        *outlen = 4;
-        *outbuf = new uint8_t[4];
+        esp_err_t err;
+        //*outlen = 4;
+        //*outbuf = new uint8_t[4];
         return network_set_server_url(inbuf, inlen);
     }
 

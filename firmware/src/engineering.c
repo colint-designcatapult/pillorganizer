@@ -45,7 +45,8 @@ EngineeringRequest* engineering_request()
     return &req;
 }
 
-static void engineering_set_samples(size_t voltage_count, uint32_t* voltages, uint32_t vbat_meas)
+static void engineering_set_samples(size_t voltage_count, uint32_t* voltages, 
+                                    uint8_t vbat_meas,  uint8_t charger_status)
 {
 
     if(xSemaphoreTake(engr_sphr, pdMS_TO_TICKS(500)) == pdTRUE) {
@@ -53,7 +54,13 @@ static void engineering_set_samples(size_t voltage_count, uint32_t* voltages, ui
         data.has_vbat_meas = true;
         data.vbat_meas = voltages[14];   //mux_14 is battery input 
 
-        //vbat_meas; //vbat_meas is meaning less, no data in this variable
+        //
+        data.has_vbat_meas = true;
+        data.vbat_meas     = vbat_meas;
+
+        data.has_vbat_scaled = true;
+        data.vbat_scaled     = charger_status;
+        //ESP_LOGI(TAG, "Batt Per:%d, %d\n", (uint8_t)data.vbat_meas, (uint8_t)data.vbat_scaled);
         
         time_t now;
         time(&now);
@@ -85,8 +92,10 @@ void engineering_print_samples() {
 
 void engineering_build_sync(SyncRequest* sync)
 {
+    // sensor voltages for 14 bins
     sync->has_engr_data = true;
     memcpy(&sync->engr_data, &data, sizeof(EngineeringData));
+
 }
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
@@ -340,7 +349,7 @@ static void engineering_event_handler(void* event_handler_arg, esp_event_base_t 
         if(event_id == BIN_EVENT_SAMPLES) {
             //gpio_set_level(TP47,1);
             BinEventSamples* samples = (BinEventSamples*)event_data;
-            engineering_set_samples(16, samples->samples, samples->vbat_meas);
+            engineering_set_samples(16, samples->samples, samples->vbat_meas, samples->vcharger_status);
             //gpio_set_level(TP47,0);
         }
     }

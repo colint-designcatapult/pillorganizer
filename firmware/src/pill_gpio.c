@@ -57,6 +57,9 @@ static esp_timer_handle_t pfiveSecondTimer;
 esp_timer_handle_t   pPgOnceShotTimerHandle = NULL;
 esp_timer_handle_t   pChgOnceShotTimerHandle = NULL;
 
+static PowerStatusChangeEvent chargerEvent = {0};
+static PowerBatteryLevelChangeEvent stBatteryLevel = {0};
+
 static void pg_debounce_cb(void *arg)
 {
 	//ESP_LOGI(TAG, "/PG Oneshot timer expire\n");
@@ -64,25 +67,31 @@ static void pg_debounce_cb(void *arg)
         //ESP_LOGI(TAG, "/PG signal Low, /CHG signal %d\n", gpio_get_level(BAT_CHARGE_PIN));
         //charger is plugged in, send the event to notify the app the charger is plugged in
 
-        PowerStatusChangeEvent ev = {
-            .battery_present = 1,
-            .plugged_in = 1, //power plug in, charging undergoing
-            .charging = 1
-        };
+        // PowerStatusChangeEvent ev = {
+        //     .battery_present = 1,
+        //     .plugged_in = 1, //power plug in, charging undergoing
+        //     .charging = 1
+        // };
+        chargerEvent.battery_present = 1;
+        chargerEvent.plugged_in      = 1;
+        chargerEvent.charging        = 1;
 
-        event_isr_post(POWER_EVENT_BASE, POWER_EVENT_PIN, &ev, sizeof(PowerStatusChangeEvent), NULL);
+        event_isr_post(POWER_EVENT_BASE, POWER_EVENT_PIN, &chargerEvent, sizeof(PowerStatusChangeEvent), NULL);
     }
     else {
     	//ESP_LOGI(TAG, "/PG signal High, /CHG signal %d\n", gpio_get_level(BAT_CHARGE_PIN));
         //charger is unplugged send the event to notify the app the charger is unplug
 
-        PowerStatusChangeEvent ev = {
-            .battery_present = 1,
-            .plugged_in = 0, //power unplug, ignore the charging status
-            .charging = 0
-        };
+        // PowerStatusChangeEvent ev = {
+        //     .battery_present = 1,
+        //     .plugged_in = 0, //power unplug, ignore the charging status
+        //     .charging = 0
+        // };
+        chargerEvent.battery_present = 1;
+        chargerEvent.plugged_in      = 0;
+        chargerEvent.charging        = 0;
 
-        event_isr_post(POWER_EVENT_BASE, POWER_EVENT_PIN, &ev, sizeof(PowerStatusChangeEvent), NULL);
+        event_isr_post(POWER_EVENT_BASE, POWER_EVENT_PIN, &chargerEvent, sizeof(PowerStatusChangeEvent), NULL);
     }
 
     //delete the outstanding once shot timer handler
@@ -118,11 +127,14 @@ static void chg_debounce_cb(void *arg)
     //this condition only true if the charger is still plug in
     //if the charger is unplug, don't update the information
     if(READ_PORT(BAT_PGOOD_PIN) == true){
-        PowerBatteryLevelChangeEvent ev = {
-            .battery_level = 100
-        };
+        // PowerBatteryLevelChangeEvent ev = {
+        //     .battery_level = 100
+        // };
 
-        event_isr_post(POWER_EVENT_BASE, POWER_EVENT_BATTERY_LEVEL_CHANGE, &ev, sizeof(PowerBatteryLevelChangeEvent), NULL);
+        stBatteryLevel.battery_level = 100;
+
+        event_isr_post(POWER_EVENT_BASE, POWER_EVENT_BATTERY_LEVEL_CHANGE, 
+                       &stBatteryLevel, sizeof(PowerBatteryLevelChangeEvent), NULL);
     }
 
     //delete the outstanding once shot timer handler
@@ -235,7 +247,6 @@ static void fiveSecondTimer_Run()
         Vbatt = BATTERY_MAX_ADC;
     }
 
-    PowerBatteryLevelChangeEvent stBatteryLevel;
     //battery percentage from 0mV to 3700mV 0% to 100%
     stBatteryLevel.battery_level = (uint8_t)( ((float)Vbatt * 1.0 / BATTERY_MAX_CAL) * 100.0); 
     //ESP_LOGI(TAG, "Batt Per:%d, %d, %d\n", Vmux, Vbatt, stBatteryLevel.battery_level);
@@ -247,6 +258,9 @@ static void twoHundredFiftyMsTimer_Run()
     // Push samples to event bus every 250ms
     BinEventSamples se;
     memcpy(se.samples, voltages, sizeof(voltages));
+    se.vbat_meas = stBatteryLevel.battery_level;
+    se.vcharger_status = chargerEvent.plugged_in;
+    
     event_post(BIN_EVENT_BASE, BIN_EVENT_SAMPLES, &se, sizeof(se), pdMS_TO_TICKS(10));            
 }
 
