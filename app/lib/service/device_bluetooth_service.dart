@@ -6,6 +6,8 @@ import 'package:permission_handler/permission_handler.dart';
 
 //Read-Write chracteristic on all device that is used to communicate the bin states
 const stateBinsState = '20ded876-5bf8-06b8-354c-759dae9d26c1';
+const stateBatteryInfo = '00002a19-0000-1000-8000-00805f9b34fb';
+const stateBatteryInfoWithCharging = '00002bed-0000-1000-8000-00805f9b34fb';
 
 class DeviceBluetoothController {
   final FlutterBluePlus _ble = FlutterBluePlus.instance;
@@ -15,6 +17,12 @@ class DeviceBluetoothController {
   BluetoothCharacteristic? _stateChr;
   final int _timeoutTime = 60;
   Function? onDisconnect;
+  int? batteryLevel;
+  bool? batteryCharging;
+
+  Future<bool> checkBluetoothState() async {
+    return await _ble.isOn;
+  }
 
   Future<void> disconnect() async {
     await _ble.stopScan();
@@ -71,15 +79,23 @@ class DeviceBluetoothController {
         if (chr.uuid.toString() == stateBinsState) {
           _stateChr = chr;
         }
+
+        if (chr.uuid.toString() == stateBatteryInfoWithCharging) {
+          chr.setNotifyValue(true).then((_) {
+            chr.value.listen((value) {
+              batteryCharging = value[1] == 1;
+              batteryLevel = value[3];
+            });
+          });
+        }
       }
     }
-    sync();
 
     return true;
   }
 
   Future<void> sync() async {
-    bool isBleOn = await _ble.isOn;
+    bool isBleOn = await checkBluetoothState();
     if (isBleOn) {
       _stateChr?.read().then((value) => handleSyncData(value));
     } else {
