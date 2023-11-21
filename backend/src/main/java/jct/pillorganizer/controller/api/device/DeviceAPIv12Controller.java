@@ -49,7 +49,7 @@ public class DeviceAPIv12Controller {
                 return HttpResponse.ok(
                                 deviceStateService
                                                 .wrapperOf(device)
-                                                .sync(req)
+                                                .sync(req, false)
                                                 .toByteArray());
         }
 

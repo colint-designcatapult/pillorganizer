@@ -28,6 +28,11 @@ import java.util.zip.CRC32;
 public class DeviceStateWrapper {
 
     private static final int EVENT_CTR_DELTA_THRESHOLD = 28;
+    private static final int BATTERY_MUX_CHANNEL =14;
+    private static final int BATTERY_OFFSET =200;
+    private static final double VOLTAGE_RATIO = 1.4;
+    private static final int BATTERY_MAX_ADC = 3700;
+    private static final double BATTERY_MAX_CAL = 3700.0;
 
     private final DeviceScheduleRepository scheduleRepository;
     private final DeviceStateRepository stateRepository;
@@ -36,15 +41,13 @@ public class DeviceStateWrapper {
     private final FirmwareService firmwareService;
     private final Device device;
 
-
     private List<DeviceSchedule> _schedule = null;
     private List<DeviceState> _stateList = null;
     private List<DeviceState> _stateChrono = null;
 
-
     public DeviceStateWrapper(DeviceRepository deviceRepository, DeviceScheduleRepository scheduleRepository,
-                              DeviceStateRepository stateRepository, DeviceEventRepository deviceEventRepository,
-                              FirmwareService firmwareService, Device device) {
+            DeviceStateRepository stateRepository, DeviceEventRepository deviceEventRepository,
+            FirmwareService firmwareService, Device device) {
         this.deviceRepository = deviceRepository;
         this.scheduleRepository = scheduleRepository;
         this.stateRepository = stateRepository;
@@ -54,7 +57,7 @@ public class DeviceStateWrapper {
     }
 
     private void lazyUpdateBin(DeviceState state, BinStatus status, long timestamp) {
-        if(state.getScheduledTime() != timestamp || !status.equals(state.getBinStatus())) {
+        if (state.getScheduledTime() != timestamp || !status.equals(state.getBinStatus())) {
             state.setBinStatus(status);
             state.setScheduledTime(timestamp);
             stateRepository.update(state.getId(), state.getVersion(), timestamp, status);
@@ -62,21 +65,22 @@ public class DeviceStateWrapper {
     }
 
     private void lazyUpdateBinDispenseTime(DeviceState state, DeviceBaseDispenseTime dispenseTime) {
-        if(state.getDispenseTime() == null || !Objects.equals(state.getDispenseTime().getId(), dispenseTime.getId())) {
-            if(dispenseTime != null) {
+        if (state.getDispenseTime() == null || !Objects.equals(state.getDispenseTime().getId(), dispenseTime.getId())) {
+            if (dispenseTime != null) {
                 state.setDispenseTime(dispenseTime);
                 stateRepository.update(state.getId(), state.getVersion(), dispenseTime);
             }
         }
     }
 
-
     /**
-     * Get the device's bin states sorted by scheduled time, starting with the oldest
+     * Get the device's bin states sorted by scheduled time, starting with the
+     * oldest
+     *
      * @return list of bin states in chronological order
      */
     public List<DeviceState> getChronologicalState() {
-        if(_stateChrono == null) {
+        if (_stateChrono == null) {
             _stateChrono = getState()
                     .stream()
                     .sorted(Comparator.comparing(DeviceState::getScheduledTime))
@@ -87,44 +91,48 @@ public class DeviceStateWrapper {
 
     /**
      * Get the previously scheduled bin relative to another bin.
+     *
      * @param state bin to get the previous scheduled bin for
      * @return the previously scheduled bin, or empty if no previously scheduled bin
      */
     public Optional<DeviceState> previousScheduled(DeviceState state) {
         List<DeviceState> c = getChronologicalState();
         int idx = c.indexOf(state);
-        if(idx > 0)
+        if (idx > 0)
             return Optional.of(c.get(idx - 1));
         return Optional.empty();
     }
 
     /**
      * Gets the next scheduled bin relative to another bin.
+     *
      * @param state bin to get the next scheduled bi nfor
      * @return the next scheduled bin, or empty if no next scheduled bin
      */
     public Optional<DeviceState> nextScheduled(DeviceState state) {
         List<DeviceState> c = getChronologicalState();
         int idx = c.indexOf(state);
-        if(idx > 0 && idx < c.size() - 1)
+        if (idx > 0 && idx < c.size() - 1)
             return Optional.of(c.get(idx + 1));
         return Optional.empty();
     }
 
     /**
      * Processes an event sourced from a device, with all state effects.
+     *
      * @param event event to process
      */
     public void handleBinEvent(DeviceEvent event) {
         DeviceState state = getState().get(event.getBin());
 
-        if(EventType.CLOSED.equals(event.getEventType())) {
-            switch(state.getBinStatus()) {
+        if (EventType.CLOSED.equals(event.getEventType())) {
+            switch (state.getBinStatus()) {
                 case PENDING:
                 case MISSED:
                     //
                     // Handles cases where a bin is opened outside its scheduled time.
-                    // We consider it "taken" if it is opened between the previous and next scheduled doses
+                    // We consider it "taken" if it is opened between the previous and next
+                    // scheduled doses
                     //
 
                     Optional<DeviceState> prevOpt = previousScheduled(state);
@@ -132,15 +140,19 @@ public class DeviceStateWrapper {
 
                     LocalDateTime ldt = LocalDateTime.ofInstant(event.getTs(), ZoneId.of("UTC"));
 
-                    if(prevOpt.isPresent() && nextOpt.isPresent()) {
-                        if(ldt.isAfter(LocalDateTime.ofEpochSecond(nextOpt.get().getScheduledTime(), 0, ZoneOffset.UTC))
-                                || ldt.isBefore(LocalDateTime.ofEpochSecond(prevOpt.get().getScheduledTime(), 0, ZoneOffset.UTC)))
+                    if (prevOpt.isPresent() && nextOpt.isPresent()) {
+                        if (ldt.isAfter(
+                                LocalDateTime.ofEpochSecond(nextOpt.get().getScheduledTime(), 0, ZoneOffset.UTC))
+                                || ldt.isBefore(LocalDateTime.ofEpochSecond(prevOpt.get().getScheduledTime(), 0,
+                                        ZoneOffset.UTC)))
                             break;
-                    } else if(prevOpt.isPresent()) {
-                        if(ldt.isBefore(LocalDateTime.ofEpochSecond(prevOpt.get().getScheduledTime(), 0, ZoneOffset.UTC)))
+                    } else if (prevOpt.isPresent()) {
+                        if (ldt.isBefore(
+                                LocalDateTime.ofEpochSecond(prevOpt.get().getScheduledTime(), 0, ZoneOffset.UTC)))
                             break;
-                    } else if(nextOpt.isPresent()) {
-                        if(ldt.isAfter(LocalDateTime.ofEpochSecond(nextOpt.get().getScheduledTime(), 0, ZoneOffset.UTC)))
+                    } else if (nextOpt.isPresent()) {
+                        if (ldt.isAfter(
+                                LocalDateTime.ofEpochSecond(nextOpt.get().getScheduledTime(), 0, ZoneOffset.UTC)))
                             break;
                     }
                 case TAKE_NOW:
@@ -148,7 +160,7 @@ public class DeviceStateWrapper {
                     state.setBinStatus(BinStatus.TAKEN);
                     break;
             }
-        } else if(EventType.MISSED.equals(event.getEventType())) {
+        } else if (EventType.MISSED.equals(event.getEventType())) {
 
             stateRepository.update(state.getId(), state.getVersion(), BinStatus.MISSED, event);
             state.setBinStatus(BinStatus.MISSED);
@@ -156,7 +168,9 @@ public class DeviceStateWrapper {
     }
 
     /**
-     * Override the bin state stored in the database with a Protobuf-encoded state structure.
+     * Override the bin state stored in the database with a Protobuf-encoded state
+     * structure.
+     *
      * @param state the state to override server state with
      */
     @Transactional
@@ -183,16 +197,20 @@ public class DeviceStateWrapper {
 
     /**
      * Performs a two-way device sync according to the business rules.
-     * @param syncRequest protobuf sync request structure containing the device's state and events to process
-     * @return sync response structure the device should process and use to override its internal state with
+     *
+     * @param syncRequest protobuf sync request structure containing the device's
+     *                    state and events to process
+     * @return sync response structure the device should process and use to override
+     *         its internal state with
      */
     @Transactional
-    public Pill.SyncResponse sync(Pill.SyncRequest syncRequest) {
+    public Pill.SyncResponse sync(Pill.SyncRequest syncRequest, boolean isBluetooth) {
         Pill.SyncResponse.Builder builder = Pill.SyncResponse.newBuilder();
 
         // Load all events
         long ctr = device.getEventCounter();
-        for(Pill.RecordedEvent recEv : syncRequest.getEventsList()) {
+        Instant timeStamp = Instant.ofEpochSecond(0);
+        for (Pill.RecordedEvent recEv : syncRequest.getEventsList()) {
             DeviceEvent ev = new DeviceEvent();
             ev.setDevice(device);
             ev.setTs(Instant.ofEpochSecond(recEv.getTimestamp()));
@@ -205,37 +223,38 @@ public class DeviceStateWrapper {
 
             deviceEventRepository.save(ev);
             handleBinEvent(ev);
+            timeStamp = Instant.ofEpochSecond(recEv.getTimestamp());
             ctr++;
         }
 
-
-
-        if(ctr != device.getEventCounter()) {
+        if (ctr != device.getEventCounter()) {
             device.setEventCounter(ctr);
             deviceRepository.update(device.getId(), device.getVersion(), calculateStateHash(), ctr);
         }
 
         long deltaCtr = syncRequest.getEventCtr() - device.getEventCounter();
-        if(deltaCtr > EVENT_CTR_DELTA_THRESHOLD) {
-            log.atInfo().log("Delta counter past threshold, accepting client state");
-            // Server is too far out of date for us to catch up, so we just accept the client state as truth
+        if (deltaCtr > EVENT_CTR_DELTA_THRESHOLD
+                || (isBluetooth && Timestamp.from(timeStamp).after(device.getLastSync()))) {
+            log.atInfo().log("Delta counter past threshold or is on bluetooth accepting client state");
+            // Server is too far out of date for us to catch up, so we just accept the
+            // client state as truth
             updateState(syncRequest.getBinState());
         } else {
             // Send the device the state that we have
-            //if(device.getStateHash() != syncRequest.getStateHash()) {
-                builder.setBinState(buildStateProtobuf());
-            //}
+            // if(device.getStateHash() != syncRequest.getStateHash()) {
+            builder.setBinState(buildStateProtobuf());
+            // }
         }
-
 
         builder.addAllSchedule(buildBinSchedule());
 
-        deviceRepository.updateLastSyncAndIpv4AndIpv6(
+        deviceRepository.updateLastSyncAndIpv4AndIpv6AndBattery(
                 device.getId(),
                 device.getVersion(),
                 Timestamp.from(Instant.now()),
                 syncRequest.hasIpv4() ? syncRequest.getIpv4() : null,
-                syncRequest.hasIpv6() ? syncRequest.getIpv6().toByteArray() : null
+                syncRequest.hasIpv6() ? syncRequest.getIpv6().toByteArray() : null,
+                getBatteryLevel(syncRequest).orElse(null)
         );
 
         builder.setLatestFirmware(firmwareService.getLatestVersion());
@@ -244,7 +263,8 @@ public class DeviceStateWrapper {
     }
 
     /**
-     * Update the state hash in the database to match the current state stored in this object.
+     * Update the state hash in the database to match the current state stored in
+     * this object.
      */
     @Transactional
     public void updateStateHash() {
@@ -258,8 +278,8 @@ public class DeviceStateWrapper {
         CRC32 crc = new CRC32();
 
         ByteBuffer bb = ByteBuffer.allocate(9).order(ByteOrder.LITTLE_ENDIAN);
-        for(DeviceState st : stateList) {
-            bb.put((byte)st.getBinStatus().getIntValue());
+        for (DeviceState st : stateList) {
+            bb.put((byte) st.getBinStatus().getIntValue());
             bb.putLong(st.getScheduledTime());
             byte[] arr = bb.array();
             crc.update(arr);
@@ -271,13 +291,14 @@ public class DeviceStateWrapper {
 
     /**
      * Serializes the device's state.
+     *
      * @return protobuf AllBinsState of the current device's state
      */
     public Pill.AllBinsState.Builder buildStateProtobuf() {
         List<DeviceState> stateList = getState();
         Pill.AllBinsState.Builder builder = Pill.AllBinsState.newBuilder();
 
-        for(DeviceState state : stateList) {
+        for (DeviceState state : stateList) {
             Pill.BinState.Builder b = Pill.BinState.newBuilder();
 
             b.setStatusValue(state.getBinStatus().getIntValue());
@@ -291,27 +312,29 @@ public class DeviceStateWrapper {
 
     /**
      * Serializes the device's schedule.
+     *
      * @return protobuf BinSchedule of the current device's dispense schedule
      * @deprecated use schedule strategy directly
      */
     public Iterable<? extends Pill.BinSchedule> buildBinSchedule() {
         List<Pill.BinSchedule> result = new ArrayList<>(device.getDeviceClass().getBinCount());
 
-        for(DeviceSchedule schedule : getDeviceSchedule()) {
+        for (DeviceSchedule schedule : getDeviceSchedule()) {
             result.add(
                     Pill.BinSchedule.newBuilder()
-                        .setDayOfWeekValue(schedule.getDayOfWeek().getIntValue())
-                        .setSecondsFrom00(schedule.getSecondsFrom00())
-                        .build()
-            );
+                            .setDayOfWeekValue(schedule.getDayOfWeek().getIntValue())
+                            .setSecondsFrom00(schedule.getSecondsFrom00())
+                            .build());
         }
 
         return result;
     }
 
     /**
-     * Initialize the state and schedule of a new device. If a device already had a state or schedule, it will be
+     * Initialize the state and schedule of a new device. If a device already had a
+     * state or schedule, it will be
      * preserved. The initial state has all bins disabled and an empty schedule.
+     *
      * @param initialState optional state to initialize the device with
      */
     @Transactional
@@ -321,13 +344,15 @@ public class DeviceStateWrapper {
     }
 
     /**
-     * Initialize the state of a new device. If a device already has a state, it will be preserved. The freshly
+     * Initialize the state of a new device. If a device already has a state, it
+     * will be preserved. The freshly
      * initialized state will have all bins disabled.
+     *
      * @param initialState unused
      */
     @Transactional
     public void buildInitialState(@Nullable Pill.AllBinsState initialState) {
-        if(initialState != null && initialState.isInitialized() && initialState.getBinsCount() > 0) {
+        if (initialState != null && initialState.isInitialized() && initialState.getBinsCount() > 0) {
             // todo
         } else {
             // Delete all state entities
@@ -337,7 +362,7 @@ public class DeviceStateWrapper {
             _stateList = new ArrayList<>(binCount);
 
             // Create state entity for each bin of this device
-            for(int bin = 0; bin < binCount; bin++) {
+            for (int bin = 0; bin < binCount; bin++) {
                 DeviceState state = new DeviceState();
                 state.setId(new DeviceBinId(device.getId(), bin));
                 state.setBinStatus(BinStatus.DISABLED);
@@ -352,17 +377,18 @@ public class DeviceStateWrapper {
     }
 
     /**
-     * Initializes the schedule of a new device, if a schedule doesn't exist. The freshly initialized schedule will
+     * Initializes the schedule of a new device, if a schedule doesn't exist. The
+     * freshly initialized schedule will
      * have all bins disabled.
      */
     @Transactional
     public void buildInitialSchedule() {
         // Only create a schedule if one doesn't exist
         int binCount = device.getDeviceClass().getBinCount();
-        if(getDeviceSchedule().size() == 0) {
+        if (getDeviceSchedule().size() == 0) {
             _schedule = new ArrayList<>(binCount);
 
-            for(int bin = 0; bin < binCount; bin++) {
+            for (int bin = 0; bin < binCount; bin++) {
                 DeviceSchedule schedule = new DeviceSchedule();
                 schedule.setId(new DeviceBinId(device.getId(), bin));
 
@@ -374,9 +400,9 @@ public class DeviceStateWrapper {
         }
     }
 
-
     /**
-     * Synchronizes the device's state scheduled times with the device's schedule. Used, for example, if the schedule
+     * Synchronizes the device's state scheduled times with the device's schedule.
+     * Used, for example, if the schedule
      * is changed in the middle of the week.
      */
     @Transactional
@@ -392,9 +418,8 @@ public class DeviceStateWrapper {
                 .atTime(0, 0, 0, 0)
                 .atOffset(tz);
 
-
         List<DeviceState> states = getState();
-        for(DeviceSchedule schedule : getDeviceSchedule()) {
+        for (DeviceSchedule schedule : getDeviceSchedule()) {
             OffsetDateTime dispenseTime = base
                     .plusDays(schedule.getDayOfWeek().getIntValue())
                     .plusSeconds(schedule.getSecondsFrom00());
@@ -429,10 +454,11 @@ public class DeviceStateWrapper {
 
     /**
      * Gets the device schedule.
+     *
      * @return all device bin schedules, in ascending order of bin ID
      */
     public List<DeviceSchedule> getDeviceSchedule() {
-        if(_schedule == null) {
+        if (_schedule == null) {
             _schedule = scheduleRepository.findByDevice(device);
             _schedule.sort(Comparator.comparingInt(c -> c.getId().getBinID()));
         }
@@ -445,20 +471,21 @@ public class DeviceStateWrapper {
         // Make sure there are exactly the number of state entries as there are bins
         int binCount = device.getDeviceClass().getBinCount();
 
-        if(state.size() != binCount) {
+        if (state.size() != binCount) {
             // todo: rebuild
         }
 
         DeviceState first = state.get(0);
         DeviceState last = state.get(binCount - 1);
 
-        if(first.getId().getBinID() != 0 || last.getId().getBinID() != (binCount - 1)) {
+        if (first.getId().getBinID() != 0 || last.getId().getBinID() != (binCount - 1)) {
             // todo: rebuild
         }
     }
 
     /**
      * Gets the device's bin states.
+     *
      * @return all device bin states, in ascending order of bin ID.
      */
     public List<DeviceState> getState() {
@@ -468,6 +495,24 @@ public class DeviceStateWrapper {
             validateOrRepairState();
         }
         return _stateList;
+    }
+
+    /**
+     * Gets the device's battery level.
+     * @return the device battery level if engineering data is available.
+     */
+    private Optional<Integer> getBatteryLevel(Pill.SyncRequest  syncRequest) {
+        if(syncRequest.hasEngrData()) {
+            Integer vMux = syncRequest.getEngrData().getVoltagesList().get(BATTERY_MUX_CHANNEL);
+            int vBatt = (int) (vMux * VOLTAGE_RATIO+ BATTERY_OFFSET);
+            if(vBatt > BATTERY_MAX_ADC) {
+                vBatt = BATTERY_MAX_ADC;
+            }
+            Integer batterLevel = (int) (vBatt * (1.0/BATTERY_MAX_CAL) * 100);
+            return Optional.of(batterLevel);
+        } else {
+            return Optional.empty();
+        }
     }
 
 }

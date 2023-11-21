@@ -1,6 +1,7 @@
 import 'package:app/api/device.dart';
 import 'package:app/navigation/provision_navigator.dart';
 import 'package:app/navigation/tab_navigator.dart';
+import 'package:app/provider/ble_provider.dart';
 import 'package:app/provider/medication_provider.dart';
 import 'package:app/provider/time_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
@@ -81,6 +82,17 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<MinuteBasedTimeProvider>(
           create: (context) => MinuteBasedTimeProvider(),
         ),
+        ChangeNotifierProxyProvider<SelectedDeviceProvider,
+                DeviceBluetoothProvider>(
+            create: (context) => DeviceBluetoothProvider(),
+            update: (context, dev, prov) {
+              if (prov != null) {
+                prov.changeDevice(dev.device);
+                return prov;
+              } else {
+                return DeviceBluetoothProvider(selectedDevice: dev.device);
+              }
+            })
       ],
       child: MediaQuery(
           data: MediaQuery.of(context).copyWith(
