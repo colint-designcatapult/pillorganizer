@@ -28,6 +28,11 @@ import java.util.zip.CRC32;
 public class DeviceStateWrapper {
 
     private static final int EVENT_CTR_DELTA_THRESHOLD = 28;
+    private static final int BATTERY_MUX_CHANNEL =14;
+    private static final int BATTERY_OFFSET =200;
+    private static final double VOLTAGE_RATIO = 1.4;
+    private static final int BATTERY_MAX_ADC = 3700;
+    private static final double BATTERY_MAX_CAL = 3700.0;
 
     private final DeviceScheduleRepository scheduleRepository;
     private final DeviceStateRepository stateRepository;
@@ -71,7 +76,7 @@ public class DeviceStateWrapper {
     /**
      * Get the device's bin states sorted by scheduled time, starting with the
      * oldest
-     * 
+     *
      * @return list of bin states in chronological order
      */
     public List<DeviceState> getChronologicalState() {
@@ -86,7 +91,7 @@ public class DeviceStateWrapper {
 
     /**
      * Get the previously scheduled bin relative to another bin.
-     * 
+     *
      * @param state bin to get the previous scheduled bin for
      * @return the previously scheduled bin, or empty if no previously scheduled bin
      */
@@ -100,7 +105,7 @@ public class DeviceStateWrapper {
 
     /**
      * Gets the next scheduled bin relative to another bin.
-     * 
+     *
      * @param state bin to get the next scheduled bi nfor
      * @return the next scheduled bin, or empty if no next scheduled bin
      */
@@ -114,7 +119,7 @@ public class DeviceStateWrapper {
 
     /**
      * Processes an event sourced from a device, with all state effects.
-     * 
+     *
      * @param event event to process
      */
     public void handleBinEvent(DeviceEvent event) {
@@ -165,7 +170,7 @@ public class DeviceStateWrapper {
     /**
      * Override the bin state stored in the database with a Protobuf-encoded state
      * structure.
-     * 
+     *
      * @param state the state to override server state with
      */
     @Transactional
@@ -192,7 +197,7 @@ public class DeviceStateWrapper {
 
     /**
      * Performs a two-way device sync according to the business rules.
-     * 
+     *
      * @param syncRequest protobuf sync request structure containing the device's
      *                    state and events to process
      * @return sync response structure the device should process and use to override
@@ -243,12 +248,14 @@ public class DeviceStateWrapper {
 
         builder.addAllSchedule(buildBinSchedule());
 
-        deviceRepository.updateLastSyncAndIpv4AndIpv6(
+        deviceRepository.updateLastSyncAndIpv4AndIpv6AndBattery(
                 device.getId(),
                 device.getVersion(),
                 Timestamp.from(Instant.now()),
                 syncRequest.hasIpv4() ? syncRequest.getIpv4() : null,
-                syncRequest.hasIpv6() ? syncRequest.getIpv6().toByteArray() : null);
+                syncRequest.hasIpv6() ? syncRequest.getIpv6().toByteArray() : null,
+                getBatteryLevel(syncRequest).orElse(null)
+        );
 
         builder.setLatestFirmware(firmwareService.getLatestVersion());
 
@@ -284,7 +291,7 @@ public class DeviceStateWrapper {
 
     /**
      * Serializes the device's state.
-     * 
+     *
      * @return protobuf AllBinsState of the current device's state
      */
     public Pill.AllBinsState.Builder buildStateProtobuf() {
@@ -305,7 +312,7 @@ public class DeviceStateWrapper {
 
     /**
      * Serializes the device's schedule.
-     * 
+     *
      * @return protobuf BinSchedule of the current device's dispense schedule
      * @deprecated use schedule strategy directly
      */
@@ -327,7 +334,7 @@ public class DeviceStateWrapper {
      * Initialize the state and schedule of a new device. If a device already had a
      * state or schedule, it will be
      * preserved. The initial state has all bins disabled and an empty schedule.
-     * 
+     *
      * @param initialState optional state to initialize the device with
      */
     @Transactional
@@ -340,7 +347,7 @@ public class DeviceStateWrapper {
      * Initialize the state of a new device. If a device already has a state, it
      * will be preserved. The freshly
      * initialized state will have all bins disabled.
-     * 
+     *
      * @param initialState unused
      */
     @Transactional
@@ -447,7 +454,7 @@ public class DeviceStateWrapper {
 
     /**
      * Gets the device schedule.
-     * 
+     *
      * @return all device bin schedules, in ascending order of bin ID
      */
     public List<DeviceSchedule> getDeviceSchedule() {
@@ -478,7 +485,7 @@ public class DeviceStateWrapper {
 
     /**
      * Gets the device's bin states.
-     * 
+     *
      * @return all device bin states, in ascending order of bin ID.
      */
     public List<DeviceState> getState() {
@@ -488,6 +495,24 @@ public class DeviceStateWrapper {
             validateOrRepairState();
         }
         return _stateList;
+    }
+
+    /**
+     * Gets the device's battery level.
+     * @return the device battery level if engineering data is available.
+     */
+    private Optional<Integer> getBatteryLevel(Pill.SyncRequest  syncRequest) {
+        if(syncRequest.hasEngrData()) {
+            Integer vMux = syncRequest.getEngrData().getVoltagesList().get(BATTERY_MUX_CHANNEL);
+            int vBatt = (int) (vMux * VOLTAGE_RATIO+ BATTERY_OFFSET);
+            if(vBatt > BATTERY_MAX_ADC) {
+                vBatt = BATTERY_MAX_ADC;
+            }
+            Integer batterLevel = (int) (vBatt * (1.0/BATTERY_MAX_CAL) * 100);
+            return Optional.of(batterLevel);
+        } else {
+            return Optional.empty();
+        }
     }
 
 }

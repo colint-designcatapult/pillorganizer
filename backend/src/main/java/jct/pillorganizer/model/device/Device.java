@@ -100,6 +100,9 @@ public class Device implements Authenticatable {
     @Column(name = "base_tz", nullable = true)
     private String baseTZ;
 
+    @Column(name = "battery", nullable = true)
+    private Integer battery;
+
     @Override
     public long getId() {
         return id;
