@@ -4,7 +4,13 @@ import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../api/device.dart';
 
-enum BLEConnectionStatus { suppressed, disconnected, connecting, connected }
+enum BLEConnectionStatus {
+  suppressed,
+  disconnected,
+  connecting,
+  connected,
+  missingPermission
+}
 
 class DeviceBluetoothProvider with ChangeNotifier {
   final DeviceBluetoothController _controller = DeviceBluetoothController();
@@ -52,7 +58,8 @@ class DeviceBluetoothProvider with ChangeNotifier {
       _controller.sync();
       _status = BLEConnectionStatus.connected;
       notifyListeners();
-    } else if (status == BLEConnectionStatus.disconnected) {
+    } else if (status == BLEConnectionStatus.disconnected ||
+        status == BLEConnectionStatus.missingPermission) {
       _connect();
     }
   }
@@ -69,7 +76,7 @@ class DeviceBluetoothProvider with ChangeNotifier {
 
   Future<void> _connect() async {
     if (await _missingBlePermission()) {
-      _status = BLEConnectionStatus.disconnected;
+      _status = BLEConnectionStatus.missingPermission;
       notifyListeners();
     } else {
       _status = BLEConnectionStatus.connecting;

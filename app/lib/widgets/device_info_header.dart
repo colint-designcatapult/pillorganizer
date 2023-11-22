@@ -1,6 +1,6 @@
 import 'package:app/api/device.dart';
 import 'package:app/provider/ble_provider.dart';
-import 'package:app/provider/device_notice_provider.dart';
+import 'package:app/service/device_information_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:provider/provider.dart';
@@ -13,46 +13,21 @@ class DeviceInfoHeader extends StatelessWidget {
   const DeviceInfoHeader({Key? key, required this.deviceOffline})
       : super(key: key);
 
-  String wirelessText(BuildContext context, DeviceBluetoothProvider bleProv) {
-    if (Provider.of<DeviceNoticeProvider>(context, listen: false).value ==
-            DeviceNotice.disconnected ||
-        bleProv.status == BLEConnectionStatus.connected) {
-      return AppLocalizations.of(context)!.wirelessDisconnected;
-    } else {
-      return AppLocalizations.of(context)!.wirelessConnected;
-    }
-  }
-
-  String bluetoothText(BuildContext context, DeviceBluetoothProvider bleProv) {
-    if (bleProv.status == BLEConnectionStatus.connected) {
-      return AppLocalizations.of(context)!.bluetoothConnected;
-    } else if (bleProv.status == BLEConnectionStatus.connecting) {
-      return AppLocalizations.of(context)!.bluetoothConnecting;
-    }
-    return AppLocalizations.of(context)!.bluetoothDisconnected;
-  }
-
-  IconData batteryIcon(DeviceBluetoothProvider bleProv) {
-    if (bleProv.batteryCharging == true) {
-      return PhosphorIcons.battery_charging;
-    } else if (bleProv.batteryLevel! == 0) {
-      return PhosphorIcons.battery_empty;
-    } else if (bleProv.batteryLevel! <= 20) {
-      return PhosphorIcons.battery_low;
-    } else if (bleProv.batteryLevel! <= 50) {
-      return PhosphorIcons.battery_medium;
-    } else if (bleProv.batteryLevel! <= 80) {
-      return PhosphorIcons.battery_high;
-    }
-
-    return PhosphorIcons.battery_full;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Consumer<SelectedDeviceProvider>(builder: (_, selectedDevice, __) {
       return Consumer<DeviceBluetoothProvider>(builder: (_, bleProv, __) {
-        int? batteryLevel = bleProv.batteryLevel;
+        int? batteryLevel;
+        bool? batteryCharging;
+        DeviceState? deviceState =
+            Provider.of<DeviceStateProvider>(context, listen: false).value;
+        if (wifiIsConnected(context, bleProv) && deviceState != null) {
+          batteryLevel = deviceState.battery;
+          batteryCharging = deviceState.charging;
+        } else {
+          batteryLevel = bleProv.batteryLevel;
+          batteryCharging = bleProv.batteryCharging;
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.end,
@@ -101,8 +76,7 @@ class DeviceInfoHeader extends StatelessWidget {
                   ]),
                 ],
               ),
-            if (batteryLevel != null &&
-                bleProv.status == BLEConnectionStatus.connected)
+            if (batteryLevel != null)
               Column(
                 children: [
                   const SizedBox(height: 8),
@@ -114,7 +88,7 @@ class DeviceInfoHeader extends StatelessWidget {
                             ?.copyWith(color: Colors.white)),
                     const SizedBox(width: 8),
                     Icon(
-                      batteryIcon(bleProv),
+                      batteryIcon(batteryLevel, batteryCharging),
                       size: 20,
                       color: Colors.white,
                     ),
@@ -138,6 +112,8 @@ class DeviceInfoHeader extends StatelessWidget {
 
   void _showConnectionStatus(
       BuildContext context, DeviceBluetoothProvider bleProv) {
+    String bleText = bluetoothText(context, bleProv);
+    const int maxLength = 30;
     showDialog(
       context: context,
       builder: (_) => Dialog(
@@ -231,9 +207,13 @@ class DeviceInfoHeader extends StatelessWidget {
                             ),
                             const SizedBox(width: 12),
                             Text(
-                              bluetoothText(context, bleProv),
-                              style: Theme.of(context).textTheme.bodyMedium,
-                              textAlign: TextAlign.center,
+                              bleText,
+                              style: bleText.length > maxLength
+                                  ? Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(fontSize: 13)
+                                  : Theme.of(context).textTheme.bodyMedium,
                             )
                           ],
                         )))

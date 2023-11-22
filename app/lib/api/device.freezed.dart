@@ -875,6 +875,8 @@ mixin _$DeviceState {
   DateTime? get lastSync => throw _privateConstructorUsedError;
   List<BinStatus> get bins => throw _privateConstructorUsedError;
   List<DosePeriod> get dosePeriods => throw _privateConstructorUsedError;
+  int? get battery => throw _privateConstructorUsedError;
+  bool? get charging => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $DeviceStateCopyWith<DeviceState> get copyWith =>
@@ -891,7 +893,9 @@ abstract class $DeviceStateCopyWith<$Res> {
       {int id,
       DateTime? lastSync,
       List<BinStatus> bins,
-      List<DosePeriod> dosePeriods});
+      List<DosePeriod> dosePeriods,
+      int? battery,
+      bool? charging});
 }
 
 /// @nodoc
@@ -911,6 +915,8 @@ class _$DeviceStateCopyWithImpl<$Res, $Val extends DeviceState>
     Object? lastSync = freezed,
     Object? bins = null,
     Object? dosePeriods = null,
+    Object? battery = freezed,
+    Object? charging = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -929,6 +935,14 @@ class _$DeviceStateCopyWithImpl<$Res, $Val extends DeviceState>
           ? _value.dosePeriods
           : dosePeriods // ignore: cast_nullable_to_non_nullable
               as List<DosePeriod>,
+      battery: freezed == battery
+          ? _value.battery
+          : battery // ignore: cast_nullable_to_non_nullable
+              as int?,
+      charging: freezed == charging
+          ? _value.charging
+          : charging // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ) as $Val);
   }
 }
@@ -945,7 +959,9 @@ abstract class _$$_DeviceStateCopyWith<$Res>
       {int id,
       DateTime? lastSync,
       List<BinStatus> bins,
-      List<DosePeriod> dosePeriods});
+      List<DosePeriod> dosePeriods,
+      int? battery,
+      bool? charging});
 }
 
 /// @nodoc
@@ -958,12 +974,13 @@ class __$$_DeviceStateCopyWithImpl<$Res>
 
   @pragma('vm:prefer-inline')
   @override
-  $Res call({
-    Object? id = null,
-    Object? lastSync = freezed,
-    Object? bins = null,
-    Object? dosePeriods = null,
-  }) {
+  $Res call(
+      {Object? id = null,
+      Object? lastSync = freezed,
+      Object? bins = null,
+      Object? dosePeriods = null,
+      Object? battery = freezed,
+      Object? charging = freezed}) {
     return _then(_$_DeviceState(
       id: null == id
           ? _value.id
@@ -981,6 +998,14 @@ class __$$_DeviceStateCopyWithImpl<$Res>
           ? _value._dosePeriods
           : dosePeriods // ignore: cast_nullable_to_non_nullable
               as List<DosePeriod>,
+      battery: freezed == battery
+          ? _value.battery
+          : battery // ignore: cast_nullable_to_non_nullable
+              as int?,
+      charging: freezed == charging
+          ? _value.charging
+          : charging // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ));
   }
 }
@@ -992,7 +1017,9 @@ class _$_DeviceState extends _DeviceState {
       {required this.id,
       this.lastSync,
       required final List<BinStatus> bins,
-      required final List<DosePeriod> dosePeriods})
+      required final List<DosePeriod> dosePeriods,
+      this.battery,
+      this.charging})
       : _bins = bins,
         _dosePeriods = dosePeriods,
         super._();
@@ -1017,6 +1044,11 @@ class _$_DeviceState extends _DeviceState {
     return EqualUnmodifiableListView(_dosePeriods);
   }
 
+  @override
+  final int? battery;
+  @override
+  final bool? charging;
+
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
@@ -1029,7 +1061,9 @@ abstract class _DeviceState extends DeviceState {
       {required final int id,
       final DateTime? lastSync,
       required final List<BinStatus> bins,
-      required final List<DosePeriod> dosePeriods}) = _$_DeviceState;
+      required final List<DosePeriod> dosePeriods,
+      final int? battery,
+      final bool? charging}) = _$_DeviceState;
   const _DeviceState._() : super._();
 
   @override
@@ -1040,6 +1074,10 @@ abstract class _DeviceState extends DeviceState {
   List<BinStatus> get bins;
   @override
   List<DosePeriod> get dosePeriods;
+  @override
+  int? get battery;
+  @override
+  bool? get charging;
   @override
   @JsonKey(ignore: true)
   _$$_DeviceStateCopyWith<_$_DeviceState> get copyWith =>

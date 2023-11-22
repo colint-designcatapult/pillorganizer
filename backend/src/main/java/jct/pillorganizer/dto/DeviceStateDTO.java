@@ -9,5 +9,6 @@ import java.util.List;
 
 @Introspected
 @Serdeable.Serializable
-public record DeviceStateDTO(long id, @Nullable Date lastSync, long bins, List<DosePeriodDTO> dosePeriods) {
+public record DeviceStateDTO(long id, @Nullable Date lastSync, long bins, List<DosePeriodDTO> dosePeriods,
+                Integer battery, boolean charging) {
 }

@@ -1,6 +1,7 @@
 import 'package:app/api/device.dart';
 import 'package:app/models/user.dart';
 import 'package:app/navigation/provision_navigator.dart';
+import 'package:app/provider/ble_provider.dart';
 import 'package:app/screens/auth/change_password.dart';
 import 'package:app/screens/auth/register.dart';
 import 'package:app/widgets/generic_yes_no_modal.dart';
@@ -123,6 +124,9 @@ class AccountScreen extends StatelessWidget {
                                 label:
                                     AppLocalizations.of(context)!.addNewDevice,
                                 onPressed: () {
+                                  Provider.of<DeviceBluetoothProvider>(context,
+                                          listen: false)
+                                      .suppress();
                                   startProvisioning(context);
                                 },
                               ),

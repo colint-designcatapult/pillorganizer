@@ -15,6 +15,7 @@
 	"bluetoothConnected": "Bluetooth connected",
 	"bluetoothConnecting": "Scanning bluetooth...",
 	"bluetoothDisconnected": "Bluetooth disconnected",
+	"bluetoothMissingPermissions": "Bluetooth missing permissions",
 	"changeDeviceName": "Change device name",
 	"changeDeviceNamePrompt": "Please enter the desired new device name right below:",
 	"changeName": "Change Name",

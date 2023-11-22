@@ -28,8 +28,8 @@ import java.util.zip.CRC32;
 public class DeviceStateWrapper {
 
     private static final int EVENT_CTR_DELTA_THRESHOLD = 28;
-    private static final int BATTERY_MUX_CHANNEL =14;
-    private static final int BATTERY_OFFSET =200;
+    private static final int BATTERY_MUX_CHANNEL = 14;
+    private static final int BATTERY_OFFSET = 200;
     private static final double VOLTAGE_RATIO = 1.4;
     private static final int BATTERY_MAX_ADC = 3700;
     private static final double BATTERY_MAX_CAL = 3700.0;
@@ -248,14 +248,14 @@ public class DeviceStateWrapper {
 
         builder.addAllSchedule(buildBinSchedule());
 
-        deviceRepository.updateLastSyncAndIpv4AndIpv6AndBattery(
+        deviceRepository.updateLastSyncAndIpv4AndIpv6AndBatteryAndCharging(
                 device.getId(),
                 device.getVersion(),
                 Timestamp.from(Instant.now()),
                 syncRequest.hasIpv4() ? syncRequest.getIpv4() : null,
                 syncRequest.hasIpv6() ? syncRequest.getIpv6().toByteArray() : null,
-                getBatteryLevel(syncRequest).orElse(null)
-        );
+                getBatteryLevel(syncRequest).orElse(null),
+                getBatteryCharging(syncRequest));
 
         builder.setLatestFirmware(firmwareService.getLatestVersion());
 
@@ -499,19 +499,27 @@ public class DeviceStateWrapper {
 
     /**
      * Gets the device's battery level.
+     * 
      * @return the device battery level if engineering data is available.
      */
-    private Optional<Integer> getBatteryLevel(Pill.SyncRequest  syncRequest) {
-        if(syncRequest.hasEngrData()) {
-            Integer vMux = syncRequest.getEngrData().getVoltagesList().get(BATTERY_MUX_CHANNEL);
-            int vBatt = (int) (vMux * VOLTAGE_RATIO+ BATTERY_OFFSET);
-            if(vBatt > BATTERY_MAX_ADC) {
-                vBatt = BATTERY_MAX_ADC;
-            }
-            Integer batterLevel = (int) (vBatt * (1.0/BATTERY_MAX_CAL) * 100);
-            return Optional.of(batterLevel);
+    private Optional<Integer> getBatteryLevel(Pill.SyncRequest syncRequest) {
+        if (syncRequest.hasEngrData()) {
+            return Optional.of((int) syncRequest.getEngrData().getVbatMeas());
         } else {
             return Optional.empty();
+        }
+    }
+
+    /**
+     * Gets the device's battery charging info.
+     * 
+     * @return the device battery charging info if engineering data is available.
+     */
+    private Boolean getBatteryCharging(Pill.SyncRequest syncRequest) {
+        if (syncRequest.hasEngrData()) {
+            return syncRequest.getEngrData().getVbatScaled() == 1.0;
+        } else {
+            return false;
         }
     }
 

@@ -15,6 +15,7 @@
 	"bluetoothConnected": "Bluetooth connecté",
 	"bluetoothConnecting": "Recherche de l'appareil...",
 	"bluetoothDisconnected": "Bluetooth déconnecté",
+	"bluetoothMissingPermissions": "Autorisation Bluetooth manquante",
 	"changeDeviceName": "Changer le nom de l'appareil",
 	"changeDeviceNamePrompt": "Veuillez entrer ci-dessous le nouveau nom désiré pour l'appareil:",
 	"changeName": "Changer le nom",
