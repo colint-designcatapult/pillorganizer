@@ -3,13 +3,12 @@ package jct.pillorganizer.service;
 import io.micronaut.context.annotation.Bean;
 import jakarta.inject.Inject;
 import jct.pillorganizer.dto.SaveMedicationDTO;
+import jct.pillorganizer.exceptions.MedicationNotFoundException;
 import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.medication.MedicationDispenseTime;
 import jct.pillorganizer.model.medication.ScheduledMedication;
 import jct.pillorganizer.repo.MedicationDispenseTimeRepository;
 import jct.pillorganizer.repo.ScheduledMedicationRepository;
-import org.zalando.problem.Problem;
-import org.zalando.problem.Status;
 
 import javax.transaction.Transactional;
 import java.util.HashSet;
@@ -41,7 +40,7 @@ public class MedicationService {
             dispenseTimeRepository.deleteAll(sm.get().getDispenseTimes());
             scheduledMedicationRepository.delete(sm.get());
         } else {
-            throw Problem.builder().withStatus(Status.NOT_FOUND).build();
+            throw new MedicationNotFoundException("Medication not found for ID: " + medicationID);
         }
     }
 

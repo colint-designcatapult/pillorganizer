@@ -1,12 +1,14 @@
 package jct.pillorganizer.service;
 
-import io.micronaut.http.HttpStatus;
-import io.micronaut.problem.HttpStatusType;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.auth.AuthService;
 import jct.pillorganizer.auth.DeviceAuthService;
 import jct.pillorganizer.device.DeviceStateWrapper;
+import jct.pillorganizer.exceptions.AccessForbiddenException;
+import jct.pillorganizer.exceptions.DeviceProvisionExpiredException;
+import jct.pillorganizer.exceptions.DeviceProvisionNotFoundException;
+import jct.pillorganizer.exceptions.SsidMismatchException;
 import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.device.DeviceClass;
 import jct.pillorganizer.model.device.DeviceProvision;
@@ -118,23 +120,19 @@ public class DeviceProvisionService {
      */
     @Transactional
     public Device checkProvisioning(long provID, long sn, String ssid) {
-        // todo: move exception handling out of service (HTTP stuff doesn't belong here)
-
         Optional<DeviceProvision> provOpt = deviceProvisionRepository.findByIdAndDevice_SerialNo(provID, sn);
         if(provOpt.isEmpty())
-            throw Problem.builder()
-                    .withStatus(new HttpStatusType(HttpStatus.NOT_FOUND))
-                    .withTitle("Device provisioning not found")
-                    .build();
+            throw new DeviceProvisionNotFoundException("Device provisioning not found");
 
         DeviceProvision prov = provOpt.get();
+        // Check if the user is allowed to access this provision record
+        if(prov.getUserID() == authService.getUserID()) {
+            throw  new AccessForbiddenException("User does not have access to this provision record");
+        }
 
         // Check if the provided provision ID and the specified device's current provision ID match
         if(!Objects.equals(prov.getId(), prov.getDevice().getCurrentProvision().getId()))
-            throw Problem.builder()
-                    .withStatus(new HttpStatusType(HttpStatus.BAD_REQUEST))
-                    .withTitle("Device provision expired")
-                    .build();
+            throw new DeviceProvisionExpiredException("Device provision expired");
 
         // Ensure device got provisioned on the correct WiFi network
         if(ssid.equalsIgnoreCase(prov.getSsid())) {
@@ -143,11 +141,7 @@ public class DeviceProvisionService {
 
         // If we hit this point, it could mean EITHER WiFi SSID didn't match OR provisioning isn't complete yet
         // We currently have no way to tell, we should add a field to DeviceProvision
-        // todo: add flag to DeviceProvision indicating whether provisioning is complete
-        throw Problem.builder()
-                .withStatus(new HttpStatusType(HttpStatus.BAD_REQUEST))
-                .withTitle("SSID does not match")
-                .build();
+        throw  new SsidMismatchException("SSID does not match");
     }
 
     /**
@@ -158,8 +152,6 @@ public class DeviceProvisionService {
      */
     @Transactional
     public Pill.SyncResponse completeProvisioning(Pill.DeviceProvisionRequest req) {
-        // todo: move sync response out of here
-
         Device device = deviceAuthService.getDevice();
         DeviceProvision provision = device.getCurrentProvision();
 
@@ -188,5 +180,4 @@ public class DeviceProvisionService {
                 .setLatestFirmware(firmwareService.getLatestVersion())
                 .build();
     }
-
 }

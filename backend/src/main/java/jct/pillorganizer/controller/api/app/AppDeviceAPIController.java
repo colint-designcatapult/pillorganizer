@@ -100,7 +100,8 @@ public class AppDeviceAPIController {
     @Delete("/{id}")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public HttpResponse<?> removeDeviceFromUser(@QueryValue long id) {
-        deviceUserService.removeDeviceFromUser(authService.getUserID(), id);
+        Device device = authService.accessDevice(id);
+        deviceUserService.removeDeviceFromUser(authService.getUserID(), device.getId());
         return HttpResponse.ok();
     }
 
@@ -129,12 +130,8 @@ public class AppDeviceAPIController {
     @Operation(summary = "Checks provisioning status")
     @Post("/provision/{id}/verify")
     @Secured(SecurityRule.IS_AUTHENTICATED)
-    // todo: authz check here (can an arbitrary user access an arbitrary provision
-    // record?)
     public HttpResponse<?> checkProvisionStatus(@QueryValue long id, @Body VerifyProvision vp) {
         Device d = deviceProvisionService.checkProvisioning(id, vp.getSerialNo(), vp.getSsid());
-        // todo: change this so we don't just return 200 OK and use exceptions to handle
-        // not provisioned yet
         return HttpResponse.ok(new ProvisionStatus(
                 true, d.getId()));
     }
