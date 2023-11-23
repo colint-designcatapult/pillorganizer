@@ -657,8 +657,15 @@ class DeviceStateDTO {
   final int? lastSync;
   final int? bins;
   final List<DosePeriodDTO>? dosePeriods;
+  final int? battery;
+  final bool? charging;
   DeviceStateDTO(
-      {required this.id, this.lastSync, this.bins, this.dosePeriods});
+      {required this.id,
+      this.lastSync,
+      this.bins,
+      this.dosePeriods,
+      this.battery,
+      this.charging});
   factory DeviceStateDTO.fromJson(Map<String, dynamic> json) =>
       _$DeviceStateDTOFromJson(json);
 }

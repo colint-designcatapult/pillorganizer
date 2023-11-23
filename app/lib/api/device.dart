@@ -133,7 +133,9 @@ class DeviceState extends Equatable with _$DeviceState {
       {required int id,
       DateTime? lastSync,
       required List<BinStatus> bins,
-      required List<DosePeriod> dosePeriods}) = _DeviceState;
+      required List<DosePeriod> dosePeriods,
+      int? battery,
+      bool? charging}) = _DeviceState;
 
   factory DeviceState.fromDTO(DeviceStateDTO dto) {
     DateTime? lastSeen = dto.lastSync != null
@@ -146,7 +148,9 @@ class DeviceState extends Equatable with _$DeviceState {
         bins: decodePackedStatus(dto.bins),
         dosePeriods:
             dto.dosePeriods?.map((e) => DosePeriod.fromDTO(e)).toList() ??
-                List<DosePeriod>.empty());
+                List<DosePeriod>.empty(),
+        battery: dto.battery,
+        charging: dto.charging);
   }
 
   @override

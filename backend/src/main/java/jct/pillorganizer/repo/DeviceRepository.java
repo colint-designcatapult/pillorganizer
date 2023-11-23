@@ -30,16 +30,15 @@ public interface DeviceRepository extends CrudRepository<Device, Long> {
 
     void update(@Id Long id, @Version Long version, DeviceProvision currentProvision);
 
-    void updateLastSyncAndIpv4AndIpv6AndBattery(@Id Long id, @Version Long version, Timestamp lastSync, @Nullable Integer ipv4, @Nullable byte[] ipv6, @Nullable Integer battery);
+    void updateLastSyncAndIpv4AndIpv6AndBatteryAndCharging(@Id Long id, @Version Long version, Timestamp lastSync,
+            @Nullable Integer ipv4, @Nullable byte[] ipv6, @Nullable Integer battery, @Nullable Boolean charging);
 
     void update(@Id Long id, String customName);
 
     void updateBaseTZById(@Id Long id, String baseTZ);
 
-
     Optional<Device> findBySerialNoAndCurrentProvisionOobKey(long sn, byte[] oob);
 
     Optional<Device> findByCurrentProvisionOobKey(byte[] oob);
-
 
 }

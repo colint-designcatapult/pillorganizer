@@ -1,14 +1,23 @@
 import 'dart:async';
 import 'package:app/service/device_bluetooth_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../api/device.dart';
 
-enum BLEConnectionStatus { suppressed, disconnected, connecting, connected }
+enum BLEConnectionStatus {
+  suppressed,
+  disconnected,
+  connecting,
+  connected,
+  missingPermission
+}
 
 class DeviceBluetoothProvider with ChangeNotifier {
   final DeviceBluetoothController _controller = DeviceBluetoothController();
   BLEConnectionStatus _status = BLEConnectionStatus.disconnected;
   BLEConnectionStatus get status => _status;
+  int? get batteryLevel => _controller.batteryLevel;
+  bool? get batteryCharging => _controller.batteryCharging;
   Timer? _heartbeat;
 
   DeviceBluetoothProvider({DeviceUser? selectedDevice}) {
@@ -49,21 +58,37 @@ class DeviceBluetoothProvider with ChangeNotifier {
       _controller.sync();
       _status = BLEConnectionStatus.connected;
       notifyListeners();
-    } else if (status == BLEConnectionStatus.disconnected) {
+    } else if (status == BLEConnectionStatus.disconnected ||
+        status == BLEConnectionStatus.missingPermission) {
       _connect();
     }
   }
 
-  Future<void> _connect() async {
-    _status = BLEConnectionStatus.connecting;
-    notifyListeners();
+  Future<bool> _missingBlePermission() async {
+    PermissionStatus locationStatus = await Permission.location.status;
+    PermissionStatus bleScanStatus = await Permission.bluetoothScan.status;
+    return await _controller.checkBluetoothState() == false ||
+        locationStatus == PermissionStatus.denied ||
+        locationStatus == PermissionStatus.permanentlyDenied ||
+        bleScanStatus == PermissionStatus.denied ||
+        bleScanStatus == PermissionStatus.permanentlyDenied;
+  }
 
-    if (await _controller.find()) {
-      _status = BLEConnectionStatus.connected;
+  Future<void> _connect() async {
+    if (await _missingBlePermission()) {
+      _status = BLEConnectionStatus.missingPermission;
       notifyListeners();
     } else {
-      _status = BLEConnectionStatus.disconnected;
+      _status = BLEConnectionStatus.connecting;
       notifyListeners();
+
+      if (await _controller.find()) {
+        _status = BLEConnectionStatus.connected;
+        notifyListeners();
+      } else {
+        _status = BLEConnectionStatus.disconnected;
+        notifyListeners();
+      }
     }
   }
 

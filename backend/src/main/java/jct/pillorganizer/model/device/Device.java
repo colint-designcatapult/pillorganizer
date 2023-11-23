@@ -19,7 +19,6 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 
-
 /**
  * A pill organizer device.
  */
@@ -31,7 +30,7 @@ import java.util.Set;
 public class Device implements Authenticatable {
 
     @Id
-    @GeneratedValue(strategy=GenerationType.SEQUENCE, generator="device_seq")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "device_seq")
     @SequenceGenerator(name = "device_seq", sequenceName = "device_seq", allocationSize = 1)
     private Long id;
 
@@ -59,7 +58,6 @@ public class Device implements Authenticatable {
     @JsonIgnore
     @Nullable
     private DeviceBaseScheduleStrategy scheduleStrategy;
-
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "device")
     @JsonIgnore
@@ -103,6 +101,9 @@ public class Device implements Authenticatable {
     @Column(name = "battery", nullable = true)
     private Integer battery;
 
+    @Column(name = "charging", nullable = false)
+    private boolean charging;
+
     @Override
     public long getId() {
         return id;
@@ -116,13 +117,12 @@ public class Device implements Authenticatable {
     @JsonIgnore
     @Transient
     public ZoneOffset getTimeZone() {
-        if(getBaseTZ() == null) {
+        if (getBaseTZ() == null) {
             return ZoneOffset.UTC;
         } else {
             // TODO: rethink how to persist timezones to avoid this mess
             return ZoneId.of(getBaseTZ()).getRules().getOffset(Instant.now());
         }
     }
-
 
 }

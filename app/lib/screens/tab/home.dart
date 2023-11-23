@@ -55,17 +55,21 @@ class HomeScreen extends StatelessWidget {
                         title: Column(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            const Padding(
-                              padding: EdgeInsets.all(12.0),
-                              child: DeviceInfoHeader(),
+                            Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: DeviceInfoHeader(
+                                  deviceOffline: deviceNoticeProvider.value ==
+                                      DeviceNotice.disconnected),
                             ),
-                            if (hasNotice)
-                              DeviceAlert(
-                                notice: deviceNoticeProvider.value,
-                                onReload: () => deviceNoticeProvider.reload(),
-                                reloadFuture: () =>
-                                    deviceNoticeProvider.reloadFuture,
-                              ),
+                            hasNotice
+                                ? DeviceAlert(
+                                    notice: deviceNoticeProvider.value,
+                                    onReload: () =>
+                                        deviceNoticeProvider.reload(),
+                                    reloadFuture: () =>
+                                        deviceNoticeProvider.reloadFuture,
+                                  )
+                                : const SizedBox(height: 8),
                           ],
                         ),
                       ),

@@ -488,6 +488,8 @@ DeviceStateDTO _$DeviceStateDTOFromJson(Map<String, dynamic> json) =>
       dosePeriods: (json['dosePeriods'] as List<dynamic>?)
           ?.map((e) => DosePeriodDTO.fromJson(e as Map<String, dynamic>))
           .toList(),
+      battery: json['battery'] as int?,
+      charging: json['charging'] as bool?,
     );
 
 Map<String, dynamic> _$DeviceStateDTOToJson(DeviceStateDTO instance) =>
@@ -496,6 +498,8 @@ Map<String, dynamic> _$DeviceStateDTOToJson(DeviceStateDTO instance) =>
       'lastSync': instance.lastSync,
       'bins': instance.bins,
       'dosePeriods': instance.dosePeriods,
+      'battery': instance.battery,
+      'charging': instance.charging,
     };
 
 _$_EmailPasswordCredentialsDTO _$$_EmailPasswordCredentialsDTOFromJson(

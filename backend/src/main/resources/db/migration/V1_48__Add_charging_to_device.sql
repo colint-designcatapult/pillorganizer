@@ -1,0 +1,1 @@
+ALTER TABLE device ADD charging BOOLEAN DEFAULT FALSE;
