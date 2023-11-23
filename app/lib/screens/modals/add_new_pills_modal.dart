@@ -103,12 +103,6 @@ class IndexNewPills extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final newMedicationProvider = NewMedicationProvider(
-        Provider.of<SelectedDeviceProvider>(context, listen: false)
-            .device!
-            .deviceID,
-        () => onAdd);
-
     return GestureDetector(
       onTap: () => {
         showModalBottomSheet(
@@ -125,7 +119,12 @@ class IndexNewPills extends StatelessWidget {
               return StatefulBuilder(
                   builder: (BuildContext context, StateSetter setState) {
                 return ChangeNotifierProvider<NewMedicationProvider>(
-                    create: (context) => newMedicationProvider,
+                    create: (context) => NewMedicationProvider(
+                        Provider.of<SelectedDeviceProvider>(context,
+                                listen: false)
+                            .device!
+                            .deviceID,
+                        () => onAdd),
                     builder: (context, _) => MedicationModal(
                         onBack: () => Navigator.of(context).pop(),
                         onNext: true,
