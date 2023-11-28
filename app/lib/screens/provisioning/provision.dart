@@ -44,6 +44,7 @@ class ProvisionPage extends StatefulWidget {
 class _ProvisionPageState extends State<ProvisionPage>
     with TickerProviderStateMixin {
   bool scanningWifi = false;
+  bool timeoutTryAgain = false;
 
   @override
   void initState() {
@@ -60,6 +61,8 @@ class _ProvisionPageState extends State<ProvisionPage>
           Navigator.of(context)
               .pushReplacement(ProvisionSelectWifiPage.route(context, state));
         }
+      }).timeout(const Duration(seconds: 25), onTimeout: () {
+        timeoutTryAgain = true;
       });
     }
   }
@@ -88,12 +91,21 @@ class _ProvisionPageState extends State<ProvisionPage>
                 Navigator.of(context, rootNavigator: true).pop();
               }
             },
-            footer: data.item2 != null
+            footer: data.item2 != null || timeoutTryAgain
                 ? PlatformElevatedButton(
                     child: Text(AppLocalizations.of(context)!.genericTryAgain),
                     onPressed: () {
+                      timeoutTryAgain = false;
                       Provider.of<ProvisionProvider>(context, listen: false)
-                          .rescanBluetooth();
+                          .rescanBluetooth()
+                          .then((state) {
+                        if (state.deviceName != null && context.mounted) {
+                          Navigator.of(context).pushReplacement(
+                              ProvisionSelectWifiPage.route(context, state));
+                        }
+                      }).timeout(const Duration(seconds: 25), onTimeout: () {
+                        timeoutTryAgain = true;
+                      });
                     },
                   )
                 : null,
