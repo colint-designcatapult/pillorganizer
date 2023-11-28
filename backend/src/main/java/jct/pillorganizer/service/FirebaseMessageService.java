@@ -19,8 +19,8 @@ import java.io.IOException;
 public class FirebaseMessageService {
 
     public FirebaseMessageService(@Value("${firebase.privkey}") String privKey,
-                                  @Value("${firebase.project}") String projID,
-                                  @Value("${firebase.email}") String email) throws IOException {
+            @Value("${firebase.project}") String projID,
+            @Value("${firebase.email}") String email) throws IOException {
         String privkey = privKey.replace("\\n", "\n");
         FirebaseOptions options = FirebaseOptions.builder()
                 .setCredentials(ServiceAccountCredentials.newBuilder()
@@ -34,11 +34,13 @@ public class FirebaseMessageService {
 
     /**
      * Sends a pill reminder notification to a specific notification token.
-     * @param details a structure containing the info necessary to deliver a push notification
+     * 
+     * @param details a structure containing the info necessary to deliver a push
+     *                notification
      */
     public void sendPillReminderNotification(DeviceNotificationDetails details) {
 
-        if(details.notificationToken() == null || details.notificationToken().isEmpty())
+        if (details.notificationToken() == null || details.notificationToken().isEmpty())
             return;
 
         log.atInfo().log("Sending to %s", details.notificationToken());
@@ -46,21 +48,21 @@ public class FirebaseMessageService {
         try {
 
             Message message = Message.builder()
-                .setNotification(Notification.builder()
-                        .setTitle("Pill Organizer")
-                        .setBody(String.format("(#%d-%s) It's time to take your pills!", details.deviceID(), details.deviceName()))
-                        .build())
-                .setAndroidConfig(AndroidConfig.builder()
-                        .setTtl(3600)
-                        .setNotification(AndroidNotification.builder()
-                                .setColor("#f45342")
-                                .build())
-                        .build())
-                .setApnsConfig(ApnsConfig.builder()
-                        .setAps(Aps.builder().build())
-                        .build())
-                .setToken(details.notificationToken())
-                .build();
+                    .setNotification(Notification.builder()
+                            .setTitle("Pill Organizer")
+                            .setBody("It's time to take your pills!")
+                            .build())
+                    .setAndroidConfig(AndroidConfig.builder()
+                            .setTtl(3600)
+                            .setNotification(AndroidNotification.builder()
+                                    .setColor("#f45342")
+                                    .build())
+                            .build())
+                    .setApnsConfig(ApnsConfig.builder()
+                            .setAps(Aps.builder().build())
+                            .build())
+                    .setToken(details.notificationToken())
+                    .build();
 
             FirebaseMessaging.getInstance().send(message);
         } catch (FirebaseMessagingException e) {
