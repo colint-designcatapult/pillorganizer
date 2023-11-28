@@ -169,11 +169,16 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
     return status;
   }
 
-  bool _handleAuthFailure(Exception err) {
-    setState(() {
-      _checkAuthFuture = Future.error(err);
-    });
-    return false;
+  bool _handleAuthFailure(dynamic err) {
+    if (err is Exception) {
+      setState(() {
+        _checkAuthFuture = Future.error(err);
+      });
+      return false;
+    } else {
+      print('Unhandled error type: $err');
+      return false;
+    }
   }
 
   void _checkAuthStatus() {

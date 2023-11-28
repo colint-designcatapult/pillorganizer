@@ -43,7 +43,9 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   FlutterError.onError = (errorDetails) {
-    FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+    if (!errorDetails.toString().contains('A RenderFlex overflowed by')) {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+    }
   };
   // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
   PlatformDispatcher.instance.onError = (error, stack) {
