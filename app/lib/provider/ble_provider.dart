@@ -22,7 +22,9 @@ class DeviceBluetoothProvider with ChangeNotifier {
 
   DeviceBluetoothProvider({DeviceUser? selectedDevice}) {
     _controller.onDisconnect = () {
-      _status = BLEConnectionStatus.disconnected;
+      if (_status != BLEConnectionStatus.suppressed) {
+        _status = BLEConnectionStatus.disconnected;
+      }
       notifyListeners();
     };
     createDevice(selectedDevice);
