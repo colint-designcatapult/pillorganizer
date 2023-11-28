@@ -67,15 +67,22 @@ public class DeviceProvisionService {
     }
 
     /**
-     * Initiates the provisioning flow. If no Device record exists with the specified serial number, a new Device is
-     * created. The serial number must be accurate otherwise provisioning will eventually fail. The timezone is
-     * written into the Device's timezone record and should be set to the user's timezone. A successful call to this
-     * method will invalidate all previous provision attempts (but will keep an existing device provisioned until
+     * Initiates the provisioning flow. If no Device record exists with the
+     * specified serial number, a new Device is
+     * created. The serial number must be accurate otherwise provisioning will
+     * eventually fail. The timezone is
+     * written into the Device's timezone record and should be set to the user's
+     * timezone. A successful call to this
+     * method will invalidate all previous provision attempts (but will keep an
+     * existing device provisioned until
      * completion).
      * Provisioning is initiated by the app.
-     * @param serialNo the serial number of the device to provision
-     * @param deviceClass the type of device (device class) of the device to provision
-     * @param tzLocation timezone location string (e.g., America/Detroit) to base the device's time on
+     * 
+     * @param serialNo    the serial number of the device to provision
+     * @param deviceClass the type of device (device class) of the device to
+     *                    provision
+     * @param tzLocation  timezone location string (e.g., America/Detroit) to base
+     *                    the device's time on
      * @return initialized provisioning record
      */
     @Transactional
@@ -91,7 +98,6 @@ public class DeviceProvisionService {
         deviceProvision.setActive(true);
         deviceProvision.setUserID(authService.getUserID());
         deviceProvision.setTimezone(tzLocation);
-
 
         // Generate OOB key
         try {
@@ -109,44 +115,51 @@ public class DeviceProvisionService {
     }
 
     /**
-     * Check if a device's provisioning process has completed. The parameters must exactly match what was provided
+     * Check if a device's provisioning process has completed. The parameters must
+     * exactly match what was provided
      * during the provisioning process otherwise this method will fail.
+     * 
      * @param provID the ID of the provision record to check
-     * @param sn serial number of the device
-     * @param ssid SSID of the WiFi network the device was provisioned for
+     * @param sn     serial number of the device
+     * @param ssid   SSID of the WiFi network the device was provisioned for
      * @return the Device record, if provisioning is finished & successful
-     * @throws org.zalando.problem.ThrowableProblem if provisioning has not finished, was not successful, or the
-     * parameters were invalid.
+     * @throws org.zalando.problem.ThrowableProblem if provisioning has not
+     *                                              finished, was not successful, or
+     *                                              the
+     *                                              parameters were invalid.
      */
     @Transactional
     public Device checkProvisioning(long provID, long sn, String ssid) {
         Optional<DeviceProvision> provOpt = deviceProvisionRepository.findByIdAndDevice_SerialNo(provID, sn);
-        if(provOpt.isEmpty())
+        if (provOpt.isEmpty())
             throw new DeviceProvisionNotFoundException("Device provisioning not found");
-
         DeviceProvision prov = provOpt.get();
         // Check if the user is allowed to access this provision record
-        if(prov.getUserID() == authService.getUserID()) {
-            throw  new AccessForbiddenException("User does not have access to this provision record");
+        if (prov.getUserID() != authService.getUserID()) {
+            throw new AccessForbiddenException("User does not have access to this provision record");
         }
 
-        // Check if the provided provision ID and the specified device's current provision ID match
-        if(!Objects.equals(prov.getId(), prov.getDevice().getCurrentProvision().getId()))
+        // Check if the provided provision ID and the specified device's current
+        // provision ID match
+        if (!Objects.equals(prov.getId(), prov.getDevice().getCurrentProvision().getId()))
             throw new DeviceProvisionExpiredException("Device provision expired");
 
         // Ensure device got provisioned on the correct WiFi network
-        if(ssid.equalsIgnoreCase(prov.getSsid())) {
+        if (ssid.equalsIgnoreCase(prov.getSsid())) {
             return prov.getDevice();
         }
 
-        // If we hit this point, it could mean EITHER WiFi SSID didn't match OR provisioning isn't complete yet
+        // If we hit this point, it could mean EITHER WiFi SSID didn't match OR
+        // provisioning isn't complete yet
         // We currently have no way to tell, we should add a field to DeviceProvision
-        throw  new SsidMismatchException("SSID does not match");
+        throw new SsidMismatchException("SSID does not match");
     }
 
     /**
-     * Finish provisioning, indicating that the device has successfully connected to WiFi (thus, this is called from
+     * Finish provisioning, indicating that the device has successfully connected to
+     * WiFi (thus, this is called from
      * the device itself).
+     * 
      * @param req protobuf structure with information about provisioning
      * @return device sync response
      */
