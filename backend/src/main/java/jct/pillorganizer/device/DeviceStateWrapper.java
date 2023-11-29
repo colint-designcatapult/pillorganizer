@@ -224,6 +224,8 @@ public class DeviceStateWrapper {
             deviceEventRepository.save(ev);
             handleBinEvent(ev);
             timeStamp = Instant.ofEpochSecond(recEv.getTimestamp());
+            log.atInfo().log("Device initiated event, bin: %d event: %s", recEv.getBin(),
+                    EventType.fromProtobuf(recEv.getType()).toString());
             ctr++;
         }
 
