@@ -38,6 +38,8 @@ micronaut:
       pattern: /api/v1_2/device/**
     - access: isAnonymous()
       pattern: /static/firmware/**
+    - access: isAnonymous()
+      pattern: /help/**
   router:
     static-resources:
       swagger:
@@ -50,6 +52,10 @@ micronaut:
         enabled: true
         mapping: "/static/firmware/**"
         paths: classpath:firmware
+      help:
+        enabled: true
+        mapping: /help/**
+        paths: classpath:help
 datasources:
   default:
     url: jdbc:postgresql://${DB_HOSTNAME}:${DB_PORT}/${DB_DATABASE}?stringtype=unspecified
