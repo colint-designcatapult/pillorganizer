@@ -2,22 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CLIENT_ID</key>
-	<string>205413249135-g6s9nr09tgg3r3f1knhbbo5ve3k3n4cr.apps.googleusercontent.com</string>
-	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.205413249135-g6s9nr09tgg3r3f1knhbbo5ve3k3n4cr</string>
 	<key>API_KEY</key>
-	<string>AIzaSyD0Tfn3oZnCecDpj2BXY0I5aXwO2uCEuWo</string>
+	<string>AIzaSyC2ElEQU73WB_uLwtnnYPxBY_5hNzpouSw</string>
 	<key>GCM_SENDER_ID</key>
-	<string>205413249135</string>
+	<string>1091240480280</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.cabinet.pillorganizer</string>
+	<string>jct.pillorganizer.pills</string>
 	<key>PROJECT_ID</key>
-	<string>jctpillorganizer</string>
+	<string>cabinet-f7e5a</string>
 	<key>STORAGE_BUCKET</key>
-	<string>jctpillorganizer.appspot.com</string>
+	<string>cabinet-f7e5a.appspot.com</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -29,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:205413249135:ios:e6196324bfe3c317229d9a</string>
+	<string>1:1091240480280:ios:29c80a6128e9fa273d3d6d</string>
 </dict>
 </plist>

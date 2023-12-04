@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="jct.pillorganizer.app">
+    package="jct.pillorganizer.pills">
 
     <!--BLUETOOTH PERMISSION-->
     <!-- Request legacy Bluetooth permissions on older devices. -->
@@ -27,7 +27,7 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
-            android:name=".MainActivity"
+            android:name="jct.pillorganizer.pills.MainActivity"
             android:screenOrientation="portrait"
             android:exported="true"
             android:launchMode="singleTop"

@@ -1,8 +1,6 @@
-package jct.pillorganizer.app;
+package jct.pillorganizer.pills;
 
 
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.le.ScanResult;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -11,12 +9,6 @@ import androidx.annotation.NonNull;
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
-
-import com.espressif.provisioning.ESPProvisionManager;
-import com.espressif.provisioning.listeners.BleScanListener;
-import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.analytics.Analytics;
-import com.microsoft.appcenter.crashes.Crashes;
 
 public class MainActivity extends FlutterActivity {
 

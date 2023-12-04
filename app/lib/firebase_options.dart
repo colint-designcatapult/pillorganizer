@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDrByJb8hQ1LdGUdMIjpDx5WpfjfJhWNOQ',
-    appId: '1:1091240480280:android:765f051e75baacfb3d3d6d',
+    appId: '1:1091240480280:android:07ba3d9dac1416663d3d6d',
     messagingSenderId: '1091240480280',
     projectId: 'cabinet-f7e5a',
     storageBucket: 'cabinet-f7e5a.appspot.com',
@@ -59,10 +59,10 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyC2ElEQU73WB_uLwtnnYPxBY_5hNzpouSw',
-    appId: '1:1091240480280:ios:5883ad356f5c225c3d3d6d',
+    appId: '1:1091240480280:ios:29c80a6128e9fa273d3d6d',
     messagingSenderId: '1091240480280',
     projectId: 'cabinet-f7e5a',
     storageBucket: 'cabinet-f7e5a.appspot.com',
-    iosBundleId: 'ca.tb.innovation.dev.Beacons',
+    iosBundleId: 'jct.pillorganizer.pills',
   );
 }

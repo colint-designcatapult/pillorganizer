@@ -1,4 +1,4 @@
-package jct.pillorganizer.app;
+package jct.pillorganizer.pills;
 
 import android.Manifest;
 import android.app.Activity;

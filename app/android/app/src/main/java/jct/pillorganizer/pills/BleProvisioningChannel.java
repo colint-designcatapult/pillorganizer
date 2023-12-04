@@ -1,17 +1,10 @@
-package jct.pillorganizer.app;
+package jct.pillorganizer.pills;
 
-import android.Manifest;
-import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.ParcelUuid;
 import android.util.Log;
-
-import androidx.annotation.RequiresApi;
-import androidx.core.app.ActivityCompat;
 
 import com.espressif.provisioning.DeviceConnectionEvent;
 import com.espressif.provisioning.ESPConstants;
