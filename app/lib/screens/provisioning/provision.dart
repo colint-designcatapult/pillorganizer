@@ -1,10 +1,12 @@
 import 'package:app/provider/provision_provider.dart';
+import 'package:app/screens/ScreenUtilWrapper.dart';
 import 'package:app/screens/provisioning/wifi_select_screen.dart';
 import 'package:app/service/provisioning_service.dart';
 import 'package:app/widgets/wizard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:tuple/tuple.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -70,49 +72,64 @@ class _ProvisionPageState extends State<ProvisionPage>
   @override
   Widget build(BuildContext context) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(1, 1);
-    return Selector<ProvisionProvider,
-            Tuple3<ProvisionStage, Object?, double?>>(
-        selector: (_, prov) =>
-            Tuple3(prov.state.stage, prov.state.error, prov.state.progress),
-        builder: (_, data, __) {
-          return WizardStep(
-            height: data.item2 != null
-                ? null
-                : data.item1 == ProvisionStage.select_ble
-                    ? 600
-                    : 400,
-            provisionningProgress: provisionningProgress,
-            title: _buildTitle(data),
-            subtext: _buildSubtitle(data),
-            onBackPressed: () {
-              if (Navigator.of(context).canPop()) {
-                Navigator.of(context).pop();
-              } else {
-                Navigator.of(context, rootNavigator: true).pop();
-              }
-            },
-            footer: data.item2 != null || timeoutTryAgain
-                ? PlatformElevatedButton(
-                    child: Text(AppLocalizations.of(context)!.genericTryAgain),
-                    onPressed: () {
-                      timeoutTryAgain = false;
-                      Provider.of<ProvisionProvider>(context, listen: false)
-                          .rescanBluetooth()
-                          .then((state) {
-                        if (state.deviceName != null && context.mounted) {
-                          Navigator.of(context).pushReplacement(
-                              ProvisionSelectWifiPage.route(context, state));
-                        }
-                      }).timeout(const Duration(seconds: 25), onTimeout: () {
-                        timeoutTryAgain = true;
-                      });
-                    },
-                  )
-                : null,
-            child: _buildBody(
-                data, Provider.of<ProvisionProvider>(context, listen: true)),
-          );
-        });
+    return ScreenUtilWrapper(
+      child: Selector<ProvisionProvider,
+              Tuple3<ProvisionStage, Object?, double?>>(
+          selector: (_, prov) =>
+              Tuple3(prov.state.stage, prov.state.error, prov.state.progress),
+          builder: (_, data, __) {
+            return WizardStep(
+              height: data.item2 != null
+                  ? null
+                  : data.item1 == ProvisionStage.select_ble
+                      ? 600.h
+                      : 400.h,
+              provisionningProgress: provisionningProgress,
+              title: _buildTitle(data),
+              subtext: _buildSubtitle(data),
+              onBackPressed: () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                } else {
+                  Navigator.of(context, rootNavigator: true).pop();
+                }
+              },
+              footer: data.item2 != null || timeoutTryAgain
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8.r),
+                      child: PlatformElevatedButton(
+                        padding: EdgeInsets.symmetric(vertical: 14.0.h),
+                        child: Text(
+                          AppLocalizations.of(context)!.genericTryAgain,
+                          style: Theme.of(context)
+                              .textTheme
+                              .displaySmall
+                              ?.copyWith(color: Colors.white),
+                        ),
+                        onPressed: () {
+                          timeoutTryAgain = false;
+                          Provider.of<ProvisionProvider>(context, listen: false)
+                              .rescanBluetooth()
+                              .then((state) {
+                            if (state.deviceName != null && context.mounted) {
+                              Navigator.of(context).pushReplacement(
+                                  ProvisionSelectWifiPage.route(
+                                      context, state));
+                            }
+                          }).timeout(const Duration(seconds: 25),
+                                  onTimeout: () {
+                            timeoutTryAgain = true;
+                          });
+                        },
+                      ),
+                    ) //
+
+                  : null,
+              child: _buildBody(
+                  data, Provider.of<ProvisionProvider>(context, listen: true)),
+            );
+          }),
+    );
   }
 
   Widget _buildBody(
@@ -120,22 +137,22 @@ class _ProvisionPageState extends State<ProvisionPage>
     if (data.item2 != null) {
       return Expanded(
           child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40.0),
+              padding: EdgeInsets.symmetric(horizontal: 40.0.w),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: ErrorInfoBox(error: data.item2),
               )));
     } else if (data.item1 == ProvisionStage.scanning_ble) {
       return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          padding: EdgeInsets.symmetric(horizontal: 24.0.w),
           child: Align(
             alignment: Alignment.topCenter,
             child: ClipRRect(
-                borderRadius: const BorderRadius.all(Radius.circular(32)),
+                borderRadius: BorderRadius.all(const Radius.circular(32).r),
                 child: LinearProgressIndicator(
                   value: data.item3,
                   semanticsLabel: AppLocalizations.of(context)!.progress,
-                  minHeight: 12,
+                  minHeight: 12.h,
                 )),
           ));
     } else if (data.item1 == ProvisionStage.select_ble && !scanningWifi) {
@@ -156,8 +173,8 @@ class _ProvisionPageState extends State<ProvisionPage>
                   child:
                       Text(AppLocalizations.of(context)!.provRescanBluetooth),
                 ),
-                const SizedBox(
-                  height: 35,
+                SizedBox(
+                  height: 35.h,
                 )
               ],
             )),
@@ -171,7 +188,7 @@ class _ProvisionPageState extends State<ProvisionPage>
     Widget? subtitle;
 
     return Padding(
-        padding: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.only(bottom: 8).h,
         child: Card(
           elevation: 1,
           child: ListTile(

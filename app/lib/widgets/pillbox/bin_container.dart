@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../api/device.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class BinContainer extends StatelessWidget {
   final bool isToday;
@@ -28,33 +29,34 @@ class BinContainer extends StatelessWidget {
 
     return Container(
       // 108 is the padding on each side of the pillbox and the padding between the column
-      width: (MediaQuery.of(context).size.width - 108) / 7,
+      width: ((MediaQuery.of(context).size.width - 108.w) / 7),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(8.0),
+        borderRadius: BorderRadius.circular(8.0).r,
         border: isDeviceActive
             ? null
             : Border.all(
                 color: const Color(0xFF206B8B),
-                width: 1.5,
+                width: 1.5.w,
               ),
       ),
-      child: Stack(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Positioned(
-            top: 14.0,
-            left: 0,
-            right: 0,
+          Padding(
+            padding: EdgeInsets.only(top: 14.h),
             child: SvgPicture.asset(
               'lib/assets/SVG/$iconName.svg',
-              height: 20,
+              height: 20.h,
             ),
           ),
-          Positioned(
-            bottom: 5.0,
-            left: 0,
-            right: 0,
-            child: SvgPicture.asset(binStatusIconPath, height: 30),
+          const Spacer(), // This will push the bottom icon to the bottom
+          Padding(
+            padding: EdgeInsets.only(bottom: 5.h),
+            child: SvgPicture.asset(
+              binStatusIconPath,
+              height: 30.h,
+            ),
           ),
         ],
       ),

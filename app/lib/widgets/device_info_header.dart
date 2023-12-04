@@ -6,6 +6,7 @@ import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:provider/provider.dart';
 import '../provider/selected_device_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class DeviceInfoHeader extends StatelessWidget {
   final bool deviceOffline;
@@ -39,71 +40,72 @@ class DeviceInfoHeader extends StatelessWidget {
                     Text(
                         selectedDevice.device?.name ??
                             AppLocalizations.of(context)!.loadingState,
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: Colors.white,
-                            fontSize: 24,
+                            fontSize: 24.h,
                             fontWeight: FontWeight.w600)),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.info, color: Colors.white, size: 16),
+                    SizedBox(width: 8.w),
+                    Icon(Icons.info, color: Colors.white, size: 16.h),
                   ],
                 )),
             if (deviceOffline &&
                 bleProv.status == BLEConnectionStatus.connecting)
               Column(
                 children: [
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8.h),
                   Row(children: [
-                    const SizedBox(
-                        height: 16,
-                        width: 16,
-                        child: CircularProgressIndicator(
+                    SizedBox(
+                        height: 16.h,
+                        width: 16.w,
+                        child: const CircularProgressIndicator(
                           color: Colors.white,
                           strokeWidth: 2,
                         )),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8.w),
                     Text(AppLocalizations.of(context)!.bluetoothConnecting,
                         style: Theme.of(context)
                             .textTheme
                             .bodySmall
                             ?.copyWith(color: Colors.white)),
-                    const SizedBox(width: 8),
-                    const Icon(
+                    SizedBox(width: 8.w),
+                    Icon(
                       PhosphorIcons.bluetooth_fill,
-                      size: 20,
+                      size: 20.h,
                       color: Colors.white,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8.w),
                   ]),
                 ],
               ),
             if (batteryLevel != null)
               Column(
                 children: [
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8.h),
                   Row(children: [
                     Text(AppLocalizations.of(context)!.batteryLevel,
                         style: Theme.of(context)
                             .textTheme
                             .bodySmall
                             ?.copyWith(color: Colors.white)),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8.w),
                     Icon(
                       batteryIcon(batteryLevel, batteryCharging),
-                      size: 20,
+                      size: 20.h,
                       color: Colors.white,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8.w),
                     Text(
                       "${batteryLevel.toString()} %",
                       style: Theme.of(context)
                           .textTheme
                           .displaySmall
-                          ?.copyWith(fontSize: 14, color: Colors.white),
+                          ?.copyWith(fontSize: 14.h, color: Colors.white),
                     )
                   ]),
                 ],
-              ),
-            const SizedBox(height: 24),
+              )
+            else
+              SizedBox(height: 12.h),
           ],
         );
       });
@@ -117,10 +119,10 @@ class DeviceInfoHeader extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => Dialog(
-          insetPadding: const EdgeInsets.all(16),
+          insetPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
           elevation: 0,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+            padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 32.h),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
@@ -130,22 +132,22 @@ class DeviceInfoHeader extends StatelessWidget {
                       onTap: () {
                         Navigator.of(context).pop();
                       },
-                      child: const Icon(
+                      child: Icon(
                         PhosphorIcons.x_bold,
-                        size: 24,
-                        color: Color(0XFF101828),
+                        size: 24.h,
+                        color: const Color(0XFF101828),
                       )),
                 ),
-                const Column(
+                Column(
                   children: [
                     Icon(
                       PhosphorIcons.hard_drives_fill,
-                      size: 48,
-                      color: Color(0xFF206B8B),
+                      size: 48.h,
+                      color: const Color(0xFF206B8B),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4.h),
                 Text(
                   AppLocalizations.of(context)!.deviceInfo,
                   style: Theme.of(context)
@@ -153,66 +155,66 @@ class DeviceInfoHeader extends StatelessWidget {
                       .labelMedium
                       ?.copyWith(color: const Color(0XFF101828)),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
                   child: Text(
                     AppLocalizations.of(context)!.deviceInfoSubtitle,
                     style: Theme.of(context).textTheme.bodySmall,
                     textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24.h),
                 Container(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border:
-                          Border.all(color: const Color(0xFFBFD2DB), width: 2),
+                      borderRadius: BorderRadius.circular(12).r,
+                      border: Border.all(
+                          color: const Color(0xFFBFD2DB), width: 2.w),
                       color: const Color(0xFFF1F3F6),
                     ),
-                    height: 58,
+                    height: 58.h,
                     child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                        padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 16.h),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               PhosphorIcons.wifi_high,
-                              size: 24,
-                              color: Color(0xFF191B1D),
+                              size: 24.h,
+                              color: const Color(0xFF191B1D),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12.w),
                             Text(
                               wirelessText(context, bleProv),
                               style: Theme.of(context).textTheme.bodyMedium,
                             )
                           ],
                         ))),
-                const SizedBox(height: 12),
+                SizedBox(height: 12.h),
                 Container(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border:
-                          Border.all(color: const Color(0xFFBFD2DB), width: 2),
+                      borderRadius: BorderRadius.circular(12).r,
+                      border: Border.all(
+                          color: const Color(0xFFBFD2DB), width: 2.w),
                       color: const Color(0xFFF1F3F6),
                     ),
-                    height: 58,
+                    height: 58.h,
                     child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                        padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 16.h),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               PhosphorIcons.bluetooth_fill,
-                              size: 24,
-                              color: Color(0xFF191B1D),
+                              size: 24.h,
+                              color: const Color(0xFF191B1D),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12.w),
                             Text(
                               bleText,
                               style: bleText.length > maxLength
                                   ? Theme.of(context)
                                       .textTheme
                                       .bodyMedium
-                                      ?.copyWith(fontSize: 13)
+                                      ?.copyWith(fontSize: 13.h)
                                   : Theme.of(context).textTheme.bodyMedium,
                             )
                           ],

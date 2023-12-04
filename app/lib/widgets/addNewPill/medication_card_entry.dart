@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class MedicationCardEntry extends StatefulWidget {
   const MedicationCardEntry({
@@ -26,20 +27,20 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
       backgroundColor: const Color(0xFFF1F2F6),
       showCheckmark: false,
       label: SizedBox(
-          height: 56,
+          height: 56.h,
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            SvgPicture.asset(imageUrl, width: 30, height: 30),
-            const SizedBox(width: 12),
+            SvgPicture.asset(imageUrl, width: 30.w, height: 30.h),
+            SizedBox(width: 12.w),
             Text(time.time.format(context),
                 style: Theme.of(context).textTheme.titleSmall)
           ])),
       selected: selected,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8).r,
       ),
       side: selected
-          ? BorderSide(color: Theme.of(context).primaryColor, width: 2)
-          : const BorderSide(color: Color(0xFFF1F2F6), width: 2),
+          ? BorderSide(color: Theme.of(context).primaryColor, width: 2.w)
+          : BorderSide(color: const Color(0xFFF1F2F6), width: 2.w),
       onPressed: () {
         provider.toggleDispenseTime(time.id!);
       },
@@ -54,8 +55,8 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
             child: _buildDose(context, sched.am!, checked, provider,
                 'lib/assets/SVG/sun.svg')),
       if (sched.pm != null && sched.pm != null)
-        const SizedBox(
-          width: 26,
+        SizedBox(
+          width: 26.w,
         ),
       if (sched.pm != null)
         Expanded(
@@ -66,14 +67,13 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
     ];
   }
 
-  static const navFooterHeight = 72.0;
   @override
   Widget build(BuildContext context) {
     return Consumer<NewMedicationProvider>(builder: (context, provider, child) {
       final isEditing = provider.state.existing != null;
       return SingleChildScrollView(
           child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 32),
+        padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 32.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.start,
@@ -89,7 +89,7 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
                     ?.copyWith(color: const Color(0xFF03012C)),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
             if (!isEditing)
               Text(
                 AppLocalizations.of(context)!.newMedicationSubtitle,
@@ -99,15 +99,15 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
                     .bodyMedium
                     ?.copyWith(color: const Color(0xFF03012C)),
               ),
-            const SizedBox(height: 36),
+            SizedBox(height: 36.h),
             Text(
               AppLocalizations.of(context)!.name,
               style: Theme.of(context)
                   .textTheme
                   .displayLarge
-                  ?.copyWith(fontSize: 28, color: const Color(0xFF03012C)),
+                  ?.copyWith(fontSize: 28.h, color: const Color(0xFF03012C)),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
             TextFormField(
                 initialValue: provider.state.name,
                 inputFormatters: [
@@ -116,14 +116,15 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: const Color(0xFFF1F3F6),
-                  enabledBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Color(0xFFBFD2DB), width: 2),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide:
+                        BorderSide(color: const Color(0xFFBFD2DB), width: 2.w),
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                   contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                 ),
                 onChanged: (val) {
                   provider.updateName(val);
@@ -131,7 +132,7 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
                 onFieldSubmitted: (val) {
                   provider.updateName(val);
                 }),
-            const SizedBox(height: 36),
+            SizedBox(height: 36.h),
             Column(
               children: [
                 MedicationColorSelector(
@@ -139,7 +140,7 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
                     onChange: (color) {
                       provider.updateColor(color);
                     }),
-                const SizedBox(height: 36),
+                SizedBox(height: 36.h),
                 PillShapeSelector(
                   key: ValueKey(provider.state.shape),
                   color: provider.state.color,
@@ -150,15 +151,15 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
                 )
               ],
             ),
-            const SizedBox(height: 36),
+            SizedBox(height: 36.h),
             Text(
               AppLocalizations.of(context)!.time,
               style: Theme.of(context)
                   .textTheme
                   .displayLarge
-                  ?.copyWith(fontSize: 28, color: const Color(0xFF03012C)),
+                  ?.copyWith(fontSize: 28.h, color: const Color(0xFF03012C)),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12.h),
             Provider(
               create: (BuildContext context) {
                 return ScheduleProvider(deviceID: provider.state.deviceID);
@@ -179,7 +180,7 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
                     );
                   }),
             ),
-            const SizedBox(height: navFooterHeight + 24),
+            SizedBox(height: 96.h),
           ],
         ),
       ));

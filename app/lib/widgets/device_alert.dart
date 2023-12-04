@@ -2,6 +2,7 @@ import 'package:app/widgets/button_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../api/device.dart';
 
@@ -21,7 +22,10 @@ class DeviceAlert extends StatelessWidget {
   Widget build(BuildContext context) {
     if (notice != DeviceNotice.none) {
       return Padding(
-        padding: const EdgeInsets.only(bottom: 10.0),
+        padding: EdgeInsets.symmetric(
+          horizontal: 10.w,
+          vertical: 10.h,
+        ),
         child: _buildNotice(context, notice),
       );
     } else {
@@ -32,15 +36,15 @@ class DeviceAlert extends StatelessWidget {
   Widget _buildNotice(BuildContext context, DeviceNotice notice) {
     return Card(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(4.0),
+        borderRadius: BorderRadius.circular(4.0).r,
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         child: Row(
           children: [
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(right: 6.0),
+                padding: const EdgeInsets.only(right: 6.0).w,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,14 +102,11 @@ class DeviceAlert extends StatelessWidget {
   Icon _getIcon(DeviceNotice notice) {
     switch (notice) {
       case DeviceNotice.disconnected:
-        return const Icon(PhosphorIcons.plugs_bold,
-            color: Colors.black, size: 20);
+        return Icon(PhosphorIcons.plugs_bold, color: Colors.black, size: 20.h);
       case DeviceNotice.empty:
-        return const Icon(PhosphorIcons.pill_bold,
-            color: Colors.black, size: 20);
+        return Icon(PhosphorIcons.pill_bold, color: Colors.black, size: 20.h);
       default:
-        return const Icon(PhosphorIcons.pill_bold,
-            color: Colors.black, size: 20);
+        return Icon(PhosphorIcons.pill_bold, color: Colors.black, size: 20.h);
     }
   }
 

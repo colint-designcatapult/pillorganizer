@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../widgets/device_rename_modal.dart';
 import '../../widgets/schedule_entry.dart';
@@ -41,26 +42,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
           backgroundColor: const Color(0xFFBFD2DB),
           body: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.only(top: 75.0),
+              padding: EdgeInsets.only(top: 75.h, bottom: 20.h),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      margin: const EdgeInsets.only(left: 24.0, bottom: 8.0),
+                      margin: EdgeInsets.only(left: 24.w, bottom: 8.h),
                       child: Text(
                         prov.device?.name ??
                             AppLocalizations.of(context)!.loadingState,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 32.0,
+                        style: TextStyle(
+                          fontSize: 32.h,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                     Container(
-                      margin: const EdgeInsets.only(left: 24.0, bottom: 32.0),
+                      margin: EdgeInsets.only(left: 24.w, bottom: 32.h),
                       child: Row(
                         children: [
                           ButtonIconText(
@@ -69,7 +70,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               onPressed: () {
                                 changeName(context);
                               }),
-                          const SizedBox(width: 20.0),
+                          SizedBox(width: 20.w),
                           ButtonIconText(
                               text: AppLocalizations.of(context)!.delete,
                               iconData: PhosphorIcons.trash_simple,
@@ -82,20 +83,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Flexible(
                       fit: FlexFit.tight,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0).w,
                         child: Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(12.0),
+                            borderRadius: BorderRadius.circular(12.0).r,
                           ),
                           child: Column(
                             children: [
                               Container(
-                                padding: const EdgeInsets.only(
-                                  top: 24,
-                                  bottom: 12,
-                                  left: 20,
-                                  right: 20,
+                                padding: EdgeInsets.only(
+                                  top: 24.h,
+                                  bottom: 12.h,
+                                  left: 20.w,
+                                  right: 20.w,
                                 ),
                                 child: Row(
                                   children: [
@@ -103,8 +104,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       child: SegmentedButton(
                                         segments: <ButtonSegment>[
                                           ButtonSegment(
-                                              icon: const Icon(
-                                                  PhosphorIcons.timer),
+                                              icon: Icon(
+                                                PhosphorIcons.timer,
+                                                size: 18.h,
+                                              ),
                                               value: 0,
                                               label: Text(
                                                 AppLocalizations.of(context)!
@@ -117,8 +120,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                                             FontWeight.w500),
                                               )),
                                           ButtonSegment(
-                                            icon: const Icon(PhosphorIcons
-                                                .bell_simple_ringing),
+                                            icon: Icon(
+                                              PhosphorIcons.bell_simple_ringing,
+                                              size: 18.h,
+                                            ),
                                             value: 1,
                                             label: Text(
                                               AppLocalizations.of(context)!
@@ -134,9 +139,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                         ],
                                         selected: {selectedButtonIndex},
                                         selectedIcon: selectedButtonIndex == 0
-                                            ? const Icon(PhosphorIcons.timer)
-                                            : const Icon(PhosphorIcons
-                                                .bell_simple_ringing),
+                                            ? Icon(
+                                                PhosphorIcons.timer,
+                                                size: 18.h,
+                                              )
+                                            : Icon(
+                                                PhosphorIcons
+                                                    .bell_simple_ringing,
+                                                size: 18.h,
+                                              ),
                                         onSelectionChanged: (Set newSelection) {
                                           setState(() {
                                             selectedButtonIndex =
@@ -149,13 +160,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                               RoundedRectangleBorder(
                                                   borderRadius:
                                                       BorderRadiusDirectional
-                                                          .circular(8))),
+                                                          .circular(8.r))),
                                           side: MaterialStateProperty
                                               .resolveWith<BorderSide>(
                                                   (Set<MaterialState> states) {
-                                            return const BorderSide(
-                                                color: Color(0xFFBFD2DB),
-                                                width: 2.0);
+                                            return BorderSide(
+                                                color: const Color(0xFFBFD2DB),
+                                                width: 2.h);
                                           }),
                                           backgroundColor: MaterialStateProperty
                                               .resolveWith<Color>(
@@ -168,8 +179,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                           }),
                                           padding: MaterialStateProperty.all<
                                               EdgeInsetsGeometry>(
-                                            const EdgeInsets.symmetric(
-                                                vertical: 16, horizontal: 12),
+                                            EdgeInsets.symmetric(
+                                                vertical: 16.h,
+                                                horizontal: 12.w),
                                           ),
                                         ),
                                       ),
@@ -182,7 +194,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   physics:
                                       const AlwaysScrollableScrollPhysics(),
                                   child: Padding(
-                                      padding: const EdgeInsets.all(20.0),
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 20.w, vertical: 20.h),
                                       child: selectedButtonIndex == 0
                                           ? const ScheduleEntry()
                                           : const NotificationsSettings()),
@@ -225,7 +238,7 @@ class NotificationsSettings extends StatelessWidget {
                   .textTheme
                   .titleSmall
                   ?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 26),
+          SizedBox(height: 26.h),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -247,7 +260,7 @@ class NotificationsSettings extends StatelessWidget {
                   },
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16.w),
               Flexible(
                 child: Text(
                   AppLocalizations.of(context)!.notificationReminder,

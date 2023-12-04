@@ -5,6 +5,7 @@ import 'package:app/provider/ble_provider.dart';
 import 'package:app/provider/medication_provider.dart';
 import 'package:app/provider/time_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
+import 'package:app/screens/ScreenUtilWrapper.dart';
 import 'package:app/screens/first_launch.dart';
 import 'package:app/screens/post_setup_wizard.dart';
 import 'package:app/service/credential_manager.dart';
@@ -17,6 +18,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'provider/authentication_provider.dart';
@@ -62,164 +64,145 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (context) => AuthenticationProvider(),
-        ),
-        ChangeNotifierProvider<UserRegistrationProvider>(
-            create: (_) => UserRegistrationProvider()),
-        ChangeNotifierProvider<DeviceListProvider>.value(
-            value: deviceRepo.deviceListProvider),
-        ChangeNotifierProxyProvider<DeviceListProvider, SelectedDeviceProvider>(
-          create: (context) => SelectedDeviceProvider(),
-          update: (context, list, prov) => prov!.update(list.value),
-        ),
-        ChangeNotifierProxyProvider<SelectedDeviceProvider,
-                MedicationsProvider>(
-            create: (context) => MedicationsProvider(
-                Provider.of<SelectedDeviceProvider>(context, listen: false)
-                    .device),
-            update: (context, device, old) => old!.update(device.device)),
-        ChangeNotifierProxyProvider<SelectedDeviceProvider, ScheduleProvider>(
-            create: (context) => ScheduleProvider(),
-            update: (context, dev, prov) => prov!.update(dev.device)),
-        ChangeNotifierProvider<MinuteBasedTimeProvider>(
-          create: (context) => MinuteBasedTimeProvider(),
-        ),
-        ChangeNotifierProxyProvider<SelectedDeviceProvider,
-                DeviceBluetoothProvider>(
-            create: (context) => DeviceBluetoothProvider(),
-            update: (context, dev, prov) {
-              if (prov != null) {
-                prov.changeDevice(dev.device);
-                return prov;
-              } else {
-                return DeviceBluetoothProvider(selectedDevice: dev.device);
-              }
-            })
-      ],
-      child: MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaleFactor: 1.0,
+    return ScreenUtilWrapper(
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(
+            create: (context) => AuthenticationProvider(),
           ),
-          child: PlatformProvider(
-            settings: PlatformSettingsData(iosUsesMaterialWidgets: true),
-            builder: (context) => MaterialApp(
-              title: 'Cabinet Pills',
-              themeMode: ThemeMode.system,
-              routes: {
-                '/': (context) {
-                  return FutureBuilder<bool>(
-                    future: _checkIfAccountExists(context),
-                    builder:
-                        (BuildContext context, AsyncSnapshot<bool> snapshot) {
-                      if (snapshot.hasData && snapshot.data!) {
-                        return const LaunchPageLogin();
-                      } else {
-                        return const FirstLaunchPage();
-                      }
-                    },
-                  );
-                },
-                '/provision': (context) => const ProvisionNavigator(),
-                '/index': (context) => const TabNavigator(),
-                '/post_setup': (context) => const PostSetupWizard()
-              },
-              supportedLocales: const [Locale('en'), Locale('fr')],
-              localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
-                AppLocalizations.delegate,
-                GlobalMaterialLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate,
-                GlobalCupertinoLocalizations.delegate,
-              ],
-              debugShowCheckedModeBanner: false,
-              theme: ThemeData(
-                useMaterial3: true,
-                colorScheme:
-                    ColorScheme.fromSeed(seedColor: const Color(0xff206b8b)),
-                appBarTheme: const AppBarTheme(
-                    toolbarHeight: 70,
-                    titleSpacing: 25,
-                    color: Color(0xff206b8b),
-                    iconTheme: IconThemeData(color: Colors.white),
-                    titleTextStyle: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600,
-                        fontSize: 24,
-                        color: Colors.white),
-                    toolbarTextStyle: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.normal,
-                    ),
-                    systemOverlayStyle: SystemUiOverlayStyle(
-                      systemNavigationBarColor: Colors.black,
-                      statusBarColor: Colors.transparent,
-                      systemNavigationBarIconBrightness: Brightness.light,
-                      statusBarIconBrightness: Brightness.light,
-                    )),
-                primaryColor: const Color(0xff206b8b),
-                secondaryHeaderColor: const Color(0xFFBFD2DB),
-                fontFamily: 'Poppins',
-                textTheme: const TextTheme(
-                  titleSmall: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                  ),
-                  titleMedium: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 20,
-                  ),
-                  titleLarge: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 24,
-                  ),
-                  labelSmall: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600),
-                  labelMedium: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600),
-                  labelLarge: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600),
-                  displaySmall: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500),
-                  displayMedium: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500),
-                  displayLarge: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 32,
-                      fontWeight: FontWeight.w500),
-                  bodySmall: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400),
-                  bodyMedium: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400),
-                  bodyLarge: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 20,
-                      fontWeight: FontWeight.w400),
-                ),
-              ),
-              navigatorObservers: [routeObserver],
+          ChangeNotifierProvider<UserRegistrationProvider>(
+              create: (_) => UserRegistrationProvider()),
+          ChangeNotifierProvider<DeviceListProvider>.value(
+              value: deviceRepo.deviceListProvider),
+          ChangeNotifierProxyProvider<DeviceListProvider,
+              SelectedDeviceProvider>(
+            create: (context) => SelectedDeviceProvider(),
+            update: (context, list, prov) => prov!.update(list.value),
+          ),
+          ChangeNotifierProxyProvider<SelectedDeviceProvider,
+                  MedicationsProvider>(
+              create: (context) => MedicationsProvider(
+                  Provider.of<SelectedDeviceProvider>(context, listen: false)
+                      .device),
+              update: (context, device, old) => old!.update(device.device)),
+          ChangeNotifierProxyProvider<SelectedDeviceProvider, ScheduleProvider>(
+              create: (context) => ScheduleProvider(),
+              update: (context, dev, prov) => prov!.update(dev.device)),
+          ChangeNotifierProvider<MinuteBasedTimeProvider>(
+            create: (context) => MinuteBasedTimeProvider(),
+          ),
+          ChangeNotifierProxyProvider<SelectedDeviceProvider,
+                  DeviceBluetoothProvider>(
+              create: (context) => DeviceBluetoothProvider(),
+              update: (context, dev, prov) {
+                if (prov != null) {
+                  prov.changeDevice(dev.device);
+                  return prov;
+                } else {
+                  return DeviceBluetoothProvider(selectedDevice: dev.device);
+                }
+              })
+        ],
+        child: MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaleFactor: 1.0,
             ),
-          )),
+            child: PlatformProvider(
+              settings: PlatformSettingsData(iosUsesMaterialWidgets: true),
+              builder: (context) => MaterialApp(
+                title: 'Cabinet Pills',
+                themeMode: ThemeMode.system,
+                routes: {
+                  '/': (context) {
+                    return FutureBuilder<bool>(
+                      future: _checkIfAccountExists(context),
+                      builder:
+                          (BuildContext context, AsyncSnapshot<bool> snapshot) {
+                        if (snapshot.hasData && snapshot.data!) {
+                          return const LaunchPageLogin();
+                        } else {
+                          return const FirstLaunchPage();
+                        }
+                      },
+                    );
+                  },
+                  '/provision': (context) => const ProvisionNavigator(),
+                  '/index': (context) => const TabNavigator(),
+                  '/post_setup': (context) => const PostSetupWizard()
+                },
+                supportedLocales: const [Locale('en'), Locale('fr')],
+                localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+                  AppLocalizations.delegate,
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                debugShowCheckedModeBanner: false,
+                theme: ThemeData(
+                  useMaterial3: true,
+                  colorScheme:
+                      ColorScheme.fromSeed(seedColor: const Color(0xff206b8b)),
+                  primaryColor: const Color(0xff206b8b),
+                  secondaryHeaderColor: const Color(0xFFBFD2DB),
+                  fontFamily: 'Poppins',
+                  textTheme: TextTheme(
+                    titleSmall: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16.h,
+                    ),
+                    titleMedium: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 20.h,
+                    ),
+                    titleLarge: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 24.h,
+                    ),
+                    labelSmall: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 16.h,
+                        fontWeight: FontWeight.w600),
+                    labelMedium: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 18.h,
+                        fontWeight: FontWeight.w600),
+                    labelLarge: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 20.h,
+                        fontWeight: FontWeight.w600),
+                    displaySmall: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 16.h,
+                        fontWeight: FontWeight.w500),
+                    displayMedium: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 20.h,
+                        fontWeight: FontWeight.w500),
+                    displayLarge: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 32.h,
+                        fontWeight: FontWeight.w500),
+                    bodySmall: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 14.h,
+                        fontWeight: FontWeight.w400),
+                    bodyMedium: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 16.h,
+                        fontWeight: FontWeight.w400),
+                    bodyLarge: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 20.h,
+                        fontWeight: FontWeight.w400),
+                  ),
+                ),
+                navigatorObservers: [routeObserver],
+              ),
+            )),
+      ),
     );
   }
 

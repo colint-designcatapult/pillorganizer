@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class ButtonIcon extends StatelessWidget {
   final Widget icon;
@@ -17,8 +18,8 @@ class ButtonIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 124,
-      height: 72,
+      width: 124.w,
+      height: 72.h,
       child: ElevatedButton(
         onPressed: isDisabled ? null : onPressed,
         style: ElevatedButton.styleFrom(
@@ -26,18 +27,18 @@ class ButtonIcon extends StatelessWidget {
           onPrimary: const Color(0xFF5796A9),
           side: BorderSide(
             color: isDisabled ? Colors.grey[700]! : const Color(0xFF5796A9),
-            width: 2,
+            width: 2.w,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4.0),
+            borderRadius: BorderRadius.circular(4.0).r,
           ),
-          padding: EdgeInsets.symmetric(vertical: 12.0),
+          padding: EdgeInsets.symmetric(vertical: 12.h),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             icon,
-            SizedBox(height: 4),
+            SizedBox(height: 4.h),
             Text(
               label,
               style: Theme.of(context)

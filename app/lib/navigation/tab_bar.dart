@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CustomTabBar extends StatelessWidget {
   final int currentIndex;
@@ -16,14 +17,14 @@ class CustomTabBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: Color(0xFFBFD2DB), width: 4),
+        borderRadius: BorderRadius.circular(16.0).r,
+        border: Border.all(color: const Color(0xFFBFD2DB), width: 4.w),
         color: const Color(0xFF206B8B),
       ),
       child: Material(
         color: Colors.transparent,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 8.0),
+          padding: EdgeInsets.symmetric(vertical: 0.0, horizontal: 8.w),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: tabs,

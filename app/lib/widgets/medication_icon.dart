@@ -4,6 +4,7 @@ import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class MedicationIcon extends StatelessWidget {
   const MedicationIcon(
@@ -23,15 +24,15 @@ class MedicationIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: size,
-      height: size,
+      width: size.h,
+      height: size.h,
       child: Center(
         child: Stack(children: [
           Center(
               child: SvgPicture.asset(_iconAssets(),
                   width: size,
                   height: size,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.fill,
                   colorFilter: ColorFilter.mode(
                       color ?? Theme.of(context).iconTheme.color!,
                       BlendMode.modulate))),
@@ -83,19 +84,19 @@ class HorizontalPillShapeSelectorOption extends StatelessWidget {
     return GestureDetector(
       onTap: () => onTap(shape),
       child: Container(
-        height: 56,
-        width: 56,
+        height: 56.h,
+        width: 56.w,
         decoration: BoxDecoration(
-            borderRadius: const BorderRadius.all(Radius.circular(8)),
+            borderRadius: BorderRadius.all(const Radius.circular(8).r),
             color: const Color.fromARGB(16, 0, 0, 0),
             border: selected
-                ? Border.all(color: Theme.of(context).primaryColor, width: 2.0)
+                ? Border.all(color: Theme.of(context).primaryColor, width: 2.w)
                 : const Border()),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            MedicationIcon(size: 40, shape: shape, color: color),
+            MedicationIcon(size: 40.h, shape: shape, color: color),
           ],
         ),
       ),
@@ -126,13 +127,13 @@ class _PillShapeSelectorState extends State<PillShapeSelector> {
             style: Theme.of(context)
                 .textTheme
                 .displayLarge
-                ?.copyWith(fontSize: 28)),
-        const SizedBox(height: 12),
+                ?.copyWith(fontSize: 28.h)),
+        SizedBox(height: 12.h),
         GridView.count(
             crossAxisCount: 4,
             childAspectRatio: 1,
-            crossAxisSpacing: 28,
-            mainAxisSpacing: 28,
+            crossAxisSpacing: 28.w,
+            mainAxisSpacing: 28.w,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             children: [
@@ -167,28 +168,28 @@ class MedicationColorSelectorColor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => onTap(color),
-      child: Container(
-        height: 56,
-        width: 56,
-        decoration: BoxDecoration(
-          borderRadius: const BorderRadius.all(Radius.circular(8)),
-          color: color,
-          border: selected
-              ? Border.all(
-                  color: Theme.of(context).primaryColor,
-                  width: 4,
-                )
-              : icon != null
-                  ? Border.all(
-                      color: Theme.of(context).secondaryHeaderColor,
-                      width: 2,
-                    )
-                  : null,
-        ),
-        child: icon,
-      ),
-    );
+        onTap: () => onTap(color),
+        child: SizedBox(
+            height: 56,
+            width: 56,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.all(Radius.circular(8)),
+                color: color,
+                border: selected
+                    ? Border.all(
+                        color: Theme.of(context).primaryColor,
+                        width: 4,
+                      )
+                    : icon != null
+                        ? Border.all(
+                            color: Theme.of(context).secondaryHeaderColor,
+                            width: 2,
+                          )
+                        : null,
+              ),
+              child: icon,
+            )));
   }
 }
 
@@ -218,13 +219,13 @@ class MedicationColorSelector extends StatelessWidget {
             style: Theme.of(context)
                 .textTheme
                 .displayLarge
-                ?.copyWith(fontSize: 28)),
-        const SizedBox(height: 12),
+                ?.copyWith(fontSize: 28.h)),
+        SizedBox(height: 12.h),
         GridView.count(
           crossAxisCount: 4,
           childAspectRatio: 1,
-          crossAxisSpacing: 28,
-          mainAxisSpacing: 28,
+          crossAxisSpacing: 28.w,
+          mainAxisSpacing: 28.w,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           children: [
@@ -238,7 +239,10 @@ class MedicationColorSelector extends StatelessWidget {
             MedicationColorSelectorColor(
                 color: Colors.white30,
                 selected: selected != null && !commonColors.contains(selected),
-                icon: const Icon(PhosphorIcons.eyedropper_sample),
+                icon: Icon(
+                  PhosphorIcons.eyedropper_sample,
+                  size: 24.w,
+                ),
                 onTap: (_) {
                   showColorPickerDialog(context);
                 })
@@ -257,7 +261,7 @@ class MedicationColorSelector extends StatelessWidget {
         return Dialog(
           insetPadding: const EdgeInsets.all(16),
           child: Container(
-            height: 550,
+            height: 550.h,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
@@ -269,14 +273,15 @@ class MedicationColorSelector extends StatelessWidget {
                   AppLocalizations.of(context)!.selectAColor,
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20.h),
                 ColorPicker(
                   pickerColor: currentColor,
                   onColorChanged: (color) => currentColor = color,
                   pickerAreaHeightPercent: 0.8,
                   enableAlpha: false,
+                  colorPickerWidth: 250.w,
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20.h),
                 Row(
                   children: <Widget>[
                     Expanded(
@@ -285,7 +290,7 @@ class MedicationColorSelector extends StatelessWidget {
                         Navigator.of(context).pop();
                       },
                       child: Container(
-                          height: 44,
+                          height: 44.h,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
@@ -305,7 +310,7 @@ class MedicationColorSelector extends StatelessWidget {
                                     ?.copyWith(color: const Color(0xFF206B8B)),
                               ))),
                     )),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12.w),
                     Expanded(
                         child: GestureDetector(
                       onTap: () {
@@ -313,7 +318,7 @@ class MedicationColorSelector extends StatelessWidget {
                         Navigator.of(context).pop();
                       },
                       child: Container(
-                          height: 44,
+                          height: 44.h,
                           decoration: BoxDecoration(
                             color: const Color(0xFF206B8B),
                             borderRadius: BorderRadius.circular(12),

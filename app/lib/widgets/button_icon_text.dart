@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class ButtonIconText extends StatelessWidget {
   final String text;
@@ -31,8 +32,12 @@ class ButtonIconText extends StatelessWidget {
       onTap: onPressed,
       child: Row(
         children: [
-          Icon(iconData, color: textColor),
-          const SizedBox(width: 1.0),
+          Icon(
+            iconData,
+            color: textColor,
+            size: 16.h,
+          ),
+          SizedBox(width: 1.w),
           Text(
             text,
             style: textStyle,

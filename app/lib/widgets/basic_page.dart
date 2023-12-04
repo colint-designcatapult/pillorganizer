@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class BasicPage extends StatelessWidget {
   const BasicPage({super.key, required this.child, this.title, this.bgColor});
@@ -32,7 +33,7 @@ class BasicPage extends StatelessWidget {
                       style: Theme.of(context)
                           .textTheme
                           .bodyMedium
-                          ?.copyWith(fontSize: 18),
+                          ?.copyWith(fontSize: 18.sp),
                       child: title!,
                     ),
                 ],
@@ -216,16 +217,16 @@ class _BasicFormState extends State<BasicForm> {
               callback: _onSubmit,
               child: Column(
                 children: [
-                  const SizedBox(
-                    height: 15,
+                  SizedBox(
+                    height: 15.h,
                   ),
                   ...widget.children,
-                  const SizedBox(
-                    height: 15,
+                  SizedBox(
+                    height: 15.h,
                   ),
                   SizedBox(
                       width: double.infinity,
-                      height: 48,
+                      height: 48.h,
                       child: FutureBuilder(
                           future: widget.future,
                           builder: (context, snapshot) {
@@ -296,14 +297,15 @@ class BasicPageTextFormField extends StatelessWidget {
           onSaved: onSaved,
           onChanged: onChanged,
           onFieldSubmitted: _onFieldSubmitted(context),
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 18),
+          style:
+              Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 18.h),
           textInputAction: textInputAction,
           decoration: InputDecoration(
               border: const OutlineInputBorder(), labelText: labelText),
           obscureText: obscureText,
         ),
-        const SizedBox(
-          height: 36,
+        SizedBox(
+          height: 36.h,
         )
       ],
     );

@@ -7,6 +7,7 @@ import 'package:app/screens/auth/register.dart';
 import 'package:app/widgets/generic_yes_no_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:app/screens/modals/device_selector_modal.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -27,10 +28,13 @@ class AccountScreen extends StatelessWidget {
           context: context,
           isScrollControlled: true,
           elevation: 0,
-          shape: const RoundedRectangleBorder(
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(
-              top: Radius.circular(16),
+              top: const Radius.circular(16).r,
             ),
+          ),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width,
           ),
           builder: (context) => const RegisterPage());
     }
@@ -70,10 +74,13 @@ class AccountScreen extends StatelessWidget {
           context: context,
           isScrollControlled: true,
           elevation: 0,
-          shape: const RoundedRectangleBorder(
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(
-              top: Radius.circular(16),
+              top: Radius.circular(16.r),
             ),
+          ),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width,
           ),
           builder: (context) => const ChangePassword());
     }
@@ -82,29 +89,30 @@ class AccountScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFBFD2DB),
       body: SafeArea(
           child: Padding(
-              padding: const EdgeInsets.only(top: 75),
+              padding: EdgeInsets.only(top: 75.h),
               child: SingleChildScrollView(
                 child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          padding: EdgeInsets.symmetric(horizontal: 24.w),
                           child: Text(
                             AppLocalizations.of(context)!.accountSettings,
                             style: Theme.of(context)
                                 .textTheme
                                 .titleLarge
-                                ?.copyWith(fontSize: 32),
+                                ?.copyWith(fontSize: 32.h),
                           )),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8.h),
                       Padding(
-                          padding: const EdgeInsets.all(24),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 24.w, vertical: 24.h),
                           child: GridView.count(
                             crossAxisCount: 2,
                             childAspectRatio: 1,
-                            crossAxisSpacing: 24,
-                            mainAxisSpacing: 24,
+                            crossAxisSpacing: 24.w,
+                            mainAxisSpacing: 24.h,
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             children: [
@@ -196,12 +204,10 @@ class SquareButton extends StatelessWidget {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        width: 150,
-        height: 150,
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: const BorderRadius.all(Radius.circular(4.0)),
+          borderRadius: BorderRadius.all(const Radius.circular(4.0).r),
           boxShadow: [
             BoxShadow(
               color: Colors.grey.withOpacity(0.3),
@@ -214,15 +220,15 @@ class SquareButton extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            const SizedBox(height: 14),
+            SizedBox(height: 14.h),
             Icon(
               icon,
-              size: 56.0,
+              size: 50.h,
               color: color,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
             SizedBox(
-                height: 48,
+                height: 60.h,
                 child: Align(
                     alignment: Alignment.center,
                     child: Text(label,

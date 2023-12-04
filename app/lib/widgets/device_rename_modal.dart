@@ -4,6 +4,7 @@ import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../provider/selected_device_provider.dart';
 import 'basic_page.dart';
@@ -23,7 +24,7 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.all(24),
+      insetPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
       child: Form(
         key: _formKey,
         child: FormSubmitCallback(
@@ -32,9 +33,9 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
             width: double.infinity,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(12).r,
             ),
-            padding: const EdgeInsets.fromLTRB(10, 2, 10, 10),
+            padding: EdgeInsets.fromLTRB(10.w, 8.h, 10.w, 10.h),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
@@ -45,32 +46,35 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
                       onPressed: () {
                         Navigator.of(context).pop();
                       },
-                      icon: const Icon(PhosphorIcons.x_bold),
+                      icon: Icon(
+                        PhosphorIcons.x_bold,
+                        size: 20.h,
+                      ),
                       color: const Color(0XFF101828),
                     ),
                   ],
                 ),
-                const Icon(
+                Icon(
                   PhosphorIcons.hard_drives,
-                  size: 48,
+                  size: 48.h,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
                 Text(
                   AppLocalizations.of(context)!.changeDeviceName,
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0).w,
                   child: Text(
                     AppLocalizations.of(context)!.changeDeviceNamePrompt,
                     style: Theme.of(context).textTheme.bodySmall,
                     textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24.h),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0).w,
                   child: BasicPageTextFormField(
                       labelText: Provider.of<SelectedDeviceProvider>(context,
                                   listen: false)
@@ -85,7 +89,7 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
                           AppLocalizations.of(context)!.deviceNameRequired)),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                  padding: EdgeInsets.fromLTRB(20.w, 0.h, 20.w, 24.h),
                   child: Row(
                     children: <Widget>[
                       Expanded(
@@ -94,13 +98,13 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
                           Navigator.of(context).pop();
                         },
                         child: Container(
-                            height: 44,
+                            height: 44.h,
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(12).r,
                               border: Border.all(
                                 color: const Color(0xFF206B8B),
-                                width: 1.0,
+                                width: 1.w,
                               ),
                             ),
                             child: Align(
@@ -115,20 +119,20 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
                                           color: const Color(0xFF206B8B)),
                                 ))),
                       )),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12.w),
                       Expanded(
                           child: GestureDetector(
                         onTap: () {
                           _onSubmit();
                         },
                         child: Container(
-                            height: 44,
+                            height: 44.h,
                             decoration: BoxDecoration(
                               color: const Color(0xFF206B8B),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(12).r,
                               border: Border.all(
                                 color: const Color(0xFF206B8B),
-                                width: 1.0,
+                                width: 1.w,
                               ),
                             ),
                             child: Align(

@@ -9,6 +9,7 @@ import 'package:app/widgets/addNewPill/medication_card_entry.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AddNewPillModal extends StatefulWidget {
   const AddNewPillModal({super.key, required this.onAdd});
@@ -32,16 +33,16 @@ class _AddNewPillModalState extends State<AddNewPillModal> {
         child: ElevatedButton(
             style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).primaryColor,
-                minimumSize: const Size(170, 72),
-                shape: const RoundedRectangleBorder(
+                minimumSize: Size(170.w, 72.h),
+                shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(40),
-                        bottomLeft: Radius.circular(40)))),
+                        topLeft: const Radius.circular(40).r,
+                        bottomLeft: const Radius.circular(40).r))),
             child: Row(
               children: [
-                const Icon(Icons.add, size: 24, color: Colors.white),
-                const SizedBox(
-                  width: 8,
+                Icon(Icons.add, size: 24.h, color: Colors.white),
+                SizedBox(
+                  width: 8.w,
                 ),
                 Text(AppLocalizations.of(context)!.addNew,
                     style: Theme.of(context)
@@ -56,10 +57,13 @@ class _AddNewPillModalState extends State<AddNewPillModal> {
                       isScrollControlled: true,
                       backgroundColor: const Color(0xFFFBFCFF),
                       elevation: 0,
-                      shape: const RoundedRectangleBorder(
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(16),
+                          top: const Radius.circular(16).r,
                         ),
+                      ),
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width,
                       ),
                       builder: (context) {
                         return StatefulBuilder(builder:
@@ -110,10 +114,13 @@ class IndexNewPills extends StatelessWidget {
             isScrollControlled: true,
             backgroundColor: const Color(0xFFFBFCFF),
             elevation: 0,
-            shape: const RoundedRectangleBorder(
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(
-                top: Radius.circular(16),
+                top: const Radius.circular(16).r,
               ),
+            ),
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width,
             ),
             builder: (context) {
               return StatefulBuilder(
@@ -143,14 +150,14 @@ class IndexNewPills extends StatelessWidget {
           color: Theme.of(context).primaryColor,
           strokeWidth: 2,
           dashPattern: const <double>[4, 4],
-          radius: const Radius.circular(8),
+          radius: const Radius.circular(8).r,
           child: Padding(
-            padding: const EdgeInsets.all(32.0),
+            padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 32.h),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.add),
-                const SizedBox(width: 4),
+                SizedBox(width: 4.w),
                 Text(
                   AppLocalizations.of(context)!.addPills,
                   style: Theme.of(context).textTheme.labelSmall,
@@ -169,7 +176,6 @@ class MedicationModal extends StatelessWidget {
   final bool? onNext;
   final int? medicationID;
   final Widget child;
-  static const navFooterHeight = 72.0;
 
   const MedicationModal(
       {super.key,
@@ -186,7 +192,7 @@ class MedicationModal extends StatelessWidget {
           Column(
             children: [
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
                 child: Row(
                   mainAxisAlignment: medicationID != null
                       ? MainAxisAlignment.spaceBetween
@@ -194,15 +200,15 @@ class MedicationModal extends StatelessWidget {
                   children: [
                     if (medicationID != null)
                       Padding(
-                          padding: const EdgeInsets.only(left: 8),
+                          padding: const EdgeInsets.only(left: 8).w,
                           child: ButtonIconText(
                               text: AppLocalizations.of(context)!.delete,
                               iconData: PhosphorIcons.trash_simple,
                               onPressed: () => deleteMedication(context))),
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.close,
-                        size: 32,
+                        size: 32.h,
                       ),
                       onPressed: () {
                         Navigator.of(context).pop();
@@ -220,7 +226,7 @@ class MedicationModal extends StatelessWidget {
           Align(
               alignment: Alignment.bottomCenter,
               child: Container(
-                height: navFooterHeight,
+                height: 72.h,
                 color: const Color(0xFFFBFCFF),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -231,12 +237,12 @@ class MedicationModal extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.arrow_back,
-                              size: 24,
+                              size: 24.h,
                             ),
-                            const SizedBox(
-                              width: 8,
+                            SizedBox(
+                              width: 8.w,
                             ),
                             Text(AppLocalizations.of(context)!.back,
                                 style: Theme.of(context).textTheme.bodyMedium),
@@ -254,7 +260,7 @@ class MedicationModal extends StatelessWidget {
                               }
                             },
                             child: Container(
-                              height: navFooterHeight,
+                              height: 72.h,
                               decoration: BoxDecoration(
                                 color: Provider.of<NewMedicationProvider>(
                                             context,
@@ -262,8 +268,8 @@ class MedicationModal extends StatelessWidget {
                                         .canComplete()
                                     ? Theme.of(context).primaryColor
                                     : const Color(0xFF7FA9BB),
-                                borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(32),
+                                borderRadius: BorderRadius.only(
+                                  topLeft: const Radius.circular(32).r,
                                 ),
                               ),
                               child: Row(
@@ -273,11 +279,11 @@ class MedicationModal extends StatelessWidget {
                                     medicationID != null
                                         ? PhosphorIcons.check
                                         : PhosphorIcons.plus,
-                                    size: 24,
+                                    size: 24.h,
                                     color: Colors.white,
                                   ),
-                                  const SizedBox(
-                                    width: 8,
+                                  SizedBox(
+                                    width: 8.w,
                                   ),
                                   Text(
                                       medicationID != null

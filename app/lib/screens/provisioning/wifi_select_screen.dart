@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:app/screens/ScreenUtilWrapper.dart';
 import 'package:app/service/provisioning_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/provision.dart';
@@ -22,42 +24,44 @@ class ProvisionSelectWifiPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(1, 2);
-    return WizardStep(
-      provisionningProgress: provisionningProgress,
-      title: AppLocalizations.of(context)!.provSelectWifi,
-      subtext: AppLocalizations.of(context)!.provSelectWifiSubtitle,
-      onBackPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-      child: Expanded(
-        child: Padding(
-          padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 32.0),
-          child: Consumer<ProvisionProvider>(
-            builder: (_, prov, child) {
-              if (prov.state.wifiNetworks == null) {
-                return const Center(child: CircularProgressIndicator());
-              } else {
-                return SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      ...prov.state.wifiNetworks!
-                          .map((e) => _buildWifiCard(context, e, prov))
-                          .toList(growable: false),
-                      TextButton(
-                        onPressed: () {
-                          prov.rescanNetworks();
-                        },
-                        child:
-                            Text(AppLocalizations.of(context)!.provRescanWifi),
-                      ),
-                      const SizedBox(
-                        height: 35,
-                      )
-                    ],
-                  ),
-                );
-              }
-            },
+    return ScreenUtilWrapper(
+      child: WizardStep(
+        provisionningProgress: provisionningProgress,
+        title: AppLocalizations.of(context)!.provSelectWifi,
+        subtext: AppLocalizations.of(context)!.provSelectWifiSubtitle,
+        onBackPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+        child: Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(left: 20.w, right: 20.0.w, bottom: 32.0.h),
+            child: Consumer<ProvisionProvider>(
+              builder: (_, prov, child) {
+                if (prov.state.wifiNetworks == null) {
+                  return const Center(child: CircularProgressIndicator());
+                } else {
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        ...prov.state.wifiNetworks!
+                            .map((e) => _buildWifiCard(context, e, prov))
+                            .toList(growable: false),
+                        TextButton(
+                          onPressed: () {
+                            prov.rescanNetworks();
+                          },
+                          child: Text(
+                              AppLocalizations.of(context)!.provRescanWifi),
+                        ),
+                        SizedBox(
+                          height: 35.h,
+                        )
+                      ],
+                    ),
+                  );
+                }
+              },
+            ),
           ),
         ),
       ),
@@ -99,14 +103,14 @@ class ProvisionSelectWifiPage extends StatelessWidget {
     }
 
     return Padding(
-        padding: const EdgeInsets.only(bottom: 8),
+        padding: EdgeInsets.only(bottom: 8.h),
         child: Card(
           elevation: 1,
           child: ListTile(
             leading: prov.state.ssid == entry.name && prov.state.error == null
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
+                ? SizedBox(
+                    width: 24.w,
+                    height: 24.h,
                     child: CircularProgressIndicator(),
                   )
                 : Icon(_wifiIcon(entry)),

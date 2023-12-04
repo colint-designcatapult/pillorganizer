@@ -14,6 +14,7 @@ import 'package:app/widgets/wizard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
@@ -58,12 +59,13 @@ class PostSetupWizard extends StatelessWidget {
                 .pushNamedAndRemoveUntil('/', (route) => false),
             onNextPressed: () =>
                 Navigator.of(context).push(NotificationStep.route(context)),
-            onSkipPressed: () => onSkip(),
+            onSkipPressed: () =>
+                Navigator.of(context).push(NotificationStep.route(context)),
             canGoNext: canGoNext,
-            child: const Expanded(
+            child: Expanded(
                 child: Padding(
-              padding: EdgeInsets.all(20.0),
-              child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+              child: const SingleChildScrollView(
                   physics: AlwaysScrollableScrollPhysics(),
                   child: ScheduleEntry()),
             )));
@@ -97,10 +99,11 @@ class NotificationStep extends StatelessWidget {
             onNextPressed: () =>
                 Navigator.of(context).push(MedicationEntryStep.route(context)),
             canGoNext: true,
-            height: 550,
+            height: 550.h,
             child: Expanded(
                 child: Padding(
-                    padding: const EdgeInsets.all(20.0),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
                     child: SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         child: Column(
@@ -113,7 +116,7 @@ class NotificationStep extends StatelessWidget {
                                       .textTheme
                                       .titleSmall
                                       ?.copyWith(fontWeight: FontWeight.w700)),
-                              const SizedBox(height: 26),
+                              SizedBox(height: 26.h),
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -139,7 +142,7 @@ class NotificationStep extends StatelessWidget {
                                       },
                                     ),
                                   ),
-                                  const SizedBox(width: 16),
+                                  SizedBox(width: 16.h),
                                   Flexible(
                                     child: Text(
                                       AppLocalizations.of(context)!
@@ -277,6 +280,9 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
             top: Radius.circular(16),
           ),
         ),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width,
+        ),
         builder: (context) => ChangeNotifierProvider<NewMedicationProvider>(
             create: (context) => NewMedicationProvider(
                 device!.deviceID, () => prov.update(device)),
@@ -298,6 +304,9 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(16),
           ),
+        ),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width,
         ),
         builder: (context) => ValueListenableBuilder(
             valueListenable: prov,

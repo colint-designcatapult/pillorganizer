@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../provider/medication_provider.dart';
 import '../provider/new_medication_provider.dart';
@@ -36,6 +37,9 @@ class MedicationCard extends StatelessWidget {
             isScrollControlled: true,
             backgroundColor: const Color(0xFFFBFCFF),
             elevation: 0,
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width,
+            ),
             builder: (context) {
               return ChangeNotifierProvider<NewMedicationProvider>(
                   create: (context) => NewMedicationProvider.fromExisting(
@@ -50,19 +54,19 @@ class MedicationCard extends StatelessWidget {
             });
       },
       child: Padding(
-          padding: const EdgeInsets.only(bottom: 20),
+          padding: EdgeInsets.only(bottom: 20.h),
           child: Container(
-              height: 80,
-              padding: const EdgeInsets.fromLTRB(20, 18, 12, 18),
+              height: 80.h,
+              padding: EdgeInsets.fromLTRB(18.w, 0.h, 18.w, 0.h),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8).r,
                 color: backgroundColor,
               ),
               child: Row(
                 children: [
-                  MedicationIcon.fromMed(med, 54),
-                  const SizedBox(
-                    width: 18,
+                  MedicationIcon.fromMed(med, 54.h),
+                  SizedBox(
+                    width: 18.w,
                   ),
                   Expanded(
                       child: Align(
@@ -82,8 +86,8 @@ class MedicationCard extends StatelessWidget {
                                     style:
                                         Theme.of(context).textTheme.bodySmall)
                               ]))),
-                  const SizedBox(
-                    width: 4,
+                  SizedBox(
+                    width: 4.w,
                   ),
                   if (med.dispenseTimes
                       .any((time) => time.period == DayPeriod.pm))
@@ -92,11 +96,11 @@ class MedicationCard extends StatelessWidget {
                         children: [
                           SvgPicture.asset(
                             'lib/assets/SVG/DEV_SYM_PM.svg',
-                            width: 18,
-                            height: 18,
+                            width: 18.w,
+                            height: 18.h,
                           ),
-                          const SizedBox(
-                            height: 4,
+                          SizedBox(
+                            height: 4.h,
                           ),
                           Text("PM",
                               style: Theme.of(context).textTheme.bodySmall),
@@ -105,7 +109,7 @@ class MedicationCard extends StatelessWidget {
                           .any((time) => time.period == DayPeriod.am) &&
                       med.dispenseTimes
                           .any((time) => time.period == DayPeriod.pm))
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12.w),
                   if (med.dispenseTimes
                       .any((time) => time.period == DayPeriod.am))
                     Column(
@@ -113,19 +117,22 @@ class MedicationCard extends StatelessWidget {
                         children: [
                           SvgPicture.asset(
                             'lib/assets/SVG/DEV_SYM_AM.svg',
-                            width: 18,
-                            height: 18,
+                            width: 18.w,
+                            height: 18.h,
                           ),
-                          const SizedBox(
-                            height: 4,
+                          SizedBox(
+                            height: 4.h,
                           ),
                           Text("AM",
                               style: Theme.of(context).textTheme.bodySmall),
                         ]),
-                  const SizedBox(
-                    width: 8,
+                  SizedBox(
+                    width: 8.w,
                   ),
-                  const Icon(PhosphorIcons.dots_three_vertical)
+                  Icon(
+                    PhosphorIcons.dots_three_vertical,
+                    size: 24.h,
+                  )
                 ],
               ))),
     );

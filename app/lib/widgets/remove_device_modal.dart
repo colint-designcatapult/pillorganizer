@@ -4,6 +4,7 @@ import 'package:app/api/device.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../provider/selected_device_provider.dart';
 
@@ -18,14 +19,14 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.all(24),
+      insetPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(12).r,
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 32),
+          padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 32.h),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -36,17 +37,20 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
-                    icon: const Icon(PhosphorIcons.x_bold),
+                    icon: Icon(
+                      PhosphorIcons.x_bold,
+                      size: 24.h,
+                    ),
                     color: const Color(0XFF101828),
                   ),
                 ],
               ),
-              const Icon(
+              Icon(
                 PhosphorIcons.warning,
-                color: Color(0XFF7A2C2C),
-                size: 48,
+                color: const Color(0XFF7A2C2C),
+                size: 48.h,
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4.h),
               Text(
                 AppLocalizations.of(context)!.removingDevice,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -55,9 +59,9 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
                     ),
                     fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8.h),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 8.0).w,
                 child: Text(
                   AppLocalizations.of(context)!.removingDeviceConfirmation,
                   style: Theme.of(context)
@@ -67,7 +71,7 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
                   textAlign: TextAlign.center,
                 ),
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32.h),
               Row(
                 children: <Widget>[
                   Expanded(
@@ -76,13 +80,13 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
                       Navigator.of(context).pop();
                     },
                     child: Container(
-                        height: 44,
+                        height: 44.h,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: const Color(0xFF206B8B),
-                            width: 1.0,
+                            width: 1.w,
                           ),
                         ),
                         child: Align(
@@ -93,20 +97,20 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
                               style: const TextStyle(color: Color(0xFF206B8B)),
                             ))),
                   )),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12.w),
                   Expanded(
                       child: GestureDetector(
                     onTap: () {
                       _onDelete();
                     },
                     child: Container(
-                        height: 44,
+                        height: 44.h,
                         decoration: BoxDecoration(
                           color: const Color(0xFF7A2C2C),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: const Color(0xFF7A2C2C),
-                            width: 1.0,
+                            width: 1.w,
                           ),
                         ),
                         child: Align(

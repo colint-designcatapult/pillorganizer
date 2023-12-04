@@ -1,9 +1,11 @@
 import 'package:app/api/schedule.dart';
 import 'package:app/provider/schedule_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
+import 'package:app/screens/ScreenUtilWrapper.dart';
 import 'package:app/screens/modals/time_zone_selection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import '../service/time_service.dart';
@@ -22,45 +24,49 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
   Widget build(BuildContext context) {
     return Consumer<ScheduleProvider>(
       builder: (context, schedProv, _) {
-        return Column(
-          mainAxisSize: MainAxisSize.max,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(AppLocalizations.of(context)!.timeSetup,
-                    style: Theme.of(context).textTheme.titleSmall)),
-            Padding(
-                padding: const EdgeInsets.only(bottom: 22),
-                child: Text(AppLocalizations.of(context)!.timeSetupSubtitle,
-                    style: Theme.of(context).textTheme.bodySmall)),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTimeBlock(DayPeriod.am, schedProv.schedule?.am),
-                ),
-                const SizedBox(
-                  width: 20,
-                ),
-                Expanded(
-                  child: _buildTimeBlock(DayPeriod.pm, schedProv.schedule?.pm),
-                ),
-              ],
-            ),
-            Padding(
-                padding: const EdgeInsets.only(bottom: 8, top: 36),
-                child: Text(AppLocalizations.of(context)!.timezone,
-                    style: Theme.of(context).textTheme.titleSmall)),
-            Text(AppLocalizations.of(context)!.timezoneSubtitle,
-                style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(
-              height: 8,
-            ),
-            TimeZoneSelectionWidget(),
-            const SizedBox(
-              height: 80,
-            )
-          ],
+        return ScreenUtilWrapper(
+          child: Column(
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                  padding: EdgeInsets.only(bottom: 8.h),
+                  child: Text(AppLocalizations.of(context)!.timeSetup,
+                      style: Theme.of(context).textTheme.titleSmall)),
+              Padding(
+                  padding: EdgeInsets.only(bottom: 22.h),
+                  child: Text(AppLocalizations.of(context)!.timeSetupSubtitle,
+                      style: Theme.of(context).textTheme.bodySmall)),
+              Row(
+                children: [
+                  Expanded(
+                    child:
+                        _buildTimeBlock(DayPeriod.am, schedProv.schedule?.am),
+                  ),
+                  SizedBox(
+                    width: 20.w,
+                  ),
+                  Expanded(
+                    child:
+                        _buildTimeBlock(DayPeriod.pm, schedProv.schedule?.pm),
+                  ),
+                ],
+              ),
+              Padding(
+                  padding: EdgeInsets.only(bottom: 8.h, top: 36.h),
+                  child: Text(AppLocalizations.of(context)!.timezone,
+                      style: Theme.of(context).textTheme.titleSmall)),
+              Text(AppLocalizations.of(context)!.timezoneSubtitle,
+                  style: Theme.of(context).textTheme.bodySmall),
+              SizedBox(
+                height: 8.h,
+              ),
+              TimeZoneSelectionWidget(),
+              SizedBox(
+                height: 80.h,
+              )
+            ],
+          ),
         );
       },
     );
@@ -86,37 +92,37 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
                 color: const Color(0xFFE8EFF4),
                 width: 1.0,
               ),
-              borderRadius: BorderRadius.circular(8.0),
+              borderRadius: BorderRadius.circular(8.0).r,
             ),
-            padding: const EdgeInsets.all(8.0),
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
             child: Column(
               children: [
                 Container(
                   color: const Color(0xFFE8EFF4),
-                  padding: const EdgeInsets.all(8.0),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(dayPeriod == DayPeriod.am ? "AM" : "PM",
                           style: Theme.of(context).textTheme.titleMedium),
-                      const SizedBox(
-                        width: 12,
+                      SizedBox(
+                        width: 12.w,
                       ),
                       SvgPicture.asset(
                         dayPeriod == DayPeriod.am
                             ? 'lib/assets/SVG/DEV_SYM_AM.svg'
                             : 'lib/assets/SVG/DEV_SYM_PM.svg',
-                        width: 24,
-                        height: 24,
+                        width: 24.w,
+                        height: 24.h,
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 8.0),
+                SizedBox(width: 8.w),
                 Padding(
                     padding: AppLocalizations.of(context)!.localeName == 'fr'
-                        ? const EdgeInsets.fromLTRB(2, 16, 2, 16)
-                        : const EdgeInsets.fromLTRB(14, 16, 14, 16),
+                        ? EdgeInsets.fromLTRB(2.w, 16.h, 2.w, 16.h)
+                        : EdgeInsets.fromLTRB(14.w, 16.h, 14.w, 16.h),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -133,8 +139,11 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
                         ),
                         Row(children: [
                           SvgPicture.asset(
-                              'lib/assets/SVG/PencilSimpleLine.svg'),
-                          const SizedBox(width: 4),
+                            'lib/assets/SVG/PencilSimpleLine.svg',
+                            width: 20.w,
+                            height: 20.h,
+                          ),
+                          SizedBox(width: 4.w),
                           if (entry != null)
                             Text(AppLocalizations.of(context)!.edit,
                                 overflow: TextOverflow.ellipsis,
@@ -180,18 +189,23 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
         children: [
           Expanded(
               child: SegmentedButton(
-            selectedIcon: const Icon(Icons.check_sharp),
+            selectedIcon: Icon(
+              Icons.check_sharp,
+              size: 20.h,
+            ),
             segments: <ButtonSegment>[
               ButtonSegment(
                 value: 0,
                 label: Text(
                   AppLocalizations.of(context)!.manual,
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
               ButtonSegment(
                 value: 1,
                 label: Text(
                   AppLocalizations.of(context)!.automatic,
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
             ],
@@ -207,7 +221,7 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
             style: ButtonStyle(
               shape: MaterialStateProperty.all<OutlinedBorder>(
                   RoundedRectangleBorder(
-                      borderRadius: BorderRadiusDirectional.circular(8))),
+                      borderRadius: BorderRadiusDirectional.circular(8.r))),
               side: MaterialStateProperty.resolveWith<BorderSide>(
                   (Set<MaterialState> states) {
                 return const BorderSide(color: Color(0xFFBFD2DB), width: 2.0);
@@ -220,7 +234,7 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
                 return Colors.white;
               }),
               padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                const EdgeInsets.symmetric(vertical: 16),
+                EdgeInsets.symmetric(vertical: 16.h),
               ),
             ),
           ))
@@ -228,7 +242,7 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
       ),
       if (selectedButtonIndex == 0)
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const SizedBox(height: 16),
+          SizedBox(height: 16.h),
           Text(AppLocalizations.of(context)!.selectManualTimezone,
               style: Theme.of(context).textTheme.bodySmall),
           ListTile(
@@ -240,8 +254,8 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
                 style: Theme.of(context).textTheme.displaySmall),
             leading: SvgPicture.asset(
               'lib/assets/SVG/Globe.svg',
-              width: 24,
-              height: 24,
+              width: 24.w,
+              height: 24.h,
             ),
             trailing: const Icon(Icons.arrow_right),
             onTap: () {

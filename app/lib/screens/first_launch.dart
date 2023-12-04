@@ -6,6 +6,7 @@ import 'package:app/screens/auth/login.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class FirstLaunchPage extends StatefulWidget {
   const FirstLaunchPage({super.key});
@@ -20,7 +21,7 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
   @override
   Widget build(BuildContext context) {
     const double edgePadding = 24;
-    const double topPadding = 120;
+    const double topPadding = 100;
     const double bottomPadding = 80;
     const double buttonHeight = 48;
 
@@ -34,7 +35,7 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
           mainAxisSize: MainAxisSize.max,
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: topPadding),
+              padding: const EdgeInsets.only(top: topPadding).h,
               child: Text(
                 AppLocalizations.of(context)!.appName,
                 style: Theme.of(context)
@@ -43,15 +44,19 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
                     ?.copyWith(color: Colors.white),
               ),
             ),
-            const SizedBox(height: 34),
-            Image.asset(
-              'lib/assets/main-icon.png',
+            SizedBox(
+              height: 450.h,
+              child: Image.asset(
+                'lib/assets/main-icon.png',
+                fit: BoxFit.contain,
+              ),
             ),
             Padding(
                 padding: const EdgeInsets.only(
-                    bottom: bottomPadding,
-                    left: edgePadding,
-                    right: edgePadding),
+                        bottom: bottomPadding,
+                        left: edgePadding,
+                        right: edgePadding)
+                    .w,
                 child: FutureBuilder<bool>(
                   future: _checkAuthFuture,
                   builder:
@@ -64,8 +69,9 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
                         children: [
                           Center(
                               child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20),
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 20)
+                                          .w,
                                   child: Text(
                                       AppLocalizations.of(context)!
                                           .welcomeCabinetLong,
@@ -75,17 +81,19 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
                                           .displaySmall
                                           ?.copyWith(color: Colors.white)))),
                           Padding(
-                            padding: const EdgeInsets.only(top: 32, bottom: 24),
+                            padding:
+                                const EdgeInsets.only(top: 32, bottom: 24).h,
                             child: SizedBox(
                               width: double.infinity,
-                              height: buttonHeight,
+                              height: buttonHeight.h,
                               child: OutlinedButton(
                                   onPressed: () {
                                     _startOOBE();
                                   },
                                   style: OutlinedButton.styleFrom(
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8.0),
+                                      borderRadius:
+                                          BorderRadius.circular(8.0).r,
                                     ),
                                     backgroundColor: Colors.white,
                                   ),
@@ -102,14 +110,14 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
                           ),
                           SizedBox(
                             width: double.infinity,
-                            height: buttonHeight,
+                            height: buttonHeight.h,
                             child: OutlinedButton(
                                 onPressed: () {
                                   _login();
                                 },
                                 style: OutlinedButton.styleFrom(
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
+                                    borderRadius: BorderRadius.circular(8.0).r,
                                   ),
                                   side: const BorderSide(
                                       width: 1.0, color: Colors.white),
@@ -181,10 +189,13 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
         context: context,
         isScrollControlled: true,
         elevation: 0,
-        shape: const RoundedRectangleBorder(
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(16),
+            top: const Radius.circular(16).r,
           ),
+        ),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width,
         ),
         builder: (context) => const LoginPage()).then((bool? result) {
       if (result != null) {

@@ -7,6 +7,7 @@ import 'package:app/service/time_service.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class Pillbox extends StatelessWidget {
   static TimeService timeService = TimeService();
@@ -26,7 +27,7 @@ class Pillbox extends StatelessWidget {
           notice.name != 'empty' && notice.name != 'disconnected';
 
       return SizedBox(
-        height: MediaQuery.of(context).size.height * 0.32,
+        height: 250.h,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: daysOfWeek.asMap().entries.map((entry) {
@@ -36,7 +37,7 @@ class Pillbox extends StatelessWidget {
             return Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.only(bottom: 6).h,
                   child: Text(day[0].toUpperCase(),
                       style: Theme.of(context)
                           .textTheme

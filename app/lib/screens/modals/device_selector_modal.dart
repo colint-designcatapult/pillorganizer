@@ -4,6 +4,7 @@ import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../api/device.dart';
 import '../../platform/bottom_modal.dart';
@@ -29,11 +30,11 @@ class DeviceListEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 8.0).h,
       child: ListTile(
         title: Text(device.name),
         leading: DeviceStatusIcon(
-            size: 48.0,
+            size: 48,
             status: device.isOnline
                 ? DeviceConnectionStatus.online
                 : DeviceConnectionStatus.offline),
@@ -55,7 +56,10 @@ class DeviceSelectorModal extends StatelessWidget {
   Widget build(BuildContext context) {
     return PlatformScaffold(
       appBar: PlatformAppBar(
-        title: Text(AppLocalizations.of(context)!.switchPillOrganizers),
+        title: Text(
+          AppLocalizations.of(context)!.switchPillOrganizers,
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
         automaticallyImplyLeading: false,
       ),
       material: (_, __) => MaterialScaffoldData(),

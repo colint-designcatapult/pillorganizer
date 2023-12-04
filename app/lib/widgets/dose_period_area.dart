@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../api/device.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../provider/device_notice_provider.dart';
 import '../../provider/medication_provider.dart';
@@ -36,7 +37,7 @@ class DosePeriodArea extends StatelessWidget {
             (reversedList == null || reversedList.isEmpty)) {
           return SliverToBoxAdapter(
               child: Padding(
-                  padding: const EdgeInsets.only(top: 40),
+                  padding: const EdgeInsets.only(top: 40).h,
                   child: Center(child: _buildNotice(context))));
         } else {
           return SliverList.builder(
@@ -59,12 +60,12 @@ class DosePeriodArea extends StatelessWidget {
     var medProv = Provider.of<MedicationsProvider>(context);
     var deviceNoticeProv = Provider.of<DeviceNoticeProvider>(context);
     return Padding(
-      padding: const EdgeInsets.only(top: 28.0, bottom: 16.0),
+      padding: const EdgeInsets.only(top: 28.0, bottom: 16.0).h,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-              padding: const EdgeInsets.fromLTRB(4, 0, 0, 20),
+              padding: EdgeInsets.fromLTRB(4.w, 0, 0, 20.h),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -92,15 +93,15 @@ class DosePeriodArea extends StatelessWidget {
   Widget _buildNotice(BuildContext context) {
     return Card(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(4.0),
+        borderRadius: BorderRadius.circular(4).r,
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         child: Row(
           children: [
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(right: 6.0),
+                padding: EdgeInsets.only(right: 6.w),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,7 +112,7 @@ class DosePeriodArea extends StatelessWidget {
                             color: Colors.black,
                           ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8.h),
                     Text(
                       AppLocalizations.of(context)!.homeNoMedTodaySubtitle,
                       style: Theme.of(context).textTheme.bodySmall,
@@ -146,6 +147,9 @@ class DosePeriodArea extends StatelessWidget {
               isScrollControlled: true,
               backgroundColor: const Color(0xFFFBFCFF),
               elevation: 0,
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width,
+              ),
               builder: (context) {
                 return ChangeNotifierProvider<NewMedicationProvider>(
                     create: (context) => NewMedicationProvider.fromExisting(
@@ -160,22 +164,22 @@ class DosePeriodArea extends StatelessWidget {
               });
         },
         child: Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: EdgeInsets.only(bottom: 12.h),
             child: Container(
-                height: 80,
-                padding: const EdgeInsets.fromLTRB(18, 12, 12, 18),
+                height: 80.h,
+                padding: EdgeInsets.fromLTRB(18.w, 0.h, 18.w, 0.h),
                 decoration: BoxDecoration(
                     color: const Color(0xFFF1F6F5),
-                    borderRadius: BorderRadius.circular(8.0),
+                    borderRadius: BorderRadius.circular(8.0).r,
                     border: Border.all(
                       color: const Color(0xFF206B8B),
-                      width: 2.0,
+                      width: 2.h,
                     )),
                 child: Row(
                   children: [
-                    MedicationIcon.fromMed(med, 54),
-                    const SizedBox(
-                      width: 18,
+                    MedicationIcon.fromMed(med, 54.h),
+                    SizedBox(
+                      width: 18.w,
                     ),
                     Expanded(
                         child: Align(
@@ -198,30 +202,33 @@ class DosePeriodArea extends StatelessWidget {
                                           .textTheme
                                           .displaySmall)
                                 ]))),
-                    const SizedBox(
-                      width: 4,
+                    SizedBox(
+                      width: 4.w,
                     ),
                     CircularBinStatusIndicator(
                         status: period.status,
                         deviceStatus: deviceNoticeProv.value),
-                    const SizedBox(width: 2),
-                    const Icon(PhosphorIcons.dots_three_vertical)
+                    SizedBox(width: 2.w),
+                    Icon(
+                      PhosphorIcons.dots_three_vertical,
+                      size: 24.h,
+                    )
                   ],
                 ))),
       );
     } else {
       return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
+          padding: EdgeInsets.only(bottom: 12.h),
           child: SizedBox(
-            height: 80,
+            height: 80.h,
             child: Container(
-                height: 80,
+                height: 80.h,
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F6F5),
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: BorderRadius.circular(8.0).r,
                   border: Border.all(
                     color: const Color(0xFF206B8B),
-                    width: 2.0,
+                    width: 2.w,
                   ),
                 ),
                 alignment: Alignment.center,
@@ -232,16 +239,16 @@ class DosePeriodArea extends StatelessWidget {
                       leading: Container(
                         decoration: const BoxDecoration(
                             shape: BoxShape.circle, color: Colors.white),
-                        height: 44.0,
-                        width: 44.0,
+                        height: 44.w,
+                        width: 44.w,
                       ),
-                      title:
-                          Container(width: 70, height: 40, color: Colors.white),
+                      title: Container(
+                          width: 70.w, height: 40.h, color: Colors.white),
                       trailing: Container(
                         decoration: const BoxDecoration(
                             shape: BoxShape.circle, color: Colors.white),
-                        height: 20,
-                        width: 20,
+                        height: 20.w,
+                        width: 20.w,
                       ),
                     );
                   },

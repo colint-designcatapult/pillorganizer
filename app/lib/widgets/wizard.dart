@@ -1,5 +1,6 @@
 import 'package:app/service/provisioning_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -21,7 +22,7 @@ class WizardStepBodyDelegate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
       child: CustomScrollView(
         physics: const NeverScrollableScrollPhysics(),
         slivers: [
@@ -29,10 +30,10 @@ class WizardStepBodyDelegate extends StatelessWidget {
             sliver: SliverFillRemaining(
                 hasScrollBody: true,
                 child: Container(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.all(Radius.circular(12)),
-                    boxShadow: [
+                    borderRadius: BorderRadius.all(Radius.circular(12.r)),
+                    boxShadow: const [
                       BoxShadow(
                         color: Color.fromRGBO(0, 0, 0, 0.1),
                         offset: Offset(4, 4),
@@ -47,33 +48,42 @@ class WizardStepBodyDelegate extends StatelessWidget {
                       provisionningProgress.step != 3
                           ? Padding(
                               padding: EdgeInsets.only(
-                                  top: 34, bottom: title != null ? 36 : 70),
+                                      top: 34.h,
+                                      bottom: title != null ? 36.h : 70.h)
+                                  .h,
                               child: _buildTransition(
                                   context: context,
                                   child: WizardProgressBar(
                                       provisionningProgress:
                                           provisionningProgress)))
-                          : const SizedBox(
-                              height: 40,
+                          : SizedBox(
+                              height: 40.h,
                             ),
                       if (title != null)
                         Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 24).w,
                             child: _buildAnimatedText(
                                 context: context,
                                 style: Theme.of(context).textTheme.titleMedium,
                                 text: title)),
                       if (icon != null)
                         Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 24).w,
                             child: _buildTransition(
                                 context: context, child: icon)),
                       if (subtext != null)
                         Padding(
-                            padding: const EdgeInsets.only(
-                                top: 8, bottom: 24, left: 24, right: 24),
-                            child: _buildAnimatedText(
-                                context: context, text: subtext!)),
+                            padding: EdgeInsets.only(
+                                top: 8.h,
+                                bottom: 24.h,
+                                left: 24.w,
+                                right: 24.w),
+                            child: SizedBox(
+                              child: _buildAnimatedText(
+                                  context: context, text: subtext!),
+                            )),
                       if (child != null) child!,
                     ],
                   )),
@@ -116,15 +126,15 @@ class WizardProgressBar extends StatelessWidget {
     int selectedStage = provisionningProgress.stage - 1;
     var iconList = provisionningProgress.getIconList();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 36),
+      padding: EdgeInsets.symmetric(horizontal: 36.w),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           for (int i = 0; i < iconList.length; i++) ...[
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.symmetric(horizontal: 8.h, vertical: 8.h),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8).r,
                 color: selectedStage == i
                     ? Theme.of(context).primaryColor
                     : Theme.of(context).secondaryHeaderColor,
@@ -135,8 +145,8 @@ class WizardProgressBar extends StatelessWidget {
                   BlendMode.srcIn,
                 ),
                 iconList[i],
-                width: 24,
-                height: 24,
+                width: 24.w,
+                height: 24.h,
               ),
             ),
             if (i < iconList.length - 1) ...[
@@ -144,24 +154,24 @@ class WizardProgressBar extends StatelessWidget {
                 alignment: Alignment.center,
                 children: [
                   Container(
-                    height: 2,
-                    width: 36,
+                    height: 2.h,
+                    width: 36.w,
                     color: Theme.of(context).secondaryHeaderColor,
                   ),
                   if (selectedStage > i)
                     Container(
-                      height: 20,
-                      width: 20,
+                      height: 20.h,
+                      width: 20.w,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(32),
+                        borderRadius: BorderRadius.circular(32).r,
                         color: Theme.of(context).secondaryHeaderColor,
                       ),
                       child: SizedBox(
-                        width: 50,
-                        height: 50,
+                        width: 50.w,
+                        height: 50.h,
                         child: SvgPicture.asset(
                           'lib/assets/SVG/CheckCircle.svg',
-                          width: 24,
+                          width: 24.w,
                           height: 24,
                         ),
                       ),
@@ -217,7 +227,7 @@ class WizardStep extends StatelessWidget {
             mainAxisSize: MainAxisSize.max,
             children: [
               Padding(
-                padding: const EdgeInsets.only(left: 24, top: 100),
+                padding: EdgeInsets.only(left: 24.w, top: 100.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -232,7 +242,7 @@ class WizardStep extends StatelessWidget {
                       style: Theme.of(context)
                           .textTheme
                           .titleLarge
-                          ?.copyWith(fontSize: 32),
+                          ?.copyWith(fontSize: 32.h),
                     ),
                   ],
                 ),
@@ -259,8 +269,8 @@ class WizardStep extends StatelessWidget {
                 Align(
                     alignment: Alignment.bottomCenter,
                     child: Padding(
-                      padding: const EdgeInsets.only(
-                        top: 8,
+                      padding: EdgeInsets.only(
+                        top: 8.h,
                         bottom: navFooterHeight,
                       ),
                       child: AnimatedSwitcher(
@@ -280,7 +290,8 @@ class WizardStep extends StatelessWidget {
                           child: SizedBox(
                             width: double.infinity,
                             child: Padding(
-                              padding: const EdgeInsets.all(20),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 20.w, vertical: 20.h),
                               child: footer!,
                             ),
                           )),
@@ -306,12 +317,12 @@ class WizardStep extends StatelessWidget {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.arrow_back,
-                                size: 24,
+                                size: 24.h,
                               ),
-                              const SizedBox(
-                                width: 8,
+                              SizedBox(
+                                width: 8.w,
                               ),
                               Text(AppLocalizations.of(context)!.back,
                                   style: Theme.of(context).textTheme.bodySmall),
@@ -332,8 +343,8 @@ class WizardStep extends StatelessWidget {
                               height: navFooterHeight,
                               decoration: BoxDecoration(
                                 color: Theme.of(context).primaryColor,
-                                borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(32),
+                                borderRadius: BorderRadius.only(
+                                  topLeft: const Radius.circular(32).r,
                                 ),
                               ),
                               child: Row(
@@ -347,13 +358,13 @@ class WizardStep extends StatelessWidget {
                                           .textTheme
                                           .bodyMedium
                                           ?.copyWith(color: Colors.white)),
-                                  const SizedBox(
-                                    width: 8,
+                                  SizedBox(
+                                    width: 8.w,
                                   ),
-                                  const Icon(
+                                  Icon(
                                     Icons.arrow_forward,
                                     color: Colors.white,
-                                    size: 24,
+                                    size: 24.h,
                                   ),
                                 ],
                               ),

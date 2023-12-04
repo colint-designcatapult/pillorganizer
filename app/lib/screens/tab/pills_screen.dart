@@ -5,6 +5,7 @@ import 'package:app/widgets/medication_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class PillsScreen extends StatefulWidget {
   const PillsScreen({super.key});
@@ -24,17 +25,17 @@ class _PillsScreenState extends State<PillsScreen> {
         backgroundColor: const Color(0xFFBFD2DB),
         body: SafeArea(
           child: Padding(
-              padding: const EdgeInsets.only(top: 75),
+              padding: EdgeInsets.only(top: 75.h),
               child: Column(children: [
                 Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Padding(
-                          padding: const EdgeInsets.only(left: 24),
+                          padding: const EdgeInsets.only(left: 24).w,
                           child: Text(
                             AppLocalizations.of(context)!.myPills,
-                            style: const TextStyle(
-                              fontSize: 32.0,
+                            style: TextStyle(
+                              fontSize: 32.h,
                               fontWeight: FontWeight.bold,
                             ),
                           )),
@@ -67,8 +68,8 @@ class _PillsScreenState extends State<PillsScreen> {
                               child: CircularProgressIndicator());
                         }
                         return ListView.builder(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 40),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 24.w, vertical: 40.h),
                           physics: const AlwaysScrollableScrollPhysics(),
                           itemCount: prov.value!.length,
                           itemBuilder: (context, index) {
@@ -79,7 +80,7 @@ class _PillsScreenState extends State<PillsScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 72),
+                SizedBox(height: 72.h),
               ])),
         ));
   }

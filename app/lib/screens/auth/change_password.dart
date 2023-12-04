@@ -8,6 +8,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class ChangePassword extends StatefulWidget {
   const ChangePassword({Key? key}) : super(key: key);
@@ -63,25 +64,28 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                 child: Stack(children: [
                   CustomScrollView(slivers: [
                     SliverAppBar(
+                      iconTheme: IconThemeData(size: 24.h),
                       floating: false,
+                      toolbarHeight: 60.h,
                       pinned: true,
                       elevation: 0,
                       scrolledUnderElevation: 0,
                       backgroundColor: const Color(0xFFFBFCFF),
                       leading: null,
-                      shape: const RoundedRectangleBorder(
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(16),
+                          top: const Radius.circular(16).r,
                         ),
                       ),
                       actions: [
                         Padding(
-                            padding: const EdgeInsets.all(8),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 8.w, vertical: 8.h),
                             child: IconButton(
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.close,
                                 color: Colors.black,
-                                size: 32,
+                                size: 32.h,
                               ),
                               onPressed: () {
                                 Navigator.of(context).pop();
@@ -91,10 +95,9 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                     ),
                     SliverToBoxAdapter(
                         child: SizedBox(
-                            height: 690,
+                            height: 690.h,
                             child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 36),
+                                padding: EdgeInsets.symmetric(horizontal: 36.w),
                                 child: Column(children: [
                                   Align(
                                       alignment: Alignment.centerLeft,
@@ -109,8 +112,8 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                   Align(
                                       alignment: Alignment.centerLeft,
                                       child: Padding(
-                                        padding: const EdgeInsets.only(
-                                            top: 8, bottom: 22, right: 0),
+                                        padding: EdgeInsets.only(
+                                            top: 8.h, bottom: 22.h, right: 0),
                                         child: Text(
                                           AppLocalizations.of(context)!
                                               .changePasswordSubtitle,
@@ -119,8 +122,8 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                               .bodyMedium,
                                         ),
                                       )),
-                                  const SizedBox(
-                                    height: 24,
+                                  SizedBox(
+                                    height: 24.h,
                                   ),
                                   BasicPageTextFormField(
                                     labelText: AppLocalizations.of(context)!
@@ -185,12 +188,12 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      const Icon(
+                                      Icon(
                                         Icons.arrow_back,
-                                        size: 24,
+                                        size: 24.h,
                                       ),
-                                      const SizedBox(
-                                        width: 8,
+                                      SizedBox(
+                                        width: 8.h,
                                       ),
                                       Text(AppLocalizations.of(context)!.back,
                                           style: Theme.of(context)
@@ -236,12 +239,12 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                                         ?.copyWith(
                                                             color:
                                                                 Colors.white)),
-                                                const SizedBox(
-                                                  width: 8,
+                                                SizedBox(
+                                                  width: 8.w,
                                                 ),
-                                                const Icon(
+                                                Icon(
                                                   Icons.check,
-                                                  size: 24,
+                                                  size: 24.h,
                                                   color: Colors.white,
                                                 ),
                                               ],

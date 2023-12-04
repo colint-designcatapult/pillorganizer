@@ -2,7 +2,7 @@ import 'package:app/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:app/api/device.dart';
 import 'package:shimmer/shimmer.dart';
-
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'bin_container.dart';
 
 class BinColumn extends StatelessWidget {
@@ -32,12 +32,12 @@ class BinColumn extends StatelessWidget {
             direction: ShimmerDirection.ttb,
             builder: (BuildContext context, bool loading) {
               return Container(
-                padding: const EdgeInsets.all(4.0),
+                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
                 decoration: BoxDecoration(
                   border: isToday
-                      ? Border.all(color: borderColor, width: 2.0)
+                      ? Border.all(color: borderColor, width: 2.w)
                       : null,
-                  borderRadius: isToday ? BorderRadius.circular(10.0) : null,
+                  borderRadius: isToday ? BorderRadius.circular(10.0).r : null,
                 ),
                 child: Column(
                   children: [
@@ -49,7 +49,7 @@ class BinColumn extends StatelessWidget {
                         isDeviceActive: isDeviceActive,
                       ),
                     ),
-                    const SizedBox(height: 10.0),
+                    SizedBox(height: 10.0.h),
                     Expanded(
                       child: BinContainer(
                         isToday: isToday,

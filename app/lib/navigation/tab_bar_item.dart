@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CustomTabBarItem extends StatelessWidget {
   final Widget icon;
@@ -23,7 +24,7 @@ class CustomTabBarItem extends StatelessWidget {
       splashColor: Colors.transparent,
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.only(top: 8.0),
+        padding: EdgeInsets.only(top: 8.h),
         color: Colors.transparent,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -40,17 +41,17 @@ class CustomTabBarItem extends StatelessWidget {
                       child: icon,
                     ),
             ),
-            const SizedBox(height: 4.0),
+            SizedBox(height: 4.h),
             Text(
               label,
               style: TextStyle(
                 color:
                     isSelected ? Colors.white : Colors.white.withOpacity(0.7),
-                fontSize: 12.0,
+                fontSize: 12.sp,
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(top: 4.0),
+              padding: EdgeInsets.only(top: 4.h),
               child: Opacity(
                 opacity: 1,
                 child: ClipRRect(
@@ -60,8 +61,8 @@ class CustomTabBarItem extends StatelessWidget {
                   child: AnimatedContainer(
                     curve: Curves.easeIn,
                     duration: const Duration(milliseconds: 300),
-                    width: isSelected ? 54.0 : 0.0,
-                    height: 4.0,
+                    width: isSelected ? 54.w : 0.0,
+                    height: 4.h,
                     decoration: BoxDecoration(
                         borderRadius:
                             BorderRadius.circular(isSelected ? 0 : 2.0),

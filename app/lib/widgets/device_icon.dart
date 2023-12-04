@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../api/device.dart';
 import '../service/bin_service.dart';
 
@@ -26,16 +26,19 @@ class DevicePeriodIcon extends StatelessWidget {
 class DeviceStatusIcon extends StatelessWidget {
   final double size;
   final DeviceConnectionStatus status;
-  const DeviceStatusIcon(
-      {super.key,
-      this.status = DeviceConnectionStatus.offline,
-      this.size = 48.0});
+
+  const DeviceStatusIcon({
+    super.key,
+    this.status = DeviceConnectionStatus.offline,
+    this.size = 48,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final double orbSize = max(size / 3.5, 16.0);
-    final Color outlineColor;
+    // Improved orbSize calculation for better responsiveness
+    final double orbSize = size / 4;
     final Color orbColor;
+    final Color outlineColor;
 
     switch (status) {
       case DeviceConnectionStatus.online:
@@ -58,37 +61,39 @@ class DeviceStatusIcon extends StatelessWidget {
       child: Stack(
         children: [
           Positioned.fill(
-              child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Image.asset("lib/assets/organizer_128.png"),
-          )),
+            child: Padding(
+                padding: const EdgeInsets.all(4).h,
+                child: Image.asset('lib/assets/organizer_128.png')),
+          ),
+
           Positioned.fill(
-              child: CircularProgressIndicator(
-            color: Theme.of(context).colorScheme.surface,
-            value: 1,
-            strokeWidth: 3.0,
-          )),
+            child: CircularProgressIndicator(
+              color: Theme.of(context).colorScheme.surface,
+              value: 1,
+              strokeWidth: size / 16,
+            ),
+          ),
           Positioned.fill(
-              child: CircularProgressIndicator(
-            color: outlineColor,
-            value: status == DeviceConnectionStatus.loading ? null : 1.0,
-            strokeWidth: 3.0,
-          )),
-          if (status != DeviceConnectionStatus.loading) ...[
-            Positioned.fill(
-                child: Align(
-              alignment: Alignment.bottomRight,
-              child: Padding(
-                padding: EdgeInsets.only(right: (orbSize / 4.0)),
-                child: Container(
-                  height: orbSize,
-                  width: orbSize,
-                  decoration:
-                      BoxDecoration(shape: BoxShape.circle, color: orbColor),
+            child: CircularProgressIndicator(
+              color: outlineColor,
+              value: status == DeviceConnectionStatus.loading ? null : 1.0,
+              strokeWidth: size / 16, // Dynamic stroke width
+            ),
+          ),
+          // Orb
+          if (status != DeviceConnectionStatus.loading)
+            Positioned(
+              right: orbSize / 2, // Dynamic positioning
+              bottom: orbSize / 2, // Dynamic positioning
+              child: Container(
+                height: orbSize,
+                width: orbSize,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: orbColor,
                 ),
               ),
-            ))
-          ]
+            ),
         ],
       ),
     );
@@ -115,9 +120,9 @@ class BinIcon extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Image.asset(icon,
-            color: const Color(0xFF03012C), width: 24, height: 24),
-        const SizedBox(
-          width: 8,
+            color: const Color(0xFF03012C), width: 24.w, height: 24.h),
+        SizedBox(
+          width: 8.w,
         ),
         Text(
           dayPeriodString,

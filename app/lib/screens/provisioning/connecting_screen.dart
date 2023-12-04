@@ -2,6 +2,7 @@ import 'package:app/api/device.dart';
 import 'package:app/service/provisioning_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:tuple/tuple.dart';
 
@@ -43,7 +44,7 @@ class ProvisionConnectingPage extends StatelessWidget {
         selector: (_, prov) => Tuple2(prov.state.stage, prov.state.error),
         builder: (_, data, __) {
           return WizardStep(
-            height: data.item2 != null ? null : 400,
+            height: data.item2 != null ? null : 400.h,
             provisionningProgress: provisionningProgress,
             title: _buildTitle(data, context),
             subtext: _buildSubtitle(data, context),
@@ -58,14 +59,28 @@ class ProvisionConnectingPage extends StatelessWidget {
   Widget? _buildFooter(context, data, retryAction) {
     if (data.item1 == ProvisionStage.failed || data.item2 != null) {
       return PlatformElevatedButton(
-        child: Text(AppLocalizations.of(context)!.genericTryAgain),
+        padding: EdgeInsets.symmetric(vertical: 14.0.h),
+        child: Text(
+          AppLocalizations.of(context)!.genericTryAgain,
+          style: Theme.of(context)
+              .textTheme
+              .displaySmall
+              ?.copyWith(color: Colors.white),
+        ),
         onPressed: () {
           retryAction();
         },
       );
     } else if (data.item1 == ProvisionStage.complete) {
       return PlatformElevatedButton(
-        child: Text(AppLocalizations.of(context)!.genericCompleteAction),
+        padding: EdgeInsets.symmetric(vertical: 14.0.h),
+        child: Text(
+          AppLocalizations.of(context)!.genericCompleteAction,
+          style: Theme.of(context)
+              .textTheme
+              .displaySmall
+              ?.copyWith(color: Colors.white),
+        ),
         onPressed: () {
           //Navigator.of(context).pushReplacement(TodayPage.route(context));
         },
@@ -78,14 +93,14 @@ class ProvisionConnectingPage extends StatelessWidget {
     if (data.item1 == ProvisionStage.failed || data.item2 != null) {
       return Expanded(
           child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40.0),
+              padding: EdgeInsets.symmetric(horizontal: 40.w),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: ErrorInfoBox(error: data.item2),
               )));
     } else {
       return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Center(
             child: Consumer<ProvisionProvider>(builder: (_, prov, child) {
               if (prov.state.stage == ProvisionStage.complete) {
@@ -95,15 +110,14 @@ class ProvisionConnectingPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ClipRRect(
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(32)),
+                        borderRadius: BorderRadius.all(Radius.circular(32.r)),
                         child: LinearProgressIndicator(
                           value: prov.state.progress,
                           semanticsLabel:
                               AppLocalizations.of(context)!.progress,
-                          minHeight: 12,
+                          minHeight: 12.h,
                         )),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14.h),
                     Text(
                         '${AppLocalizations.of(context)!.estimatedTime} ${(prov.state.completionETA?.inMinutes ?? 0) + 1} min.')
                   ],

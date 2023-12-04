@@ -75,6 +75,8 @@ dependencies:
   flutter_colorpicker: ^1.0.3
   firebase_crashlytics: ^3.4.3
   permission_handler: ^11.0.1
+  flutter_screenutil: ^5.9.0
+  pixel_perfect: any
 
 
 dev_dependencies:

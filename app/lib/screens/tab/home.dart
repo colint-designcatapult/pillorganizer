@@ -1,10 +1,12 @@
 import 'package:app/provider/time_provider.dart';
+import 'package:app/screens/ScreenUtilWrapper.dart';
 import 'package:app/widgets/device_info_header.dart';
 import 'package:app/widgets/device_alert.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../api/api.dart';
 import '../../api/device.dart';
 import '../../platform/ble_auto_supress.dart';
@@ -24,107 +26,114 @@ class HomeScreen extends StatelessWidget {
         builder: (context, deviceNoticeProvider, child) {
           final bool hasNotice =
               deviceNoticeProvider.value != DeviceNotice.none;
-          return Scaffold(
-            body: Stack(children: [
-              Container(
-                height: MediaQuery.of(context).size.height,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    stops: [0.0, 0.3317],
-                    colors: [
-                      Color(0xFF206B8B),
-                      Color(0xFF002D40),
-                    ],
+          return ScreenUtilWrapper(
+            child: Scaffold(
+              body: Stack(children: [
+                Container(
+                  height: MediaQuery.of(context).size.height,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      stops: [0.0, 0.3317],
+                      colors: [
+                        Color(0xFF206B8B),
+                        Color(0xFF002D40),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              NestedScrollView(
-                headerSliverBuilder:
-                    (BuildContext context, bool innerBoxIsScrolled) {
-                  return <Widget>[
-                    SliverAppBar(
-                      expandedHeight: MediaQuery.of(context).size.height *
-                          (hasNotice ? 0.25 : 0.150),
-                      backgroundColor: Colors.transparent,
-                      flexibleSpace: FlexibleSpaceBar(
-                        expandedTitleScale: 1.0,
-                        titlePadding: const EdgeInsets.symmetric(
-                            horizontal: 10.0, vertical: 00.0),
-                        title: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: DeviceInfoHeader(
-                                  deviceOffline: deviceNoticeProvider.value ==
-                                      DeviceNotice.disconnected),
+                NestedScrollView(
+                  headerSliverBuilder:
+                      (BuildContext context, bool innerBoxIsScrolled) {
+                    return <Widget>[
+                      SliverAppBar(
+                        toolbarHeight: (hasNotice ? 250 : 130).h,
+                        backgroundColor: Colors.transparent,
+                        flexibleSpace: FlexibleSpaceBar(
+                          expandedTitleScale: 1.0,
+                          titlePadding: EdgeInsets.symmetric(
+                              horizontal: 10.0.w, vertical: 00.0.h),
+                          title: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 12.w, vertical: 12.h),
+                                child: DeviceInfoHeader(
+                                    deviceOffline: deviceNoticeProvider.value ==
+                                        DeviceNotice.disconnected),
+                              ),
+                              hasNotice
+                                  ? DeviceAlert(
+                                      notice: deviceNoticeProvider.value,
+                                      onReload: () =>
+                                          deviceNoticeProvider.reload(),
+                                      reloadFuture: () =>
+                                          deviceNoticeProvider.reloadFuture,
+                                    )
+                                  : SizedBox(height: 8.h),
+                            ],
+                          ),
+                        ),
+                        pinned: false,
+                      ),
+                    ];
+                  },
+                  body: ClipRRect(
+                    borderRadius: BorderRadius.only(
+                        topRight: const Radius.circular(40.0).r),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topRight: const Radius.circular(40.0).r,
+                        ),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                            top: 24.0.w,
+                            left: 24.0.w,
+                            right: 24.0.w,
+                            bottom: 74.w),
+                        child: CustomScrollView(
+                          slivers: [
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: EdgeInsets.only(bottom: 20.h),
+                                child: Consumer<MinuteBasedTimeProvider>(
+                                  builder: (context, minuteProvider, child) {
+                                    return Text(
+                                      AppLocalizations.of(context)!
+                                                  .localeName ==
+                                              'fr'
+                                          ? DateFormat('EEEE, d MMMM', 'fr')
+                                              .format(minuteProvider.value)
+                                          : DateFormat('EEEE, d MMMM', 'en')
+                                              .format(minuteProvider.value),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge,
+                                    );
+                                  },
+                                ),
+                              ),
                             ),
-                            hasNotice
-                                ? DeviceAlert(
-                                    notice: deviceNoticeProvider.value,
-                                    onReload: () =>
-                                        deviceNoticeProvider.reload(),
-                                    reloadFuture: () =>
-                                        deviceNoticeProvider.reloadFuture,
-                                  )
-                                : const SizedBox(height: 8),
+                            const SliverToBoxAdapter(child: Pillbox()),
+                            if (!hasNotice &&
+                                Provider.of<DeviceStateProvider>(context,
+                                            listen: false)
+                                        .value !=
+                                    null)
+                              const DosePeriodArea(),
                           ],
                         ),
                       ),
-                      pinned: false,
-                    ),
-                  ];
-                },
-                body: ClipRRect(
-                  borderRadius:
-                      const BorderRadius.only(topRight: Radius.circular(40.0)),
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topRight: Radius.circular(40.0),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                          top: 24.0, left: 24.0, right: 24.0, bottom: 74),
-                      child: CustomScrollView(
-                        slivers: [
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 20.0),
-                              child: Consumer<MinuteBasedTimeProvider>(
-                                builder: (context, minuteProvider, child) {
-                                  return Text(
-                                    AppLocalizations.of(context)!.localeName ==
-                                            'fr'
-                                        ? DateFormat('EEEE, d MMMM', 'fr')
-                                            .format(minuteProvider.value)
-                                        : DateFormat('EEEE, d MMMM', 'en')
-                                            .format(minuteProvider.value),
-                                    style:
-                                        Theme.of(context).textTheme.labelLarge,
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                          const SliverToBoxAdapter(child: Pillbox()),
-                          if (!hasNotice &&
-                              Provider.of<DeviceStateProvider>(context,
-                                          listen: false)
-                                      .value !=
-                                  null)
-                            const DosePeriodArea(),
-                        ],
-                      ),
                     ),
                   ),
                 ),
-              ),
-            ]),
+              ]),
+            ),
           );
         },
       ),

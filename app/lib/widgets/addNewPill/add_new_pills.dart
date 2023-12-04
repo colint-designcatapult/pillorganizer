@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AddNewPills extends StatelessWidget {
   final Function() onAddMedicationClick;
@@ -8,7 +9,7 @@ class AddNewPills extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 48),
+      padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 48.w),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
@@ -19,7 +20,7 @@ class AddNewPills extends StatelessWidget {
                 .titleLarge
                 ?.copyWith(color: const Color(0xFF03012C)),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16.h),
           Text(
             AppLocalizations.of(context)!.addMedicationsSubtitle,
             textAlign: TextAlign.center,
@@ -28,21 +29,21 @@ class AddNewPills extends StatelessWidget {
                 .bodyMedium
                 ?.copyWith(color: const Color(0xFF03012C)),
           ),
-          const SizedBox(height: 44),
+          SizedBox(height: 44.h),
           GestureDetector(
               onTap: onAddMedicationClick,
               child: Container(
-                padding: const EdgeInsets.all(10),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: onAddMedicationClick,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF206B8B),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(8).r,
                     ),
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 20, horizontal: 18),
+                    padding:
+                        EdgeInsets.symmetric(vertical: 20.h, horizontal: 18.w),
                   ),
                   child: Text(
                     AppLocalizations.of(context)!.addPillManually,

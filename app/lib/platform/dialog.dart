@@ -9,7 +9,9 @@ Future<void> showAlertDialog(BuildContext context, String message) {
             content: Center(
               child: Text(
                 message,
-                style: Theme.of(context).textTheme.labelLarge,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontSize: 24,
+                    ),
                 textAlign: TextAlign.center,
               ),
             ),

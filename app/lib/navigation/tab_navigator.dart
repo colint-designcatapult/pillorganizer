@@ -8,6 +8,7 @@ import 'package:app/screens/tab/settings.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../api/device.dart';
 import '../provider/device_connection_status_provider.dart';
@@ -75,9 +76,9 @@ class _TabNavigatorState extends State<TabNavigator> {
           children: [
             _tabs[_currentIndex],
             Positioned(
-              left: 20,
-              right: 20,
-              bottom: 24,
+              left: 20.w,
+              right: 20.w,
+              bottom: 24.h,
               child: CustomTabBar(
                 currentIndex: _currentIndex,
                 onTabSelected: (int index) {
@@ -90,11 +91,11 @@ class _TabNavigatorState extends State<TabNavigator> {
                     child: CustomTabBarItem(
                       icon: SvgPicture.asset(
                         'lib/assets/SVG/tabs/house-outline.svg',
-                        height: 24,
+                        height: 24.h,
                       ),
                       selectedIcon: SvgPicture.asset(
                         'lib/assets/SVG/tabs/house-filled.svg',
-                        height: 24,
+                        height: 24.h,
                       ),
                       label: AppLocalizations.of(context)!.tabHome,
                       isSelected: _currentIndex == 0,
@@ -109,11 +110,11 @@ class _TabNavigatorState extends State<TabNavigator> {
                     child: CustomTabBarItem(
                       icon: SvgPicture.asset(
                         'lib/assets/SVG/tabs/pill-outline.svg',
-                        height: 24,
+                        height: 24.h,
                       ),
                       selectedIcon: SvgPicture.asset(
                         'lib/assets/SVG/tabs/pill-filled.svg',
-                        height: 24,
+                        height: 24.h,
                       ),
                       label: AppLocalizations.of(context)!.tabPills,
                       isSelected: _currentIndex == 1,
@@ -128,11 +129,11 @@ class _TabNavigatorState extends State<TabNavigator> {
                     child: CustomTabBarItem(
                       icon: SvgPicture.asset(
                         'lib/assets/SVG/tabs/settings-outline.svg',
-                        height: 24,
+                        height: 24.h,
                       ),
                       selectedIcon: SvgPicture.asset(
                         'lib/assets/SVG/tabs/settings-filled.svg',
-                        height: 24,
+                        height: 24.h,
                       ),
                       label: AppLocalizations.of(context)!.tabSettings,
                       isSelected: _currentIndex == 2,
@@ -147,11 +148,11 @@ class _TabNavigatorState extends State<TabNavigator> {
                     child: CustomTabBarItem(
                       icon: SvgPicture.asset(
                         'lib/assets/SVG/tabs/user-outline.svg',
-                        height: 24,
+                        height: 24.h,
                       ),
                       selectedIcon: SvgPicture.asset(
                         'lib/assets/SVG/tabs/user-filled.svg',
-                        height: 24,
+                        height: 24.h,
                       ),
                       label: AppLocalizations.of(context)!.tabAccount,
                       isSelected: _currentIndex == 3,
