@@ -470,6 +470,7 @@ DosePeriodDTO _$DosePeriodDTOFromJson(Map<String, dynamic> json) =>
       medications: (json['medications'] as List<dynamic>?)
           ?.map((e) => e as int)
           .toList(),
+      takenAtTime: json['takenAtTime'] as String?,
     );
 
 Map<String, dynamic> _$DosePeriodDTOToJson(DosePeriodDTO instance) =>

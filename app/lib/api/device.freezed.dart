@@ -672,6 +672,7 @@ mixin _$DosePeriod {
   DateTime? get scheduledTime => throw _privateConstructorUsedError;
   BinStatus get status => throw _privateConstructorUsedError;
   List<int> get medicationIDs => throw _privateConstructorUsedError;
+  String? get takenAtTime => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $DosePeriodCopyWith<DosePeriod> get copyWith =>
@@ -688,7 +689,8 @@ abstract class $DosePeriodCopyWith<$Res> {
       {int binID,
       DateTime? scheduledTime,
       BinStatus status,
-      List<int> medicationIDs});
+      List<int> medicationIDs,
+      String? takenAtTime});
 }
 
 /// @nodoc
@@ -708,25 +710,28 @@ class _$DosePeriodCopyWithImpl<$Res, $Val extends DosePeriod>
     Object? scheduledTime = freezed,
     Object? status = null,
     Object? medicationIDs = null,
+    Object? takenAtTime = freezed,
   }) {
     return _then(_value.copyWith(
-      binID: null == binID
-          ? _value.binID
-          : binID // ignore: cast_nullable_to_non_nullable
-              as int,
-      scheduledTime: freezed == scheduledTime
-          ? _value.scheduledTime
-          : scheduledTime // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      status: null == status
-          ? _value.status
-          : status // ignore: cast_nullable_to_non_nullable
-              as BinStatus,
-      medicationIDs: null == medicationIDs
-          ? _value.medicationIDs
-          : medicationIDs // ignore: cast_nullable_to_non_nullable
-              as List<int>,
-    ) as $Val);
+        binID: null == binID
+            ? _value.binID
+            : binID // ignore: cast_nullable_to_non_nullable
+                as int,
+        scheduledTime: freezed == scheduledTime
+            ? _value.scheduledTime
+            : scheduledTime // ignore: cast_nullable_to_non_nullable
+                as DateTime?,
+        status: null == status
+            ? _value.status
+            : status // ignore: cast_nullable_to_non_nullable
+                as BinStatus,
+        medicationIDs: null == medicationIDs
+            ? _value.medicationIDs
+            : medicationIDs // ignore: cast_nullable_to_non_nullable
+                as List<int>,
+        takenAtTime: freezed == takenAtTime
+            ? _value.takenAtTime
+            : takenAtTime as String?) as $Val);
   }
 }
 
@@ -742,7 +747,8 @@ abstract class _$$_DosePeriodCopyWith<$Res>
       {int binID,
       DateTime? scheduledTime,
       BinStatus status,
-      List<int> medicationIDs});
+      List<int> medicationIDs,
+      String? takenAtTime});
 }
 
 /// @nodoc
@@ -755,12 +761,12 @@ class __$$_DosePeriodCopyWithImpl<$Res>
 
   @pragma('vm:prefer-inline')
   @override
-  $Res call({
-    Object? binID = null,
-    Object? scheduledTime = freezed,
-    Object? status = null,
-    Object? medicationIDs = null,
-  }) {
+  $Res call(
+      {Object? binID = null,
+      Object? scheduledTime = freezed,
+      Object? status = null,
+      Object? medicationIDs = null,
+      Object? takenAtTime = freezed}) {
     return _then(_$_DosePeriod(
       binID: null == binID
           ? _value.binID
@@ -778,6 +784,10 @@ class __$$_DosePeriodCopyWithImpl<$Res>
           ? _value._medicationIDs
           : medicationIDs // ignore: cast_nullable_to_non_nullable
               as List<int>,
+      takenAtTime: freezed == takenAtTime
+          ? _value.takenAtTime
+          : takenAtTime // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -789,7 +799,8 @@ class _$_DosePeriod extends _DosePeriod with DiagnosticableTreeMixin {
       {required this.binID,
       this.scheduledTime,
       required this.status,
-      required final List<int> medicationIDs})
+      required final List<int> medicationIDs,
+      this.takenAtTime})
       : _medicationIDs = medicationIDs,
         super._();
 
@@ -801,6 +812,8 @@ class _$_DosePeriod extends _DosePeriod with DiagnosticableTreeMixin {
   final BinStatus status;
   final List<int> _medicationIDs;
   @override
+  final String? takenAtTime;
+  @override
   List<int> get medicationIDs {
     if (_medicationIDs is EqualUnmodifiableListView) return _medicationIDs;
     // ignore: implicit_dynamic_type
@@ -809,7 +822,7 @@ class _$_DosePeriod extends _DosePeriod with DiagnosticableTreeMixin {
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'DosePeriod(binID: $binID, scheduledTime: $scheduledTime, status: $status, medicationIDs: $medicationIDs)';
+    return 'DosePeriod(binID: $binID, scheduledTime: $scheduledTime, status: $status, medicationIDs: $medicationIDs, takenAtTime: $takenAtTime)';
   }
 
   @override
@@ -820,7 +833,8 @@ class _$_DosePeriod extends _DosePeriod with DiagnosticableTreeMixin {
       ..add(DiagnosticsProperty('binID', binID))
       ..add(DiagnosticsProperty('scheduledTime', scheduledTime))
       ..add(DiagnosticsProperty('status', status))
-      ..add(DiagnosticsProperty('medicationIDs', medicationIDs));
+      ..add(DiagnosticsProperty('medicationIDs', medicationIDs))
+      ..add(DiagnosticsProperty('takenAtTime', takenAtTime));
   }
 
   @override
@@ -832,13 +846,15 @@ class _$_DosePeriod extends _DosePeriod with DiagnosticableTreeMixin {
             (identical(other.scheduledTime, scheduledTime) ||
                 other.scheduledTime == scheduledTime) &&
             (identical(other.status, status) || other.status == status) &&
+            (identical(other.takenAtTime, takenAtTime) ||
+                other.takenAtTime == takenAtTime) &&
             const DeepCollectionEquality()
                 .equals(other._medicationIDs, _medicationIDs));
   }
 
   @override
   int get hashCode => Object.hash(runtimeType, binID, scheduledTime, status,
-      const DeepCollectionEquality().hash(_medicationIDs));
+      takenAtTime, const DeepCollectionEquality().hash(_medicationIDs));
 
   @JsonKey(ignore: true)
   @override
@@ -852,7 +868,8 @@ abstract class _DosePeriod extends DosePeriod {
       {required final int binID,
       final DateTime? scheduledTime,
       required final BinStatus status,
-      required final List<int> medicationIDs}) = _$_DosePeriod;
+      required final List<int> medicationIDs,
+      final String? takenAtTime}) = _$_DosePeriod;
   const _DosePeriod._() : super._();
 
   @override
@@ -863,6 +880,8 @@ abstract class _DosePeriod extends DosePeriod {
   BinStatus get status;
   @override
   List<int> get medicationIDs;
+  @override
+  String? get takenAtTime;
   @override
   @JsonKey(ignore: true)
   _$$_DosePeriodCopyWith<_$_DosePeriod> get copyWith =>

@@ -264,11 +264,13 @@ class DosePeriodArea extends StatelessWidget {
       return "";
     }
     String format = fm.format(period.scheduledTime!);
+
     if (period.status == BinStatus.DISABLED ||
         deviceNoticeProv.value == DeviceNotice.empty) {
       return AppLocalizations.of(context)!.doseRefill;
     } else if (period.status == BinStatus.TAKEN) {
-      return AppLocalizations.of(context)!.doseTakenAt(format);
+      return AppLocalizations.of(context)!
+          .doseTakenAt(period.takenAtTime ?? fm.format(period.scheduledTime!));
     } else if (period.status == BinStatus.TAKE_NOW) {
       return AppLocalizations.of(context)!.doseTakeNow;
     } else if (period.status == BinStatus.PENDING) {

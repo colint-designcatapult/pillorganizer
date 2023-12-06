@@ -642,11 +642,13 @@ class DosePeriodDTO {
   final int? timestamp;
   final int status;
   final List<int>? medications;
+  final String? takenAtTime;
   DosePeriodDTO(
       {required this.binID,
       this.timestamp,
       required this.status,
-      this.medications});
+      this.medications,
+      this.takenAtTime});
   factory DosePeriodDTO.fromJson(Map<String, dynamic> json) =>
       _$DosePeriodDTOFromJson(json);
 }

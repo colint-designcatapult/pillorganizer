@@ -90,12 +90,12 @@ class BinState with _$BinState {
 class DosePeriod with _$DosePeriod {
   const DosePeriod._();
 
-  const factory DosePeriod({
-    required int binID,
-    DateTime? scheduledTime,
-    required BinStatus status,
-    required List<int> medicationIDs,
-  }) = _DosePeriod;
+  const factory DosePeriod(
+      {required int binID,
+      DateTime? scheduledTime,
+      required BinStatus status,
+      required List<int> medicationIDs,
+      String? takenAtTime}) = _DosePeriod;
 
   factory DosePeriod.fromDTO(DosePeriodDTO dto) {
     return DosePeriod(
@@ -105,7 +105,8 @@ class DosePeriod with _$DosePeriod {
                 isUtc: true)
             .toLocal(),
         status: BinStatus.values[dto.status],
-        medicationIDs: dto.medications ?? List.empty());
+        medicationIDs: dto.medications ?? List.empty(),
+        takenAtTime: dto.takenAtTime);
   }
   static TimeService timeService = TimeService();
 }
