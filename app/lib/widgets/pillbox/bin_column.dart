@@ -25,42 +25,33 @@ class BinColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     Color borderColor = isToday ? const Color(0xFF043C4D) : Colors.transparent;
     return Expanded(
-        child: ShimmerPlaceholder(
-            loading: isDeviceLoading,
-            baseColor: const Color(0xFFBFD2DB),
-            highlightColor: const Color(0xFFF1F6F5),
-            direction: ShimmerDirection.ttb,
-            builder: (BuildContext context, bool loading) {
-              return Container(
-                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  border: isToday
-                      ? Border.all(color: borderColor, width: 2.w)
-                      : null,
-                  borderRadius: isToday ? BorderRadius.circular(10.0).r : null,
+        child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              border:
+                  isToday ? Border.all(color: borderColor, width: 2.w) : null,
+              borderRadius: isToday ? BorderRadius.circular(10.0).r : null,
+            ),
+            child: Column(
+              children: [
+                Expanded(
+                  child: BinContainer(
+                    isToday: isToday,
+                    icon: 'moon',
+                    status: nightStatus,
+                    isDeviceActive: isDeviceActive,
+                  ),
                 ),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: BinContainer(
-                        isToday: isToday,
-                        icon: 'moon',
-                        status: nightStatus,
-                        isDeviceActive: isDeviceActive,
-                      ),
-                    ),
-                    SizedBox(height: 10.0.h),
-                    Expanded(
-                      child: BinContainer(
-                        isToday: isToday,
-                        icon: 'sun',
-                        status: dayStatus,
-                        isDeviceActive: isDeviceActive,
-                      ),
-                    ),
-                  ],
+                SizedBox(height: 10.0.h),
+                Expanded(
+                  child: BinContainer(
+                    isToday: isToday,
+                    icon: 'sun',
+                    status: dayStatus,
+                    isDeviceActive: isDeviceActive,
+                  ),
                 ),
-              );
-            }));
+              ],
+            )));
   }
 }
