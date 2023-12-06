@@ -16,7 +16,7 @@ class ProvisionProvider extends ChangeNotifier {
   ProvisionState get state => _state;
 
   final _flutterEspBleProvPlugin = FlutterEspBleProv();
-  final String _prefix = "PROV_";
+  final String _prefix = "CAB_";
   final String _popKey = "abcd1234";
   final Duration completionTimeout = const Duration(minutes: 1);
   final Duration completionCheckPeriod = const Duration(seconds: 5);

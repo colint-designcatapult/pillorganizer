@@ -6,7 +6,7 @@ import 'src/flutter_esp_ble_prov_platform_interface.dart';
 class FlutterEspBleProv {
   /// Initiates a scan of BLE devices with the given [prefix].
   ///
-  /// ESP32 Arduino demo defaults this value to "PROV_"
+  /// ESP32 Arduino demo defaults this value to "CAB_"
   Future<List<String>> scanBleDevices(String prefix) {
     return FlutterEspBleProvPlatform.instance.scanBleDevices(prefix);
   }

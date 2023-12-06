@@ -125,6 +125,6 @@ class DeviceBluetoothProvider with ChangeNotifier {
 
   String _getDeviceName(DeviceUser d) {
     String hex = d.serialNo.toRadixString(16);
-    return "PROV_${hex.substring(hex.length - 6).toUpperCase()}";
+    return "CAB_${hex.substring(hex.length - 6).toUpperCase()}";
   }
 }

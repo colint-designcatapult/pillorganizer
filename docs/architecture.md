@@ -195,7 +195,7 @@ On the app side, we use a custom forked version of flutter_esp_ble_prov with a n
 ![provisioning flow](_provision.png)
 
 1. The app scans for BLE devices.
-   For best support between iOS and Android, we look for devices starting with "PROV_" (change this).
+   For best support between iOS and Android, we look for devices starting with "CAB_".
 2. When a matching device is found, we scan for WiFi networks (handled by idf). 
    Present the user with a list of networks.
 3. Call the `serial-no` custom endpoint to get the device's serial number.
