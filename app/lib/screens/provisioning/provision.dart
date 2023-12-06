@@ -101,10 +101,7 @@ class _ProvisionPageState extends State<ProvisionPage>
                         padding: EdgeInsets.symmetric(vertical: 14.0.h),
                         child: Text(
                           AppLocalizations.of(context)!.genericTryAgain,
-                          style: Theme.of(context)
-                              .textTheme
-                              .displaySmall
-                              ?.copyWith(color: Colors.white),
+                          style: Theme.of(context).textTheme.displaySmall,
                         ),
                         onPressed: () {
                           timeoutTryAgain = false;
