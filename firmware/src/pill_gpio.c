@@ -367,7 +367,7 @@ void adc_read_task(void *arg)
         uint16_t bin_mask = 0;
         
         for(bin_id_t bin = 0; bin < BIN_COUNT; bin++) {
-            if(voltages[bin] > thresh || voltages[bin] > 1200) {
+            if(voltages[bin] > thresh || voltages[bin] > 800) { //reduce threshold from 1200 to 800
                 #if GPIO_PRINT_BINS
                 ESP_LOGI(TAG, "Bin %d voltage %lumV <--- TRIGGERED, T %lu", bin, voltages[bin], thresh);
                 #endif
