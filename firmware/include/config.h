@@ -1,7 +1,7 @@
 #pragma once
 
 #ifndef FIRMWARE_REVISION
-#define FIRMWARE_REVISION       30
+#define FIRMWARE_REVISION       31
 #endif
 
 #ifndef FIRMWARE_BUILD          
@@ -9,7 +9,7 @@
 #endif
 
 #ifndef FIRMWARE_DATE          
-#define FIRMWARE_DATE           "11/27/2023"
+#define FIRMWARE_DATE           "12/05/2023"
 #endif
 
 #ifndef BOARD_REV

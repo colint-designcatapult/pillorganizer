@@ -220,7 +220,8 @@ void on_bin_close_raw(bin_id_t bin)
         //ESP_LOGI(TAG, "Bin %d CLOSED", bin);
 
         // Bin must be open for at least 2 seconds for it to be considered a dispense event
-        if(close - open >= 2)
+        //if(close - open >= 2)
+        if(close -open >= 1)
             fire_bin_event_dispense(bin, open, close);
     }
 }
