@@ -145,7 +145,7 @@ class WizardProgressBar extends StatelessWidget {
                   BlendMode.srcIn,
                 ),
                 iconList[i],
-                width: 24.w,
+                width: 24.h,
                 height: 24.h,
               ),
             ),
@@ -160,20 +160,18 @@ class WizardProgressBar extends StatelessWidget {
                   ),
                   if (selectedStage > i)
                     Container(
-                      height: 20.h,
-                      width: 20.w,
+                      height: 24.h,
+                      width: 24.h,
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 1.w, vertical: 1.h),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(32).r,
                         color: Theme.of(context).secondaryHeaderColor,
                       ),
-                      child: SizedBox(
-                        width: 50.w,
-                        height: 50.h,
-                        child: SvgPicture.asset(
-                          'lib/assets/SVG/CheckCircle.svg',
-                          width: 24.w,
-                          height: 24,
-                        ),
+                      child: SvgPicture.asset(
+                        'lib/assets/SVG/CheckCircle.svg',
+                        width: 20.h,
+                        height: 20.h,
                       ),
                     ),
                 ],

@@ -240,27 +240,33 @@ class NotificationsSettings extends StatelessWidget {
                   ?.copyWith(fontWeight: FontWeight.w700)),
           SizedBox(height: 26.h),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Switch(
-                value: Provider.of<SelectedDeviceProvider>(context)
-                        .device
-                        ?.notifications ??
-                    false,
-                onChanged: (bool value) {
-                  toggleNotifications();
-                },
-                activeTrackColor: const Color(0xff708F72),
-                thumbIcon: MaterialStateProperty.resolveWith<Icon?>(
-                  (Set<MaterialState> states) {
-                    if (states.contains(MaterialState.selected)) {
-                      return const Icon(Icons.check, color: Color(0xff708F72));
-                    }
-                    return null;
-                  },
-                ),
-              ),
-              SizedBox(width: 16.w),
+              SizedBox(
+                  width: 50.h,
+                  height: 40.h,
+                  child: FittedBox(
+                      fit: BoxFit.fill,
+                      child: Switch(
+                        value: Provider.of<SelectedDeviceProvider>(context)
+                                .device
+                                ?.notifications ??
+                            false,
+                        onChanged: (bool value) {
+                          toggleNotifications();
+                        },
+                        activeTrackColor: const Color(0xff708F72),
+                        thumbIcon: MaterialStateProperty.resolveWith<Icon?>(
+                          (Set<MaterialState> states) {
+                            if (states.contains(MaterialState.selected)) {
+                              return Icon(Icons.check,
+                                  color: const Color(0xff708F72), size: 18.h);
+                            }
+                            return null;
+                          },
+                        ),
+                      ))),
+              SizedBox(width: 16.h),
               Flexible(
                 child: Text(
                   AppLocalizations.of(context)!.notificationReminder,

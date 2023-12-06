@@ -257,7 +257,7 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
               width: 24.w,
               height: 24.h,
             ),
-            trailing: const Icon(Icons.arrow_right),
+            trailing: Icon(Icons.arrow_right, size: 24.h),
             onTap: () {
               Navigator.of(context)
                   .push(TimeZoneSelectionModal.route(context))
