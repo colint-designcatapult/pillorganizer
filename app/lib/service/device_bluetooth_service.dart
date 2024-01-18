@@ -68,7 +68,7 @@ class DeviceBluetoothController {
   }
 
   Future<bool> connectTo(BluetoothDevice device) async {
-    await device.connect(timeout: const Duration(seconds: 4));
+    await device.connect(timeout: const Duration(seconds: 20));
     this.device = device;
 
     await device.clearGattCache();
