@@ -67,6 +67,8 @@ class DeviceBluetoothProvider with ChangeNotifier {
   }
 
   Future<bool> _missingBlePermission() async {
+    await Permission.location.request();
+    await Permission.bluetoothScan.request();
     PermissionStatus locationStatus = await Permission.location.status;
     PermissionStatus bleScanStatus = await Permission.bluetoothScan.status;
     return await _controller.checkBluetoothState() == false ||

@@ -49,8 +49,6 @@ class DeviceBluetoothController {
   }
 
   Future<bool> find() async {
-    await Permission.location.request();
-
     List scanResult =
         await _ble.startScan(timeout: Duration(seconds: _timeoutTime));
 
