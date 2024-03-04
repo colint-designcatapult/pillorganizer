@@ -32,6 +32,16 @@ class ProvisionProvider extends ChangeNotifier {
     }
   }
 
+  Future<ProvisionState> verifyPermissions(
+      Future<ProvisionState> Function() action) async {
+    if (await ProvisionUtils.missingProvisionPermission()) {
+      _state = _state.copyWith(stage: ProvisionStage.missingPermissions);
+      notifyListeners();
+      return _state;
+    }
+    return await action();
+  }
+
   Future<ProvisionState> _scanWifi() async {
     String deviceName = _state.deviceName!;
     var res =
@@ -47,11 +57,6 @@ class ProvisionProvider extends ChangeNotifier {
   }
 
   Future<ProvisionState> scanWifi() async {
-    if (await ProvisionUtils.missingProvisionPermission()) {
-      _state = _state.copyWith(stage: ProvisionStage.missingPermissions);
-      notifyListeners();
-      return _state;
-    }
     _state = _state.copyWith(progress: 0.0);
     notifyListeners();
 
@@ -71,15 +76,12 @@ class ProvisionProvider extends ChangeNotifier {
   }
 
   Future<ProvisionState> rescanBluetooth() async {
-    if (await ProvisionUtils.missingProvisionPermission()) {
-      _state = _state.copyWith(stage: ProvisionStage.missingPermissions);
-      notifyListeners();
-      return _state;
-    }
     _state = _state.copyWith(
         stage: ProvisionStage.scanning_ble,
         wifiNetworks: null,
-        future: scanBluetooth().onError((err, st) {
+        future: verifyPermissions(() async {
+          return scanBluetooth();
+        }).onError((err, st) {
           debugPrintStack(stackTrace: st, label: 'Rescan error: $err');
           _state = _state.copyWith(error: err);
           notifyListeners();
@@ -123,13 +125,10 @@ class ProvisionProvider extends ChangeNotifier {
   }
 
   Future<ProvisionState> scanBluetooth() async {
-    if (await ProvisionUtils.missingProvisionPermission()) {
-      _state = _state.copyWith(stage: ProvisionStage.missingPermissions);
-      notifyListeners();
-      return _state;
-    }
     _state = _state.copyWith(
-        future: _scanBluetooth().onError((err, st) {
+        future: verifyPermissions(() async {
+          return _scanBluetooth();
+        }).onError((err, st) {
           debugPrintStack(stackTrace: st, label: 'Start error: $err');
           _state = _state.copyWith(error: err);
           notifyListeners();
@@ -150,7 +149,9 @@ class ProvisionProvider extends ChangeNotifier {
 
   Future<ProvisionState> selectBluetooth(String device) {
     _state = _state.copyWith(
-        future: _selectBluetooth(device).onError((err, st) {
+        future: verifyPermissions(() async {
+          return _selectBluetooth(device);
+        }).onError((err, st) {
           debugPrintStack(stackTrace: st, label: 'Start error: $err');
           _state = _state.copyWith(error: err);
           notifyListeners();
@@ -166,7 +167,9 @@ class ProvisionProvider extends ChangeNotifier {
     _state = _state.copyWith(
         stage: ProvisionStage.scanning_wifi,
         wifiNetworks: null,
-        future: scanWifi().onError((err, st) {
+        future: verifyPermissions(() async {
+          return scanWifi();
+        }).onError((err, st) {
           debugPrintStack(stackTrace: st, label: 'Rescan error: $err');
           _state = _state.copyWith(error: err);
           notifyListeners();
@@ -267,11 +270,6 @@ class ProvisionProvider extends ChangeNotifier {
   }
 
   Future<ProvisionState> checkProvision() async {
-    if (await ProvisionUtils.missingProvisionPermission()) {
-      _state = _state.copyWith(stage: ProvisionStage.missingPermissions);
-      notifyListeners();
-      return _state;
-    }
     final int iterations =
         completionTimeout.inSeconds ~/ completionCheckPeriod.inSeconds;
 
@@ -309,17 +307,14 @@ class ProvisionProvider extends ChangeNotifier {
   }
 
   Future<ProvisionState> finalize(BuildContext context) async {
-    if (await ProvisionUtils.missingProvisionPermission()) {
-      _state = _state.copyWith(stage: ProvisionStage.missingPermissions);
-      notifyListeners();
-      return _state;
-    }
     _state = _state.copyWith(
         stage: ProvisionStage.finalizing,
         error: null,
         completionETA: completionTimeout,
         progress: 0,
-        future: checkProvision().then((val) {
+        future: verifyPermissions(() async {
+          return checkProvision();
+        }).then((val) {
           _state = _state.copyWith(error: null, stage: ProvisionStage.complete);
           notifyListeners();
           return val;
@@ -335,19 +330,14 @@ class ProvisionProvider extends ChangeNotifier {
 
   Future<ProvisionState> setWifiPassword(
       BuildContext context, String ssid, String pw) async {
-    if (await ProvisionUtils.missingProvisionPermission()) {
-      _state = _state.copyWith(stage: ProvisionStage.missingPermissions);
-      notifyListeners();
-      return _state;
-    }
     _state = _state.copyWith(
         stage: ProvisionStage.provisioning_wifi,
         ssid: ssid,
         wifiPassword: pw,
         error: null,
-        future: _setWifiPassword(context, ssid, pw)
-            .timeout(const Duration(seconds: 45))
-            .onError((err, st) {
+        future: verifyPermissions(() async {
+          return _setWifiPassword(context, ssid, pw);
+        }).timeout(const Duration(seconds: 45)).onError((err, st) {
           debugPrintStack(
               stackTrace: st, label: 'Set wifi password error: $err');
           _state =
