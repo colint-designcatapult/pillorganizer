@@ -5,6 +5,7 @@ import 'package:app/api/api.dart';
 import 'package:app/api/provision.dart';
 import 'package:app/provider/authentication_provider.dart';
 import 'package:app/service/provisioning_service.dart';
+import 'package:app/utils/provision_utils.dart';
 import 'package:convert/convert.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -45,7 +46,12 @@ class ProvisionProvider extends ChangeNotifier {
     return _state;
   }
 
-  Future<ProvisionState> scanWifi() {
+  Future<ProvisionState> scanWifi() async {
+    if (await ProvisionUtils.missingProvisionPermission()) {
+      _state = _state.copyWith(stage: ProvisionStage.missingPermissions);
+      notifyListeners();
+      return _state;
+    }
     _state = _state.copyWith(progress: 0.0);
     notifyListeners();
 
@@ -64,7 +70,12 @@ class ProvisionProvider extends ChangeNotifier {
     });
   }
 
-  Future<ProvisionState> rescanBluetooth() {
+  Future<ProvisionState> rescanBluetooth() async {
+    if (await ProvisionUtils.missingProvisionPermission()) {
+      _state = _state.copyWith(stage: ProvisionStage.missingPermissions);
+      notifyListeners();
+      return _state;
+    }
     _state = _state.copyWith(
         stage: ProvisionStage.scanning_ble,
         wifiNetworks: null,
@@ -82,6 +93,11 @@ class ProvisionProvider extends ChangeNotifier {
 
   Future<ProvisionState> _scanBluetooth() async {
     for (int i = 0; i < 5; i++) {
+      if (await ProvisionUtils.missingProvisionPermission()) {
+        _state = _state.copyWith(stage: ProvisionStage.missingPermissions);
+        notifyListeners();
+        return _state;
+      }
       List<String> devices =
           await _flutterEspBleProvPlugin.scanBleDevices(_prefix);
       debugPrint("Found devices: ${devices.join(" ")}");
@@ -107,6 +123,11 @@ class ProvisionProvider extends ChangeNotifier {
   }
 
   Future<ProvisionState> scanBluetooth() async {
+    if (await ProvisionUtils.missingProvisionPermission()) {
+      _state = _state.copyWith(stage: ProvisionStage.missingPermissions);
+      notifyListeners();
+      return _state;
+    }
     _state = _state.copyWith(
         future: _scanBluetooth().onError((err, st) {
           debugPrintStack(stackTrace: st, label: 'Start error: $err');
@@ -246,6 +267,11 @@ class ProvisionProvider extends ChangeNotifier {
   }
 
   Future<ProvisionState> checkProvision() async {
+    if (await ProvisionUtils.missingProvisionPermission()) {
+      _state = _state.copyWith(stage: ProvisionStage.missingPermissions);
+      notifyListeners();
+      return _state;
+    }
     final int iterations =
         completionTimeout.inSeconds ~/ completionCheckPeriod.inSeconds;
 
@@ -282,7 +308,12 @@ class ProvisionProvider extends ChangeNotifier {
     return Future.error(TimeoutException(ProvisionError.errorDeviceOffline));
   }
 
-  Future<ProvisionState> finalize(BuildContext context) {
+  Future<ProvisionState> finalize(BuildContext context) async {
+    if (await ProvisionUtils.missingProvisionPermission()) {
+      _state = _state.copyWith(stage: ProvisionStage.missingPermissions);
+      notifyListeners();
+      return _state;
+    }
     _state = _state.copyWith(
         stage: ProvisionStage.finalizing,
         error: null,
@@ -303,7 +334,12 @@ class ProvisionProvider extends ChangeNotifier {
   }
 
   Future<ProvisionState> setWifiPassword(
-      BuildContext context, String ssid, String pw) {
+      BuildContext context, String ssid, String pw) async {
+    if (await ProvisionUtils.missingProvisionPermission()) {
+      _state = _state.copyWith(stage: ProvisionStage.missingPermissions);
+      notifyListeners();
+      return _state;
+    }
     _state = _state.copyWith(
         stage: ProvisionStage.provisioning_wifi,
         ssid: ssid,
