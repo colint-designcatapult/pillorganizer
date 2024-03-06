@@ -2,8 +2,10 @@ import 'package:app/provider/provision_provider.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
 import 'package:app/screens/provisioning/wifi_select_screen.dart';
 import 'package:app/service/provisioning_service.dart';
+import 'package:app/widgets/missing_permission_info_box.dart';
 import 'package:app/widgets/wizard.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -47,6 +49,7 @@ class _ProvisionPageState extends State<ProvisionPage>
     with TickerProviderStateMixin {
   bool scanningWifi = false;
   bool timeoutTryAgain = false;
+  FlutterBluePlus bluetooth = FlutterBluePlus.instance;
 
   @override
   void initState() {
@@ -54,7 +57,7 @@ class _ProvisionPageState extends State<ProvisionPage>
     _startScanningBluetooth();
   }
 
-  void _startScanningBluetooth() {
+  Future<void> _startScanningBluetooth() async {
     final prov = Provider.of<ProvisionProvider>(context, listen: false);
 
     if (prov.state.deviceName == null) {
@@ -79,7 +82,8 @@ class _ProvisionPageState extends State<ProvisionPage>
               Tuple3(prov.state.stage, prov.state.error, prov.state.progress),
           builder: (_, data, __) {
             return WizardStep(
-              height: data.item2 != null
+              height: data.item2 != null ||
+                      data.item1 == ProvisionStage.missingPermissions
                   ? null
                   : data.item1 == ProvisionStage.select_ble
                       ? 600.h
@@ -94,16 +98,22 @@ class _ProvisionPageState extends State<ProvisionPage>
                   Navigator.of(context, rootNavigator: true).pop();
                 }
               },
-              footer: data.item2 != null || timeoutTryAgain
+              footer: data.item2 != null ||
+                      timeoutTryAgain ||
+                      data.item1 == ProvisionStage.missingPermissions
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(8.r),
                       child: PlatformElevatedButton(
+                        color: Theme.of(context).primaryColor,
                         padding: EdgeInsets.symmetric(vertical: 14.0.h),
                         child: Text(
                           AppLocalizations.of(context)!.genericTryAgain,
-                          style: Theme.of(context).textTheme.displaySmall,
+                          style: Theme.of(context)
+                              .textTheme
+                              .displaySmall
+                              ?.copyWith(color: Colors.white),
                         ),
-                        onPressed: () {
+                        onPressed: () async {
                           timeoutTryAgain = false;
                           Provider.of<ProvisionProvider>(context, listen: false)
                               .rescanBluetooth()
@@ -131,7 +141,15 @@ class _ProvisionPageState extends State<ProvisionPage>
 
   Widget _buildBody(
       Tuple3<ProvisionStage, Object?, double?> data, ProvisionProvider prov) {
-    if (data.item2 != null) {
+    if (data.item1 == ProvisionStage.missingPermissions) {
+      return Expanded(
+          child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40.0.w),
+              child: const SingleChildScrollView(
+                physics: AlwaysScrollableScrollPhysics(),
+                child: MissingPermissionInfoBox(),
+              )));
+    } else if (data.item2 != null) {
       return Expanded(
           child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 40.0.w),
@@ -208,7 +226,9 @@ class _ProvisionPageState extends State<ProvisionPage>
   }
 
   String _buildTitle(data) {
-    if (data.item2 != null) {
+    if (data.item1 == ProvisionStage.missingPermissions) {
+      return AppLocalizations.of(context)!.provMissingPermission;
+    } else if (data.item2 != null) {
       return AppLocalizations.of(context)!.provErrConGeneric;
     } else if (data.item1 == ProvisionStage.scanning_ble) {
       return AppLocalizations.of(context)!.provConSearching;
@@ -222,7 +242,9 @@ class _ProvisionPageState extends State<ProvisionPage>
   }
 
   String _buildSubtitle(data) {
-    if (data.item2 != null) {
+    if (data.item1 == ProvisionStage.missingPermissions) {
+      return '';
+    } else if (data.item2 != null) {
       return AppLocalizations.of(context)!.provErrConGenericSubtitle;
     } else if (data.item1 == ProvisionStage.scanning_ble) {
       return AppLocalizations.of(context)!.provConSearchingSubtitle;

@@ -7,26 +7,26 @@ The app is written in Dart using the Flutter Framework.
 The app generally follows a typical Flutter app directory structure.
 Here's a brief overview:
 
-* **`/api`** models, repositories, providers, and the API client live in here.
-  * `api.dart` is where the API client and DTO classes live.
-  * `[...].dart` contain models, repositories, and providers for a particular subset of the API (think devices, medications, etc).
-  * `provision.dart` contains all the business logic for provisioning a new device
-* **`/l10n`** localization files (for translations) - only English is supported right now
-* **`/platform`** utility widgets to implement a behavior that has the native look and feel for either Android or iOS
-* **`/proto`** contains the generated protocol buffer files, generated from `pill.proto` (used for Bluetooth sync)
-* **`/provider`** providers that aren't related to accessing the API
-* **`/screens`** pages in the app
-  * `auth/` login/create account/invite code pages
-  * `device_settings/medication/medication_entry_wizard.dart` contains medication entry/edit wizard (in this weird folder because this used to be a part of a now-removed device settings page)
-  * `my_account/my_account.dart` contains the "my account" page (sign out/sign up)
-  * `first_launch.dart` This is the first screen that loads every time a user opens the app.
-        It checks to see if the user is signed in already, immediately switching to the `index` page.
-        If not, it prompts for options (setup new device, sign in, etc).
-  * `index.dart` the home page for the app, when a user is signed in. They see their device here.
-  * `post_setup_wizard.dart` screens that run after a device has just been provisioned (asking them to create an account, add medications, set times, etc).
-  * `provision.dart` screen to guide the user through provisioning (setting up a new device)
-* **`/service`** general utility/service classes
-* **`/widgets`** general reusable widgets
+- **`/api`** models, repositories, providers, and the API client live in here.
+  - `api.dart` is where the API client and DTO classes live.
+  - `[...].dart` contain models, repositories, and providers for a particular subset of the API (think devices, medications, etc).
+  - `provision.dart` contains all the business logic for provisioning a new device
+- **`/l10n`** localization files (for translations) - only English is supported right now
+- **`/platform`** utility widgets to implement a behavior that has the native look and feel for either Android or iOS
+- **`/proto`** contains the generated protocol buffer files, generated from `pill.proto` (used for Bluetooth sync)
+- **`/provider`** providers that aren't related to accessing the API
+- **`/screens`** pages in the app
+  - `auth/` login/create account/invite code pages
+  - `device_settings/medication/medication_entry_wizard.dart` contains medication entry/edit wizard (in this weird folder because this used to be a part of a now-removed device settings page)
+  - `my_account/my_account.dart` contains the "my account" page (sign out/sign up)
+  - `first_launch.dart` This is the first screen that loads every time a user opens the app.
+    It checks to see if the user is signed in already, immediately switching to the `index` page.
+    If not, it prompts for options (setup new device, sign in, etc).
+  - `index.dart` the home page for the app, when a user is signed in. They see their device here.
+  - `post_setup_wizard.dart` screens that run after a device has just been provisioned (asking them to create an account, add medications, set times, etc).
+  - `provision.dart` screen to guide the user through provisioning (setting up a new device)
+- **`/service`** general utility/service classes
+- **`/widgets`** general reusable widgets
 
 ### API client
 
@@ -35,14 +35,13 @@ Client functions are defined declarative using annotations (see retrofit docs).
 
 The client has two filters that intercept every request:
 
-  * The `JwtAuthInterceptor` adds the `Authorization: Bearer` token to all HTTP requests (if a token exists).
-    If the token is expired, the interceptor will attempt to sign in again and acquire another authentication token.
-  * The `ProblemJsonInterceptor` automatically decodes [Problem JSON](https://datatracker.ietf.org/doc/html/rfc7807)
-    bodies from failed HTTP requests. Note that due to some bugs in Dio (the underlying HTTP library), this isn't always
-    reliable.
+- The `JwtAuthInterceptor` adds the `Authorization: Bearer` token to all HTTP requests (if a token exists).
+  If the token is expired, the interceptor will attempt to sign in again and acquire another authentication token.
+- The `ProblemJsonInterceptor` automatically decodes [Problem JSON](https://datatracker.ietf.org/doc/html/rfc7807)
+  bodies from failed HTTP requests. Note that due to some bugs in Dio (the underlying HTTP library), this isn't always
+  reliable.
 
 The client is a global variable, access it with `client` (type `RestClient` in `api.dart`).
-
 
 ### Repositories & DTOs
 
@@ -61,7 +60,7 @@ Effort should be made to ensure the data flows properly, since direct access to 
 
 ### State management
 
-The project went through a couple of different state management patterns, starting with simple stateful widgets, Bloc, 
+The project went through a couple of different state management patterns, starting with simple stateful widgets, Bloc,
 to finally [providers](https://pub.dev/packages/provider) using only stateless widgets.
 There is a mix state management patterns in the codebase, but all modern code should use providers with stateless widgets.
 There is also a mix of how data flows through providers, this is also an area that is being worked on.
@@ -75,6 +74,10 @@ The stock extension does not provide calling a custom endpoint, so we maintain a
 We call custom endpoints with `customEndpoint`.
 
 Maintaining a separate fork is a maintenance burden, and we should probably just contribute our changes upstream.
+
+### flutter_blue_plus
+
+Needed to use a local copy of the library to disable the two notifications that we get when starting onboarding on ios. This is the problem and fix added: https://github.com/boskokg/flutter_blue_plus/issues/119 in FlutterBluePlusPlugin.m changing self.centralManager to disable the second notification.
 
 ## Building, Deploying, and CI/CD
 

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:app/screens/ScreenUtilWrapper.dart';
 import 'package:app/service/provisioning_service.dart';
+import 'package:app/widgets/missing_permission_info_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -23,49 +24,105 @@ class ProvisionSelectWifiPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool timeoutTryAgain = false;
     ProvisionningProgress provisionningProgress = ProvisionningProgress(1, 2);
     return ScreenUtilWrapper(
-      child: WizardStep(
-        provisionningProgress: provisionningProgress,
-        title: AppLocalizations.of(context)!.provSelectWifi,
-        subtext: AppLocalizations.of(context)!.provSelectWifiSubtitle,
-        onBackPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-        child: Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(left: 20.w, right: 20.0.w, bottom: 32.0.h),
-            child: Consumer<ProvisionProvider>(
-              builder: (_, prov, child) {
-                if (prov.state.wifiNetworks == null) {
-                  return const Center(child: CircularProgressIndicator());
-                } else {
-                  return SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        ...prov.state.wifiNetworks!
-                            .map((e) => _buildWifiCard(context, e, prov))
-                            .toList(growable: false),
-                        TextButton(
-                          onPressed: () {
-                            prov.rescanNetworks();
-                          },
-                          child: Text(
-                              AppLocalizations.of(context)!.provRescanWifi),
-                        ),
-                        SizedBox(
-                          height: 35.h,
-                        )
-                      ],
+        child: Selector<ProvisionProvider, ({ProvisionStage stage})>(
+            selector: (_, prov) => (stage: prov.state.stage),
+            builder: (_, data, __) {
+              return WizardStep(
+                provisionningProgress: provisionningProgress,
+                title: AppLocalizations.of(context)!.provSelectWifi,
+                subtext: data.stage == ProvisionStage.missingPermissions
+                    ? ''
+                    : AppLocalizations.of(context)!.provSelectWifiSubtitle,
+                onBackPressed: () =>
+                    Navigator.of(context, rootNavigator: true).pop(),
+                child: Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                        left: 20.w, right: 20.0.w, bottom: 32.0.h),
+                    child: Consumer<ProvisionProvider>(
+                      builder: (_, prov, child) {
+                        if (prov.state.stage ==
+                            ProvisionStage.missingPermissions) {
+                          return Center(
+                              child: Padding(
+                                  padding:
+                                      EdgeInsets.symmetric(horizontal: 20.0.w),
+                                  child: Column(children: [
+                                    const SingleChildScrollView(
+                                      physics: AlwaysScrollableScrollPhysics(),
+                                      child: MissingPermissionInfoBox(),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        timeoutTryAgain = false;
+                                        prov
+                                            .rescanNetworks()
+                                            .then((state) {})
+                                            .timeout(
+                                                const Duration(seconds: 25),
+                                                onTimeout: () {
+                                          timeoutTryAgain = true;
+                                        });
+                                      },
+                                      child: Text(AppLocalizations.of(context)!
+                                          .provRescanWifi),
+                                    ),
+                                  ])));
+                        }
+                        if (prov.state.wifiNetworks == null) {
+                          return Center(
+                              child: Column(children: [
+                            const CircularProgressIndicator(),
+                            timeoutTryAgain
+                                ? TextButton(
+                                    onPressed: () {
+                                      timeoutTryAgain = false;
+                                      prov
+                                          .rescanNetworks()
+                                          .then((state) {})
+                                          .timeout(const Duration(seconds: 25),
+                                              onTimeout: () {
+                                        timeoutTryAgain = true;
+                                      });
+                                    },
+                                    child: Text(AppLocalizations.of(context)!
+                                        .provRescanWifi),
+                                  )
+                                : const SizedBox.shrink()
+                          ]));
+                        } else {
+                          return SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.max,
+                              children: [
+                                ...prov.state.wifiNetworks!
+                                    .map(
+                                        (e) => _buildWifiCard(context, e, prov))
+                                    .toList(growable: false),
+                                TextButton(
+                                  onPressed: () {
+                                    prov.rescanNetworks();
+                                  },
+                                  child: Text(AppLocalizations.of(context)!
+                                      .provRescanWifi),
+                                ),
+                                SizedBox(
+                                  height: 35.h,
+                                )
+                              ],
+                            ),
+                          );
+                        }
+                      },
                     ),
-                  );
-                }
-              },
-            ),
-          ),
-        ),
-      ),
-    );
+                  ),
+                ),
+              );
+            }));
   }
 
   void _showPasswordDialog(

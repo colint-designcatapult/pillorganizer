@@ -12,7 +12,8 @@ enum ProvisionStage {
   provisioning_wifi,
   finalizing,
   complete,
-  failed
+  failed,
+  missingPermissions
 }
 
 @freezed

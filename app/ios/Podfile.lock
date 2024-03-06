@@ -1,4 +1,6 @@
 PODS:
+  - "app_settings (3.0.0+1)":
+    - Flutter
   - ESPProvision (2.1.2):
     - ESPProvision/Core (= 2.1.2)
   - ESPProvision/Core (2.1.2):
@@ -118,6 +120,7 @@ PODS:
   - SwiftProtobuf (1.22.1)
 
 DEPENDENCIES:
+  - app_settings (from `.symlinks/plugins/app_settings/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - firebase_crashlytics (from `.symlinks/plugins/firebase_crashlytics/ios`)
   - firebase_messaging (from `.symlinks/plugins/firebase_messaging/ios`)
@@ -153,6 +156,8 @@ SPEC REPOS:
     - SwiftProtobuf
 
 EXTERNAL SOURCES:
+  app_settings:
+    :path: ".symlinks/plugins/app_settings/ios"
   firebase_core:
     :path: ".symlinks/plugins/firebase_core/ios"
   firebase_crashlytics:
@@ -181,6 +186,7 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
 
 SPEC CHECKSUMS:
+  app_settings: d103828c9f5d515c4df9ee754dabd443f7cedcf3
   ESPProvision: f05031824999e3493e5e90b7c74d0aebcd7777d0
   Firebase: 25899099b77d255a636e3579c3d9dce10ec150d5
   firebase_core: 68027ba03585e3efe1608e35d3ab2777a64eabe9
@@ -193,7 +199,7 @@ SPEC CHECKSUMS:
   FirebaseInstallations: 9387bf15abfc69a714f54e54f74a251264fdb79b
   FirebaseMessaging: 80b4a086d20ed4fd385a702f4bfa920e14f5064d
   FirebaseSessions: 49f39e5c10e3f9fdd38d01b748329bae2a2fa8ed
-  Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
+  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_blue_plus: 316ac8d1179789616d2c148e8a03c37720e63933
   flutter_esp_ble_prov: a18fa58626e98c50e663a3d054dd99b9dde6b84d
   flutter_local_notifications: 0c0b1ae97e741e1521e4c1629a459d04b9aec743

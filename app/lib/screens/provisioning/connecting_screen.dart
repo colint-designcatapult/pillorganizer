@@ -1,5 +1,6 @@
 import 'package:app/api/device.dart';
 import 'package:app/service/provisioning_service.dart';
+import 'package:app/widgets/missing_permission_info_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -57,8 +58,11 @@ class ProvisionConnectingPage extends StatelessWidget {
   }
 
   Widget? _buildFooter(context, data, retryAction) {
-    if (data.item1 == ProvisionStage.failed || data.item2 != null) {
+    if (data.item1 == ProvisionStage.failed ||
+        data.item1 == ProvisionStage.missingPermissions ||
+        data.item2 != null) {
       return PlatformElevatedButton(
+        color: Theme.of(context).primaryColor,
         padding: EdgeInsets.symmetric(vertical: 14.0.h),
         child: Text(
           AppLocalizations.of(context)!.genericTryAgain,
@@ -73,6 +77,7 @@ class ProvisionConnectingPage extends StatelessWidget {
       );
     } else if (data.item1 == ProvisionStage.complete) {
       return PlatformElevatedButton(
+        color: Theme.of(context).primaryColor,
         padding: EdgeInsets.symmetric(vertical: 14.0.h),
         child: Text(
           AppLocalizations.of(context)!.genericCompleteAction,
@@ -90,6 +95,15 @@ class ProvisionConnectingPage extends StatelessWidget {
   }
 
   Widget _buildBody(context, data) {
+    if (data.item1 == ProvisionStage.missingPermissions) {
+      return Expanded(
+          child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40.0.w),
+              child: const SingleChildScrollView(
+                physics: AlwaysScrollableScrollPhysics(),
+                child: MissingPermissionInfoBox(),
+              )));
+    }
     if (data.item1 == ProvisionStage.failed || data.item2 != null) {
       return Expanded(
           child: Padding(
@@ -138,7 +152,9 @@ class ProvisionConnectingPage extends StatelessWidget {
   }
 
   String _buildTitle(data, context) {
-    if (data.item2 != null) {
+    if (data.item1 == ProvisionStage.missingPermissions) {
+      return AppLocalizations.of(context)!.provMissingPermission;
+    } else if (data.item2 != null) {
       return AppLocalizations.of(context)!.connectionProblem;
     } else if (data.item1 == ProvisionStage.finalizing) {
       return AppLocalizations.of(context)!.finishingSetup;
@@ -150,7 +166,9 @@ class ProvisionConnectingPage extends StatelessWidget {
   }
 
   String _buildSubtitle(data, context) {
-    if (data.item2 != null) {
+    if (data.item1 == ProvisionStage.missingPermissions) {
+      return '';
+    } else if (data.item2 != null) {
       return AppLocalizations.of(context)!.connectionProblemSubtitle;
     } else if (data.item1 == ProvisionStage.finalizing) {
       return AppLocalizations.of(context)!.finishingSetupSubtitle;
