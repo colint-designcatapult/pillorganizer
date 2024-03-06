@@ -5,6 +5,7 @@ import 'package:app/provider/schedule_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
 import 'package:app/screens/modals/add_new_pills_modal.dart';
+import 'package:app/screens/tab/settings.dart';
 import 'package:app/service/authentication_service.dart';
 import 'package:app/service/provisioning_service.dart';
 import 'package:app/widgets/addNewPill/medication_card_entry.dart';
@@ -84,88 +85,21 @@ class NotificationStep extends StatelessWidget {
   Widget build(BuildContext context) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(2, 2);
 
-    return Consumer<SelectedDeviceProvider>(
-      builder: (context, selectedDeviceProvider, child) {
-        void toggleNotifications() {
-          selectedDeviceProvider.updateNotifications(
-              !(selectedDeviceProvider.device?.notifications ?? false));
-        }
-
-        return WizardStep(
-            provisionningProgress: provisionningProgress,
-            title: AppLocalizations.of(context)!.reminders,
-            subtext: AppLocalizations.of(context)!.remindersSubtitle,
-            onBackPressed: () => Navigator.of(context).pop(),
-            onNextPressed: () =>
-                Navigator.of(context).push(MedicationEntryStep.route(context)),
-            canGoNext: true,
-            height: 550.h,
-            child: Expanded(
-                child: Padding(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-                    child: SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        child: Column(
-                            mainAxisSize: MainAxisSize.max,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                  '${AppLocalizations.of(context)!.notificationPreferences}:',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleSmall
-                                      ?.copyWith(fontWeight: FontWeight.w700)),
-                              SizedBox(height: 26.h),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  SizedBox(
-                                      width: 50.h,
-                                      height: 40.h,
-                                      child: FittedBox(
-                                          fit: BoxFit.fill,
-                                          child: Switch(
-                                            value:
-                                                Provider.of<SelectedDeviceProvider>(
-                                                            context)
-                                                        .device
-                                                        ?.notifications ??
-                                                    false,
-                                            onChanged: (bool value) {
-                                              toggleNotifications();
-                                            },
-                                            activeTrackColor:
-                                                const Color(0xff708F72),
-                                            thumbIcon: MaterialStateProperty
-                                                .resolveWith<Icon?>(
-                                              (Set<MaterialState> states) {
-                                                if (states.contains(
-                                                    MaterialState.selected)) {
-                                                  return const Icon(Icons.check,
-                                                      color: Color(0xff708F72));
-                                                }
-                                                return null;
-                                              },
-                                            ),
-                                          ))),
-                                  SizedBox(width: 16.h),
-                                  Flexible(
-                                    child: Text(
-                                      AppLocalizations.of(context)!
-                                          .notificationReminder,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ])))));
-      },
-    );
+    return WizardStep(
+        provisionningProgress: provisionningProgress,
+        title: AppLocalizations.of(context)!.reminders,
+        subtext: AppLocalizations.of(context)!.remindersSubtitle,
+        onBackPressed: () => Navigator.of(context).pop(),
+        onNextPressed: () =>
+            Navigator.of(context).push(MedicationEntryStep.route(context)),
+        canGoNext: true,
+        height: 550.h,
+        child: Expanded(
+            child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+                child: const SingleChildScrollView(
+                    physics: AlwaysScrollableScrollPhysics(),
+                    child: NotificationsSettings()))));
   }
 }
 
