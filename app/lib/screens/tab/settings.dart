@@ -1,8 +1,10 @@
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/widgets/button_icon_text.dart';
 import 'package:app/widgets/remove_device_modal.dart';
+import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -217,66 +219,156 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-class NotificationsSettings extends StatelessWidget {
+class NotificationsSettings extends StatefulWidget {
   const NotificationsSettings({
     super.key,
   });
 
   @override
+  _NotificationsSettingsState createState() => _NotificationsSettingsState();
+}
+
+class _NotificationsSettingsState extends State<NotificationsSettings>
+    with WidgetsBindingObserver {
+  late Future<bool> _notificationPreference;
+  @override
   Widget build(BuildContext context) {
-    void toggleNotifications() {
-      var sdp = Provider.of<SelectedDeviceProvider>(context, listen: false);
-      sdp.updateNotifications(!(sdp.device?.notifications ?? false));
+    Future<void> toggleNotifications(bool value) async {
+      var status = await Permission.notification.status;
+      if (value == false) {
+        //When we toggle off we don't turn permission off since we can have other devices with notification on
+        updateNotification(false);
+      } else {
+        if (status.isDenied) {
+          //Asks for permission with native popup
+          await Permission.notification.request().then(
+              (value) => value.isGranted ? updateNotification(true) : null);
+        } else if (status.isPermanentlyDenied) {
+          //If denied the native permission then we need to open settings since it won't show again
+          AppSettings.openAppSettings();
+        } else {
+          //If permission was already granted and we toggle on
+          updateNotification(true);
+        }
+      }
     }
 
-    return Column(
-        mainAxisSize: MainAxisSize.max,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(AppLocalizations.of(context)!.notificationPreferences,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700)),
-          SizedBox(height: 26.h),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(
-                  width: 50.h,
-                  height: 40.h,
-                  child: FittedBox(
-                      fit: BoxFit.fill,
-                      child: Switch(
-                        value: Provider.of<SelectedDeviceProvider>(context)
-                                .device
-                                ?.notifications ??
-                            false,
-                        onChanged: (bool value) {
-                          toggleNotifications();
-                        },
-                        activeTrackColor: const Color(0xff708F72),
-                        thumbIcon: MaterialStateProperty.resolveWith<Icon?>(
-                          (Set<MaterialState> states) {
-                            if (states.contains(MaterialState.selected)) {
-                              return Icon(Icons.check,
-                                  color: const Color(0xff708F72), size: 18.h);
-                            }
-                            return null;
-                          },
+    return FutureBuilder<bool>(
+        future: _notificationPreference,
+        builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+          if (snapshot.hasData ||
+              snapshot.hasError ||
+              snapshot.connectionState == ConnectionState.done) {
+            return Consumer<SelectedDeviceProvider>(
+                builder: (_, selectedDevice, __) {
+              return Column(
+                  mainAxisSize: MainAxisSize.max,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(AppLocalizations.of(context)!.notificationPreferences,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w700)),
+                    SizedBox(height: 26.h),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                            width: 50.h,
+                            height: 40.h,
+                            child: FittedBox(
+                                fit: BoxFit.fill,
+                                child: Switch(
+                                  value: snapshot.data ?? false,
+                                  onChanged: (bool value) {
+                                    toggleNotifications(value);
+                                  },
+                                  activeTrackColor: const Color(0xff708F72),
+                                  thumbIcon:
+                                      MaterialStateProperty.resolveWith<Icon?>(
+                                    (Set<MaterialState> states) {
+                                      if (states
+                                          .contains(MaterialState.selected)) {
+                                        return Icon(Icons.check,
+                                            color: const Color(0xff708F72),
+                                            size: 18.h);
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ))),
+                        SizedBox(width: 16.h),
+                        Flexible(
+                          child: Text(
+                            AppLocalizations.of(context)!.notificationReminder,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ))),
-              SizedBox(width: 16.h),
-              Flexible(
-                child: Text(
-                  AppLocalizations.of(context)!.notificationReminder,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ]);
+                      ],
+                    ),
+                  ]);
+            });
+          } else {
+            return const CircularProgressIndicator(
+              color: Colors.white,
+            );
+          }
+        });
+  }
+
+  void updateNotification(bool value) {
+    Provider.of<SelectedDeviceProvider>(context, listen: false)
+        .updateNotifications(value);
+
+    setState(() {
+      _notificationPreference = Future.value(value);
+    });
+  }
+
+  Future<void> checkPermission() async {
+    if (await Permission.notification.status.isGranted) {
+      updateNotification(true);
+    } else if (await Permission.notification.status.isDenied ||
+        await Permission.notification.status.isPermanentlyDenied) {
+      updateNotification(false);
+    }
+  }
+
+  Future<void> initPermission() async {
+    _notificationPreference = Future.value(
+        Provider.of<SelectedDeviceProvider>(context, listen: false)
+                .device
+                ?.notifications ??
+            false);
+    if (await Permission.notification.status.isDenied ||
+        await Permission.notification.status.isPermanentlyDenied) {
+      //Only if the permission is disabled do we reflect in the app that no notification can be shown
+      //Because having notification on in settings != wanting the notification for a device
+      updateNotification(false);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    initPermission();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // When user leaves the app to go into notification, check permission
+    if (state == AppLifecycleState.resumed) {
+      checkPermission();
+    }
   }
 }
