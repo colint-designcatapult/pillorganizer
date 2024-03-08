@@ -19,12 +19,14 @@ class SelectedDeviceProvider with ChangeNotifier {
   }
 
   SelectedDeviceProvider update(List<DeviceUser>? deviceList) {
-    _devices = deviceList;
-    isUpdatedTimeZoneCalled = false;
-    if (_selectedID != null) {
-      _selectDeviceByID(_selectedID!);
-    } else if (deviceList != null && deviceList.isNotEmpty) {
-      _selectDeviceByID(deviceList.first.deviceID);
+    if (_devices != deviceList) {
+      _devices = deviceList;
+      isUpdatedTimeZoneCalled = false;
+      if (_selectedID != null) {
+        _selectDeviceByID(_selectedID!);
+      } else if (deviceList != null && deviceList.isNotEmpty) {
+        _selectDeviceByID(deviceList.first.deviceID);
+      }
     }
     return this;
   }
