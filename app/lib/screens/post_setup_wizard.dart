@@ -221,13 +221,24 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width,
         ),
-        builder: (context) => ChangeNotifierProvider<NewMedicationProvider>(
-            create: (context) => NewMedicationProvider(
-                device!.deviceID, () => prov.update(device)),
-            builder: (context, _) => MedicationModal(
-                onBack: () => Navigator.of(context).pop(),
-                onNext: true,
-                child: const MedicationCardEntry()))).whenComplete(() {
+        builder: (context) => device == null
+            ? ChangeNotifierProvider<NewMedicationProvider>(
+                create: (context) => NewMedicationProvider(
+                    device!.deviceID, () => prov.update(device)),
+                builder: (context, _) => MedicationModal(
+                    onBack: () => Navigator.of(context).pop(),
+                    onNext: true,
+                    child: const MedicationCardEntry()))
+            : SingleChildScrollView(
+                child: Padding(
+                    padding:
+                        EdgeInsets.symmetric(vertical: 8.h, horizontal: 32.w),
+                    child: SizedBox(
+                        height: 200.h,
+                        width: 200.w,
+                        child: Center(
+                            child: Text(AppLocalizations.of(context)!
+                                .addPillsError)))))).whenComplete(() {
       prov.refresh();
     });
   }
@@ -332,12 +343,18 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
   }
 }
 
-class CreateAccountStep extends StatelessWidget {
+class CreateAccountStep extends StatefulWidget {
   const CreateAccountStep({super.key});
 
   static Route<CreateAccountStep> route(context) => platformPageRoute(
       context: context, builder: (_) => const CreateAccountStep());
 
+  @override
+  State<CreateAccountStep> createState() => _CreateAccountStepState();
+}
+
+class _CreateAccountStepState extends State<CreateAccountStep> {
+  bool _obscureText = true;
   @override
   Widget build(BuildContext context) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(3, 1);
@@ -353,6 +370,7 @@ class CreateAccountStep extends StatelessWidget {
               canGoNext: false,
               onSkipPressed: () => Navigator.of(context)
                   .pushNamedAndRemoveUntil('/index', (route) => false),
+              canScroll: true,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: BasicForm(
@@ -383,7 +401,12 @@ class CreateAccountStep extends StatelessWidget {
                             AppLocalizations.of(context)!
                                 .passwordLengthValidation)
                       ]),
-                      obscureText: true,
+                      onRevealText: () {
+                        setState(() {
+                          _obscureText = !_obscureText;
+                        });
+                      },
+                      obscureText: _obscureText,
                       textInputAction: TextInputAction.done,
                       onSaved: (val) {
                         context

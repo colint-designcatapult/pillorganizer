@@ -197,7 +197,8 @@ class WizardStep extends StatelessWidget {
       this.onSkipPressed,
       this.height,
       this.canGoNext = false,
-      this.onBackPressed});
+      this.onBackPressed,
+      this.canScroll = false});
 
   final ProvisionningProgress provisionningProgress;
   final Widget? icon;
@@ -210,43 +211,52 @@ class WizardStep extends StatelessWidget {
   final VoidCallback? onSkipPressed;
   final double? height;
   final bool canGoNext;
+  final bool canScroll;
 
   static const navFooterHeight = 72.0;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       backgroundColor: const Color(0xFFBFD2DB),
-      body: Stack(
-        children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.max,
+      body: SingleChildScrollView(
+        physics: canScroll
+            ? const AlwaysScrollableScrollPhysics()
+            : const NeverScrollableScrollPhysics(),
+        child: Container(
+          constraints: BoxConstraints.expand(
+            height: MediaQuery.of(context).size.height,
+          ),
+          child: Stack(
             children: [
-              Padding(
-                padding: EdgeInsets.only(left: 24.w, top: 100.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "${AppLocalizations.of(context)!.step} ${provisionningProgress.step} / 3",
-                      textAlign: TextAlign.left,
-                      style: Theme.of(context).textTheme.displaySmall,
+              Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(left: 24.w, top: 100.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "${AppLocalizations.of(context)!.step} ${provisionningProgress.step} / 3",
+                          textAlign: TextAlign.left,
+                          style: Theme.of(context).textTheme.displaySmall,
+                        ),
+                        Text(
+                          provisionningProgress.getTitle(context),
+                          textAlign: TextAlign.left,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontSize: 32.h),
+                        ),
+                      ],
                     ),
-                    Text(
-                      provisionningProgress.getTitle(context),
-                      textAlign: TextAlign.left,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(fontSize: 32.h),
-                    ),
-                  ],
-                ),
-              ),
-              height != null
-                  ? SizedBox(
+                  ),
+                  if (height != null)
+                    SizedBox(
                       height: height,
                       child: WizardStepBodyDelegate(
                         title: title,
@@ -254,24 +264,27 @@ class WizardStep extends StatelessWidget {
                         provisionningProgress: provisionningProgress,
                         subtext: subtext,
                         child: child,
-                      ))
-                  : Expanded(
-                      child: WizardStepBodyDelegate(
-                      title: title,
-                      icon: icon,
-                      provisionningProgress: provisionningProgress,
-                      subtext: subtext,
-                      child: child,
-                    )),
-              if (footer != null)
-                Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        top: 8.h,
-                        bottom: navFooterHeight,
                       ),
-                      child: AnimatedSwitcher(
+                    )
+                  else
+                    Expanded(
+                      child: WizardStepBodyDelegate(
+                        title: title,
+                        icon: icon,
+                        provisionningProgress: provisionningProgress,
+                        subtext: subtext,
+                        child: child,
+                      ),
+                    ),
+                  if (footer != null)
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          top: 8.h,
+                          bottom: navFooterHeight,
+                        ),
+                        child: AnimatedSwitcher(
                           duration: const Duration(milliseconds: 350),
                           switchInCurve: Curves.easeIn,
                           switchOutCurve: Curves.easeIn,
@@ -292,88 +305,89 @@ class WizardStep extends StatelessWidget {
                                   horizontal: 20.w, vertical: 20.h),
                               child: footer!,
                             ),
-                          )),
-                    ))
+                          ),
+                        ),
+                      ),
+                    )
+                ],
+              ),
             ],
           ),
-          Positioned(
-            // Position the bottomNavigationBar at the bottom
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              color: Theme.of(context).secondaryHeaderColor,
-              child: Row(
-                children: [
-                  Expanded(
+        ),
+      ),
+      bottomNavigationBar: Container(
+        color: Theme.of(context).secondaryHeaderColor,
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: onBackPressed,
+                child: Container(
+                  color: Colors.transparent,
+                  child: SizedBox(
+                    height: navFooterHeight,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.arrow_back,
+                          size: 24.h,
+                        ),
+                        SizedBox(
+                          width: 8.w,
+                        ),
+                        Text(
+                          AppLocalizations.of(context)!.back,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            provisionningProgress.step == 1
+                ? const Expanded(
+                    child: SizedBox(),
+                  )
+                : Expanded(
                     child: GestureDetector(
-                      onTap: onBackPressed,
+                      onTap: canGoNext ? onNextPressed : onSkipPressed,
                       child: Container(
-                        color: Colors.transparent,
-                        child: SizedBox(
-                          height: navFooterHeight,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.arrow_back,
-                                size: 24.h,
-                              ),
-                              SizedBox(
-                                width: 8.w,
-                              ),
-                              Text(AppLocalizations.of(context)!.back,
-                                  style: Theme.of(context).textTheme.bodySmall),
-                            ],
+                        height: navFooterHeight,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          borderRadius: BorderRadius.only(
+                            topLeft: const Radius.circular(32).r,
                           ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              canGoNext
+                                  ? AppLocalizations.of(context)!.next
+                                  : AppLocalizations.of(context)!.skip,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(color: Colors.white),
+                            ),
+                            SizedBox(
+                              width: 8.w,
+                            ),
+                            Icon(
+                              Icons.arrow_forward,
+                              color: Colors.white,
+                              size: 24.h,
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ),
-                  provisionningProgress.step == 1
-                      ? const Expanded(
-                          child: SizedBox(),
-                        )
-                      : Expanded(
-                          child: GestureDetector(
-                            onTap: canGoNext ? onNextPressed : onSkipPressed,
-                            child: Container(
-                              height: navFooterHeight,
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).primaryColor,
-                                borderRadius: BorderRadius.only(
-                                  topLeft: const Radius.circular(32).r,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                      canGoNext
-                                          ? AppLocalizations.of(context)!.next
-                                          : AppLocalizations.of(context)!.skip,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.copyWith(color: Colors.white)),
-                                  SizedBox(
-                                    width: 8.w,
-                                  ),
-                                  Icon(
-                                    Icons.arrow_forward,
-                                    color: Colors.white,
-                                    size: 24.h,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                ],
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

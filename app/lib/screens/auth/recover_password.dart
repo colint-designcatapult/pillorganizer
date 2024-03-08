@@ -179,6 +179,7 @@ class _RecoverPasswordInputState extends State<RecoverPasswordInput> {
   final _formKey = GlobalKey<FormState>();
   String? currentPassword;
   String? newPassword;
+  bool _obscureText = true;
 
   @override
   Widget build(BuildContext context) {
@@ -277,7 +278,12 @@ class _RecoverPasswordInputState extends State<RecoverPasswordInput> {
                                           AppLocalizations.of(context)!
                                               .passwordLengthValidation)
                                     ]),
-                                    obscureText: true,
+                                    onRevealText: () {
+                                      setState(() {
+                                        _obscureText = !_obscureText;
+                                      });
+                                    },
+                                    obscureText: _obscureText,
                                     textInputAction: TextInputAction.done,
                                     onSaved: (val) => newPassword = val,
                                     onFieldSubmitted: (val) {

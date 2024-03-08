@@ -6,6 +6,7 @@
 	"addNew": "Ajouter",
 	"addNewDevice": "Ajouter un nouvel appareil",
 	"addPills": "Ajouter des pilules",
+	"addPillsError": "Une erreur s'est produite lors de la tentative d'ajout de pilules. Vous pouvez toujours ajouter des pilules après l'intégration"
 	"addPillManually": "Ajouter manuellement",
 	"addToList": "Ajouter à la liste",
 	"authError": "Authentification échouée",
@@ -98,6 +99,7 @@
 	"otherDevices": "Autres appareils",
 	"password": "Mot de passe",
 	"passwordChangedSuccess": "Le mot de passe a été changé avec succès",
+	"passwordChangedIdentical": "Le nouveau mot de passe ne peut pas être le même que l'ancien",
 	"passwordLengthValidation": "Les mots de passe doivent comporter entre 6 et 32 ​​caractères",
 	"passwordRecovery": "Récupération de mot de passe",
 	"passwordRecoverySubtitle": "Veuillez saisir le code que vous avez reçu afin de créer un nouveau mot de passe.",
