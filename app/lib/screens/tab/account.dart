@@ -2,6 +2,7 @@ import 'package:app/api/device.dart';
 import 'package:app/models/user.dart';
 import 'package:app/navigation/provision_navigator.dart';
 import 'package:app/provider/ble_provider.dart';
+import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/auth/change_password.dart';
 import 'package:app/screens/auth/register.dart';
 import 'package:app/widgets/generic_yes_no_modal.dart';
@@ -47,26 +48,34 @@ class AccountScreen extends StatelessWidget {
           title: AppLocalizations.of(context)!.exitApplication,
           subtitle: AppLocalizations.of(context)!.exitApplicationSubtitle,
           saveWidgetText: AppLocalizations.of(context)!.signOut,
-          saveWidgetAction: () =>
-              Provider.of<AuthenticationProvider>(context, listen: false)
-                  .signOut(context),
+          saveWidgetAction: () {
+            Provider.of<SelectedDeviceProvider>(context, listen: false)
+                .updateNotificationsForAll(false)
+                .then((value) =>
+                    Provider.of<AuthenticationProvider>(context, listen: false)
+                        .signOut(context));
+          },
         ),
       );
     }
 
     void signout(BuildContext context) {
       showDialog(
-        context: context,
-        builder: (_) => GenericYesNoModal(
-          icon: PhosphorIcons.power_fill,
-          title: AppLocalizations.of(context)!.signingOut,
-          subtitle: AppLocalizations.of(context)!.signingOutSubtitle,
-          saveWidgetText: AppLocalizations.of(context)!.signOut,
-          saveWidgetAction: () =>
-              Provider.of<AuthenticationProvider>(context, listen: false)
-                  .signOut(context),
-        ),
-      );
+          context: context,
+          builder: (_) => GenericYesNoModal(
+                icon: PhosphorIcons.power_fill,
+                title: AppLocalizations.of(context)!.signingOut,
+                subtitle: AppLocalizations.of(context)!.signingOutSubtitle,
+                saveWidgetText: AppLocalizations.of(context)!.signOut,
+                saveWidgetAction: () {
+                  Provider.of<SelectedDeviceProvider>(context, listen: false)
+                      .updateNotificationsForAll(false)
+                      .then((value) => Provider.of<AuthenticationProvider>(
+                              context,
+                              listen: false)
+                          .signOut(context));
+                },
+              ));
     }
 
     void changePassword() {

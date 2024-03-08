@@ -101,4 +101,15 @@ class SelectedDeviceProvider with ChangeNotifier {
     notifyListeners();
     _selectedDevice = newDevice;
   }
+
+  Future<void> updateNotificationsForAll(bool notifications) async {
+    if (_devices != null) {
+      for (var device in _devices!) {
+        var newDevice = await deviceRepo.update(device.deviceID,
+            notifications: notifications);
+        notifyListeners();
+        _selectedDevice = newDevice;
+      }
+    }
+  }
 }
