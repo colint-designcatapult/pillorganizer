@@ -9,6 +9,7 @@
 	"addPillsError": "Une erreur s'est produite lors de la tentative d'ajout de pilules. Vous pouvez toujours ajouter des pilules après l'intégration"
 	"addPillManually": "Ajouter manuellement",
 	"addToList": "Ajouter à la liste",
+	"authConnectionError": "Assurez-vous que vous êtes connecté à Internet et réessayez",
 	"authError": "Authentification échouée",
 	"automatic": "Automatique",
 	"back": "Retour",

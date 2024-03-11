@@ -38,6 +38,9 @@ class AuthenticationProvider with ChangeNotifier {
         throw 'authError';
       }
     }).catchError((error) {
+      if (error.toString().contains("[connection error]")) {
+        throw ('authConnectionError');
+      }
       throw ('authGenericLoginError');
     });
   }
