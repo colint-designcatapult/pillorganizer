@@ -8,6 +8,7 @@
 	"addPills": "Add Pills",
 	"addPillManually": "Add Pill Manually",
 	"addToList": "Add to list",
+	"authConnectionError": "Make sure you are connected to the internet and try again",
 	"authError": "Authentication failed",
 	"automatic": "Automatic",
 	"back": "Back",
