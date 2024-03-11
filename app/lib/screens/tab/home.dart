@@ -151,9 +151,8 @@ class HomeScreen extends StatelessWidget {
 
   Future<void> _askPermissions(BuildContext context) async {
     //Ask Notification permission
-    await Permission.notification.request().then((value) => value.isGranted
-        ? Provider.of<SelectedDeviceProvider>(context, listen: false)
-            .updateNotifications(true)
-        : null);
+    if (!await Permission.notification.isGranted) {
+      await Permission.notification.request();
+    }
   }
 }
