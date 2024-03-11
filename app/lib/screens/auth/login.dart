@@ -23,6 +23,7 @@ class _LoginPageState extends State<LoginPage> {
   String? username;
   String? password;
   bool useAnon = false;
+  bool _obscureText = true;
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +120,12 @@ class _LoginPageState extends State<LoginPage> {
                                   onFieldSubmitted: (value) => _onSubmit(),
                                   onSaved: (val) => password = val,
                                   textInputAction: TextInputAction.done,
-                                  obscureText: true,
+                                  onRevealText: () {
+                                    setState(() {
+                                      _obscureText = !_obscureText;
+                                    });
+                                  },
+                                  obscureText: _obscureText,
                                 ),
                               ])))),
                 ]),

@@ -11,7 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-class CreateAccountPage extends StatelessWidget {
+class CreateAccountPage extends StatefulWidget {
   const CreateAccountPage({Key? key}) : super(key: key);
 
   static Route<CreateAccountPage> route(context) {
@@ -19,6 +19,12 @@ class CreateAccountPage extends StatelessWidget {
         context: context, builder: (_) => const CreateAccountPage());
   }
 
+  @override
+  State<CreateAccountPage> createState() => _CreateAccountPageState();
+}
+
+class _CreateAccountPageState extends State<CreateAccountPage> {
+  bool _obscureText = true;
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<UserRegistrationProvider>(
@@ -50,7 +56,12 @@ class CreateAccountPage extends StatelessWidget {
                     Validatorless.between(6, 48,
                         AppLocalizations.of(context)!.passwordLengthValidation)
                   ]),
-                  obscureText: true,
+                  onRevealText: () {
+                    setState(() {
+                      _obscureText = !_obscureText;
+                    });
+                  },
+                  obscureText: _obscureText,
                   textInputAction: TextInputAction.done,
                   onSaved: (val) {
                     context

@@ -30,6 +30,7 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
   String? username;
   String? password;
   bool useAnon = false;
+  bool _obscureText = true;
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +91,12 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
                                       (), //To trigger the form submit function
                                   onSaved: (val) => password = val,
                                   textInputAction: TextInputAction.done,
-                                  obscureText: true,
+                                  onRevealText: () {
+                                    setState(() {
+                                      _obscureText = !_obscureText;
+                                    });
+                                  },
+                                  obscureText: _obscureText,
                                 ),
                               ],
                             ),

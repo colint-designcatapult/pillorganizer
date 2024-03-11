@@ -19,6 +19,7 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
+  bool _obscureText = true;
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +118,12 @@ class _RegisterPageState extends State<RegisterPage> {
                                           AppLocalizations.of(context)!
                                               .passwordLengthValidation)
                                     ]),
-                                    obscureText: true,
+                                    onRevealText: () {
+                                      setState(() {
+                                        _obscureText = !_obscureText;
+                                      });
+                                    },
+                                    obscureText: _obscureText,
                                     textInputAction: TextInputAction.done,
                                     onSaved: (val) => context
                                         .read<UserRegistrationProvider>()

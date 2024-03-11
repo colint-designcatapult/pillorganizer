@@ -52,6 +52,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
   final _formKey = GlobalKey<FormState>();
   String? currentPassword;
   String? newPassword;
+  bool _obscureText = true;
 
   @override
   Widget build(BuildContext context) {
@@ -147,7 +148,12 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                           AppLocalizations.of(context)!
                                               .passwordLengthValidation)
                                     ]),
-                                    obscureText: true,
+                                    onRevealText: () {
+                                      setState(() {
+                                        _obscureText = !_obscureText;
+                                      });
+                                    },
+                                    obscureText: _obscureText,
                                     textInputAction: TextInputAction.done,
                                     onSaved: (val) => newPassword = val,
                                     onFieldSubmitted: (val) {
@@ -268,17 +274,23 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
 
   void _submit(BuildContext context) {
     var authProv = Provider.of<AuthenticationProvider>(context, listen: false);
-    _changePassword(authProv, currentPassword!, newPassword!).then((value) {
-      if (value) {
-        SchedulerBinding.instance.addPostFrameCallback((_) {
-          showAlertDialog(
-                  context, AppLocalizations.of(context)!.passwordChangedSuccess)
-              .then((value) => Navigator.pop(context));
-        });
-      }
-    }).catchError((err) {
-      _handleError(context, err);
-    });
+
+    if (currentPassword == newPassword) {
+      showAlertDialog(
+          context, AppLocalizations.of(context)!.passwordChangedIdentical);
+    } else {
+      _changePassword(authProv, currentPassword!, newPassword!).then((value) {
+        if (value) {
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            showAlertDialog(context,
+                    AppLocalizations.of(context)!.passwordChangedSuccess)
+                .then((value) => Navigator.pop(context));
+          });
+        }
+      }).catchError((err) {
+        _handleError(context, err);
+      });
+    }
   }
 
   Future<bool> _changePassword(AuthenticationProvider authProv,
