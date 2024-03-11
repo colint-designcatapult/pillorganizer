@@ -54,13 +54,15 @@ class GenericYesNoModal extends StatelessWidget {
                 ],
               ),
               SizedBox(height: 4.h),
-              Text(
-                title,
-                style: Theme.of(context)
-                    .textTheme
-                    .labelMedium
-                    ?.copyWith(color: const Color(0xFF7A2C2C)),
-              ),
+              Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10.0).w,
+                  child: Text(
+                    title,
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelMedium
+                        ?.copyWith(color: const Color(0xFF7A2C2C)),
+                  )),
               SizedBox(height: 8.h),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0).w,
