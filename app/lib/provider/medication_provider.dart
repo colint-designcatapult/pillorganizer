@@ -11,11 +11,11 @@ class MedicationsProvider
   MedicationsProvider(this._device) : super(null, () => Future.value(null));
 
   MedicationsProvider update(DeviceUser? newDevice) {
-    // if(newDevice?.id != _device?.id) {
-    _device = newDevice;
-    super.loadFunction = _load;
-    refresh();
-    // }
+    if (newDevice?.id != _device?.id) {
+      _device = newDevice;
+      super.loadFunction = _load;
+      refresh();
+    }
     return this;
   }
 

@@ -183,99 +183,96 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final prov = Provider.of<SelectedDeviceProvider>(context, listen: false);
-    return Column(children: [
-      Row(
-        children: [
-          Expanded(
-              child: SegmentedButton(
-            selectedIcon: Icon(
-              Icons.check_sharp,
-              size: 20.h,
-            ),
-            segments: <ButtonSegment>[
-              ButtonSegment(
-                value: 0,
-                label: Text(
-                  AppLocalizations.of(context)!.manual,
-                  style: Theme.of(context).textTheme.bodySmall,
+    return Consumer<SelectedDeviceProvider>(builder: (context, deviceProv, _) {
+      return Column(children: [
+        Row(
+          children: [
+            Expanded(
+                child: SegmentedButton(
+              selectedIcon: Icon(
+                Icons.check_sharp,
+                size: 20.h,
+              ),
+              segments: <ButtonSegment>[
+                ButtonSegment(
+                  value: 0,
+                  label: Text(
+                    AppLocalizations.of(context)!.manual,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+                ButtonSegment(
+                  value: 1,
+                  label: Text(
+                    AppLocalizations.of(context)!.automatic,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ],
+              selected: {selectedButtonIndex},
+              onSelectionChanged: (Set newSelection) {
+                setState(() {
+                  selectedButtonIndex = newSelection.first;
+                  if (selectedButtonIndex == 1) {
+                    deviceProv.updateTimeZone(phoneLocation);
+                  }
+                });
+              },
+              style: ButtonStyle(
+                shape: MaterialStateProperty.all<OutlinedBorder>(
+                    RoundedRectangleBorder(
+                        borderRadius: BorderRadiusDirectional.circular(8.r))),
+                side: MaterialStateProperty.resolveWith<BorderSide>(
+                    (Set<MaterialState> states) {
+                  return const BorderSide(color: Color(0xFFBFD2DB), width: 2.0);
+                }),
+                backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                    (Set<MaterialState> states) {
+                  if (states.contains(MaterialState.selected)) {
+                    return const Color(0xFFE8EFF4);
+                  }
+                  return Colors.white;
+                }),
+                padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                  EdgeInsets.symmetric(vertical: 16.h),
                 ),
               ),
-              ButtonSegment(
-                value: 1,
-                label: Text(
-                  AppLocalizations.of(context)!.automatic,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+            ))
+          ],
+        ),
+        if (selectedButtonIndex == 0)
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            SizedBox(height: 16.h),
+            Text(AppLocalizations.of(context)!.selectManualTimezone,
+                style: Theme.of(context).textTheme.bodySmall),
+            ListTile(
+              title: Text(_buildTimeZoneName(deviceProv.device?.timezone),
+                  style: Theme.of(context).textTheme.displaySmall),
+              leading: SvgPicture.asset(
+                'lib/assets/SVG/Globe.svg',
+                width: 24.w,
+                height: 24.h,
               ),
-            ],
-            selected: {selectedButtonIndex},
-            onSelectionChanged: (Set newSelection) {
-              setState(() {
-                selectedButtonIndex = newSelection.first;
-                if (selectedButtonIndex == 1) {
-                  prov.updateTimeZone(phoneLocation);
-                }
-              });
-            },
-            style: ButtonStyle(
-              shape: MaterialStateProperty.all<OutlinedBorder>(
-                  RoundedRectangleBorder(
-                      borderRadius: BorderRadiusDirectional.circular(8.r))),
-              side: MaterialStateProperty.resolveWith<BorderSide>(
-                  (Set<MaterialState> states) {
-                return const BorderSide(color: Color(0xFFBFD2DB), width: 2.0);
-              }),
-              backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                  (Set<MaterialState> states) {
-                if (states.contains(MaterialState.selected)) {
-                  return const Color(0xFFE8EFF4);
-                }
-                return Colors.white;
-              }),
-              padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                EdgeInsets.symmetric(vertical: 16.h),
-              ),
-            ),
-          ))
-        ],
-      ),
-      if (selectedButtonIndex == 0)
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          SizedBox(height: 16.h),
-          Text(AppLocalizations.of(context)!.selectManualTimezone,
-              style: Theme.of(context).textTheme.bodySmall),
-          ListTile(
-            title: Text(
-                _buildTimeZoneName(
-                    Provider.of<SelectedDeviceProvider>(context, listen: false)
-                        .device
-                        ?.timezone),
-                style: Theme.of(context).textTheme.displaySmall),
-            leading: SvgPicture.asset(
-              'lib/assets/SVG/Globe.svg',
-              width: 24.w,
-              height: 24.h,
-            ),
-            trailing: Icon(Icons.arrow_right, size: 24.h),
-            onTap: () {
-              Navigator.of(context)
-                  .push(TimeZoneSelectionModal.route(context))
-                  .then((value) {
-                if (value != null) {
-                  prov.updateTimeZone(value);
-                }
-              });
-            },
-          )
-        ]),
-      if (selectedButtonIndex == 1)
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const SizedBox(height: 16),
-          Text(AppLocalizations.of(context)!.timezoneChangeReminder,
-              style: Theme.of(context).textTheme.bodySmall),
-        ]),
-    ]);
+              trailing: Icon(Icons.arrow_right, size: 24.h),
+              onTap: () {
+                Navigator.of(context)
+                    .push(TimeZoneSelectionModal.route(context))
+                    .then((value) {
+                  if (value != null) {
+                    deviceProv.updateTimeZone(value);
+                  }
+                });
+              },
+            )
+          ]),
+        if (selectedButtonIndex == 1)
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const SizedBox(height: 16),
+            Text(AppLocalizations.of(context)!.timezoneChangeReminder,
+                style: Theme.of(context).textTheme.bodySmall),
+          ]),
+      ]);
+    });
   }
 
   String _buildTimeZoneName(TimeZoneLocation? loc) {
