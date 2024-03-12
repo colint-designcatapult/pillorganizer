@@ -31,6 +31,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
+    name: 'Cabinet',
     options: DefaultFirebaseOptions.currentPlatform,
   );
 }
@@ -42,6 +43,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await Firebase.initializeApp(
+    name: 'Cabinet',
     options: DefaultFirebaseOptions.currentPlatform,
   );
   FlutterError.onError = (errorDetails) {
