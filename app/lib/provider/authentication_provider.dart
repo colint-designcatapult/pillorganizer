@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:app/api/user.dart';
+import 'package:app/exceptions/auth_failed.dart';
 import 'package:app/provider/ble_provider.dart';
+import 'package:app/utils/api_utils.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -35,13 +37,10 @@ class AuthenticationProvider with ChangeNotifier {
             credentialManager.updateCreds(creds.username!, creds.password!))
         .then((v) async {
       if (!await checkAuthStatus()) {
-        throw 'authError';
+        throw AuthFailedException();
       }
     }).catchError((error) {
-      if (error.toString().contains("[connection error]")) {
-        throw ('authConnectionError');
-      }
-      throw ('authGenericLoginError');
+      loginError(error);
     });
   }
 
@@ -62,7 +61,7 @@ class AuthenticationProvider with ChangeNotifier {
         .then((v) => credentialManager.updateAnonymousCreds(creds))
         .then((v) async {
       if (!await checkAuthStatus()) {
-        throw 'authError';
+        throw AuthFailedException();
       }
     });
   }

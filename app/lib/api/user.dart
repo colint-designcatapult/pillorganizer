@@ -1,3 +1,5 @@
+import 'package:app/exceptions/auth_already_registered.dart';
+import 'package:app/utils/api_utils.dart';
 import 'package:equatable/equatable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -13,12 +15,20 @@ class UserService {
   }
 
   Future<void> register(UserRegistration registration) async {
-    if (await credentialManager.isAnonUser()) {
-      await client.upgradeAnonymous(registration.toDTO());
-    } else if (await credentialManager.isRealUser()) {
-      throw 'Already a full user';
-    } else {
-      await client.register(registration.toDTO());
+    try {
+      if (await credentialManager.isAnonUser()) {
+        await client.upgradeAnonymous(registration.toDTO());
+      } else if (await credentialManager.isRealUser()) {
+        throw AuthAlreadyRegisteredException();
+      } else {
+        await client.register(registration.toDTO());
+      }
+    } catch (error) {
+      if (error is AuthAlreadyRegisteredException) {
+        throw AuthAlreadyRegisteredException;
+      } else {
+        registerError(error);
+      }
     }
   }
 
