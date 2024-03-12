@@ -381,15 +381,18 @@ class _CreateAccountStepState extends State<CreateAccountStep> {
                     BasicPageTextFormField(
                       labelText: AppLocalizations.of(context)!.email,
                       validator: Validatorless.multiple([
-                        Validatorless.email(
-                            AppLocalizations.of(context)!.emailNotValid),
+                        (value) {
+                          return Validatorless.email(
+                                  AppLocalizations.of(context)!.emailNotValid)(
+                              value?.toLowerCase());
+                        },
                         Validatorless.required(
                             AppLocalizations.of(context)!.emailRequired)
                       ]),
                       onSaved: (val) {
                         context
                             .read<UserRegistrationProvider>()
-                            .updateEmail(val);
+                            .updateEmail(val?.toLowerCase());
                       },
                     ),
                     BasicPageTextFormField(
