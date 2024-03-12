@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:app/service/device_bluetooth_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -67,11 +68,14 @@ class DeviceBluetoothProvider with ChangeNotifier {
   }
 
   Future<bool> _missingBlePermission() async {
+    if (Platform.isIOS) {
+      return !await _controller.checkBluetoothState();
+    }
     await Permission.location.request();
     await Permission.bluetoothScan.request();
     PermissionStatus locationStatus = await Permission.location.status;
     PermissionStatus bleScanStatus = await Permission.bluetoothScan.status;
-    return await _controller.checkBluetoothState() == false ||
+    return !await _controller.checkBluetoothState() ||
         locationStatus == PermissionStatus.denied ||
         locationStatus == PermissionStatus.permanentlyDenied ||
         bleScanStatus == PermissionStatus.denied ||
