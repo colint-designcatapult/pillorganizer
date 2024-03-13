@@ -40,14 +40,18 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 BasicPageTextFormField(
                   labelText: AppLocalizations.of(context)!.email,
                   validator: Validatorless.multiple([
-                    Validatorless.email(
-                        AppLocalizations.of(context)!.emailNotValid),
+                    (value) {
+                      return Validatorless.email(AppLocalizations.of(context)!
+                          .emailNotValid)(value?.toLowerCase());
+                    },
                     Validatorless.required(
                         AppLocalizations.of(context)!.emailRequired)
                   ]),
                   autofocus: true,
                   onSaved: (val) {
-                    context.read<UserRegistrationProvider>().updateEmail(val);
+                    context
+                        .read<UserRegistrationProvider>()
+                        .updateEmail(val?.toLowerCase());
                   },
                 ),
                 BasicPageTextFormField(

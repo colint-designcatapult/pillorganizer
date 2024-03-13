@@ -72,9 +72,12 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
                                       AppLocalizations.of(context)!.email,
                                   validator: Validatorless.multiple([
                                     if (!useAnon)
-                                      Validatorless.email(
-                                          AppLocalizations.of(context)!
-                                              .emailNotValid),
+                                      (value) {
+                                        return Validatorless.email(
+                                                AppLocalizations.of(context)!
+                                                    .emailNotValid)(
+                                            value?.toLowerCase());
+                                      },
                                     Validatorless.required(
                                         AppLocalizations.of(context)!
                                             .emailRequired)
@@ -232,8 +235,8 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
     var prov = Provider.of<AuthenticationProvider>(context, listen: false);
 
     if (!useAnon) {
-      _loginFuture =
-          prov.logIn(username: username ?? '', password: password ?? '');
+      _loginFuture = prov.logIn(
+          username: username?.toLowerCase() ?? '', password: password ?? '');
     } else {
       _loginFuture =
           prov.logInAnonymous(id: int.parse(username!), secret: password!);
