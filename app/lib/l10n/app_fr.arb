@@ -54,7 +54,7 @@
 	"estimatedTime": "Heure estimée:",
 	"everyday": "À chaque jour",
 	"exitApplication": "Se déconnecter de la session invité",
-	"exitApplicationSubtitle": "Cette action entraînera une perte de données ! Pensez à créer un compte pour y revenir facilement plus tard.",
+	"exitApplicationSubtitle": "Cette action entraînera la perte des données du compte! Pensez à créer un compte pour y revenir facilement plus tard.",
 	"finishingSetup": "Terminer la configuration",
 	"finishingSetupSubtitle": "Veuillez attendre quelques minutes pendant que nous terminons la configuration de votre pilulier",
 	"friday": "Vendredi",
