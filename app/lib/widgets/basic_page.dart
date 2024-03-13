@@ -306,8 +306,8 @@ class BasicPageTextFormField extends StatelessWidget {
               suffixIcon: onRevealText != null
                   ? IconButton(
                       icon: Icon(
-                        obscureText ? Icons.visibility_off : Icons.visibility,
-                      ),
+                          obscureText ? Icons.visibility_off : Icons.visibility,
+                          size: 24.h),
                       onPressed: onRevealText!,
                     )
                   : null,

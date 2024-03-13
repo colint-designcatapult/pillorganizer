@@ -20,7 +20,7 @@ class _MissingPermissionInfoBoxState extends State<MissingPermissionInfoBox> {
           Expanded(
               child: MarkdownBody(
             shrinkWrap: true,
-            data: Platform.operatingSystem == 'ios'
+            data: Platform.isIOS
                 ? AppLocalizations.of(context)!.missingPermissionInfoTextIos
                 : AppLocalizations.of(context)!
                     .missingPermissionInfoTextAndroid,

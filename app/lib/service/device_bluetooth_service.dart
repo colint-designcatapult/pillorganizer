@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:app/api/api.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -70,7 +71,9 @@ class DeviceBluetoothController {
     this.device = device;
 
     await device.clearGattCache();
-    await device.requestMtu(512);
+    if (!Platform.isIOS) {
+      await device.requestMtu(512);
+    }
     List<BluetoothService> services = await device.discoverServices();
     for (BluetoothService svc in services) {
       for (BluetoothCharacteristic chr in svc.characteristics) {

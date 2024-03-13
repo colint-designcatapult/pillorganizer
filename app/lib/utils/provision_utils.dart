@@ -10,8 +10,7 @@ class ProvisionUtils {
   }
 
   static Future<bool> missingProvisionPermission() async {
-    bool isIOS = Platform.operatingSystem == 'ios';
-    if (isIOS) {
+    if (Platform.isIOS) {
       return !await checkDeviceBluetoothIsOn();
     }
     await Permission.location.request();

@@ -6,7 +6,7 @@
 	"addNew": "Ajouter",
 	"addNewDevice": "Ajouter un nouvel appareil",
 	"addPills": "Ajouter des pilules",
-	"addPillsError": "Une erreur s'est produite lors de la tentative d'ajout de pilules. Vous pouvez toujours ajouter des pilules après l'intégration"
+	"addPillsError": "Une erreur s'est produite lors de la tentative d'ajout de pilules. Vous pouvez toujours ajouter des pilules après l'intégration",
 	"addPillManually": "Ajouter manuellement",
 	"addToList": "Ajouter à la liste",
 	"authConnectionError": "Assurez-vous que vous êtes connecté à Internet et réessayez",
@@ -74,6 +74,8 @@
 	"missedAt": "Manqué à {time}",
 	"missingPermissionInfoTextAndroid": "Assurez-vous que le Bluetooth est activé et que les autorisations **Localisation** et **Appareils à proximité** sont également autorisées.",
 	"missingPermissionInfoTextIos": "Assurez-vous que le **Bluetooth** est activé et que l'autorisation **Bluetooth** est authorisé dans les paramètres.",
+	"missingBlePermissionTextIos": "Autorisation manquante: l'autorisation Bluetooth doit être activée",
+	"missingBlePermissionTextAndroid": "Autorisations manquantes: l'autorisation de Localisation, Bluetooth et Appareils à proximité doivent être activées",
 	"monday": "Lundi",
 	"myAccount": "Mon compte",
 	"myDevices": "Mes appareils",

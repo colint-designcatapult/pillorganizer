@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:app/api/device.dart';
 import 'package:app/provider/ble_provider.dart';
 import 'package:app/service/device_information_service.dart';
+import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +25,8 @@ class DeviceInfoHeader extends StatelessWidget {
         bool? batteryCharging;
         DeviceState? deviceState =
             Provider.of<DeviceStateProvider>(context, listen: false).value;
+        bool isMissingPermission =
+            bleProv.status == BLEConnectionStatus.missingPermission;
         if (wifiIsConnected(context, bleProv) && deviceState != null) {
           batteryLevel = deviceState.battery;
           batteryCharging = deviceState.charging;
@@ -34,7 +39,8 @@ class DeviceInfoHeader extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             GestureDetector(
-                onTap: () => _showConnectionStatus(context, bleProv),
+                onTap: () => _showConnectionStatus(
+                    context, bleProv, isMissingPermission),
                 child: Row(
                   children: [
                     Text(
@@ -45,7 +51,16 @@ class DeviceInfoHeader extends StatelessWidget {
                             fontSize: 24.h,
                             fontWeight: FontWeight.w600)),
                     SizedBox(width: 8.w),
-                    Icon(Icons.info, color: Colors.white, size: 16.h),
+                    Container(
+                      decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                              width: 2.h,
+                              color: isMissingPermission
+                                  ? Colors.red
+                                  : const Color.fromARGB(0, 0, 0, 0))),
+                      child: Icon(Icons.info, color: Colors.white, size: 16.h),
+                    ),
                   ],
                 )),
             if (deviceOffline &&
@@ -112,8 +127,8 @@ class DeviceInfoHeader extends StatelessWidget {
     });
   }
 
-  void _showConnectionStatus(
-      BuildContext context, DeviceBluetoothProvider bleProv) {
+  void _showConnectionStatus(BuildContext context,
+      DeviceBluetoothProvider bleProv, bool isMissingPermission) {
     String bleText = bluetoothText(context, bleProv);
     const int maxLength = 30;
     showDialog(
@@ -218,7 +233,37 @@ class DeviceInfoHeader extends StatelessWidget {
                                   : Theme.of(context).textTheme.bodyMedium,
                             )
                           ],
-                        )))
+                        ))),
+                if (isMissingPermission)
+                  SizedBox(
+                      height: 125.w,
+                      child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.w),
+                          child: Column(children: [
+                            SizedBox(
+                              height: 10.h,
+                            ),
+                            Text(
+                                Platform.isIOS
+                                    ? AppLocalizations.of(context)!
+                                        .missingBlePermissionTextIos
+                                    : AppLocalizations.of(context)!
+                                        .missingBlePermissionTextAndroid,
+                                style: Theme.of(context).textTheme.bodySmall),
+                            Padding(
+                              padding: EdgeInsets.all(6.h),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  AppSettings.openAppSettings();
+                                },
+                                child: Text(
+                                    AppLocalizations.of(context)!.openSettings,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .displaySmall),
+                              ),
+                            ),
+                          ])))
               ],
             ),
           )),
