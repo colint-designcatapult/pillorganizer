@@ -38,6 +38,16 @@
 
   <dependencies>
     <dependency>
+      <groupId>com.sendgrid</groupId>
+      <artifactId>sendgrid-java</artifactId>
+      <version>4.10.0</version>
+    </dependency>
+    <dependency>
+    <groupId>io.github.resilience4j</groupId>
+    <artifactId>resilience4j-ratelimiter</artifactId>
+    <version>2.2.0</version>
+</dependency>
+    <dependency>
       <groupId>io.micronaut</groupId>
       <artifactId>micronaut-inject</artifactId>
       <scope>compile</scope>

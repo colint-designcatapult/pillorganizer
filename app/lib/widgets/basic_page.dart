@@ -253,6 +253,93 @@ class _BasicFormState extends State<BasicForm> {
   }
 }
 
+class SixDigitCodeInput extends StatefulWidget {
+  final Function(String) onSubmitted;
+  final bool reset;
+
+  const SixDigitCodeInput(
+      {Key? key, required this.onSubmitted, this.reset = false})
+      : super(key: key);
+
+  @override
+  State<SixDigitCodeInput> createState() => _SixDigitCodeInputState();
+}
+
+class _SixDigitCodeInputState extends State<SixDigitCodeInput> {
+  late List<TextEditingController> _controllers;
+  bool _shouldReset = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = List.generate(
+      6,
+      (index) => TextEditingController(),
+    );
+  }
+
+  @override
+  void dispose() {
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _resetNumber() {
+    for (var controller in _controllers) {
+      controller.clear();
+    }
+
+    FocusScope.of(context).requestFocus(FocusNode());
+  }
+
+  @override
+  void didUpdateWidget(covariant SixDigitCodeInput oldWidget) {
+    if (widget.reset && !_shouldReset) {
+      _shouldReset = true;
+      _resetNumber();
+    }
+    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_shouldReset) {
+      _shouldReset = false;
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: List.generate(
+        6,
+        (index) => SizedBox(
+          width: 50,
+          child: TextField(
+            controller: _controllers[index],
+            onChanged: (value) {
+              if (value.length == 1 && index < 5) {
+                FocusScope.of(context).nextFocus();
+              }
+              if (index == 5 && value.isNotEmpty) {
+                String code = '';
+                _controllers.forEach((controller) => code += controller.text);
+                widget.onSubmitted(code);
+              }
+            },
+            maxLength: 1,
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              counterText: '',
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class BasicPageTextFormField extends StatelessWidget {
   final FormFieldValidator<String>? validator;
   final TextInputAction textInputAction;
@@ -263,6 +350,7 @@ class BasicPageTextFormField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final VoidCallback? onRevealText;
   final bool obscureText;
+  final double? paddingBottom;
 
   const BasicPageTextFormField(
       {super.key,
@@ -274,7 +362,8 @@ class BasicPageTextFormField extends StatelessWidget {
       this.onFieldSubmitted,
       this.onChanged,
       this.onRevealText,
-      this.obscureText = false});
+      this.obscureText = false,
+      this.paddingBottom});
 
   ValueChanged<String>? _onFieldSubmitted(context) {
     if (onFieldSubmitted == null) {
@@ -316,7 +405,7 @@ class BasicPageTextFormField extends StatelessWidget {
           obscureText: obscureText,
         ),
         SizedBox(
-          height: 36.h,
+          height: paddingBottom != null ? paddingBottom!.h : 36.h,
         )
       ],
     );

@@ -1,6 +1,7 @@
 import 'package:app/provider/authentication_provider.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
 import 'package:app/service/error_handler.dart';
+import 'package:app/screens/auth/recover_password.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -21,6 +22,23 @@ class _LoginPageState extends State<LoginPage> {
   String? username;
   String? password;
   bool _obscureText = true;
+
+  void forgotPassword() {
+    showModalBottomSheet<bool>(
+        context: context,
+        isScrollControlled: true,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(16.r),
+          ),
+        ),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width,
+        ),
+        builder: (context) =>
+            RecoverPassword(onBack: () => {Navigator.of(context).pop()}));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -122,7 +140,26 @@ class _LoginPageState extends State<LoginPage> {
                                     });
                                   },
                                   obscureText: _obscureText,
+                                  paddingBottom: 12,
                                 ),
+                                Align(
+                                    alignment: Alignment.topRight,
+                                    child: GestureDetector(
+                                        onTap: () => forgotPassword(),
+                                        child: Text(
+                                            AppLocalizations.of(context)!
+                                                .forgotPassword,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelSmall
+                                                ?.copyWith(
+                                                    color:
+                                                        const Color(0xFF206B8B),
+                                                    decoration: TextDecoration
+                                                        .underline,
+                                                    decorationColor:
+                                                        const Color(
+                                                            0xFF206B8B))))),
                               ])))),
                 ]),
                 Align(
@@ -141,9 +178,9 @@ class _LoginPageState extends State<LoginPage> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.arrow_back,
-                                      size: 24,
+                                      size: 24.h,
                                     ),
                                     const SizedBox(
                                       width: 8,

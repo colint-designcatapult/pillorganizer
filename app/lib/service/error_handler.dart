@@ -5,7 +5,6 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 
 void loginHandleError(context, err) {
-  debugPrint(err.toString());
   if (err is ProblemJsonException) {
     showErrorDialog(
         context, AppLocalizations.of(context)!.genericProblem(err.problem));
@@ -18,7 +17,6 @@ void loginHandleError(context, err) {
 }
 
 void registerHandleError(context, err) {
-  debugPrint(err.toString());
   if (err is ProblemJsonException) {
     showErrorDialog(
         context, AppLocalizations.of(context)!.genericProblem(err.problem));
@@ -30,8 +28,18 @@ void registerHandleError(context, err) {
   }
 }
 
-void showErrorDialog(BuildContext context, String message) {
-  showPlatformDialog(
+Future<void> passwordHandleError(context, err) async {
+  if (err is ProblemJsonException) {
+    showErrorDialog(
+        context, AppLocalizations.of(context)!.genericProblem(err.problem));
+  } else {
+    showErrorDialog(
+        context, AppLocalizations.of(context)!.genericProblem(err.toString()));
+  }
+}
+
+Future<void> showErrorDialog(BuildContext context, String message) {
+  return showPlatformDialog(
       context: context,
       builder: (context) {
         return PlatformAlertDialog(

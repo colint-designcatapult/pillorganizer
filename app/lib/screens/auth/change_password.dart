@@ -1,7 +1,6 @@
-import 'package:app/api/api.dart';
-import 'package:app/platform/dialog.dart';
 import 'package:app/provider/authentication_provider.dart';
 import 'package:app/screens/auth/recover_password.dart';
+import 'package:app/service/error_handler.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -73,6 +72,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                       scrolledUnderElevation: 0,
                       backgroundColor: const Color(0xFFFBFCFF),
                       leading: null,
+                      automaticallyImplyLeading: false,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.vertical(
                           top: const Radius.circular(16).r,
@@ -159,12 +159,15 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                     onFieldSubmitted: (val) {
                                       _onSubmit(context);
                                     },
+                                    paddingBottom: 12,
                                   ),
-                                  /*Align(
+                                  Align(
                                       alignment: Alignment.bottomRight,
                                       child: GestureDetector(
                                           onTap: widget.gotoForgotPassword,
-                                          child: Text('Forgot password?',
+                                          child: Text(
+                                              AppLocalizations.of(context)!
+                                                  .forgotPassword,
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .labelSmall
@@ -175,7 +178,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                                           .underline,
                                                       decorationColor:
                                                           const Color(
-                                                              0xFF206B8B))))),*/
+                                                              0xFF206B8B))))),
                                 ])))),
                   ]),
                   Align(
@@ -276,19 +279,19 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
     var authProv = Provider.of<AuthenticationProvider>(context, listen: false);
 
     if (currentPassword == newPassword) {
-      showAlertDialog(
+      showErrorDialog(
           context, AppLocalizations.of(context)!.passwordChangedIdentical);
     } else {
       _changePassword(authProv, currentPassword!, newPassword!).then((value) {
         if (value) {
           SchedulerBinding.instance.addPostFrameCallback((_) {
-            showAlertDialog(context,
+            showErrorDialog(context,
                     AppLocalizations.of(context)!.passwordChangedSuccess)
                 .then((value) => Navigator.pop(context));
           });
         }
       }).catchError((err) {
-        _handleError(context, err);
+        passwordHandleError(context, err);
       });
     }
   }
@@ -298,16 +301,5 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
     await authProv.changePassword(
         currentPassword: currentPassword, newPassword: newPassword);
     return true;
-  }
-
-  void _handleError(context, err) {
-    debugPrint(err.toString());
-    if (err is ProblemJsonException) {
-      showAlertDialog(
-          context, AppLocalizations.of(context)!.genericProblem(err.problem));
-    } else {
-      showAlertDialog(context,
-          AppLocalizations.of(context)!.genericProblem(err.toString()));
-    }
   }
 }

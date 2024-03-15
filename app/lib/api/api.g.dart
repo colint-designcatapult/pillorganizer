@@ -71,6 +71,26 @@ Map<String, dynamic> _$UserChangePasswordDTOToJson(
       'newPassword': instance.newPassword,
     };
 
+Map<String, dynamic> _$UserNewPasswordDTOToJson(UserNewPasswordDTO instance) =>
+    <String, dynamic>{
+      'email': instance.email,
+      'newPassword': instance.newPassword,
+      'recoveryCode': instance.recoveryCode,
+    };
+
+Map<String, dynamic> _$UserSendRecoveryCodeDTOToJson(
+        UserSendRecoveryCodeDTO instance) =>
+    <String, dynamic>{
+      'sendTo': instance.sendTo,
+    };
+
+Map<String, dynamic> _$UserValidateRecoveryCodeDTOToJson(
+        UserValidateRecoveryCodeDTO instance) =>
+    <String, dynamic>{
+      'recoveryCode': instance.recoveryCode,
+      'email': instance.email,
+    };
+
 ProvisionStart _$ProvisionStartFromJson(Map<String, dynamic> json) =>
     ProvisionStart(
       serialNo: json['serialNo'] as String,
@@ -768,6 +788,28 @@ class _RestClient implements RestClient {
   }
 
   @override
+  Future<void> newPassword(UserNewPasswordDTO reg) async {
+    const _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(reg.toJson());
+
+    await _dio.fetch<Map<String, dynamic>>(_setStreamType<UserDTO>(Options(
+      method: 'PUT',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/user/new_password',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
+  }
+
+  @override
   Future<DeviceUserSettings> userSettings(int deviceID) async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
@@ -1128,5 +1170,47 @@ class _RestClient implements RestClient {
       }
     }
     return requestOptions;
+  }
+
+  @override
+  Future<void> sendRecoveryCode(UserSendRecoveryCodeDTO dto) async {
+    const _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = dto.toJson();
+    await _dio.fetch<void>(_setStreamType<void>(Options(
+      method: 'POST',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/mail/send_recovery_code',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
+  }
+
+  @override
+  Future<bool> validateRecoveryCode(UserValidateRecoveryCodeDTO dto) async {
+    const _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = dto.toJson();
+    final _result = await _dio.fetch<bool>(_setStreamType<void>(Options(
+      method: 'POST',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/mail/validate_recovery_code',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
+
+    return _result.data!;
   }
 }

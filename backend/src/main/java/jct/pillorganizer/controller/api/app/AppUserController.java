@@ -1,6 +1,8 @@
 package jct.pillorganizer.controller.api.app;
 
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
@@ -9,6 +11,7 @@ import jakarta.inject.Inject;
 import jct.pillorganizer.auth.AnonAuthService;
 import jct.pillorganizer.auth.AuthService;
 import jct.pillorganizer.dto.ChangePasswordDTO;
+import jct.pillorganizer.dto.NewPasswordDTO;
 import jct.pillorganizer.dto.UserInfoDTO;
 import jct.pillorganizer.dto.UserRegistration;
 import jct.pillorganizer.model.user.AnonymousUser;
@@ -103,6 +106,30 @@ public class AppUserController {
     public HttpResponse<?> changePassword(@Body @Valid ChangePasswordDTO passwordChange) throws IllegalAccessException {
         authService.changePassword(passwordChange.getCurrentPassword(), passwordChange.getNewPassword());
         return HttpResponse.ok();
+    }
+
+    @Operation(summary = "reset password of a user that went through the email process")
+    @Put("/new_password")
+    @Secured(SecurityRule.IS_ANONYMOUS)
+    public Mono<MutableHttpResponse<Object>> newPassword(@Body @Valid NewPasswordDTO passwordChange)
+            throws IllegalAccessException {
+        return userRepo.getRecoveryCodeByEmail(passwordChange.getEmail())
+                .flatMap(number -> {
+                    boolean validationSuccessful = (number == passwordChange.getRecoveryCode());
+                    if (validationSuccessful) {
+                        try {
+                            userRepo.updateUserRecoveryCode(null, passwordChange.getEmail());
+                            authService.newPassword(passwordChange.getEmail(),
+                                    passwordChange.getNewPassword());
+                            return Mono.just(HttpResponse.accepted());
+                        } catch (IllegalAccessException e) {
+                            e.printStackTrace();
+                            return Mono.error(new IllegalAccessException("Internal server error."));
+                        }
+                    }
+                    return Mono.just(HttpResponse.status(HttpStatus.UNAUTHORIZED));
+                })
+                .defaultIfEmpty(HttpResponse.notFound());
     }
 
 }

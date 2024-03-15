@@ -7,6 +7,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({Key? key}) : super(key: key);
@@ -151,9 +152,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      const Icon(
+                                      Icon(
                                         Icons.arrow_back,
-                                        size: 24,
+                                        size: 24.h,
                                       ),
                                       const SizedBox(
                                         width: 8,

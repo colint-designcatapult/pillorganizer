@@ -39,6 +39,12 @@ class UserService {
       });
     }
   }
+
+  Future<void> newPassword(UserNewPasswordDTO creds) async {
+    await client.newPassword(creds).catchError((error) {
+      throw ('Error');
+    });
+  }
 }
 
 final UserService userService = UserService();
