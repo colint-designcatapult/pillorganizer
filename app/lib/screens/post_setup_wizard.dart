@@ -6,8 +6,8 @@ import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
 import 'package:app/screens/modals/add_new_pills_modal.dart';
 import 'package:app/screens/tab/settings.dart';
-import 'package:app/service/authentication_service.dart';
 import 'package:app/service/provisioning_service.dart';
+import 'package:app/service/error_handler.dart';
 import 'package:app/widgets/addNewPill/medication_card_entry.dart';
 import 'package:app/widgets/medication_card.dart';
 import 'package:app/widgets/schedule_entry.dart';
@@ -20,10 +20,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-
-import '../api/api.dart';
 import '../models/user.dart';
-import '../platform/dialog.dart';
 import '../widgets/basic_page.dart';
 
 class PostSetupWizard extends StatelessWidget {
@@ -432,7 +429,7 @@ class _CreateAccountStepState extends State<CreateAccountStep> {
     var prov = Provider.of<UserRegistrationProvider>(context, listen: false);
     var authProv = Provider.of<AuthenticationProvider>(context, listen: false);
     _register(prov, authProv).catchError((err) {
-      _handleError(context, err);
+      registerHandleError(context, err);
       return false;
     }).then((value) {
       if (value) {
@@ -450,18 +447,5 @@ class _CreateAccountStepState extends State<CreateAccountStep> {
     await authProv.logIn(
         username: prov.model.email, password: prov.model.password);
     return true;
-  }
-
-  void _handleError(context, err) {
-    debugPrint(err.toString());
-    if (err is ProblemJsonException) {
-      showAlertDialog(
-          context, AppLocalizations.of(context)!.genericProblem(err.problem));
-    } else {
-      showAlertDialog(
-          context,
-          AppLocalizations.of(context)!
-              .genericProblem(authErrorMessage(context, err.toString())));
-    }
   }
 }

@@ -1,6 +1,5 @@
-import 'package:app/api/api.dart';
 import 'package:app/provider/authentication_provider.dart';
-import 'package:app/service/authentication_service.dart';
+import 'package:app/service/error_handler.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
@@ -29,7 +28,6 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
   Future<void>? _loginFuture;
   String? username;
   String? password;
-  bool useAnon = false;
   bool _obscureText = true;
 
   @override
@@ -71,13 +69,9 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
                                   labelText:
                                       AppLocalizations.of(context)!.email,
                                   validator: Validatorless.multiple([
-                                    if (!useAnon)
-                                      (value) {
-                                        return Validatorless.email(
-                                                AppLocalizations.of(context)!
-                                                    .emailNotValid)(
-                                            value?.toLowerCase());
-                                      },
+                                    Validatorless.email(
+                                        AppLocalizations.of(context)!
+                                            .emailNotValid),
                                     Validatorless.required(
                                         AppLocalizations.of(context)!
                                             .emailRequired)
@@ -211,47 +205,16 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
     startProvisioning(context);
   }
 
-  void _showErrorDialog(String message) {
-    showPlatformDialog(
-        context: context,
-        builder: (context) {
-          return PlatformAlertDialog(
-              content: Text(
-                message,
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-              actions: [
-                PlatformDialogAction(
-                  child: Text(AppLocalizations.of(context)!.genericOK),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ]);
-        });
-  }
-
   void _submitForm() {
     var prov = Provider.of<AuthenticationProvider>(context, listen: false);
 
-    if (!useAnon) {
-      _loginFuture = prov.logIn(
-          username: username?.toLowerCase() ?? '', password: password ?? '');
-    } else {
-      _loginFuture =
-          prov.logInAnonymous(id: int.parse(username!), secret: password!);
-    }
+    _loginFuture =
+        prov.logIn(username: username ?? '', password: password ?? '');
 
     _loginFuture!.then((_) {
       Navigator.of(context).pushNamedAndRemoveUntil("/index", (route) => false);
     }).catchError((err) {
-      if (err is ProblemJsonException) {
-        _showErrorDialog(
-            AppLocalizations.of(context)!.signInError('err.problem'));
-      } else {
-        _showErrorDialog(AppLocalizations.of(context)!
-            .signInError(authErrorMessage(context, err.toString())));
-      }
+      loginHandleError(context, err);
     });
   }
 

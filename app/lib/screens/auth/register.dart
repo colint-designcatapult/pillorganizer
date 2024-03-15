@@ -1,8 +1,6 @@
-import 'package:app/api/api.dart';
-import 'package:app/platform/dialog.dart';
 import 'package:app/provider/authentication_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
-import 'package:app/service/authentication_service.dart';
+import 'package:app/service/error_handler.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -236,7 +234,7 @@ class _RegisterPageState extends State<RegisterPage> {
     var prov = Provider.of<UserRegistrationProvider>(context, listen: false);
     var authProv = Provider.of<AuthenticationProvider>(context, listen: false);
     _register(prov, authProv).catchError((err) {
-      _handleError(context, err);
+      registerHandleError(context, err);
       return false;
     }).then((value) {
       if (value) {
@@ -253,18 +251,5 @@ class _RegisterPageState extends State<RegisterPage> {
     await authProv.logIn(
         username: prov.model.email, password: prov.model.password);
     return true;
-  }
-
-  void _handleError(context, err) {
-    debugPrint(err.toString());
-    if (err is ProblemJsonException) {
-      showAlertDialog(
-          context, AppLocalizations.of(context)!.genericProblem(err.problem));
-    } else {
-      showAlertDialog(
-          context,
-          AppLocalizations.of(context)!
-              .genericProblem(authErrorMessage(context, err.toString())));
-    }
   }
 }
