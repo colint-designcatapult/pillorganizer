@@ -63,11 +63,7 @@ All the secret environment are on 1password in cabinet's vault and here is the [
 
 ## Technical limitations
 
-None
-
 ## Known problems
-
-None
 
 ## External documentation
 
@@ -83,8 +79,8 @@ then manually publish these files on the app store connect and the android store
 
 Backend is run via github actions
 
-Firmware need to follow the OTA protocol in the `cabinet_docs.pdf` also the github actions will build the right folder for it.
+Firmware need to follow the OTA protocol in `firmware/README.md` also the github actions will build the right folder for it.
 
 ## More documentation
 
-Go in the `/docs` folder in the root to see the `cabinet_docs.pdf` and other document.
+Go in the `/docs` folder in the root to see the `cabinet_docs.pdf` and other documents.
