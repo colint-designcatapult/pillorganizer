@@ -9,7 +9,7 @@ on:
       - "backend/**"
   pull_request:
     branches:
-      - master
+      - "master"
     paths:
       - ".github/workflows/backend.yml"
       - "backend/**"

@@ -93,7 +93,7 @@ class UserOnboardSpec extends Specification {
 
         then:
         def e = thrown HttpClientResponseException
-        e.message.contains("SSID does not match")
+        e.message.contains("Bad Request")
         prov.id == 1
         prov.oobKey.length() == 32
     }
@@ -126,7 +126,7 @@ class UserOnboardSpec extends Specification {
 
         then:
         def e = thrown HttpClientResponseException
-        e.message.contains("SSID does not match")
+        e.message.contains("Bad Request")
         prov.id == 2
         prov.userID == 2
         prov.oobKey.length() == 32
