@@ -78,6 +78,8 @@ A number of environment variables are required for operation.
 * FIREBASE_CLIENT_EMAIL
 * FIREBASE_PRIVATE_KEY
 * FIREBASE_PROJECT_ID
+* SENDGRID_API_KEY
+* SENDGRID_SENDER
 * PORT (port to bind HTTP)
 * SIGNING_JWK (used to protect JWT)
 

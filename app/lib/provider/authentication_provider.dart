@@ -44,6 +44,28 @@ class AuthenticationProvider with ChangeNotifier {
     });
   }
 
+  Future<void> sendRecoveryCode(String email) async {
+    var dto = UserSendRecoveryCodeDTO(sendTo: email);
+    await client.sendRecoveryCode(dto);
+  }
+
+  Future<bool> validateRecoveryCode(int code, String email) async {
+    var dto = UserValidateRecoveryCodeDTO(recoveryCode: code, email: email);
+    return await client.validateRecoveryCode(dto);
+  }
+
+  Future<void> newPassword({
+    required String email,
+    required String newPassword,
+    required int recoveryCode,
+  }) async {
+    var creds = UserNewPasswordDTO(
+        email: email, newPassword: newPassword, recoveryCode: recoveryCode);
+
+    _future = userService.newPassword(creds);
+    return _future;
+  }
+
   Future<void> createAnonymous() async {
     var reg = await client.registerAnonymous();
     await logInAnonymous(id: reg.id, secret: reg.secret);

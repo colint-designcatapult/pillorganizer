@@ -50,6 +50,12 @@ abstract class RestClient {
   @POST("/user/register_anonymous")
   Future<AnonymousCredentialsDTO> registerAnonymous();
 
+  @POST("/mail/send_recovery_code")
+  Future<void> sendRecoveryCode(@Body() UserSendRecoveryCodeDTO dto);
+
+  @POST("/mail/validate_recovery_code")
+  Future<bool> validateRecoveryCode(@Body() UserValidateRecoveryCodeDTO dto);
+
   @POST("/auth/login_anonymous")
   Future<JwtCredentials> loginAnonymous(@Body() AnonymousCredentialsDTO creds);
 
@@ -67,6 +73,9 @@ abstract class RestClient {
 
   @PUT("user/change_password")
   Future<void> changePassword(@Body() UserChangePasswordDTO reg);
+
+  @PUT("user/new_password")
+  Future<void> newPassword(@Body() UserNewPasswordDTO reg);
 
   @GET("/device/list")
   Future<List<DeviceUserDTO>> listMyDevices();
@@ -237,6 +246,37 @@ class UserChangePasswordDTO {
   UserChangePasswordDTO(
       {required this.currentPassword, required this.newPassword});
   Map<String, dynamic> toJson() => _$UserChangePasswordDTOToJson(this);
+}
+
+@JsonSerializable()
+class UserNewPasswordDTO {
+  final String email;
+  final String newPassword;
+  final int recoveryCode;
+
+  UserNewPasswordDTO(
+      {required this.email,
+      required this.newPassword,
+      required this.recoveryCode});
+  Map<String, dynamic> toJson() => _$UserNewPasswordDTOToJson(this);
+}
+
+@JsonSerializable()
+class UserSendRecoveryCodeDTO {
+  final String sendTo;
+
+  UserSendRecoveryCodeDTO({required this.sendTo});
+  Map<String, dynamic> toJson() => _$UserSendRecoveryCodeDTOToJson(this);
+}
+
+@JsonSerializable()
+class UserValidateRecoveryCodeDTO {
+  final int recoveryCode;
+  final String email;
+
+  UserValidateRecoveryCodeDTO(
+      {required this.recoveryCode, required this.email});
+  Map<String, dynamic> toJson() => _$UserValidateRecoveryCodeDTOToJson(this);
 }
 
 @JsonSerializable()

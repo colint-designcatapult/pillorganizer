@@ -1,4 +1,4 @@
-import 'package:app/platform/dialog.dart';
+import 'package:app/service/error_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:app/api/device.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
@@ -139,7 +139,7 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
         .then((_) =>
             Provider.of<DeviceListProvider>(context, listen: false).refresh())
         .catchError((error) {
-      showAlertDialog(context, "There was an error while removing the device.");
+      showErrorDialog(context, "There was an error while removing the device.");
     });
   }
 }

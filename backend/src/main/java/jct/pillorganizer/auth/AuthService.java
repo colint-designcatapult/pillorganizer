@@ -1,6 +1,7 @@
 package jct.pillorganizer.auth;
 
-import com.google.api.gax.rpc.UnauthenticatedException;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.security.authentication.AuthenticationException;
 import io.micronaut.security.utils.SecurityService;
 import jakarta.inject.Inject;
@@ -13,6 +14,7 @@ import jct.pillorganizer.repo.DeviceUserAsyncRepository;
 import jct.pillorganizer.repo.DeviceUserRepository;
 import jct.pillorganizer.repo.UserRepository;
 import org.mindrot.jbcrypt.BCrypt;
+
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.Charset;
@@ -20,8 +22,8 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Utility functions for dealing with authentication and authorization.
- * Plaintext passwords are stored as a character array for security, since it helps prevent accidental leakage through
- * logging.
+ * Plaintext passwords are stored as a character array for security, since it
+ * helps prevent accidental leakage through logging.
  */
 @Singleton
 public class AuthService {
@@ -39,36 +41,56 @@ public class AuthService {
     @Inject
     UserRepository userRepo;
 
-
     // todo: why ascii here? check if there are any weird side effects
     private static final Charset HASH_CARSET = StandardCharsets.US_ASCII;
 
     /**
      * Check if the specified password matches the user's password.
-     * @param user the user to check the password for
+     * 
+     * @param user     the user to check the password for
      * @param password a character array of the password to check
      * @return true if the password matches, false otherwise
      */
     public boolean checkPassword(User user, char[] password) {
         return checkPassword(user.getPasswordHash(), password);
     }
+
     public void changePassword(String currentPassword, String newPassword) throws IllegalAccessException {
         User user = userRepo.findById(getUserID()).block();
         assert user != null;
-        if(!checkPassword(user.getPasswordHash(), currentPassword.toCharArray())){
-             throw new IllegalAccessException("Current password is incorrect.");
-         } else {
-             byte[] newPasswordHash = hashPassword(newPassword.toCharArray());
-             user.setPasswordHash(newPasswordHash);
-             userRepo.update(user);
-         }
+        if (!checkPassword(user.getPasswordHash(), currentPassword.toCharArray())) {
+            throw new IllegalAccessException("Current password is incorrect.");
+        } else {
+            byte[] newPasswordHash = hashPassword(newPassword.toCharArray());
+            user.setPasswordHash(newPasswordHash);
+            userRepo.update(user).block();
+        }
     }
+
     private boolean checkPassword(byte[] hash, char[] password) {
         return BCrypt.checkpw(String.valueOf(password), new String(hash, HASH_CARSET));
     }
 
     /**
+     * New password just set the new password for the user.
+     * 
+     * @param user     the user to change the password for
+     * @param password a character array of the password to check
+     * @return true if success, false otherwise
+     */
+    public void newPassword(String email, String newPassword) throws IllegalAccessException {
+        User user = userRepo.findByEmail(email).block();
+        if (user == null) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "User not found");
+        }
+        byte[] newPasswordHash = hashPassword(newPassword.toCharArray());
+        user.setPasswordHash(newPasswordHash);
+        userRepo.update(user).block();
+    }
+
+    /**
      * Hashes a plaintext password into a secure hash format.
+     * 
      * @param plaintext the plaintext password to hash, as a character array.
      * @return the hashed password as a byte array
      */
@@ -78,6 +100,7 @@ public class AuthService {
 
     /**
      * Converts a plaintext password in string form to a character array.
+     * 
      * @param plaintextPassword a plaintext password in string form
      * @return the plaintext password as a character array
      */
@@ -86,18 +109,22 @@ public class AuthService {
     }
 
     /**
-     * Gets the currently logged-in user ID. Note that if the user type is Device, this will return a device ID and not
+     * Gets the currently logged-in user ID. Note that if the user type is Device,
+     * this will return a device ID and not
      * a user ID.
+     * 
      * @throws AuthenticationException if no user is currently signed in
      * @return a user ID or device ID of the currently logged-in user
      */
     public long getUserID() {
-        return (long)securityService.getAuthentication()
+        return (long) securityService.getAuthentication()
                 .orElseThrow(() -> new AuthenticationException("No authentication")).getAttributes().get("id");
     }
 
     /**
-     * Attempt to asynchronously access a device using the currently logged-in user's credentials.
+     * Attempt to asynchronously access a device using the currently logged-in
+     * user's credentials.
+     * 
      * @param deviceID device ID to access
      * @return a Mono wrapping a future device
      */
@@ -107,13 +134,15 @@ public class AuthService {
 
     /**
      * Attempt to access a device using the currently logged-in user's credentials.
+     * 
      * @param deviceID device ID to access
      * @return the Device object if the user has access to the specified device
-     * @throws RuntimeException if no device with the specified ID exists
-     * @throws AuthenticationException if the user doesn't have access to the specified device
+     * @throws RuntimeException        if no device with the specified ID exists
+     * @throws AuthenticationException if the user doesn't have access to the
+     *                                 specified device
      */
     public Device accessDevice(long deviceID) {
-        if(isAdmin()) {
+        if (isAdmin()) {
             return deviceRepository.findById(deviceID)
                     .orElseThrow(() -> new RuntimeException("Device ID does not exist"));
         } else {
@@ -124,6 +153,7 @@ public class AuthService {
 
     /**
      * Check if the currently logged-in user has the administrator role.
+     * 
      * @return true if the logged-in user is an administrator, false otherwise
      */
     public boolean isAdmin() {

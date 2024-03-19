@@ -1,5 +1,6 @@
 import 'package:app/provider/authentication_provider.dart';
 import 'package:app/service/error_handler.dart';
+import 'package:app/screens/auth/recover_password.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
@@ -7,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
 import 'package:app/navigation/provision_navigator.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class LaunchPageLogin extends StatefulWidget {
   const LaunchPageLogin({Key? key}) : super(key: key);
@@ -29,6 +31,23 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
   String? username;
   String? password;
   bool _obscureText = true;
+
+  void forgotPassword() {
+    showModalBottomSheet<bool>(
+        context: context,
+        isScrollControlled: true,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(16.r),
+          ),
+        ),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width,
+        ),
+        builder: (context) =>
+            RecoverPassword(onBack: () => {Navigator.of(context).pop()}));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +113,26 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
                                     });
                                   },
                                   obscureText: _obscureText,
+                                  paddingBottom: 12,
                                 ),
+                                Align(
+                                    alignment: Alignment.topRight,
+                                    child: GestureDetector(
+                                        onTap: () => forgotPassword(),
+                                        child: Text(
+                                            AppLocalizations.of(context)!
+                                                .forgotPassword,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelSmall
+                                                ?.copyWith(
+                                                    color:
+                                                        const Color(0xFF206B8B),
+                                                    decoration: TextDecoration
+                                                        .underline,
+                                                    decorationColor:
+                                                        const Color(
+                                                            0xFF206B8B))))),
                               ],
                             ),
                           ),

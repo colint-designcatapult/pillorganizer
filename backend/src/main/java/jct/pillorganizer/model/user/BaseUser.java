@@ -1,6 +1,5 @@
 package jct.pillorganizer.model.user;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
@@ -14,21 +13,24 @@ import java.sql.Timestamp;
 import java.util.List;
 
 /**
- * A generic human user account that can log in to the system. A BaseUser has a role, which indicates global permissions
- * e.g., administrator. Roles may be indicated in the app's JWT tokens, so use care. A `BaseUser` can be associated with
- * one or more devices, which is the key separation between a user and an `Authenticatable`.
+ * A generic human user account that can log in to the system. A BaseUser has a
+ * role, which indicates global permissions
+ * e.g., administrator. Roles may be indicated in the app's JWT tokens, so use
+ * care. A `BaseUser` can be associated with
+ * one or more devices, which is the key separation between a user and an
+ * `Authenticatable`.
+ * 
  * @see Authenticatable
  */
 @Entity(name = "users")
-@DiscriminatorColumn(name="user_type",
-        discriminatorType = DiscriminatorType.INTEGER)
+@DiscriminatorColumn(name = "user_type", discriminatorType = DiscriminatorType.INTEGER)
 @Getter
 @Setter
 @Serdeable.Serializable
 public class BaseUser {
 
     @Id
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="user_seq")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_seq")
     @SequenceGenerator(name = "user_seq", sequenceName = "user_seq", allocationSize = 1)
     private Long id;
 
@@ -50,5 +52,8 @@ public class BaseUser {
     @JsonIgnore
     private Timestamp updated;
 
+    @Column(name = "recovery_code")
+    @JsonIgnore
+    private Long recoveryCode;
 
 }
