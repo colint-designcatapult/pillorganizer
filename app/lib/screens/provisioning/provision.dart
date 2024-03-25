@@ -241,9 +241,9 @@ class _ProvisionPageState extends State<ProvisionPage>
     }
   }
 
-  String _buildSubtitle(data) {
+  String? _buildSubtitle(data) {
     if (data.item1 == ProvisionStage.missingPermissions) {
-      return '';
+      return null;
     } else if (data.item2 != null) {
       return AppLocalizations.of(context)!.provErrConGenericSubtitle;
     } else if (data.item1 == ProvisionStage.scanning_ble) {

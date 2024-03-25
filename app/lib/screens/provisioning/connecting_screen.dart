@@ -165,9 +165,9 @@ class ProvisionConnectingPage extends StatelessWidget {
     }
   }
 
-  String _buildSubtitle(data, context) {
+  String? _buildSubtitle(data, context) {
     if (data.item1 == ProvisionStage.missingPermissions) {
-      return '';
+      return null;
     } else if (data.item2 != null) {
       return AppLocalizations.of(context)!.connectionProblemSubtitle;
     } else if (data.item1 == ProvisionStage.finalizing) {

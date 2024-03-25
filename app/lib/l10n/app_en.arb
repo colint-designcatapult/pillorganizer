@@ -78,7 +78,7 @@
 	"manual": "Manual",
 	"missedAt": "Missed at {time}",
 	"missingPermissionInfoTextAndroid": "Make sure bluetooth is turned on and also the **Location** and **Nearby devices** permissions are enabled",
-	"missingPermissionInfoTextIos": "Make sure **Bluetooth** is turned on and also **Bluetooth** is enabled in the settings",
+	"missingPermissionInfoTextIos": "To setup the device, make sure that : \n- Bluetooth is turned on \n- Bluetooth is enabled in the settings \n- *Authorize a new connection* in Bluethooth is checked",
 	"missingBlePermissionTextIos": "Missing Permission: the Bluetooth permission need to be enabled",
 	"missingBlePermissionTextAndroid": "Missing Permission: the Location, Bluetooth and Scan permission needs to be enabled",
 	"monday": "Monday",

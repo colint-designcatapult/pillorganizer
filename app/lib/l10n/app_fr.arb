@@ -78,7 +78,7 @@
 	"manual": "Manuel",
 	"missedAt": "Manqué à {time}",
 	"missingPermissionInfoTextAndroid": "Assurez-vous que le Bluetooth est activé et que les autorisations **Localisation** et **Appareils à proximité** sont également autorisées.",
-	"missingPermissionInfoTextIos": "Assurez-vous que le **Bluetooth** est activé et que l'autorisation **Bluetooth** est authorisé dans les paramètres.",
+	"missingPermissionInfoTextIos": "Pour configurer l'appareil, assurez-vous que : \n- Bluetooth est activé \n- Bluetooth est activé dans les paramètres \n- *Autoriser une nouvelle connexion* dans Bluethooth est coché",
 	"missingBlePermissionTextIos": "Autorisation manquante: l'autorisation Bluetooth doit être activée",
 	"missingBlePermissionTextAndroid": "Autorisations manquantes: l'autorisation de Localisation, Bluetooth et Appareils à proximité doivent être activées",
 	"monday": "Lundi",
