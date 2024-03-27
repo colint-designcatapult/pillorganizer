@@ -34,7 +34,7 @@ class ProvisionSelectWifiPage extends StatelessWidget {
                 provisionningProgress: provisionningProgress,
                 title: AppLocalizations.of(context)!.provSelectWifi,
                 subtext: data.stage == ProvisionStage.missingPermissions
-                    ? ''
+                    ? null
                     : AppLocalizations.of(context)!.provSelectWifiSubtitle,
                 onBackPressed: () =>
                     Navigator.of(context, rootNavigator: true).pop(),
