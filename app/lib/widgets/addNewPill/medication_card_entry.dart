@@ -160,26 +160,20 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
                   ?.copyWith(fontSize: 28.h, color: const Color(0xFF03012C)),
             ),
             SizedBox(height: 12.h),
-            Provider(
-              create: (BuildContext context) {
-                return ScheduleProvider(deviceID: provider.state.deviceID);
-              },
-              child: FutureBuilder<SimpleSchedule?>(
-                  future: Provider.of<ScheduleProvider>(context).future,
-                  builder: (context, snapshot) {
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (!snapshot.hasData) ...[
-                          const CircularProgressIndicator()
-                        ] else ...[
-                          ..._buildForSchedule(context, snapshot.requireData!,
-                              provider.state.assignedDispenseTimes, provider)
-                        ]
-                      ],
-                    );
-                  }),
-            ),
+            Consumer<ScheduleProvider>(
+                builder: (context, scheduleProv, snapshot) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (scheduleProv.schedule == null) ...[
+                    const CircularProgressIndicator()
+                  ] else ...[
+                    ..._buildForSchedule(context, scheduleProv.schedule!,
+                        provider.state.assignedDispenseTimes, provider)
+                  ]
+                ],
+              );
+            }),
             SizedBox(height: 96.h),
           ],
         ),

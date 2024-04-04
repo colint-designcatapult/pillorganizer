@@ -8,14 +8,20 @@ class MedicationsProvider
   Map<int, ScheduledMedication>? _idToMed;
   bool isUpdateMedication = false;
 
-  MedicationsProvider(this._device) : super(null, () => Future.value(null));
+  MedicationsProvider(this._device)
+      : super(null, () {
+          return Future.value(null);
+        }) {
+    super.loadFunction = _load;
+    refresh();
+  }
 
   MedicationsProvider update(DeviceUser? newDevice) {
     if (newDevice?.id != _device?.id) {
       _device = newDevice;
       super.loadFunction = _load;
-      refresh();
     }
+    refresh();
     return this;
   }
 

@@ -21,10 +21,10 @@ class ButtonIcon extends StatelessWidget {
       width: 124.w,
       height: 72.h,
       child: ElevatedButton(
-        onPressed: isDisabled ? null : onPressed,
+        onPressed: isDisabled ? () {} : onPressed,
         style: ElevatedButton.styleFrom(
-          primary: isDisabled ? Colors.grey : Colors.white,
-          onPrimary: const Color(0xFF5796A9),
+          backgroundColor: isDisabled ? Colors.grey : Colors.white,
+          foregroundColor: const Color(0xFF5796A9),
           side: BorderSide(
             color: isDisabled ? Colors.grey[700]! : const Color(0xFF5796A9),
             width: 2.w,

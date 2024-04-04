@@ -32,7 +32,7 @@ class ScheduleProvider with ChangeNotifier {
     if (selectedDevice != null) {
       load(selectedDevice.deviceID);
     } else if (deviceID != null) {
-      load(deviceID!);
+      load(deviceID);
     }
   }
 
