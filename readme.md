@@ -72,10 +72,13 @@ All the secret environment are on 1password in cabinet's vault and here is the [
 ## How to deploy application
 
 Change app version in `app/pubspec.yaml`
+Make sure your .env is set to the API_URL you need
 
-Run
-`flutter build ios --release` and `flutter build appbundle --release`
-then manually publish these files on the app store connect and the android store
+On ios:
+Open IOS/Runner.workspace in Xcode then update in General->Identity the Version and Build then click Product->Archive and distribute app
+
+On android:
+Run `flutter build appbundle --release` then manually push the files to the store
 
 Backend is run via github actions
 
