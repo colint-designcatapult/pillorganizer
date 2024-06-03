@@ -30,6 +30,8 @@
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>CabiNET needs permission to access your pill organizer</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>CabiNET needs permission to access your pill organizer</string>
 	<key>NSCameraUsageDescription</key>
 	<string>CabiNET uses your camera to automatically set up your device</string>
 	<key>NSLocalNetworkUsageDescription</key>

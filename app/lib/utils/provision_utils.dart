@@ -14,6 +14,7 @@ class ProvisionUtils {
       return !await checkDeviceBluetoothIsOn();
     }
     await Permission.location.request();
+    await Permission.bluetoothConnect.request();
     await Permission.bluetoothScan.request();
     PermissionStatus locationStatus = await Permission.location.status;
     PermissionStatus bleScanStatus = await Permission.bluetoothScan.status;

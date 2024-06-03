@@ -7,8 +7,10 @@ import 'package:permission_handler/permission_handler.dart';
 
 //Read-Write chracteristic on all device that is used to communicate the bin states
 const stateBinsState = '20ded876-5bf8-06b8-354c-759dae9d26c1';
-//Read subscribable chracteristic that returns the device battery info
+//Read subscribable chracteristic that returns the device battery info (charging)
 const stateBatteryInfo = '00002bed-0000-1000-8000-00805f9b34fb';
+//Read subscribable chracteristic that returns the device battery level
+const stateBatteryLevel = '00002a19-0000-1000-8000-00805f9b34fb';
 
 class DeviceBluetoothController {
   final FlutterBluePlus _ble = FlutterBluePlus.instance;
@@ -52,7 +54,6 @@ class DeviceBluetoothController {
   Future<bool> find() async {
     List scanResult =
         await _ble.startScan(timeout: Duration(seconds: _timeoutTime));
-
     for (ScanResult r in scanResult) {
       if (r.device.name == _target) {
         try {
@@ -81,11 +82,18 @@ class DeviceBluetoothController {
           _stateChr = chr;
         }
 
+        if (chr.uuid.toString() == stateBatteryLevel) {
+          chr.setNotifyValue(true).then((_) {
+            chr.value.listen((value) {
+              batteryLevel = value[0];
+            });
+          });
+        }
+
         if (chr.uuid.toString() == stateBatteryInfo) {
           chr.setNotifyValue(true).then((_) {
             chr.value.listen((value) {
               batteryCharging = value[1] == 1;
-              batteryLevel = value[3];
             });
           });
         }
