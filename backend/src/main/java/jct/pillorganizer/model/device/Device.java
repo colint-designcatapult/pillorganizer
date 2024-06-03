@@ -104,6 +104,9 @@ public class Device implements Authenticatable {
     @Column(name = "charging", nullable = false)
     private boolean charging;
 
+    @Column(name = "engr_data", nullable = true, columnDefinition = "jsonb")
+    private String engr_data;
+
     @Override
     public long getId() {
         return id;

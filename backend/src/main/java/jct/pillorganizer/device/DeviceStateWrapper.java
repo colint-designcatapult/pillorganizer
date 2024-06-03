@@ -250,14 +250,15 @@ public class DeviceStateWrapper {
 
         builder.addAllSchedule(buildBinSchedule());
 
-        deviceRepository.updateLastSyncAndIpv4AndIpv6AndBatteryAndCharging(
+        deviceRepository.updateLastSyncAndIpv4AndIpv6AndBatteryAndChargingAndEngrData(
                 device.getId(),
                 device.getVersion(),
                 Timestamp.from(Instant.now()),
                 syncRequest.hasIpv4() ? syncRequest.getIpv4() : null,
                 syncRequest.hasIpv6() ? syncRequest.getIpv6().toByteArray() : null,
                 getBatteryLevel(syncRequest).orElse(null),
-                getBatteryCharging(syncRequest));
+                getBatteryCharging(syncRequest),
+                getEngineeringData(syncRequest).orElse(null));
 
         builder.setLatestFirmware(firmwareService.getLatestVersion());
 
@@ -522,6 +523,19 @@ public class DeviceStateWrapper {
             return syncRequest.getEngrData().getVbatScaled() == 1.0;
         } else {
             return false;
+        }
+    }
+
+    /**
+     * Gets the device's engr_data.
+     *
+     * @return the device engineering data if available.
+     */
+    private Optional<String> getEngineeringData(Pill.SyncRequest syncRequest) {
+        if (syncRequest.hasEngrData()) {
+            return Optional.of("vbatMeas:" +syncRequest.getEngrData().getVbatMeas());
+        } else {
+            return Optional.empty();
         }
     }
 

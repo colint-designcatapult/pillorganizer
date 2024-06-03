@@ -7,6 +7,7 @@ import io.micronaut.data.annotation.Version;
 import io.micronaut.data.repository.CrudRepository;
 import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.device.DeviceProvision;
+import jct.pillorganizer.proto.Pill;
 
 import javax.annotation.Nullable;
 import java.sql.Timestamp;
@@ -30,8 +31,8 @@ public interface DeviceRepository extends CrudRepository<Device, Long> {
 
     void update(@Id Long id, @Version Long version, DeviceProvision currentProvision);
 
-    void updateLastSyncAndIpv4AndIpv6AndBatteryAndCharging(@Id Long id, @Version Long version, Timestamp lastSync,
-            @Nullable Integer ipv4, @Nullable byte[] ipv6, @Nullable Integer battery, @Nullable Boolean charging);
+    void updateLastSyncAndIpv4AndIpv6AndBatteryAndChargingAndEngrData(@Id Long id, @Version Long version, Timestamp lastSync,
+                                                                      @Nullable Integer ipv4, @Nullable byte[] ipv6, @Nullable Integer battery, @Nullable Boolean charging, @Nullable String engr_data);
 
     void update(@Id Long id, String customName);
 
