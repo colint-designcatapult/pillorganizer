@@ -1,16 +1,11 @@
-import 'package:app/api/device.dart';
-import 'package:app/models/user.dart';
-import 'package:app/navigation/provision_navigator.dart';
-import 'package:app/provider/ble_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/auth/change_password.dart';
-import 'package:app/screens/auth/register.dart';
+import 'package:app/screens/auth/change_email.dart';
 import 'package:app/widgets/generic_yes_no_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import 'package:app/screens/modals/device_selector_modal.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../provider/authentication_provider.dart';
 
@@ -19,46 +14,6 @@ class AccountScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var authProvider = Provider.of<AuthenticationProvider>(context);
-    var user = authProvider.currentUser;
-    var numberOfDevices =
-        Provider.of<DeviceListProvider>(context, listen: false).value?.length;
-
-    void register() {
-      showModalBottomSheet<bool>(
-          context: context,
-          isScrollControlled: true,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(
-              top: const Radius.circular(16).r,
-            ),
-          ),
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width,
-          ),
-          builder: (context) => const RegisterPage());
-    }
-
-    void exitApplication(BuildContext context) {
-      showDialog(
-        context: context,
-        builder: (_) => GenericYesNoModal(
-          icon: PhosphorIcons.power_fill,
-          title: AppLocalizations.of(context)!.exitApplication,
-          subtitle: AppLocalizations.of(context)!.exitApplicationSubtitle,
-          saveWidgetText: AppLocalizations.of(context)!.signOut,
-          saveWidgetAction: () {
-            Provider.of<SelectedDeviceProvider>(context, listen: false)
-                .updateNotificationsForAll(false)
-                .then((value) =>
-                    Provider.of<AuthenticationProvider>(context, listen: false)
-                        .signOut(context));
-          },
-        ),
-      );
-    }
-
     void signout(BuildContext context) {
       showDialog(
           context: context,
@@ -94,6 +49,26 @@ class AccountScreen extends StatelessWidget {
           builder: (context) => const ChangePassword());
     }
 
+    void changeEmail() {
+      showModalBottomSheet<bool>(
+          context: context,
+          isScrollControlled: true,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(16.r),
+            ),
+          ),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width,
+          ),
+          builder: (context) => const ChangeEmail());
+    }
+
+    void navigateToFaq() {
+      // TODO: IMPLEMENT FAQ NAVIGATION
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFBFD2DB),
       body: SafeArea(
@@ -125,68 +100,41 @@ class AccountScreen extends StatelessWidget {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             children: [
-                              if (user is User)
-                                SquareButton(
-                                  color: const Color(0xFF043C4D),
-                                  icon: PhosphorIcons.key_fill,
-                                  label: AppLocalizations.of(context)!
-                                      .changePassword,
-                                  onPressed: () {
-                                    changePassword();
-                                  },
-                                ),
                               SquareButton(
                                 color: const Color(0xFF043C4D),
-                                icon: PhosphorIcons.plus_circle_fill,
-                                label:
-                                    AppLocalizations.of(context)!.addNewDevice,
+                                icon: PhosphorIcons.envelope_simple_fill,
+                                label: AppLocalizations.of(context)!
+                                    .changeEmail,
                                 onPressed: () {
-                                  Provider.of<DeviceBluetoothProvider>(context,
-                                          listen: false)
-                                      .suppress();
-                                  startProvisioning(context);
+                                  changeEmail();
                                 },
                               ),
-                              if (user is User)
-                                SquareButton(
-                                  color: const Color(0xFF7A2C2C),
-                                  icon: PhosphorIcons.power_fill,
-                                  label: AppLocalizations.of(context)!.signOut,
-                                  onPressed: () {
-                                    signout(context);
-                                  },
-                                ),
-                              if (user is AnonymousUser)
-                                SquareButton(
-                                  color: const Color(0xFF043C4D),
-                                  icon: PhosphorIcons.user_fill,
-                                  label: AppLocalizations.of(context)!
-                                      .createAccount,
-                                  onPressed: () {
-                                    register();
-                                  },
-                                ),
-                              if (numberOfDevices != null &&
-                                  numberOfDevices > 1)
-                                SquareButton(
-                                  color: const Color(0xFF043C4D),
-                                  icon: PhosphorIcons.arrows_clockwise,
-                                  label: AppLocalizations.of(context)!
-                                      .switchDevice,
-                                  onPressed: () {
-                                    showDeviceSelectorModal(context);
-                                  },
-                                ),
-                              if (user is AnonymousUser)
-                                SquareButton(
-                                  color: const Color(0xFF043C4D),
-                                  icon: PhosphorIcons.sign_out,
-                                  label: AppLocalizations.of(context)!
-                                      .exitApplication,
-                                  onPressed: () {
-                                    exitApplication(context);
-                                  },
-                                ),
+                              SquareButton(
+                                color: const Color(0xFF043C4D),
+                                icon: PhosphorIcons.key_fill,
+                                label: AppLocalizations.of(context)!
+                                    .changePassword,
+                                onPressed: () {
+                                  changePassword();
+                                },
+                              ),
+                              SquareButton(
+                                color: const Color(0xFF043C4D),
+                                icon: PhosphorIcons.question_fill,
+                                label: AppLocalizations.of(context)!
+                                    .faq,
+                                onPressed: () {
+                                  navigateToFaq();
+                                },
+                              ),
+                              SquareButton(
+                                color: const Color(0xFF7A2C2C),
+                                icon: PhosphorIcons.power_fill,
+                                label: AppLocalizations.of(context)!.signOut,
+                                onPressed: () {
+                                  signout(context);
+                                },
+                              ),
                             ],
                           ))
                     ]),
