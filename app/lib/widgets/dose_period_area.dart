@@ -4,17 +4,16 @@ import 'package:app/screens/modals/add_new_pills_modal.dart';
 import 'package:app/widgets/circular_bin_status_indicator.dart';
 import 'package:app/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../api/device.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../api/device.dart';
 import '../../provider/device_notice_provider.dart';
 import '../../provider/medication_provider.dart';
 import '../../provider/selected_device_provider.dart';
-
 import '../../widgets/addNewPill/medication_card_entry.dart';
 import '../../widgets/device_icon.dart';
 import '../../widgets/medication_icon.dart';
@@ -27,8 +26,12 @@ class DosePeriodArea extends StatelessWidget {
     return Selector<DeviceStateProvider, List<DosePeriod>?>(
       selector: (_, prov) => prov.value?.dosePeriods,
       builder: (_, list, __) {
+        final now = DateTime.now();
         List<DosePeriod>? reversedList = list
-            ?.where((element) => element.status != BinStatus.DISABLED)
+            ?.where((element) =>
+                element.status != BinStatus.DISABLED &&
+                element.scheduledTime != null &&
+                element.scheduledTime!.isAfter(now))
             .toList()
             .reversed
             .toList();
@@ -209,10 +212,14 @@ class DosePeriodArea extends StatelessWidget {
                         status: period.status,
                         deviceStatus: deviceNoticeProv.value),
                     SizedBox(width: 2.w),
-                    Icon(
-                      PhosphorIcons.dots_three_vertical,
-                      size: 24.h,
-                    )
+                    SizedBox(
+                      width: 20.w,
+                    ),
+                    SvgPicture.asset(
+                      'lib/assets/SVG/pencilLight.svg',
+                      width: 24.w,
+                      height: 24.h,
+                    ),
                   ],
                 ))),
       );

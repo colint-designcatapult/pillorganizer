@@ -163,6 +163,7 @@ flutter:
     - lib/assets/SVG/CheckCircle.svg
     - lib/assets/SVG/DEV_SYM_AM.svg
     - lib/assets/SVG/DEV_SYM_PM.svg
+    - lib/assets/SVG/pencilLight.svg
     - lib/assets/SVG/PencilSimpleLine.svg
     - lib/assets/SVG/Globe.svg
     - lib/assets/SVG/User.svg

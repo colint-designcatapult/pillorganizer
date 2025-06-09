@@ -3,13 +3,15 @@ import 'dart:io';
 import 'package:app/api/device.dart';
 import 'package:app/provider/ble_provider.dart';
 import 'package:app/service/device_information_service.dart';
+import 'package:app/widgets/switch_device.dart';
 import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
-import 'package:provider/provider.dart';
-import '../provider/selected_device_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
+
+import '../provider/selected_device_provider.dart';
 
 class DeviceInfoHeader extends StatelessWidget {
   final bool deviceOffline;
@@ -27,6 +29,10 @@ class DeviceInfoHeader extends StatelessWidget {
             Provider.of<DeviceStateProvider>(context, listen: false).value;
         bool isMissingPermission =
             bleProv.status == BLEConnectionStatus.missingPermission;
+        var numberOfDevices =
+            Provider.of<DeviceListProvider>(context, listen: false)
+                .value
+                ?.length;
         if (wifiIsConnected(context, bleProv) && deviceState != null) {
           batteryLevel = deviceState.battery;
           batteryCharging = deviceState.charging;
@@ -51,16 +57,6 @@ class DeviceInfoHeader extends StatelessWidget {
                             fontSize: 24.h,
                             fontWeight: FontWeight.w600)),
                     SizedBox(width: 8.w),
-                    Container(
-                      decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                              width: 2.h,
-                              color: isMissingPermission
-                                  ? Colors.red
-                                  : const Color.fromARGB(0, 0, 0, 0))),
-                      child: Icon(Icons.info, color: Colors.white, size: 16.h),
-                    ),
                   ],
                 )),
             if (deviceOffline &&
@@ -91,6 +87,10 @@ class DeviceInfoHeader extends StatelessWidget {
                     SizedBox(width: 8.w),
                   ]),
                 ],
+              ),
+            if (numberOfDevices != null && numberOfDevices > 1)
+              Column(
+                children: [SizedBox(height: 8.h), SwitchDevice()],
               ),
             if (batteryLevel != null)
               Column(
