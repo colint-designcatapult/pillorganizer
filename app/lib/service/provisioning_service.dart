@@ -15,8 +15,10 @@ class ProvisionningProgress {
       case 1:
         return AppLocalizations.of(context)!.deviceSetup;
       case 2:
-        return AppLocalizations.of(context)!.preferences;
+        return AppLocalizations.of(context)!.nameDevice;
       case 3:
+        return AppLocalizations.of(context)!.preferences;
+      case 4:
         return AppLocalizations.of(context)!.createAnAccount;
       default:
         return '';
@@ -30,6 +32,8 @@ class ProvisionningProgress {
         'lib/assets/SVG/WifiHigh.svg',
         'lib/assets/SVG/PlugsConnected.svg'
       ];
+    } else if (step == 2) {
+      return ['lib/assets/SVG/pencilLight.svg'];
     } else {
       return [
         'lib/assets/SVG/Timer.svg',

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class BasicPage extends StatelessWidget {
@@ -256,9 +256,13 @@ class _BasicFormState extends State<BasicForm> {
 class SixDigitCodeInput extends StatefulWidget {
   final Function(String) onSubmitted;
   final bool reset;
+  final bool inError;
 
   const SixDigitCodeInput(
-      {Key? key, required this.onSubmitted, this.reset = false})
+      {Key? key,
+      required this.onSubmitted,
+      this.reset = false,
+      this.inError = false})
       : super(key: key);
 
   @override
@@ -266,17 +270,12 @@ class SixDigitCodeInput extends StatefulWidget {
 }
 
 class _SixDigitCodeInputState extends State<SixDigitCodeInput> {
-  late List<TextEditingController> _controllers;
   bool _shouldReset = false;
+  final List<TextEditingController> _controllers =
+      List.generate(6, (_) => TextEditingController());
 
-  @override
-  void initState() {
-    super.initState();
-    _controllers = List.generate(
-      6,
-      (index) => TextEditingController(),
-    );
-  }
+  // Track filled state for each digit
+  final List<bool> _isFilled = List.generate(6, (_) => false);
 
   @override
   void dispose() {
@@ -305,9 +304,6 @@ class _SixDigitCodeInputState extends State<SixDigitCodeInput> {
 
   @override
   Widget build(BuildContext context) {
-    if (_shouldReset) {
-      _shouldReset = false;
-    }
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: List.generate(
@@ -317,6 +313,11 @@ class _SixDigitCodeInputState extends State<SixDigitCodeInput> {
           child: TextField(
             controller: _controllers[index],
             onChanged: (value) {
+              // Update filled state
+              setState(() {
+                _isFilled[index] = value.isNotEmpty;
+              });
+
               if (value.length == 1 && index < 5) {
                 FocusScope.of(context).nextFocus();
               }
@@ -329,8 +330,28 @@ class _SixDigitCodeInputState extends State<SixDigitCodeInput> {
             maxLength: 1,
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
+            style: const TextStyle(
+                fontWeight: FontWeight.w500, height: 1.25, fontSize: 36),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: widget.inError
+                  ? const Color(0xffFEF3F2) // Light red for error
+                  : _isFilled[index]
+                      ? const Color(0xFFF1F5F6)
+                      : Colors.transparent,
+              // Transparent when empty and no error
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: widget.inError
+                    ? const BorderSide(color: Color(0xffFAD2CF), width: 2)
+                    : const BorderSide(color: Color(0xffBED4D8), width: 2),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: widget.inError
+                    ? const BorderSide(color: Color(0xffFAD2CF), width: 2)
+                    : const BorderSide(color: Color(0xff206B8B), width: 2),
+              ),
               counterText: '',
             ),
           ),

@@ -2,6 +2,7 @@ import 'package:app/api/device.dart';
 import 'package:app/service/provisioning_service.dart';
 import 'package:app/widgets/missing_permission_info_box.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -11,8 +12,6 @@ import '../../api/provision.dart';
 import '../../provider/provision_provider.dart';
 import '../../provider/selected_device_provider.dart';
 import '../../widgets/wizard.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-
 import 'provision.dart';
 
 class ProvisionConnectingPage extends StatelessWidget {
@@ -34,8 +33,8 @@ class ProvisionConnectingPage extends StatelessWidget {
           Provider.of<DeviceListProvider>(context, listen: false).refresh();
           Provider.of<SelectedDeviceProvider>(context, listen: false)
               .selectDeviceByID(value.deviceID!);
-          Navigator.of(context, rootNavigator: true)
-              .pushNamedAndRemoveUntil('/post_setup', (route) => false);
+          Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+              '/name_new_device?id=${value.deviceID}', (route) => false);
         }
       });
     }

@@ -1213,4 +1213,22 @@ class _RestClient implements RestClient {
 
     return _result.data!;
   }
+
+  @override
+  Future<void> validateCaregiverCode(String code) async {
+    const _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    await _dio.fetch<bool>(_setStreamType<void>(Options(
+      method: 'POST',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/caregiver/validate/${code}',
+          queryParameters: queryParameters,
+        )
+        .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
+  }
 }

@@ -5,7 +5,6 @@ import 'package:app/api/intreceptors/auth-interceptors.dart';
 import 'package:app/service/time_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -120,6 +119,10 @@ abstract class RestClient {
   @FormUrlEncoded()
   Future<DeviceStateDTO> stateDate(
       @Path("id") int deviceID, @Field() String date);
+
+  @POST("/caregiver/validate/{code}")
+  @FormUrlEncoded()
+  Future<void> validateCaregiverCode(@Path("code") String code);
 }
 
 @JsonSerializable()
@@ -128,6 +131,7 @@ class ProblemJsonViolation {
   final String? message;
 
   ProblemJsonViolation({this.field, this.message});
+
   factory ProblemJsonViolation.fromJson(Map<String, dynamic> json) =>
       _$ProblemJsonViolationFromJson(json);
 
@@ -149,6 +153,7 @@ class ProblemJson {
 
   ProblemJson(
       {this.type, this.title, this.detail, this.cause, this.violations});
+
   factory ProblemJson.fromJson(Map<String, dynamic> json) =>
       _$ProblemJsonFromJson(json);
 
@@ -225,6 +230,7 @@ class UserDTO {
   final String email;
 
   UserDTO({required this.id, required this.email});
+
   factory UserDTO.fromJson(Map<String, dynamic> json) =>
       _$UserDTOFromJson(json);
 }
@@ -235,6 +241,7 @@ class UserRegistrationDTO {
   final String password;
 
   UserRegistrationDTO({required this.email, required this.password});
+
   Map<String, dynamic> toJson() => _$UserRegistrationDTOToJson(this);
 }
 
@@ -245,6 +252,7 @@ class UserChangePasswordDTO {
 
   UserChangePasswordDTO(
       {required this.currentPassword, required this.newPassword});
+
   Map<String, dynamic> toJson() => _$UserChangePasswordDTOToJson(this);
 }
 
@@ -258,6 +266,7 @@ class UserNewPasswordDTO {
       {required this.email,
       required this.newPassword,
       required this.recoveryCode});
+
   Map<String, dynamic> toJson() => _$UserNewPasswordDTOToJson(this);
 }
 
@@ -266,6 +275,7 @@ class UserSendRecoveryCodeDTO {
   final String sendTo;
 
   UserSendRecoveryCodeDTO({required this.sendTo});
+
   Map<String, dynamic> toJson() => _$UserSendRecoveryCodeDTOToJson(this);
 }
 
@@ -276,6 +286,7 @@ class UserValidateRecoveryCodeDTO {
 
   UserValidateRecoveryCodeDTO(
       {required this.recoveryCode, required this.email});
+
   Map<String, dynamic> toJson() => _$UserValidateRecoveryCodeDTOToJson(this);
 }
 
@@ -285,6 +296,7 @@ class ProvisionStart {
   final String deviceClass;
 
   ProvisionStart({required this.serialNo, required this.deviceClass});
+
   Map<String, dynamic> toJson() => _$ProvisionStartToJson(this);
 }
 
@@ -294,6 +306,7 @@ class DeviceProvision {
   final String oobKey;
 
   DeviceProvision({required this.id, required this.oobKey});
+
   factory DeviceProvision.fromJson(Map<String, dynamic> json) =>
       _$DeviceProvisionFromJson(json);
 }
@@ -304,6 +317,7 @@ class VerifyProvision {
   final String ssid;
 
   VerifyProvision({required this.serialNo, required this.ssid});
+
   Map<String, dynamic> toJson() => _$VerifyProvisionToJson(this);
 }
 
@@ -313,6 +327,7 @@ class UserInfoDTO {
   final String? email;
 
   UserInfoDTO({required this.id, this.email});
+
   factory UserInfoDTO.fromJson(Map<String, dynamic> json) =>
       _$UserInfoDTOFromJson(json);
 }
@@ -323,6 +338,7 @@ class ProvisionStatus {
   final bool provisioned;
 
   ProvisionStatus({required this.deviceID, required this.provisioned});
+
   factory ProvisionStatus.fromJson(Map<String, dynamic> json) =>
       _$ProvisionStatusFromJson(json);
 }
@@ -333,6 +349,7 @@ class DeviceBinID {
   final int binID;
 
   DeviceBinID({required this.deviceID, required this.binID});
+
   factory DeviceBinID.fromJson(Map<String, dynamic> json) =>
       _$DeviceBinIDFromJson(json);
 }
@@ -349,6 +366,7 @@ class BinEventDTO {
       required this.ts,
       required this.eventType,
       required this.bin});
+
   factory BinEventDTO.fromJson(Map<String, dynamic> json) =>
       _$BinEventDTOFromJson(json);
 }
@@ -367,8 +385,10 @@ class BinStateDTO {
       required this.scheduledTime,
       this.event,
       this.schedule});
+
   factory BinStateDTO.fromJson(Map<String, dynamic> json) =>
       _$BinStateDTOFromJson(json);
+
   Map<String, dynamic> toJson() => _$BinStateDTOToJson(this);
 }
 
@@ -396,6 +416,7 @@ class DeviceUserDTO {
       required this.owner,
       required this.notifications,
       this.timezone});
+
   factory DeviceUserDTO.fromJson(Map<String, dynamic> json) =>
       _$DeviceUserDTOFromJson(json);
 }
@@ -414,8 +435,10 @@ class DeviceDTO {
       required this.serialNo,
       this.customName,
       this.lastSync});
+
   factory DeviceDTO.fromJson(Map<String, dynamic> json) =>
       _$DeviceDTOFromJson(json);
+
   Map<String, dynamic> toJson() => _$DeviceDTOToJson(this);
 
   String bestHumanNane() {
@@ -433,8 +456,10 @@ class AnonymousCredentialsDTO {
   final String secret;
 
   AnonymousCredentialsDTO({required this.id, required this.secret});
+
   factory AnonymousCredentialsDTO.fromJson(Map<String, dynamic> json) =>
       _$AnonymousCredentialsDTOFromJson(json);
+
   Map<String, dynamic> toJson() => _$AnonymousCredentialsDTOToJson(this);
 }
 
@@ -462,8 +487,10 @@ class JwtCredentials {
       this.access_token,
       this.token_type,
       this.expires_in});
+
   factory JwtCredentials.fromJson(Map<String, dynamic> json) =>
       _$JwtCredentialsFromJson(json);
+
   Map<String, dynamic> toJson() => _$JwtCredentialsToJson(this);
 }
 
@@ -493,8 +520,10 @@ class ScheduleDTO {
       {required this.binID,
       required this.dayOfWeek,
       required this.secondsFrom00});
+
   factory ScheduleDTO.fromJson(Map<String, dynamic> json) =>
       _$ScheduleDTOFromJson(json);
+
   Map<String, dynamic> toJson() => _$ScheduleDTOToJson(this);
 }
 
@@ -517,6 +546,7 @@ class EngineeringDataDTO {
       required this.vbatScaled,
       required this.timestamp,
       required this.voltages});
+
   factory EngineeringDataDTO.fromJson(Map<String, dynamic> json) =>
       _$EngineeringDataDTOFromJson(json);
 }
@@ -526,8 +556,10 @@ class EngineeringReqDTO {
   final int? holdMuxChannel;
 
   EngineeringReqDTO({this.holdMuxChannel});
+
   factory EngineeringReqDTO.fromJson(Map<String, dynamic> json) =>
       _$EngineeringReqDTOFromJson(json);
+
   Map<String, dynamic> toJson() => _$EngineeringReqDTOToJson(this);
 }
 
@@ -538,8 +570,10 @@ class DeviceEngineeringData {
   final String? engrData;
 
   DeviceEngineeringData({required this.engrMode, this.engrReq, this.engrData});
+
   factory DeviceEngineeringData.fromJson(Map<String, dynamic> json) =>
       _$DeviceEngineeringDataFromJson(json);
+
   Map<String, dynamic> toJson() => _$DeviceEngineeringDataToJson(this);
 }
 
@@ -555,6 +589,7 @@ class EventDTO {
       required this.ts,
       required this.eventType,
       required this.bin});
+
   factory EventDTO.fromJson(Map<String, dynamic> json) =>
       _$EventDTOFromJson(json);
 }
@@ -564,6 +599,7 @@ class DeviceUserSettings {
   final bool notifications;
 
   DeviceUserSettings({required this.notifications});
+
   factory DeviceUserSettings.fromJson(Map<String, dynamic> json) =>
       _$DeviceUserSettingsFromJson(json);
 }
@@ -573,8 +609,10 @@ class NotificationTokenDTO {
   final String? notificationToken;
 
   NotificationTokenDTO({this.notificationToken});
+
   factory NotificationTokenDTO.fromJson(Map<String, dynamic> json) =>
       _$NotificationTokenDTOFromJson(json);
+
   Map<String, dynamic> toJson() => _$NotificationTokenDTOToJson(this);
 }
 
@@ -595,6 +633,7 @@ class MedicationDispenseTimeDTO {
 
   factory MedicationDispenseTimeDTO.fromJson(Map<String, dynamic> json) =>
       _$MedicationDispenseTimeDTOFromJson(json);
+
   Map<String, dynamic> toJson() => _$MedicationDispenseTimeDTOToJson(this);
 }
 
@@ -608,6 +647,7 @@ class SimpleDispenseTimeDTO {
 
   factory SimpleDispenseTimeDTO.fromJson(Map<String, dynamic> json) =>
       _$SimpleDispenseTimeDTOFromJson(json);
+
   Map<String, dynamic> toJson() => _$SimpleDispenseTimeDTOToJson(this);
 }
 
@@ -625,8 +665,10 @@ class ScheduledMedicationDTO {
       this.shape,
       this.color,
       this.dispenseTimes});
+
   factory ScheduledMedicationDTO.fromJson(Map<String, dynamic> json) =>
       _$ScheduledMedicationDTOFromJson(json);
+
   Map<String, dynamic> toJson() => _$ScheduledMedicationDTOToJson(this);
 }
 
@@ -642,8 +684,10 @@ class UpdateDeviceUserSettings {
       required this.notificationToken,
       required this.notifications,
       required this.timezone});
+
   factory UpdateDeviceUserSettings.fromJson(Map<String, dynamic> json) =>
       _$UpdateDeviceUserSettingsFromJson(json);
+
   Map<String, dynamic> toJson() => _$UpdateDeviceUserSettingsToJson(this);
 }
 
@@ -656,8 +700,10 @@ class SimpleScheduleDTO {
 
   SimpleScheduleDTO(
       {this.amID, this.amSecondsFrom00, this.pmID, this.pmSecondsFrom00});
+
   factory SimpleScheduleDTO.fromJson(Map<String, dynamic> json) =>
       _$SimpleScheduleDTOFromJson(json);
+
   Map<String, dynamic> toJson() => _$SimpleScheduleDTOToJson(this);
 }
 
@@ -671,8 +717,10 @@ class SaveMedicationDTO {
 
   SaveMedicationDTO(
       {this.id, this.name, this.shape, this.color, this.dispenseTimes});
+
   factory SaveMedicationDTO.fromJson(Map<String, dynamic> json) =>
       _$SaveMedicationDTOFromJson(json);
+
   Map<String, dynamic> toJson() => _$SaveMedicationDTOToJson(this);
 }
 
@@ -683,12 +731,14 @@ class DosePeriodDTO {
   final int status;
   final List<int>? medications;
   final String? takenAtTime;
+
   DosePeriodDTO(
       {required this.binID,
       this.timestamp,
       required this.status,
       this.medications,
       this.takenAtTime});
+
   factory DosePeriodDTO.fromJson(Map<String, dynamic> json) =>
       _$DosePeriodDTOFromJson(json);
 }
@@ -701,6 +751,7 @@ class DeviceStateDTO {
   final List<DosePeriodDTO>? dosePeriods;
   final int? battery;
   final bool? charging;
+
   DeviceStateDTO(
       {required this.id,
       this.lastSync,
@@ -708,15 +759,18 @@ class DeviceStateDTO {
       this.dosePeriods,
       this.battery,
       this.charging});
+
   factory DeviceStateDTO.fromJson(Map<String, dynamic> json) =>
       _$DeviceStateDTOFromJson(json);
 }
 
 class LoadingValueNotifier<T> extends ValueNotifier<T?> {
   bool _loading = false;
+
   LoadingValueNotifier(super.value) : _loading = value == null;
 
   bool get loading => _loading;
+
   set loading(bool newValue) {
     if (_loading == newValue) {
       return;
@@ -742,6 +796,7 @@ abstract mixin class Refreshable {
 class RefreshableValueNotifier<T> extends LoadingValueNotifier<T>
     with Refreshable {
   Future<T> Function() loadFunction;
+
   RefreshableValueNotifier(super.value, this.loadFunction);
 
   @override

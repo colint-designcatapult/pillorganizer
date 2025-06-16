@@ -2,6 +2,7 @@ import 'package:app/api/device.dart';
 import 'package:app/navigation/provision_navigator.dart';
 import 'package:app/provider/ble_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
+import 'package:app/screens/provisioning/join_device_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
@@ -75,7 +76,8 @@ class _SwitchDeviceState extends State<SwitchDevice> {
   }
 
   void _handleJoinExistingDevice() {
-    // TODO: Link to new page(PILLS-172)
+    Navigator.of(context).pop();
+    Navigator.of(context).push(JoinDevicePage.route(context));
   }
 
   void _showQuickSwitchDialog() {

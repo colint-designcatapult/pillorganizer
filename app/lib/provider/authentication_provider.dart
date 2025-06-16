@@ -8,9 +8,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
+import '../api/api.dart';
 import '../models/user.dart';
 import '../service/credential_manager.dart';
-import '../api/api.dart';
 
 final CredentialManager credentialManager = CredentialManager();
 
@@ -21,6 +21,7 @@ class AuthenticationProvider with ChangeNotifier {
   BaseUser? _user;
 
   Future<void> _future = Future.value();
+
   Future<void> get future => _future;
 
   Future<void> logIn({

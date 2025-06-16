@@ -2,11 +2,14 @@ import 'package:app/api/device.dart';
 import 'package:app/navigation/provision_navigator.dart';
 import 'package:app/navigation/tab_navigator.dart';
 import 'package:app/provider/ble_provider.dart';
+import 'package:app/provider/caregiver_provider.dart';
 import 'package:app/provider/medication_provider.dart';
+import 'package:app/provider/provision_provider.dart';
 import 'package:app/provider/time_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
 import 'package:app/screens/first_launch.dart';
+import 'package:app/screens/name_device_wizard.dart';
 import 'package:app/screens/post_setup_wizard.dart';
 import 'package:app/service/credential_manager.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -14,19 +17,19 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/data/latest.dart' as tz;
-import 'provider/authentication_provider.dart';
+
 import 'firebase_options.dart';
+import 'provider/authentication_provider.dart';
 import 'provider/schedule_provider.dart';
 import 'provider/selected_device_provider.dart';
 import 'screens/auth/launch_page_login.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -103,7 +106,9 @@ class MyApp extends StatelessWidget {
                 } else {
                   return DeviceBluetoothProvider(selectedDevice: dev.device);
                 }
-              })
+              }),
+          ChangeNotifierProvider<CaregiverProvider>(
+              create: (_) => CaregiverProvider()),
         ],
         child: MediaQuery(
             data: MediaQuery.of(context).copyWith(
@@ -114,6 +119,25 @@ class MyApp extends StatelessWidget {
               builder: (context) => MaterialApp(
                 title: 'Cabinet Pills',
                 themeMode: ThemeMode.system,
+                onGenerateRoute: (settings) {
+                  if (settings.name?.startsWith('/name_new_device') == true) {
+                    final uri = Uri.parse(settings.name!);
+                    final deviceId = uri.queryParameters['id'] != null
+                        ? int.parse(uri.queryParameters['id']!)
+                        : null;
+
+                    return MaterialPageRoute(
+                      builder: (context) =>
+                          ChangeNotifierProvider<ProvisionProvider>(
+                        create: (context) => ProvisionProvider(),
+                        child: NameDeviceWizard(deviceId: deviceId),
+                      ),
+                    );
+                  }
+
+                  // Handle other routes that might need query parameters here
+                  return null; // Let the routes table handle other routes
+                },
                 routes: {
                   '/': (context) {
                     return FutureBuilder<bool>(

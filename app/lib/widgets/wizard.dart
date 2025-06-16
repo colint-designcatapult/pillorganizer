@@ -1,8 +1,8 @@
 import 'package:app/service/provisioning_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class WizardStepBodyDelegate extends StatelessWidget {
   const WizardStepBodyDelegate(
@@ -128,7 +128,9 @@ class WizardProgressBar extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 36.w),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: iconList.length > 1
+            ? MainAxisAlignment.spaceBetween
+            : MainAxisAlignment.center,
         children: [
           for (int i = 0; i < iconList.length; i++) ...[
             Container(
@@ -214,6 +216,7 @@ class WizardStep extends StatelessWidget {
   final bool canScroll;
 
   static const navFooterHeight = 72.0;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

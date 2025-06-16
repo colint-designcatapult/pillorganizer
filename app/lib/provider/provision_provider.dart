@@ -14,6 +14,7 @@ import 'package:provider/provider.dart';
 
 class ProvisionProvider extends ChangeNotifier {
   late ProvisionState _state;
+
   ProvisionState get state => _state;
 
   final _flutterEspBleProvPlugin = FlutterEspBleProv();

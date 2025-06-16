@@ -2,8 +2,8 @@ import 'package:app/provider/provision_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../screens/provisioning/provision.dart';
 import '../screens/provisioning/connecting_screen.dart';
+import '../screens/provisioning/provision.dart';
 import '../screens/provisioning/wifi_select_screen.dart';
 
 class ProvisionNavigator extends StatefulWidget {
@@ -37,7 +37,6 @@ class _ProvisionNavigatorState extends State<ProvisionNavigator> {
             case 'select_wifi':
               builder = (BuildContext _) => const ProvisionSelectWifiPage();
               break;
-
             case 'connecting':
               builder = (BuildContext _) => const ProvisionConnectingPage();
               break;

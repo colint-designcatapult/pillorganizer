@@ -6,20 +6,21 @@ import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
 import 'package:app/screens/modals/add_new_pills_modal.dart';
 import 'package:app/screens/tab/settings.dart';
-import 'package:app/service/provisioning_service.dart';
 import 'package:app/service/error_handler.dart';
+import 'package:app/service/provisioning_service.dart';
 import 'package:app/widgets/addNewPill/medication_card_entry.dart';
 import 'package:app/widgets/medication_card.dart';
 import 'package:app/widgets/schedule_entry.dart';
 import 'package:app/widgets/wizard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 import '../models/user.dart';
 import '../widgets/basic_page.dart';
 
@@ -28,7 +29,7 @@ class PostSetupWizard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ProvisionningProgress provisionningProgress = ProvisionningProgress(2, 1);
+    ProvisionningProgress provisionningProgress = ProvisionningProgress(3, 1);
     void onSkip() {
       var currentUser =
           Provider.of<AuthenticationProvider>(context, listen: false)
@@ -54,7 +55,7 @@ class PostSetupWizard extends StatelessWidget {
             title: AppLocalizations.of(context)!.welcomeCabinet,
             subtext: AppLocalizations.of(context)!.postSetupSubtitle,
             onBackPressed: () => Navigator.of(context)
-                .pushNamedAndRemoveUntil('/', (route) => false),
+                .pushNamedAndRemoveUntil('/name_new_device', (route) => false),
             onNextPressed: () =>
                 Navigator.of(context).push(NotificationStep.route(context)),
             onSkipPressed: () =>
@@ -80,7 +81,7 @@ class NotificationStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ProvisionningProgress provisionningProgress = ProvisionningProgress(2, 2);
+    ProvisionningProgress provisionningProgress = ProvisionningProgress(3, 2);
 
     return WizardStep(
         provisionningProgress: provisionningProgress,
@@ -113,7 +114,7 @@ class MedicationEntryStep extends StatefulWidget {
 class _MedicationEntryStepState extends State<MedicationEntryStep> {
   @override
   Widget build(BuildContext context) {
-    ProvisionningProgress provisionningProgress = ProvisionningProgress(2, 3);
+    ProvisionningProgress provisionningProgress = ProvisionningProgress(3, 3);
     void onNext() {
       var currentUser =
           Provider.of<AuthenticationProvider>(context, listen: false)
@@ -352,6 +353,7 @@ class CreateAccountStep extends StatefulWidget {
 
 class _CreateAccountStepState extends State<CreateAccountStep> {
   bool _obscureText = true;
+
   @override
   Widget build(BuildContext context) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(3, 1);
