@@ -1,14 +1,14 @@
 import 'package:app/navigation/tab_bar.dart';
 import 'package:app/navigation/tab_bar_item.dart';
-import 'package:app/screens/tab/home.dart';
-import 'package:flutter/material.dart';
 import 'package:app/screens/tab/account.dart';
+import 'package:app/screens/tab/home.dart';
+import 'package:app/screens/tab/my_devices.dart';
 import 'package:app/screens/tab/pills_screen.dart';
-import 'package:app/screens/tab/settings.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 
 import '../api/device.dart';
 import '../provider/device_connection_status_provider.dart';
@@ -33,7 +33,7 @@ class _TabNavigatorState extends State<TabNavigator> {
   final List<Widget> _tabs = [
     Builder(builder: (context) => const HomeScreen()),
     Builder(builder: (context) => const PillsScreen()),
-    Builder(builder: (context) => const SettingsScreen()),
+    Builder(builder: (context) => const MyDevicesScreen()),
     Builder(builder: (context) => const AccountScreen()),
   ];
 

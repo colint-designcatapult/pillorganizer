@@ -1,15 +1,15 @@
-import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/time_provider.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
-import 'package:app/widgets/device_info_header.dart';
 import 'package:app/widgets/device_alert.dart';
+import 'package:app/widgets/device_info_header.dart';
 import 'package:app/widgets/stateful_wrapper.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../../api/api.dart';
 import '../../api/device.dart';
 import '../../platform/ble_auto_supress.dart';

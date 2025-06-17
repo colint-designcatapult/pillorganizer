@@ -5,7 +5,7 @@ import 'package:app/provider/schedule_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
 import 'package:app/screens/modals/add_new_pills_modal.dart';
-import 'package:app/screens/tab/settings.dart';
+import 'package:app/screens/tab/my_devices.dart';
 import 'package:app/service/error_handler.dart';
 import 'package:app/service/provisioning_service.dart';
 import 'package:app/widgets/addNewPill/medication_card_entry.dart';
@@ -66,7 +66,15 @@ class PostSetupWizard extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
               child: const SingleChildScrollView(
                   physics: AlwaysScrollableScrollPhysics(),
-                  child: ScheduleEntry()),
+                  child: Column(
+                    children: [
+                      ScheduleEntry(
+                        showRemovalSection: false,
+                        showAddDeviceSection: false,
+                      ),
+                      SizedBox(height: 72),
+                    ],
+                  )),
             )));
       },
     );

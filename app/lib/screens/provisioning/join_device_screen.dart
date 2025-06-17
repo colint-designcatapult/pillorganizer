@@ -110,7 +110,7 @@ class _JoinDevicePageState extends State<JoinDevicePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          AppLocalizations.of(context)!.joinPageTitle,
+                          AppLocalizations.of(context)!.joinExistingDevice,
                           textAlign: TextAlign.left,
                           style: Theme.of(context)
                               .textTheme

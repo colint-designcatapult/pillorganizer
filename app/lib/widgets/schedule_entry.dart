@@ -3,20 +3,41 @@ import 'package:app/provider/schedule_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
 import 'package:app/screens/modals/time_zone_selection.dart';
+import 'package:app/widgets/add_device.dart';
+import 'package:app/widgets/remove_device_modal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
-import '../service/time_service.dart';
 import 'package:timezone/standalone.dart' as tz;
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+import '../service/time_service.dart';
+
+const double _sectionSpacing = 32.0;
+const double _titleSubtitleSpacing = 8.0;
+const double _subtitleContentSpacing = 16.0;
 
 class ScheduleEntry extends StatefulWidget {
-  const ScheduleEntry({super.key});
+  final bool showRemovalSection;
+  final bool showAddDeviceSection;
+
+  const ScheduleEntry({
+    super.key,
+    this.showRemovalSection = true,
+    this.showAddDeviceSection = true,
+  });
 
   @override
   State<StatefulWidget> createState() => _ScheduleEntyState();
+}
+
+void deleteDevice(context) {
+  showDialog(
+    context: context,
+    builder: (_) => const RemoveDeviceDialog(),
+  );
 }
 
 class _ScheduleEntyState extends State<ScheduleEntry> {
@@ -29,46 +50,70 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
             mainAxisSize: MainAxisSize.max,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                  padding: EdgeInsets.only(bottom: 8.h),
-                  child: Text(AppLocalizations.of(context)!.timeSetup,
-                      style: Theme.of(context).textTheme.titleSmall)),
-              Padding(
-                  padding: EdgeInsets.only(bottom: 22.h),
-                  child: Text(AppLocalizations.of(context)!.timeSetupSubtitle,
-                      style: Theme.of(context).textTheme.bodySmall)),
-              Row(
-                children: [
-                  Expanded(
-                    child:
-                        _buildTimeBlock(DayPeriod.am, schedProv.schedule?.am),
-                  ),
-                  SizedBox(
-                    width: 20.w,
-                  ),
-                  Expanded(
-                    child:
-                        _buildTimeBlock(DayPeriod.pm, schedProv.schedule?.pm),
-                  ),
-                ],
-              ),
-              Padding(
-                  padding: EdgeInsets.only(bottom: 8.h, top: 36.h),
-                  child: Text(AppLocalizations.of(context)!.timezone,
-                      style: Theme.of(context).textTheme.titleSmall)),
-              Text(AppLocalizations.of(context)!.timezoneSubtitle,
-                  style: Theme.of(context).textTheme.bodySmall),
-              SizedBox(
-                height: 8.h,
-              ),
-              TimeZoneSelectionWidget(),
-              SizedBox(
-                height: 80.h,
-              )
+              _buildTimeSetupSection(schedProv),
+              SizedBox(height: _sectionSpacing.h),
+              _buildTimezoneSection(),
+              if (widget.showRemovalSection) ...[
+                SizedBox(height: _sectionSpacing.h),
+                const RemovalSection(),
+              ],
+              if (widget.showAddDeviceSection) ...[
+                SizedBox(height: _sectionSpacing.h),
+                const AddDevice(titleSize: 30.0),
+              ],
+              SizedBox(height: 8.h),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildTimeSetupSection(ScheduleProvider schedProv) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AppLocalizations.of(context)!.timeSetup,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        SizedBox(height: _titleSubtitleSpacing.h),
+        Text(
+          AppLocalizations.of(context)!.timeSetupSubtitle,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        SizedBox(height: _subtitleContentSpacing.h),
+        Row(
+          children: [
+            Expanded(
+              child: _buildTimeBlock(DayPeriod.am, schedProv.schedule?.am),
+            ),
+            SizedBox(width: 20.w),
+            Expanded(
+              child: _buildTimeBlock(DayPeriod.pm, schedProv.schedule?.pm),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTimezoneSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AppLocalizations.of(context)!.timezone,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        SizedBox(height: _titleSubtitleSpacing.h),
+        Text(
+          AppLocalizations.of(context)!.timezoneSubtitle,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        SizedBox(height: _subtitleContentSpacing.h),
+        TimeZoneSelectionWidget(),
+      ],
     );
   }
 
@@ -184,95 +229,133 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
   @override
   Widget build(BuildContext context) {
     return Consumer<SelectedDeviceProvider>(builder: (context, deviceProv, _) {
-      return Column(children: [
-        Row(
-          children: [
-            Expanded(
+      return Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
                 child: SegmentedButton(
-              selectedIcon: Icon(
-                Icons.check_sharp,
-                size: 20.h,
-              ),
-              segments: <ButtonSegment>[
-                ButtonSegment(
-                  value: 0,
-                  label: Text(
-                    AppLocalizations.of(context)!.manual,
-                    style: Theme.of(context).textTheme.bodySmall,
+                  selectedIcon: Icon(
+                    Icons.check_sharp,
+                    size: 20.h,
+                  ),
+                  segments: <ButtonSegment>[
+                    ButtonSegment(
+                      value: 0,
+                      label: Text(
+                        AppLocalizations.of(context)!.manual,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                    ButtonSegment(
+                      value: 1,
+                      label: Text(
+                        AppLocalizations.of(context)!.automatic,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                  selected: {selectedButtonIndex},
+                  onSelectionChanged: (Set newSelection) {
+                    setState(() {
+                      selectedButtonIndex = newSelection.first;
+                      if (selectedButtonIndex == 1) {
+                        deviceProv.updateTimeZone(phoneLocation);
+                      }
+                    });
+                  },
+                  style: ButtonStyle(
+                    shape: MaterialStateProperty.all<OutlinedBorder>(
+                        RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadiusDirectional.circular(8.r))),
+                    side: MaterialStateProperty.resolveWith<BorderSide>(
+                        (Set<MaterialState> states) {
+                      return const BorderSide(
+                          color: Color(0xFFBFD2DB), width: 2.0);
+                    }),
+                    backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                        (Set<MaterialState> states) {
+                      if (states.contains(MaterialState.selected)) {
+                        return const Color(0xFFE8EFF4);
+                      }
+                      return Colors.white;
+                    }),
+                    padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                      EdgeInsets.symmetric(vertical: 16.h),
+                    ),
                   ),
                 ),
-                ButtonSegment(
-                  value: 1,
-                  label: Text(
-                    AppLocalizations.of(context)!.automatic,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ),
-              ],
-              selected: {selectedButtonIndex},
-              onSelectionChanged: (Set newSelection) {
-                setState(() {
-                  selectedButtonIndex = newSelection.first;
-                  if (selectedButtonIndex == 1) {
-                    deviceProv.updateTimeZone(phoneLocation);
-                  }
-                });
-              },
-              style: ButtonStyle(
-                shape: MaterialStateProperty.all<OutlinedBorder>(
-                    RoundedRectangleBorder(
-                        borderRadius: BorderRadiusDirectional.circular(8.r))),
-                side: MaterialStateProperty.resolveWith<BorderSide>(
-                    (Set<MaterialState> states) {
-                  return const BorderSide(color: Color(0xFFBFD2DB), width: 2.0);
-                }),
-                backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
-                  if (states.contains(MaterialState.selected)) {
-                    return const Color(0xFFE8EFF4);
-                  }
-                  return Colors.white;
-                }),
-                padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                  EdgeInsets.symmetric(vertical: 16.h),
-                ),
               ),
-            ))
-          ],
-        ),
-        if (selectedButtonIndex == 0)
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            SizedBox(height: 16.h),
-            Text(AppLocalizations.of(context)!.selectManualTimezone,
-                style: Theme.of(context).textTheme.bodySmall),
-            ListTile(
-              title: Text(_buildTimeZoneName(deviceProv.device?.timezone),
-                  style: Theme.of(context).textTheme.displaySmall),
-              leading: SvgPicture.asset(
-                'lib/assets/SVG/Globe.svg',
-                width: 24.w,
-                height: 24.h,
-              ),
-              trailing: Icon(Icons.arrow_right, size: 24.h),
-              onTap: () {
-                Navigator.of(context)
-                    .push(TimeZoneSelectionModal.route(context))
-                    .then((value) {
-                  if (value != null) {
-                    deviceProv.updateTimeZone(value);
-                  }
-                });
-              },
-            )
-          ]),
-        if (selectedButtonIndex == 1)
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const SizedBox(height: 16),
-            Text(AppLocalizations.of(context)!.timezoneChangeReminder,
-                style: Theme.of(context).textTheme.bodySmall),
-          ]),
-      ]);
+            ],
+          ),
+          SizedBox(height: 16.h),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: selectedButtonIndex == 0
+                ? _buildManualTimezoneSection(deviceProv)
+                : _buildAutomaticTimezoneSection(),
+          ),
+        ],
+      );
     });
+  }
+
+  Widget _buildManualTimezoneSection(SelectedDeviceProvider deviceProv) {
+    return Column(
+      key: const ValueKey('manual'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AppLocalizations.of(context)!.selectManualTimezone,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        SizedBox(height: 12.h),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: const Color(0xFFBFD2DB),
+              width: 2.0,
+            ),
+            borderRadius: BorderRadius.circular(8.0).r,
+          ),
+          child: ListTile(
+            title: Text(
+              _buildTimeZoneName(deviceProv.device?.timezone),
+              style: Theme.of(context).textTheme.displaySmall,
+            ),
+            leading: SvgPicture.asset(
+              'lib/assets/SVG/Globe.svg',
+              width: 24.w,
+              height: 24.h,
+            ),
+            trailing: Icon(Icons.arrow_right, size: 24.h),
+            onTap: () {
+              Navigator.of(context)
+                  .push(TimeZoneSelectionModal.route(context))
+                  .then((value) {
+                if (value != null) {
+                  deviceProv.updateTimeZone(value);
+                }
+              });
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAutomaticTimezoneSection() {
+    return Column(
+      key: const ValueKey('automatic'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AppLocalizations.of(context)!.timezoneChangeReminder,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    );
   }
 
   String _buildTimeZoneName(TimeZoneLocation? loc) {
@@ -282,5 +365,82 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
       final idx = loc.name.indexOf('/') + 1;
       return "${loc.name.substring(idx, loc.name.length).replaceAll("_", " ")} (${loc.currentTimeZone.abbreviation})";
     }
+  }
+}
+
+class RemovalSection extends StatelessWidget {
+  const RemovalSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AppLocalizations.of(context)!.removal,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        SizedBox(
+          height: 16.h,
+        ),
+        Consumer<SelectedDeviceProvider>(
+          builder: (context, deviceProv, _) {
+            return SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () {
+                  deleteDevice(context);
+                },
+                style: ButtonStyle(
+                  side: MaterialStateProperty.all<BorderSide>(
+                    BorderSide(
+                      color: Theme.of(context).colorScheme.error,
+                      width: 1.0,
+                    ),
+                  ),
+                  shape: MaterialStateProperty.all<OutlinedBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0).r,
+                    ),
+                  ),
+                  padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                    EdgeInsets.symmetric(vertical: 16.h),
+                  ),
+                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
+                    (Set<MaterialState> states) {
+                      if (states.contains(MaterialState.pressed)) {
+                        return Theme.of(context)
+                            .colorScheme
+                            .error
+                            .withOpacity(0.2);
+                      }
+                      return Colors.transparent;
+                    },
+                  ),
+                  overlayColor: MaterialStateProperty.resolveWith<Color>(
+                    (Set<MaterialState> states) {
+                      if (states.contains(MaterialState.pressed)) {
+                        return Theme.of(context)
+                            .colorScheme
+                            .error
+                            .withOpacity(0.2);
+                      }
+                      return Colors.transparent;
+                    },
+                  ),
+                ),
+                child: Text(
+                  AppLocalizations.of(context)!.removeDevice,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
   }
 }

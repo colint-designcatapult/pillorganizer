@@ -178,8 +178,8 @@ class _SwitchDeviceState extends State<SwitchDevice> {
                   borderRadius: BorderRadius.circular(50).r,
                 ),
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-                child: const Text(
-                  'View-only',
+                child: Text(
+                  AppLocalizations.of(context)!.viewOnly,
                   style: TextStyle(fontSize: 12, fontFamily: 'Poppins'),
                 )),
           const SizedBox(width: 8), // Spacing between icon and text
