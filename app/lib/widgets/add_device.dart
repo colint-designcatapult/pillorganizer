@@ -1,4 +1,5 @@
 import 'package:app/navigation/provision_navigator.dart';
+import 'package:app/screens/provisioning/join_device_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -6,20 +7,22 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 const double _titleSubtitleSpacing = 8.0;
 const double _subtitleContentSpacing = 16.0;
 
-void startProvisioning(BuildContext context) {
-  Navigator.push(context,
-      MaterialPageRoute(builder: (context) => const ProvisionNavigator()));
-}
-
 class AddDevice extends StatelessWidget {
-  final VoidCallback? onJoinExistingDevice;
   final double titleSize;
 
   const AddDevice({
     super.key,
-    this.onJoinExistingDevice,
     this.titleSize = 16.0,
   });
+
+  void _startProvisioning(BuildContext context) {
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) => const ProvisionNavigator()));
+  }
+
+  void _handleJoinExistingDevice(BuildContext context) {
+    Navigator.of(context).push(JoinDevicePage.route(context));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +52,7 @@ class AddDevice extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton(
-            onPressed: () => startProvisioning(context),
+            onPressed: () => _startProvisioning(context),
             style: ButtonStyle(
               side: MaterialStateProperty.all<BorderSide>(
                 const BorderSide(
@@ -79,7 +82,7 @@ class AddDevice extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton(
-            onPressed: onJoinExistingDevice,
+            onPressed: () => _handleJoinExistingDevice(context),
             style: ButtonStyle(
               side: MaterialStateProperty.all<BorderSide>(
                 const BorderSide(

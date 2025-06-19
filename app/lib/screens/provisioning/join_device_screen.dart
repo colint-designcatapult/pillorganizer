@@ -104,20 +104,18 @@ class _JoinDevicePageState extends State<JoinDevicePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.max,
                 children: [
-                  Padding(
-                    padding: EdgeInsets.only(left: 24.w, top: 100.h),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          AppLocalizations.of(context)!.joinExistingDevice,
-                          textAlign: TextAlign.left,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(fontSize: 32.h),
-                        ),
-                      ],
+                  SizedBox(height: 100.h),
+                  Container(
+                    margin: EdgeInsets.symmetric(horizontal: 24.w),
+                    child: Text(
+                      AppLocalizations.of(context)!.joinExistingDevice,
+                      textAlign: TextAlign.left,
+                      softWrap: true,
+                      overflow: TextOverflow.fade,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(fontSize: 32.h),
                     ),
                   ),
                   Container(
@@ -152,22 +150,26 @@ class _JoinDevicePageState extends State<JoinDevicePage> {
               Expanded(
                 child: GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.arrow_back,
-                        size: 24.h,
-                      ),
-                      SizedBox(
-                        width: 8.w,
-                      ),
-                      Text(AppLocalizations.of(context)!.back,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w700)),
-                    ],
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    height: 72.h,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.arrow_back,
+                          size: 24.h,
+                        ),
+                        SizedBox(
+                          width: 8.w,
+                        ),
+                        Text(AppLocalizations.of(context)!.back,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w700)),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -175,6 +177,7 @@ class _JoinDevicePageState extends State<JoinDevicePage> {
                 child: GestureDetector(
                     onTap: () =>
                         canProceed ? Navigator.of(context).pop() : null,
+                    behavior: HitTestBehavior.opaque,
                     child: Container(
                       height: 72.h,
                       decoration: BoxDecoration(

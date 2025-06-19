@@ -23,6 +23,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
 import 'firebase_options.dart';
@@ -233,7 +234,13 @@ class MyApp extends StatelessWidget {
   }
 
   Future<bool> _checkIfAccountExists(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
     CredentialManager cred = CredentialManager();
+
+    if (prefs.getBool('first_run') ?? true) {
+      await cred.cleanCredentials();
+      prefs.setBool('first_run', false);
+    }
     return await cred.hasAccount();
   }
 }

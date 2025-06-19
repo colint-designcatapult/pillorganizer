@@ -87,6 +87,8 @@
 	"homeNoMedTodayTitle": "Plus de pilules pour aujourd'hui",
 	"homeNoMedTodaySubtitle": "Revenez demain pour voir vos prochaines doses ou modifier l'horaire.",
 	"invalidEmailFormat": "Format d'adresse courriel invalide",
+	"inviteCollaborators": "Inviter des collaborateurs",
+	"inviteCollaboratorsDescription": "Pour inviter des membres avec accès en lecture seule à votre pilulier, appuyez ci-dessous pour générer un code. Le code sera valide pendant 10 minutes seulement.",
 	"joinExistingDevice": "Rejoindre un appareil existant",
 	"joinDeviceTitle": "Entrer le code",
 	"joinDeviceSubtext": "L'administrateur du pilulier vous a probablement envoyé un code de sécurité pour accéder à votre compte. Saisissez-le ci-dessous :",
@@ -208,7 +210,7 @@
 	"switchPillOrganizers": "Changer de pilulier",
 	"tabHome": "Accueil",
 	"tabPills": "Mes pilules",
-	"tabSettings": "Mes appareils",
+	"tabSettings": "Appareils",
 	"tabAccount": "Compte",
 	"thursday": "Jeudi",
 	"time": "Heure",
@@ -224,5 +226,13 @@
 	"welcomeCabinet": "Bienvenue à CabiNET!",
 	"welcomeCabinetLong": "Bienvenue à CabiNET!\n Choisissez entre les options ci-dessous:",
 	"wirelessConnected": "Connecté sans fil",
-	"wirelessDisconnected": "Déconnecté sans fil"
+	"wirelessDisconnected": "Déconnecté sans fil",
+	"share": "Partager",
+	"generateCode": "Générer un nouveau code",
+	"codeExpiresIn": "Ce code expirera dans",
+	"minutes": "minutes",
+	"seconds": "secondes",
+	"copyCode": "Copier le code",
+	"codeCopied": "Code copié dans le presse-papiers",
+	"errorGenerateCode": "Erreur lors de la génération du code. Veuillez réessayer."
 }

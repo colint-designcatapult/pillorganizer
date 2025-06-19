@@ -1,11 +1,11 @@
 package jct.pillorganizer.dto;
 
+import java.util.Date;
+
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.serde.annotation.Serdeable;
 import jct.pillorganizer.model.device.DeviceClass;
-
-import java.util.Date;
 
 @Introspected
 @Serdeable.Serializable

@@ -713,25 +713,27 @@ class _$DosePeriodCopyWithImpl<$Res, $Val extends DosePeriod>
     Object? takenAtTime = freezed,
   }) {
     return _then(_value.copyWith(
-        binID: null == binID
-            ? _value.binID
-            : binID // ignore: cast_nullable_to_non_nullable
-                as int,
-        scheduledTime: freezed == scheduledTime
-            ? _value.scheduledTime
-            : scheduledTime // ignore: cast_nullable_to_non_nullable
-                as DateTime?,
-        status: null == status
-            ? _value.status
-            : status // ignore: cast_nullable_to_non_nullable
-                as BinStatus,
-        medicationIDs: null == medicationIDs
-            ? _value.medicationIDs
-            : medicationIDs // ignore: cast_nullable_to_non_nullable
-                as List<int>,
-        takenAtTime: freezed == takenAtTime
-            ? _value.takenAtTime
-            : takenAtTime as String?) as $Val);
+      binID: null == binID
+          ? _value.binID
+          : binID // ignore: cast_nullable_to_non_nullable
+              as int,
+      scheduledTime: freezed == scheduledTime
+          ? _value.scheduledTime
+          : scheduledTime // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      status: null == status
+          ? _value.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as BinStatus,
+      medicationIDs: null == medicationIDs
+          ? _value.medicationIDs
+          : medicationIDs // ignore: cast_nullable_to_non_nullable
+              as List<int>,
+      takenAtTime: freezed == takenAtTime
+          ? _value.takenAtTime
+          : takenAtTime // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ) as $Val);
   }
 }
 
@@ -761,12 +763,13 @@ class __$$_DosePeriodCopyWithImpl<$Res>
 
   @pragma('vm:prefer-inline')
   @override
-  $Res call(
-      {Object? binID = null,
-      Object? scheduledTime = freezed,
-      Object? status = null,
-      Object? medicationIDs = null,
-      Object? takenAtTime = freezed}) {
+  $Res call({
+    Object? binID = null,
+    Object? scheduledTime = freezed,
+    Object? status = null,
+    Object? medicationIDs = null,
+    Object? takenAtTime = freezed,
+  }) {
     return _then(_$_DosePeriod(
       binID: null == binID
           ? _value.binID
@@ -812,13 +815,14 @@ class _$_DosePeriod extends _DosePeriod with DiagnosticableTreeMixin {
   final BinStatus status;
   final List<int> _medicationIDs;
   @override
-  final String? takenAtTime;
-  @override
   List<int> get medicationIDs {
     if (_medicationIDs is EqualUnmodifiableListView) return _medicationIDs;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_medicationIDs);
   }
+
+  @override
+  final String? takenAtTime;
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
@@ -846,15 +850,15 @@ class _$_DosePeriod extends _DosePeriod with DiagnosticableTreeMixin {
             (identical(other.scheduledTime, scheduledTime) ||
                 other.scheduledTime == scheduledTime) &&
             (identical(other.status, status) || other.status == status) &&
-            (identical(other.takenAtTime, takenAtTime) ||
-                other.takenAtTime == takenAtTime) &&
             const DeepCollectionEquality()
-                .equals(other._medicationIDs, _medicationIDs));
+                .equals(other._medicationIDs, _medicationIDs) &&
+            (identical(other.takenAtTime, takenAtTime) ||
+                other.takenAtTime == takenAtTime));
   }
 
   @override
   int get hashCode => Object.hash(runtimeType, binID, scheduledTime, status,
-      takenAtTime, const DeepCollectionEquality().hash(_medicationIDs));
+      const DeepCollectionEquality().hash(_medicationIDs), takenAtTime);
 
   @JsonKey(ignore: true)
   @override
@@ -993,13 +997,14 @@ class __$$_DeviceStateCopyWithImpl<$Res>
 
   @pragma('vm:prefer-inline')
   @override
-  $Res call(
-      {Object? id = null,
-      Object? lastSync = freezed,
-      Object? bins = null,
-      Object? dosePeriods = null,
-      Object? battery = freezed,
-      Object? charging = freezed}) {
+  $Res call({
+    Object? id = null,
+    Object? lastSync = freezed,
+    Object? bins = null,
+    Object? dosePeriods = null,
+    Object? battery = freezed,
+    Object? charging = freezed,
+  }) {
     return _then(_$_DeviceState(
       id: null == id
           ? _value.id

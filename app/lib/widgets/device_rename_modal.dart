@@ -1,16 +1,18 @@
 import 'package:app/api/device.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../provider/selected_device_provider.dart';
 import 'basic_page.dart';
 
 class ChangeDeviceNameDialog extends StatefulWidget {
-  const ChangeDeviceNameDialog({super.key});
+  final DeviceUser? device;
+
+  const ChangeDeviceNameDialog({super.key, this.device});
 
   @override
   State<StatefulWidget> createState() => _ChangeDeviceNameDialogState();
@@ -76,7 +78,8 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0).w,
                   child: BasicPageTextFormField(
-                      labelText: Provider.of<SelectedDeviceProvider>(context,
+                      labelText: widget.device?.name ??
+                          Provider.of<SelectedDeviceProvider>(context,
                                   listen: false)
                               .device
                               ?.name ??
@@ -166,11 +169,16 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
 
   Future<void> _save() async {
     if (value != null) {
-      await Provider.of<SelectedDeviceProvider>(context, listen: false)
-          .updateName(value!)
-          .then((value) =>
-              Provider.of<DeviceListProvider>(context, listen: false)
-                  .refresh());
+      final deviceToUpdate = widget.device ??
+          Provider.of<SelectedDeviceProvider>(context, listen: false).device;
+
+      if (deviceToUpdate != null) {
+        await Provider.of<SelectedDeviceProvider>(context, listen: false)
+            .updateDeviceName(deviceToUpdate.deviceID, value!)
+            .then((value) =>
+                Provider.of<DeviceListProvider>(context, listen: false)
+                    .refresh());
+      }
     }
   }
 }

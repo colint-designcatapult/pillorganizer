@@ -110,6 +110,7 @@ flutter:
 
   assets:
     - .env
+    - lib/assets/SVG/share.svg
     - lib/assets/noun-open-box-1485434.svg
     - lib/assets/package-svgrepo-com.svg
     - lib/assets/SVG/moon.svg

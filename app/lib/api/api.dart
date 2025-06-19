@@ -123,6 +123,14 @@ abstract class RestClient {
   @POST("/caregiver/validate/{code}")
   @FormUrlEncoded()
   Future<void> validateCaregiverCode(@Path("code") String code);
+
+  @POST("/caregiver/generate/{deviceId}")
+  Future<DeviceCaregiverCodeDTO> generateCaregiverCode(
+      @Path("deviceId") int deviceId);
+
+  @GET("/caregiver/codes")
+  Future<List<DeviceCaregiverCodeDTO>> getShareCodes(
+      @Query("deviceIds") List<int> deviceIds);
 }
 
 @JsonSerializable()
@@ -762,6 +770,28 @@ class DeviceStateDTO {
 
   factory DeviceStateDTO.fromJson(Map<String, dynamic> json) =>
       _$DeviceStateDTOFromJson(json);
+}
+
+@JsonSerializable()
+class DeviceCaregiverCodeDTO {
+  final int id;
+  final int deviceID;
+  final int code;
+  final int expiresAt;
+  final bool deleted;
+
+  DeviceCaregiverCodeDTO({
+    required this.id,
+    required this.deviceID,
+    required this.code,
+    required this.expiresAt,
+    required this.deleted,
+  });
+
+  factory DeviceCaregiverCodeDTO.fromJson(Map<String, dynamic> json) =>
+      _$DeviceCaregiverCodeDTOFromJson(json);
+
+  Map<String, dynamic> toJson() => _$DeviceCaregiverCodeDTOToJson(this);
 }
 
 class LoadingValueNotifier<T> extends ValueNotifier<T?> {

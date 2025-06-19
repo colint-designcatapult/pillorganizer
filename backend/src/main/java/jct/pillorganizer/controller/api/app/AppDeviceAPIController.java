@@ -1,11 +1,33 @@
 package jct.pillorganizer.controller.api.app;
 
+import java.text.ParseException;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
+import java.util.Base64;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.transaction.Transactional;
+
+import org.zalando.problem.Problem;
+
 import com.google.protobuf.InvalidProtocolBufferException;
+
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
-import io.micronaut.http.annotation.*;
+import io.micronaut.http.annotation.Body;
+import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Delete;
+import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.Header;
+import io.micronaut.http.annotation.PathVariable;
+import io.micronaut.http.annotation.Post;
+import io.micronaut.http.annotation.Put;
+import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.problem.HttpStatusType;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
@@ -14,28 +36,25 @@ import jakarta.inject.Inject;
 import jct.pillorganizer.auth.AuthService;
 import jct.pillorganizer.auth.DeviceABAC;
 import jct.pillorganizer.auth.DeviceABACIDType;
-import jct.pillorganizer.dto.*;
+import jct.pillorganizer.dto.DeviceStateDTO;
+import jct.pillorganizer.dto.DeviceUserDTO;
+import jct.pillorganizer.dto.ProvisionStatus;
+import jct.pillorganizer.dto.StartProvision;
+import jct.pillorganizer.dto.UpdateDeviceUserSettings;
+import jct.pillorganizer.dto.VerifyProvision;
 import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.device.DeviceClass;
 import jct.pillorganizer.model.device.DeviceProvision;
 import jct.pillorganizer.proto.Pill;
-import jct.pillorganizer.repo.*;
+import jct.pillorganizer.repo.DeviceEventRepository;
+import jct.pillorganizer.repo.DeviceRepository;
+import jct.pillorganizer.repo.DeviceScheduleRepository;
+import jct.pillorganizer.repo.DeviceStateRepository;
+import jct.pillorganizer.repo.DeviceUserRepository;
 import jct.pillorganizer.service.DeviceProvisionService;
 import jct.pillorganizer.service.DeviceStateService;
 import jct.pillorganizer.service.DeviceUserService;
 import lombok.extern.flogger.Flogger;
-import org.zalando.problem.Problem;
-
-import javax.transaction.Transactional;
-import java.text.ParseException;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
-import java.util.Base64;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * API endpoints for the app to configure and view device information and state.
@@ -78,22 +97,34 @@ public class AppDeviceAPIController {
     @Get("/list")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public Set<DeviceUserDTO> listDeviceUser() {
+        long userId = authService.getUserID();
+        Set<DeviceUserDTO> baseResults = deviceUserRepository.findByUserID(userId);
+        
         if (authService.isAdmin()) {
-            Set<DeviceUserDTO> result = new HashSet<>(deviceUserRepository.findByUserID(authService.getUserID()));
-            Set<Long> ids = result.stream().map(DeviceUserDTO::deviceID).collect(Collectors.toSet());
-
+            Set<Long> existingDeviceIds = baseResults.stream()
+                .map(DeviceUserDTO::deviceID)
+                .collect(Collectors.toSet());
+            
             deviceRepository.findAll()
-                    .stream()
-                    .filter(d -> !ids.contains(d.getId()))
-                    .map(d -> new DeviceUserDTO(
-                            -1, d.getId(), d.getDeviceClass(), d.getCustomName(), d.getLastSync(),
-                            d.getSerialNo(), false, false, false, d.getBaseTZ()))
-                    .forEach(result::add);
-
-            return result;
-        } else {
-            return deviceUserRepository.findByUserID(authService.getUserID());
+                .stream()
+                .filter(d -> !existingDeviceIds.contains(d.getId()))
+                .forEach(d -> {
+                    baseResults.add(new DeviceUserDTO(
+                        -1,
+                        d.getId(),
+                        d.getDeviceClass(),
+                        d.getCustomName(),
+                        d.getLastSync(),
+                        d.getSerialNo(),
+                        false,
+                        false,
+                        false,
+                        d.getBaseTZ()
+                    ));
+                });
         }
+        
+        return baseResults;
     }
 
     @Operation(summary = "Soft deletes the device user link")

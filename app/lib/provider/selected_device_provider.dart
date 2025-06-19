@@ -1,9 +1,11 @@
-import 'package:app/api/device.dart';
+import 'dart:async';
+
 import 'package:app/api/api.dart';
+import 'package:app/api/device.dart';
 import 'package:app/service/time_service.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:collection/collection.dart';
 
 class SelectedDeviceProvider with ChangeNotifier {
   List<DeviceUser>? _devices;
@@ -16,6 +18,11 @@ class SelectedDeviceProvider with ChangeNotifier {
 
   SelectedDeviceProvider() {
     _loadSaved();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   SelectedDeviceProvider update(List<DeviceUser>? deviceList) {
@@ -86,6 +93,14 @@ class SelectedDeviceProvider with ChangeNotifier {
     var newDevice =
         await deviceRepo.update(_selectedDevice!.deviceID, name: newName);
     _selectedDevice = newDevice;
+    notifyListeners();
+  }
+
+  Future<void> updateDeviceName(int deviceID, String newName) async {
+    var newDevice = await deviceRepo.update(deviceID, name: newName);
+    if (_selectedDevice?.deviceID == deviceID) {
+      _selectedDevice = newDevice;
+    }
     notifyListeners();
   }
 

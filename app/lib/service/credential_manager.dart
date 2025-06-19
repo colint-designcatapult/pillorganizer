@@ -124,4 +124,9 @@ class CredentialManager {
     jwt = null;
     credentialPair = null;
   }
+
+  Future<void> cleanCredentials() async {
+    await signOut();
+    storage.write(key: KEY_HAS_ACCOUNT, value: null);
+  }
 }

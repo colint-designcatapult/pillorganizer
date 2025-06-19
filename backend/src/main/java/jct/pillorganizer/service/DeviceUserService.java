@@ -68,6 +68,23 @@ public class DeviceUserService {
         return repository.countByUserIDAndDeviceIDAndDeletedFalse(userID, deviceID) != 0;
     }
 
+    /**
+     * Checks if a user has access to a device (is related to the device).
+     * @param userID the user ID
+     * @param deviceID the device ID
+     * @return true if the user has access to the device
+     */
+    public boolean userHasAccessToDevice(long userID, long deviceID) {
+        return doesUserBelongToDevice(userID, deviceID);
+    }
 
-
+    /**
+     * Checks if a user owns a specific device.
+     * @param userID the user ID
+     * @param deviceID the device ID
+     * @return true if the user owns the device
+     */
+    public boolean userOwnsDevice(long userID, long deviceID) {
+        return repository.countByUserIDAndDeviceIDAndOwnerTrueAndDeletedFalse(userID, deviceID) != 0;
+    }
 }

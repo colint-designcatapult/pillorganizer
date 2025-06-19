@@ -1,5 +1,8 @@
 package jct.pillorganizer.repo;
 
+import java.util.Optional;
+import java.util.Set;
+
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
@@ -10,14 +13,12 @@ import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.device.DeviceUser;
 import jct.pillorganizer.model.user.BaseUser;
 
-import java.util.Optional;
-import java.util.Set;
-
 @Repository
 public interface DeviceUserRepository extends CrudRepository<DeviceUser, Long> {
 
     int countByUserIDAndDeviceIDAndDeletedFalse(long user, long device);
     int countByUserAndDeviceAndDeletedFalse(BaseUser user, Device device);
+    int countByUserIDAndDeviceIDAndOwnerTrueAndDeletedFalse(long user, long device);
 
     /*@Query(nativeQuery = true, readOnly = false, value = "INSERT INTO device_user (id, device_id, user_id, primary_user, owner)" +
             " VALUES (nextval('device_user_seq'), :user, :device, :primaryUser, :owner) ON CONFLICT (device_id, user_id) DO NOTHING")
