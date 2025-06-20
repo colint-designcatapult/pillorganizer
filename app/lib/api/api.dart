@@ -121,7 +121,6 @@ abstract class RestClient {
       @Path("id") int deviceID, @Field() String date);
 
   @POST("/caregiver/validate/{code}")
-  @FormUrlEncoded()
   Future<void> validateCaregiverCode(@Path("code") String code);
 
   @POST("/caregiver/generate/{deviceId}")
