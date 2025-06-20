@@ -130,27 +130,26 @@ class MultipleDevices extends StatelessWidget {
                                             ],
                                           ),
                                         ),
-                                        if (isDeviceReadOnly) ...[
-                                          SizedBox(width: 4.w),
-                                          Container(
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xffF8F9FC),
-                                                borderRadius:
-                                                    BorderRadius.circular(50).r,
+                                      ],
+                                      if (isDeviceReadOnly) ...[
+                                        SizedBox(width: 4.w),
+                                        Container(
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xffF8F9FC),
+                                              borderRadius:
+                                                  BorderRadius.circular(50).r,
+                                            ),
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 8.w, vertical: 2.h),
+                                            child: Text(
+                                              AppLocalizations.of(context)!
+                                                  .viewOnly,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Color(0xff363F72),
+                                                fontWeight: FontWeight.w500,
                                               ),
-                                              padding: EdgeInsets.symmetric(
-                                                  horizontal: 8.w,
-                                                  vertical: 2.h),
-                                              child: Text(
-                                                AppLocalizations.of(context)!
-                                                    .viewOnly,
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Color(0xff363F72),
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ))
-                                        ],
+                                            ))
                                       ],
                                     ],
                                   ),
@@ -194,32 +193,31 @@ class MultipleDevices extends StatelessWidget {
                                 ],
                                 IconButton(
                                   padding: const EdgeInsets.all(12),
-                                  icon: SvgPicture.asset(
-                                    'lib/assets/SVG/pencilLight.svg',
-                                    width: 24.w,
-                                    height: 24.h,
-                                  ),
-                                  onPressed: isDeviceReadOnly
-                                      ? null
-                                      : () {
-                                          showMaterialModalBottomSheet(
-                                            context: context,
-                                            backgroundColor: Colors.transparent,
-                                            builder: (context) => SingleDevice(
-                                              showAddDeviceSection: false,
-                                              device: device,
-                                              isModal: true,
-                                            ),
-                                          );
-                                        },
-                                  color: isDeviceReadOnly
-                                      ? const Color(0xFF9BAEB6)
-                                      : const Color(0xFF206B8B),
+                                  icon: isDeviceReadOnly
+                                      ? Icon(
+                                          PhosphorIcons.eye,
+                                          size: 24.h,
+                                        )
+                                      : SvgPicture.asset(
+                                          'lib/assets/SVG/pencilLight.svg',
+                                          width: 24.w,
+                                          height: 24.h,
+                                        ),
+                                  onPressed: () {
+                                    showMaterialModalBottomSheet(
+                                      context: context,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (context) => SingleDevice(
+                                        showAddDeviceSection: false,
+                                        device: device,
+                                        isModal: true,
+                                      ),
+                                    );
+                                  },
+                                  color: const Color(0xFF206B8B),
                                   style: ButtonStyle(
-                                    backgroundColor: isDeviceReadOnly
-                                        ? MaterialStateProperty.all<Color>(
-                                            const Color(0xFFE3EAEE))
-                                        : MaterialStateProperty.all<Color>(
+                                    backgroundColor:
+                                        MaterialStateProperty.all<Color>(
                                             Colors.transparent),
                                     shape: MaterialStateProperty.all<
                                         OutlinedBorder>(
@@ -231,10 +229,8 @@ class MultipleDevices extends StatelessWidget {
                                     side: MaterialStateProperty.resolveWith<
                                         BorderSide>(
                                       (Set<MaterialState> states) {
-                                        return BorderSide(
-                                          color: isDeviceReadOnly
-                                              ? const Color(0xFFCFDDE3)
-                                              : Color(0xFF8BCAE5),
+                                        return const BorderSide(
+                                          color: Color(0xFF8BCAE5),
                                           width: 2.0,
                                         );
                                       },
