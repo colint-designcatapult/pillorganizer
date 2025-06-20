@@ -70,11 +70,13 @@ jobs:
       - name: Install Heroku CLI
         run: |
           curl https://cli-assets.heroku.com/install.sh | sh
+          echo "$HOME/heroku/bin" >> $GITHUB_PATH
 
-      - name: Login to Heroku
+      - name: Login and Push to Heroku
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
+          echo $HEROKU_API_KEY | heroku auth:token
           heroku container:login
           docker tag backend registry.heroku.com/cabinet-staging/web
           docker push registry.heroku.com/cabinet-staging/web
@@ -90,6 +92,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: backend-image
+
       - name: Load Docker Image
         run: docker load -i backend.tar
 
@@ -97,10 +100,11 @@ jobs:
         run: |
           curl https://cli-assets.heroku.com/install.sh | sh
 
-      - name: Login to Heroku
+      - name: Login and Push to Heroku
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
+          echo $HEROKU_API_KEY | heroku auth:token
           heroku container:login
           docker tag backend registry.heroku.com/jctbackend/web
           docker push registry.heroku.com/jctbackend/web

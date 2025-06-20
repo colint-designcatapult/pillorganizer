@@ -76,10 +76,11 @@ class BasicFormContainer extends StatelessWidget {
         child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Container(
-                padding: const EdgeInsets.fromLTRB(20, 32, 20, 24),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
                 decoration: const BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.all(Radius.circular(16)),
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
                   boxShadow: [
                     BoxShadow(
                       color: Color.fromRGBO(0, 0, 0, 0.10),
@@ -163,7 +164,8 @@ class _BasicFormState extends State<BasicForm> {
         style: Theme.of(context)
             .textTheme
             .bodyMedium
-            ?.copyWith(color: Colors.white),
+            ?.copyWith(color: Colors.white)
+            .copyWith(fontWeight: FontWeight.w600),
       );
     }
   }
@@ -207,7 +209,7 @@ class _BasicFormState extends State<BasicForm> {
                 padding: const EdgeInsets.only(top: 8, bottom: 22, right: 0),
                 child: Text(
                   widget.subtitleText!,
-                  style: Theme.of(context).textTheme.bodySmall,
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
             ),
@@ -236,8 +238,9 @@ class _BasicFormState extends State<BasicForm> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8.0),
                                     ),
-                                    padding: const EdgeInsets.all(12),
-                                    backgroundColor: const Color(0xff043C4D),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 18, vertical: 12),
+                                    backgroundColor: const Color(0xff206B8B),
                                     foregroundColor: Colors.white,
                                     disabledForegroundColor: Colors.white,
                                     disabledBackgroundColor: Theme.of(context)

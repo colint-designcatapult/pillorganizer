@@ -17,6 +17,7 @@ class CredentialPair {
 
 class CredentialManager {
   static final CredentialManager _instance = CredentialManager._internal();
+
   factory CredentialManager() => _instance;
 
   final FlutterSecureStorage storage = const FlutterSecureStorage();

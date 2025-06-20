@@ -1,9 +1,11 @@
 import 'dart:async';
+
 import 'package:app/api/device.dart';
 import 'package:flutter/material.dart';
 
 class DeviceConnectionStatusProvider extends ChangeNotifier {
   DeviceConnectionStatus _value = DeviceConnectionStatus.undefined;
+
   DeviceConnectionStatus get value => _value;
   Timer? _stateTimer;
   int _prevStateHash = 0;

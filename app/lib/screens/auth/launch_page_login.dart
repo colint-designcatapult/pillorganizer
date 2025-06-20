@@ -1,14 +1,14 @@
 import 'package:app/provider/authentication_provider.dart';
-import 'package:app/service/error_handler.dart';
 import 'package:app/screens/auth/recover_password.dart';
+import 'package:app/screens/auth/register.dart';
+import 'package:app/service/error_handler.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
-import 'package:app/navigation/provision_navigator.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class LaunchPageLogin extends StatefulWidget {
   const LaunchPageLogin({Key? key}) : super(key: key);
@@ -56,150 +56,118 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
     return Scaffold(
       backgroundColor: const Color(0xFFBFD2DB),
       body: SingleChildScrollView(
-          padding: EdgeInsets.only(top: topSize),
-          child: FutureBuilder<bool>(
-              future: _checkAuthFuture,
-              builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
-                if (snapshot.hasData ||
-                    snapshot.hasError ||
-                    snapshot.connectionState == ConnectionState.done) {
-                  return SizedBox(
-                      height: MediaQuery.of(context).size.height - topSize,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            AppLocalizations.of(context)!.appName,
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 36),
-                            child: BasicFormContainer(
-                              titleText:
-                                  AppLocalizations.of(context)!.signInPrompt,
-                              subtitleText: AppLocalizations.of(context)!
-                                  .signInBackSubtitle,
-                              buttonText:
-                                  AppLocalizations.of(context)!.signInAction,
-                              onSubmit: _submitForm,
-                              future: _loginFuture,
-                              children: [
-                                BasicPageTextFormField(
-                                  labelText:
-                                      AppLocalizations.of(context)!.email,
-                                  validator: Validatorless.multiple([
-                                    Validatorless.email(
-                                        AppLocalizations.of(context)!
-                                            .emailNotValid),
-                                    Validatorless.required(
-                                        AppLocalizations.of(context)!
-                                            .emailRequired)
-                                  ]),
-                                  onSaved: (val) => username = val,
-                                ),
-                                BasicPageTextFormField(
-                                  labelText:
-                                      AppLocalizations.of(context)!.password,
-                                  validator: Validatorless.required(
-                                      AppLocalizations.of(context)!
-                                          .passwordRequired),
-                                  onFieldSubmitted: (value) =>
-                                      (), //To trigger the form submit function
-                                  onSaved: (val) => password = val,
-                                  textInputAction: TextInputAction.done,
-                                  onRevealText: () {
-                                    setState(() {
-                                      _obscureText = !_obscureText;
-                                    });
-                                  },
-                                  obscureText: _obscureText,
-                                  paddingBottom: 12,
-                                ),
-                                Align(
-                                    alignment: Alignment.topRight,
-                                    child: GestureDetector(
-                                        onTap: () => forgotPassword(),
-                                        child: Text(
-                                            AppLocalizations.of(context)!
-                                                .forgotPassword,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .labelSmall
-                                                ?.copyWith(
-                                                    color:
-                                                        const Color(0xFF206B8B),
-                                                    decoration: TextDecoration
-                                                        .underline,
-                                                    decorationColor:
-                                                        const Color(
-                                                            0xFF206B8B))))),
-                              ],
-                            ),
-                          ),
-                          Expanded(
-                            child: Align(
-                              alignment: Alignment.bottomCenter,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 20),
-                                    child: Text(
-                                      AppLocalizations.of(context)!.or,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .displaySmall,
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                        24, 12, 24, 40),
-                                    child: SizedBox(
-                                      width: double.infinity,
-                                      height: 48,
-                                      child: OutlinedButton(
-                                        onPressed: () {
-                                          _startOOBE();
-                                        },
-                                        style: OutlinedButton.styleFrom(
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(8.0),
-                                          ),
-                                          side: const BorderSide(
-                                              width: 1,
-                                              color: Color(0xff03012C)),
-                                        ),
-                                        child: Text(
-                                          AppLocalizations.of(context)!
-                                              .deviceNewSetup,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium
-                                              ?.copyWith(
-                                                  color:
-                                                      const Color(0xff03012C)),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ));
-                } else {
-                  return SizedBox(
-                      height: MediaQuery.of(context).size.height - topSize,
-                      child: const Align(
-                        alignment: Alignment.center,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
+          child: SizedBox(
+              height: MediaQuery.of(context).size.height,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(left: 24.w, top: 100.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          AppLocalizations.of(context)!.signInAction,
+                          textAlign: TextAlign.left,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontSize: 32.h),
                         ),
-                      ));
-                }
-              })),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                      padding: const EdgeInsets.only(top: 36),
+                      child: _formComponent()),
+                  Align(
+                    alignment: Alignment.center,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: Text(
+                        AppLocalizations.of(context)!.dontHaveAccountAlready,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          _handleRegisterRedirect();
+                        },
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0).r,
+                          ),
+                          backgroundColor: const Color(0xFFBFD2DB),
+                          minimumSize: Size(double.infinity, 48.h),
+                          // Make it full width
+                          side: const BorderSide(
+                            color: Color(0xff206B8B), // Change border color
+                          ),
+                        ),
+                        child: Text(
+                          AppLocalizations.of(context)!.createAnAccount,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(color: Color(0xff445860))
+                              .copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ))),
+    );
+  }
+
+  Widget _formComponent() {
+    return BasicFormContainer(
+      subtitleText: AppLocalizations.of(context)!.signInBackSubtitle,
+      buttonText: AppLocalizations.of(context)!.signInAction,
+      onSubmit: _submitForm,
+      future: _loginFuture,
+      children: [
+        BasicPageTextFormField(
+          labelText: AppLocalizations.of(context)!.email,
+          validator: Validatorless.multiple([
+            Validatorless.email(AppLocalizations.of(context)!.emailNotValid),
+            Validatorless.required(AppLocalizations.of(context)!.emailRequired)
+          ]),
+          onSaved: (val) => username = val,
+        ),
+        BasicPageTextFormField(
+          labelText: AppLocalizations.of(context)!.password,
+          validator: Validatorless.required(
+              AppLocalizations.of(context)!.passwordRequired),
+          onFieldSubmitted: (value) => (),
+          //To trigger the form submit function
+          onSaved: (val) => password = val,
+          textInputAction: TextInputAction.done,
+          onRevealText: () {
+            setState(() {
+              _obscureText = !_obscureText;
+            });
+          },
+          obscureText: _obscureText,
+          paddingBottom: 12,
+        ),
+        Align(
+            alignment: Alignment.topRight,
+            child: GestureDetector(
+                onTap: () => forgotPassword(),
+                child: Text(AppLocalizations.of(context)!.forgotPassword,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: const Color(0xFF2680A6),
+                        decoration: TextDecoration.underline,
+                        decorationColor: const Color(0xFF2680A6))))),
+      ],
     );
   }
 
@@ -239,8 +207,12 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
     });
   }
 
-  void _startOOBE() {
-    startProvisioning(context);
+  void _handleRegisterRedirect() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => const RegisterPage(),
+      ),
+    );
   }
 
   void _submitForm() {

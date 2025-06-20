@@ -33,6 +33,7 @@ class DeviceInfoHeader extends StatelessWidget {
             Provider.of<DeviceListProvider>(context, listen: false)
                 .value
                 ?.length;
+
         if (wifiIsConnected(context, bleProv) && deviceState != null) {
           batteryLevel = deviceState.battery;
           batteryCharging = deviceState.charging;
@@ -40,6 +41,21 @@ class DeviceInfoHeader extends StatelessWidget {
           batteryLevel = bleProv.batteryLevel;
           batteryCharging = bleProv.batteryCharging;
         }
+
+        if (deviceState == null) {
+          return Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: Row(
+                children: [
+                  Text(AppLocalizations.of(context)!.welcome,
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 36.h,
+                          fontWeight: FontWeight.w700)),
+                ],
+              ));
+        }
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.end,

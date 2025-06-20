@@ -79,91 +79,99 @@ class _TabNavigatorState extends State<TabNavigator> {
               left: 20.w,
               right: 20.w,
               bottom: 24.h,
-              child: CustomTabBar(
-                currentIndex: _currentIndex,
-                onTabSelected: (int index) {
-                  setState(() {
-                    _currentIndex = index;
-                  });
+              child: Consumer<SelectedDeviceProvider>(
+                builder: (context, selectedDeviceProvider, child) {
+                  DeviceUser? device = selectedDeviceProvider.device;
+
+                  return CustomTabBar(
+                    currentIndex: _currentIndex,
+                    onTabSelected: (int index) {
+                      setState(() {
+                        _currentIndex = index;
+                      });
+                    },
+                    tabs: [
+                      Expanded(
+                        child: CustomTabBarItem(
+                          icon: SvgPicture.asset(
+                            'lib/assets/SVG/tabs/house-outline.svg',
+                            height: 24.h,
+                          ),
+                          selectedIcon: SvgPicture.asset(
+                            'lib/assets/SVG/tabs/house-filled.svg',
+                            height: 24.h,
+                          ),
+                          label: AppLocalizations.of(context)!.tabHome,
+                          isSelected: _currentIndex == 0,
+                          onTap: () {
+                            setState(() {
+                              _currentIndex = 0;
+                            });
+                          },
+                        ),
+                      ),
+                      if (device != null)
+                        Expanded(
+                          child: CustomTabBarItem(
+                            icon: SvgPicture.asset(
+                              'lib/assets/SVG/tabs/pill-outline.svg',
+                              height: 24.h,
+                            ),
+                            selectedIcon: SvgPicture.asset(
+                              'lib/assets/SVG/tabs/pill-filled.svg',
+                              height: 24.h,
+                            ),
+                            label: AppLocalizations.of(context)!.tabPills,
+                            isSelected: _currentIndex == 1,
+                            onTap: () {
+                              setState(() {
+                                _currentIndex = 1;
+                              });
+                            },
+                          ),
+                        ),
+                      if (device != null)
+                        Expanded(
+                          child: CustomTabBarItem(
+                            icon: SvgPicture.asset(
+                              'lib/assets/SVG/tabs/settings-outline.svg',
+                              height: 24.h,
+                            ),
+                            selectedIcon: SvgPicture.asset(
+                              'lib/assets/SVG/tabs/settings-filled.svg',
+                              height: 24.h,
+                            ),
+                            label: AppLocalizations.of(context)!.tabSettings,
+                            isSelected: _currentIndex == 2,
+                            onTap: () {
+                              setState(() {
+                                _currentIndex = 2;
+                              });
+                            },
+                          ),
+                        ),
+                      Expanded(
+                        child: CustomTabBarItem(
+                          icon: SvgPicture.asset(
+                            'lib/assets/SVG/tabs/user-outline.svg',
+                            height: 24.h,
+                          ),
+                          selectedIcon: SvgPicture.asset(
+                            'lib/assets/SVG/tabs/user-filled.svg',
+                            height: 24.h,
+                          ),
+                          label: AppLocalizations.of(context)!.tabAccount,
+                          isSelected: _currentIndex == 3,
+                          onTap: () {
+                            setState(() {
+                              _currentIndex = 3;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  );
                 },
-                tabs: [
-                  Expanded(
-                    child: CustomTabBarItem(
-                      icon: SvgPicture.asset(
-                        'lib/assets/SVG/tabs/house-outline.svg',
-                        height: 24.h,
-                      ),
-                      selectedIcon: SvgPicture.asset(
-                        'lib/assets/SVG/tabs/house-filled.svg',
-                        height: 24.h,
-                      ),
-                      label: AppLocalizations.of(context)!.tabHome,
-                      isSelected: _currentIndex == 0,
-                      onTap: () {
-                        setState(() {
-                          _currentIndex = 0;
-                        });
-                      },
-                    ),
-                  ),
-                  Expanded(
-                    child: CustomTabBarItem(
-                      icon: SvgPicture.asset(
-                        'lib/assets/SVG/tabs/pill-outline.svg',
-                        height: 24.h,
-                      ),
-                      selectedIcon: SvgPicture.asset(
-                        'lib/assets/SVG/tabs/pill-filled.svg',
-                        height: 24.h,
-                      ),
-                      label: AppLocalizations.of(context)!.tabPills,
-                      isSelected: _currentIndex == 1,
-                      onTap: () {
-                        setState(() {
-                          _currentIndex = 1;
-                        });
-                      },
-                    ),
-                  ),
-                  Expanded(
-                    child: CustomTabBarItem(
-                      icon: SvgPicture.asset(
-                        'lib/assets/SVG/tabs/settings-outline.svg',
-                        height: 24.h,
-                      ),
-                      selectedIcon: SvgPicture.asset(
-                        'lib/assets/SVG/tabs/settings-filled.svg',
-                        height: 24.h,
-                      ),
-                      label: AppLocalizations.of(context)!.tabSettings,
-                      isSelected: _currentIndex == 2,
-                      onTap: () {
-                        setState(() {
-                          _currentIndex = 2;
-                        });
-                      },
-                    ),
-                  ),
-                  Expanded(
-                    child: CustomTabBarItem(
-                      icon: SvgPicture.asset(
-                        'lib/assets/SVG/tabs/user-outline.svg',
-                        height: 24.h,
-                      ),
-                      selectedIcon: SvgPicture.asset(
-                        'lib/assets/SVG/tabs/user-filled.svg',
-                        height: 24.h,
-                      ),
-                      label: AppLocalizations.of(context)!.tabAccount,
-                      isSelected: _currentIndex == 3,
-                      onTap: () {
-                        setState(() {
-                          _currentIndex = 3;
-                        });
-                      },
-                    ),
-                  ),
-                ],
               ),
             ),
           ],

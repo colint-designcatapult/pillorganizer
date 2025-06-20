@@ -8,6 +8,7 @@ import 'package:app/provider/provision_provider.dart';
 import 'package:app/provider/time_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
+import 'package:app/screens/auth/register.dart';
 import 'package:app/screens/first_launch.dart';
 import 'package:app/screens/name_device_wizard.dart';
 import 'package:app/screens/post_setup_wizard.dart';
@@ -155,7 +156,8 @@ class MyApp extends StatelessWidget {
                   },
                   '/provision': (context) => const ProvisionNavigator(),
                   '/index': (context) => const TabNavigator(),
-                  '/post_setup': (context) => const PostSetupWizard()
+                  '/post_setup': (context) => const PostSetupWizard(),
+                  '/register': (context) => const RegisterPage()
                 },
                 supportedLocales: const [Locale('en'), Locale('fr')],
                 localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
@@ -237,10 +239,12 @@ class MyApp extends StatelessWidget {
     final prefs = await SharedPreferences.getInstance();
     CredentialManager cred = CredentialManager();
 
+    // Storage in keypass: clean at first use
     if (prefs.getBool('first_run') ?? true) {
       await cred.cleanCredentials();
       prefs.setBool('first_run', false);
     }
+
     return await cred.hasAccount();
   }
 }

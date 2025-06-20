@@ -1,12 +1,11 @@
 import 'dart:async';
 
-import 'package:app/navigation/provision_navigator.dart';
 import 'package:app/provider/authentication_provider.dart';
-import 'package:app/screens/auth/login.dart';
+import 'package:app/screens/auth/launch_page_login.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 class FirstLaunchPage extends StatefulWidget {
   const FirstLaunchPage({super.key});
@@ -88,7 +87,7 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
                               height: buttonHeight.h,
                               child: OutlinedButton(
                                   onPressed: () {
-                                    _startOOBE();
+                                    _handleCreateAccount();
                                   },
                                   style: OutlinedButton.styleFrom(
                                     shape: RoundedRectangleBorder(
@@ -99,7 +98,7 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
                                   ),
                                   child: Text(
                                       AppLocalizations.of(context)!
-                                          .deviceNewSetup,
+                                          .createAnAccount,
                                       style: Theme.of(context)
                                           .textTheme
                                           .displaySmall
@@ -180,28 +179,13 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
     });
   }
 
-  void _startOOBE() {
-    startProvisioning(context);
+  void _handleCreateAccount() {
+    Navigator.of(context, rootNavigator: true)
+        .pushNamedAndRemoveUntil('/register', (route) => false);
   }
 
   void _login() {
-    showModalBottomSheet<bool>(
-        context: context,
-        isScrollControlled: true,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            top: const Radius.circular(16).r,
-          ),
-        ),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width,
-        ),
-        builder: (context) => const LoginPage()).then((bool? result) {
-      if (result != null) {
-        _handleAuthSuccess(result);
-      }
-    });
+    Navigator.of(context).push(LaunchPageLogin.route(context));
   }
 
   @override
