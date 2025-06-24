@@ -27,9 +27,10 @@ class _JoinDevicePageState extends State<JoinDevicePage> {
     var caregiverProvider =
         Provider.of<CaregiverProvider>(context, listen: false);
 
-    caregiverProvider.validateCaregiverCode(code: code).then((_) {
+    caregiverProvider.validateCaregiverCode(code: code).then((res) {
       Provider.of<DeviceListProvider>(context, listen: false).refresh();
       setState(() {
+        joinedDeviceName = res.name;
         showCodeStep = false;
         canProceed = true;
       });

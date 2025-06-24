@@ -22,8 +22,9 @@ class CaregiverProvider with ChangeNotifier {
     return null;
   }
 
-  Future<void> validateCaregiverCode({required String code}) async {
-    await client.validateCaregiverCode(code);
+  Future<CaregiverCodeValidationDTO> validateCaregiverCode(
+      {required String code}) async {
+    return await client.validateCaregiverCode(code);
   }
 
   Future<ShareCode> generateCaregiverCodeForDevice(int deviceId) async {

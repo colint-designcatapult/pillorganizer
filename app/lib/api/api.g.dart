@@ -583,6 +583,18 @@ Map<String, dynamic> _$DeviceCaregiverCodeDTOToJson(
       'deleted': instance.deleted,
     };
 
+CaregiverCodeValidationDTO _$CaregiverCodeValidationDTOFromJson(
+        Map<String, dynamic> json) =>
+    CaregiverCodeValidationDTO(
+      name: json['name'] as String,
+    );
+
+Map<String, dynamic> _$CaregiverCodeValidationDTOToJson(
+        CaregiverCodeValidationDTO instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+    };
+
 _$_EmailPasswordCredentialsDTO _$$_EmailPasswordCredentialsDTOFromJson(
         Map<String, dynamic> json) =>
     _$_EmailPasswordCredentialsDTO(
@@ -1236,23 +1248,26 @@ class _RestClient implements RestClient {
   }
 
   @override
-  Future<void> validateCaregiverCode(String code) async {
+  Future<CaregiverCodeValidationDTO> validateCaregiverCode(String code) async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final Map<String, dynamic>? _data = null;
-    await _dio.fetch<void>(_setStreamType<void>(Options(
+    final _result = await _dio.fetch<Map<String, dynamic>>(
+        _setStreamType<CaregiverCodeValidationDTO>(Options(
       method: 'POST',
       headers: _headers,
       extra: _extra,
     )
-        .compose(
-          _dio.options,
-          '/caregiver/validate/${code}',
-          queryParameters: queryParameters,
-          data: _data,
-        )
-        .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
+            .compose(
+              _dio.options,
+              '/caregiver/validate/${code}',
+              queryParameters: queryParameters,
+              data: _data,
+            )
+            .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
+    final value = CaregiverCodeValidationDTO.fromJson(_result.data!);
+    return value;
   }
 
   @override

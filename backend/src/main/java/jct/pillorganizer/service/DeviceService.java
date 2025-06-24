@@ -41,5 +41,8 @@ public class DeviceService {
         });
     }
 
-
+    @Transactional
+    public Device findById(long id) {
+        return deviceRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Device not found"));
+    }
 }

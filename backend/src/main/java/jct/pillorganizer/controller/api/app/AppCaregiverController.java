@@ -1,6 +1,7 @@
 package jct.pillorganizer.controller.api.app;
 
 import java.util.List;
+import java.util.Map;
 
 import org.zalando.problem.Problem;
 import org.zalando.problem.Status;
@@ -18,8 +19,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 import jct.pillorganizer.auth.AuthService;
 import jct.pillorganizer.dto.DeviceCaregiverCodeDTO;
+import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.device.DeviceCaregiverCode;
 import jct.pillorganizer.service.CaregiverService;
+import jct.pillorganizer.service.DeviceService;
 import jct.pillorganizer.service.DeviceUserService;
 import lombok.extern.flogger.Flogger;
 
@@ -38,6 +41,9 @@ public class AppCaregiverController {
     @Inject
     DeviceUserService deviceUserService;
 
+    @Inject
+    private DeviceService deviceService;
+
     @Operation(summary = "Validate caregiver's code")
     @Post("/validate/{code}")
     @Secured(SecurityRule.IS_AUTHENTICATED)
@@ -45,19 +51,22 @@ public class AppCaregiverController {
         long userID = authService.getUserID();
         DeviceCaregiverCode caregiverCode = caregiverService.findCaregiverCode(code);
 
-        if(caregiverCode == null) {
+        if (caregiverCode == null) {
             return HttpResponse.status(HttpStatus.BAD_REQUEST)
-                .body(Problem.builder()
-                    .withStatus(Status.BAD_REQUEST)
-                    .withTitle("INVALID_CAREGIVER_CODE")
-                    .withDetail("The provided caregiver code is invalid or has expired: " + code)
-                    .build());
+                    .body(Problem.builder()
+                            .withStatus(Status.BAD_REQUEST)
+                            .withTitle("INVALID_CAREGIVER_CODE")
+                            .withDetail("The provided caregiver code is invalid or has expired: " + code)
+                            .build());
         }
 
         deviceUserService.addUserToDevice(userID, caregiverCode.getDeviceID(), false, false);
         caregiverService.deleteCaregiverCode(caregiverCode.getId());
 
-        return HttpResponse.ok();
+        Device device = deviceService.findById(caregiverCode.getDeviceID());
+        String name = device.getCustomName() == null ? "Device #" + device.getId() : device.getCustomName();
+
+        return HttpResponse.ok(Map.of("name", name));
     }
 
     @Operation(summary = "Generate caregiver's code")

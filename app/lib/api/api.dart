@@ -124,7 +124,8 @@ abstract class RestClient {
       @Path("id") int deviceID, @Field() String date);
 
   @POST("/caregiver/validate/{code}")
-  Future<void> validateCaregiverCode(@Path("code") String code);
+  Future<CaregiverCodeValidationDTO> validateCaregiverCode(
+      @Path("code") String code);
 
   @POST("/caregiver/generate/{deviceId}")
   Future<DeviceCaregiverCodeDTO> generateCaregiverCode(
@@ -804,6 +805,18 @@ class DeviceCaregiverCodeDTO {
       _$DeviceCaregiverCodeDTOFromJson(json);
 
   Map<String, dynamic> toJson() => _$DeviceCaregiverCodeDTOToJson(this);
+}
+
+@JsonSerializable()
+class CaregiverCodeValidationDTO {
+  final String name;
+
+  CaregiverCodeValidationDTO({required this.name});
+
+  factory CaregiverCodeValidationDTO.fromJson(Map<String, dynamic> json) =>
+      _$CaregiverCodeValidationDTOFromJson(json);
+
+  Map<String, dynamic> toJson() => _$CaregiverCodeValidationDTOToJson(this);
 }
 
 class LoadingValueNotifier<T> extends ValueNotifier<T?> {
