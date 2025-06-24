@@ -32,6 +32,14 @@ class UserService {
     }
   }
 
+  Future<void> changeEmail(UserChangeEmailDTO creds) async {
+    if (await credentialManager.isAnonUser() == false) {
+      await client.changeEmail(creds).catchError((error) {
+        throw ('The email does not match');
+      });
+    }
+  }
+
   Future<void> changePassword(UserChangePasswordDTO creds) async {
     if (await credentialManager.isAnonUser() == false) {
       await client.changePassword(creds).catchError((error) {

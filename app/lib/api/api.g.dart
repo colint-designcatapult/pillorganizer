@@ -64,6 +64,18 @@ Map<String, dynamic> _$UserRegistrationDTOToJson(
       'password': instance.password,
     };
 
+UserChangeEmailDTO _$UserChangeEmailDTOFromJson(Map<String, dynamic> json) =>
+    UserChangeEmailDTO(
+      currentEmail: json['currentEmail'] as String,
+      newEmail: json['newEmail'] as String,
+    );
+
+Map<String, dynamic> _$UserChangeEmailDTOToJson(UserChangeEmailDTO instance) =>
+    <String, dynamic>{
+      'currentEmail': instance.currentEmail,
+      'newEmail': instance.newEmail,
+    };
+
 UserChangePasswordDTO _$UserChangePasswordDTOFromJson(
         Map<String, dynamic> json) =>
     UserChangePasswordDTO(
@@ -872,6 +884,27 @@ class _RestClient implements RestClient {
         .compose(
           _dio.options,
           'user/change_password',
+          queryParameters: queryParameters,
+          data: _data,
+        )
+        .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
+  }
+
+  @override
+  Future<void> changeEmail(UserChangeEmailDTO reg) async {
+    const _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _data = <String, dynamic>{};
+    _data.addAll(reg.toJson());
+    await _dio.fetch<void>(_setStreamType<void>(Options(
+      method: 'PUT',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/user/change_email',
           queryParameters: queryParameters,
           data: _data,
         )

@@ -1,12 +1,13 @@
 import 'package:app/provider/selected_device_provider.dart';
-import 'package:app/screens/auth/change_password.dart';
 import 'package:app/screens/auth/change_email.dart';
+import 'package:app/screens/auth/change_password.dart';
 import 'package:app/widgets/generic_yes_no_modal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 import '../../provider/authentication_provider.dart';
 
 class AccountScreen extends StatelessWidget {
@@ -65,10 +66,6 @@ class AccountScreen extends StatelessWidget {
           builder: (context) => const ChangeEmail());
     }
 
-    void navigateToFaq() {
-      // TODO: IMPLEMENT FAQ NAVIGATION
-    }
-
     return Scaffold(
       backgroundColor: const Color(0xFFBFD2DB),
       body: SafeArea(
@@ -103,8 +100,8 @@ class AccountScreen extends StatelessWidget {
                               SquareButton(
                                 color: const Color(0xFF043C4D),
                                 icon: PhosphorIcons.envelope_simple_fill,
-                                label: AppLocalizations.of(context)!
-                                    .changeEmail,
+                                label:
+                                    AppLocalizations.of(context)!.changeEmail,
                                 onPressed: () {
                                   changeEmail();
                                 },
@@ -116,15 +113,6 @@ class AccountScreen extends StatelessWidget {
                                     .changePassword,
                                 onPressed: () {
                                   changePassword();
-                                },
-                              ),
-                              SquareButton(
-                                color: const Color(0xFF043C4D),
-                                icon: PhosphorIcons.question_fill,
-                                label: AppLocalizations.of(context)!
-                                    .faq,
-                                onPressed: () {
-                                  navigateToFaq();
                                 },
                               ),
                               SquareButton(

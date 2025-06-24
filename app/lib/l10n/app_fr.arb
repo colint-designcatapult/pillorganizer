@@ -24,7 +24,7 @@
 	"changeDeviceName": "Changer le nom de l'appareil",
 	"changeDeviceNamePrompt": "Veuillez entrer ci-dessous le nouveau nom désiré pour l'appareil:",
 	"changeEmail": "Changer l'adresse courriel",
-	"changeEmailSubtitle": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+	"changeEmailSubtitle": "Veuillez saisir votre couriel actuel afin d'en créer un nouveau.",
 	"changeName": "Changer le nom",
 	"changePassword": "Changer le mot de passe",
 	"changePasswordSubtitle": "Veuillez saisir votre mot de passe actuel afin d'en créer un nouveau.",

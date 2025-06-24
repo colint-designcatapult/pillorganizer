@@ -10,10 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 import jct.pillorganizer.auth.AnonAuthService;
 import jct.pillorganizer.auth.AuthService;
-import jct.pillorganizer.dto.ChangePasswordDTO;
-import jct.pillorganizer.dto.NewPasswordDTO;
-import jct.pillorganizer.dto.UserInfoDTO;
-import jct.pillorganizer.dto.UserRegistration;
+import jct.pillorganizer.dto.*;
 import jct.pillorganizer.model.user.AnonymousUser;
 import jct.pillorganizer.model.user.User;
 import jct.pillorganizer.model.user.UserRole;
@@ -98,6 +95,14 @@ public class AppUserController {
                     return Mono.just(number);
                 })
                 .then(userRepo.save(user));
+    }
+
+    @Operation(summary = "Change email of a logged in account")
+    @Put("/change_email")
+    @Secured(SecurityRule.IS_AUTHENTICATED)
+    public HttpResponse<?> changeEmail(@Body @Valid ChangeEmailDTO emailChange) throws IllegalAccessException {
+        authService.changeEmail(emailChange.getCurrentEmail(), emailChange.getNewEmail());
+        return HttpResponse.ok();
     }
 
     @Operation(summary = "Change password of a logged in account")

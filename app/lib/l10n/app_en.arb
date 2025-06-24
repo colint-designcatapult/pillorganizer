@@ -24,7 +24,7 @@
 	"changeDeviceName": "Change device name",
 	"changeDeviceNamePrompt": "Please enter the desired new device name right below:",
 	"changeEmail": "Change Email",
-	"changeEmailSubtitle": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+	"changeEmailSubtitle": "Please enter your current email in order to set up a new one.",
 	"changeName": "Change Name",
 	"changePassword": "Change Password",
 	"changePasswordSubtitle": "Please enter your current password in order to set up a new one.",

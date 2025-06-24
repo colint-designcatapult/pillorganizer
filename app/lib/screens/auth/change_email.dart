@@ -3,10 +3,10 @@ import 'package:app/service/error_handler.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:provider/provider.dart';
-import 'package:validatorless/validatorless.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
+import 'package:validatorless/validatorless.dart';
 
 class ChangeEmail extends StatefulWidget {
   const ChangeEmail({Key? key}) : super(key: key);
@@ -114,18 +114,22 @@ class _ChangeEmailModalState extends State<ChangeEmailModal> {
                                         .currentEmail,
                                     validator: Validatorless.multiple([
                                       Validatorless.regex(
-                                          RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'),
-                                          AppLocalizations.of(context)!.invalidEmailFormat),
+                                          RegExp(
+                                              r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'),
+                                          AppLocalizations.of(context)!
+                                              .invalidEmailFormat),
                                     ]),
                                     onSaved: (val) => currentEmail = val,
                                   ),
                                   BasicPageTextFormField(
-                                    labelText: AppLocalizations.of(context)!
-                                        .newEmail,
+                                    labelText:
+                                        AppLocalizations.of(context)!.newEmail,
                                     validator: Validatorless.multiple([
                                       Validatorless.regex(
-                                          RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'),
-                                          AppLocalizations.of(context)!.invalidEmailFormat),
+                                          RegExp(
+                                              r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'),
+                                          AppLocalizations.of(context)!
+                                              .invalidEmailFormat),
                                     ]),
                                     textInputAction: TextInputAction.done,
                                     onSaved: (val) => newEmail = val,
@@ -240,8 +244,8 @@ class _ChangeEmailModalState extends State<ChangeEmailModal> {
       _changeEmail(authProv, currentEmail!, newEmail!).then((value) {
         if (value) {
           SchedulerBinding.instance.addPostFrameCallback((_) {
-            showErrorDialog(context,
-                    AppLocalizations.of(context)!.emailChangedSuccess)
+            showErrorDialog(
+                    context, AppLocalizations.of(context)!.emailChangedSuccess)
                 .then((value) => Navigator.pop(context));
           });
         }
@@ -253,6 +257,7 @@ class _ChangeEmailModalState extends State<ChangeEmailModal> {
 
   Future<bool> _changeEmail(AuthenticationProvider authProv,
       String currentEmail, String newEmail) async {
+    await authProv.changeEmail(currentEmail: currentEmail, newEmail: newEmail);
     return true;
   }
 }

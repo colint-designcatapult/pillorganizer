@@ -1,5 +1,6 @@
 package jct.pillorganizer.auth;
 
+import com.google.common.flogger.FluentLogger;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.security.authentication.AuthenticationException;
@@ -27,6 +28,7 @@ import java.nio.charset.StandardCharsets;
  */
 @Singleton
 public class AuthService {
+    private static final FluentLogger log = FluentLogger.forEnclosingClass();
     @Inject
     SecurityService securityService;
 
@@ -43,6 +45,20 @@ public class AuthService {
 
     // todo: why ascii here? check if there are any weird side effects
     private static final Charset HASH_CARSET = StandardCharsets.US_ASCII;
+
+    public void changeEmail(String currentEmail, String newEmail) throws IllegalAccessException {
+        User user = userRepo.findById(getUserID()).block();
+        if (user == null) {
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "User not found");
+        }
+
+        if (!user.getEmail().equals(currentEmail)){
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Invalid email");
+        }
+
+        user.setEmail(newEmail);
+        userRepo.update(user).block();
+    }
 
     /**
      * Check if the specified password matches the user's password.

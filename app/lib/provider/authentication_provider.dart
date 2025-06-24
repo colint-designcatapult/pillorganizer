@@ -109,6 +109,17 @@ class AuthenticationProvider with ChangeNotifier {
     return _future;
   }
 
+  Future<void> changeEmail({
+    required String currentEmail,
+    required String newEmail,
+  }) async {
+    var creds =
+        UserChangeEmailDTO(currentEmail: currentEmail, newEmail: newEmail);
+
+    _future = userService.changeEmail(creds);
+    return _future;
+  }
+
   Future<bool> checkAuthStatus() {
     return client.authStatus().then((user) {
       _user = user.email != null

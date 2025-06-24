@@ -73,6 +73,9 @@ abstract class RestClient {
   @PUT("user/change_password")
   Future<void> changePassword(@Body() UserChangePasswordDTO reg);
 
+  @PUT("/user/change_email")
+  Future<void> changeEmail(@Body() UserChangeEmailDTO reg);
+
   @PUT("user/new_password")
   Future<void> newPassword(@Body() UserNewPasswordDTO reg);
 
@@ -250,6 +253,16 @@ class UserRegistrationDTO {
   UserRegistrationDTO({required this.email, required this.password});
 
   Map<String, dynamic> toJson() => _$UserRegistrationDTOToJson(this);
+}
+
+@JsonSerializable()
+class UserChangeEmailDTO {
+  final String currentEmail;
+  final String newEmail;
+
+  UserChangeEmailDTO({required this.currentEmail, required this.newEmail});
+
+  Map<String, dynamic> toJson() => _$UserChangeEmailDTOToJson(this);
 }
 
 @JsonSerializable()
