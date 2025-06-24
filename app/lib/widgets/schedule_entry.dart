@@ -22,11 +22,13 @@ const double _subtitleContentSpacing = 16.0;
 class ScheduleEntry extends StatefulWidget {
   final bool showRemovalSection;
   final bool showAddDeviceSection;
+  final bool isOwner;
 
   const ScheduleEntry({
     super.key,
     this.showRemovalSection = true,
     this.showAddDeviceSection = true,
+    this.isOwner = false,
   });
 
   @override
@@ -112,7 +114,7 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
           style: Theme.of(context).textTheme.bodySmall,
         ),
         SizedBox(height: _subtitleContentSpacing.h),
-        TimeZoneSelectionWidget(),
+        TimeZoneSelectionWidget(isOwner: widget.isOwner),
       ],
     );
   }
@@ -120,6 +122,10 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
   Widget _buildTimeBlock(DayPeriod dayPeriod, DispenseTime? entry) {
     return GestureDetector(
         onTap: () {
+          if (!widget.isOwner) {
+            return;
+          }
+
           showTimePicker(
             initialTime: entry?.time ?? TimeOfDay.now(),
             context: context,
@@ -169,7 +175,9 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
                         ? EdgeInsets.fromLTRB(2.w, 16.h, 2.w, 16.h)
                         : EdgeInsets.fromLTRB(14.w, 16.h, 14.w, 16.h),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: widget.isOwner
+                          ? MainAxisAlignment.spaceBetween
+                          : MainAxisAlignment.center,
                       children: [
                         Text(
                           entry != null
@@ -182,18 +190,19 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
                                   ? Theme.of(context).textTheme.bodySmall
                                   : Theme.of(context).textTheme.labelSmall,
                         ),
-                        Row(children: [
-                          SvgPicture.asset(
-                            'lib/assets/SVG/PencilSimpleLine.svg',
-                            width: 20.w,
-                            height: 20.h,
-                          ),
-                          SizedBox(width: 4.w),
-                          if (entry != null)
-                            Text(AppLocalizations.of(context)!.edit,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodySmall)
-                        ])
+                        if (widget.isOwner)
+                          Row(children: [
+                            SvgPicture.asset(
+                              'lib/assets/SVG/PencilSimpleLine.svg',
+                              width: 20.w,
+                              height: 20.h,
+                            ),
+                            SizedBox(width: 4.w),
+                            if (entry != null)
+                              Text(AppLocalizations.of(context)!.edit,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodySmall)
+                          ])
                       ],
                     )),
               ],
@@ -202,6 +211,10 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
 }
 
 class TimeZoneSelectionWidget extends StatefulWidget {
+  final bool isOwner;
+
+  const TimeZoneSelectionWidget({super.key, required this.isOwner});
+
   @override
   _TimeZoneSelectionWidgetState createState() =>
       _TimeZoneSelectionWidgetState();
@@ -241,6 +254,7 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
                   ),
                   segments: <ButtonSegment>[
                     ButtonSegment(
+                      enabled: widget.isOwner,
                       value: 0,
                       label: Text(
                         AppLocalizations.of(context)!.manual,
@@ -248,6 +262,7 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
                       ),
                     ),
                     ButtonSegment(
+                      enabled: widget.isOwner,
                       value: 1,
                       label: Text(
                         AppLocalizations.of(context)!.automatic,
@@ -293,7 +308,7 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             child: selectedButtonIndex == 0
-                ? _buildManualTimezoneSection(deviceProv)
+                ? _buildManualTimezoneSection(deviceProv, widget.isOwner)
                 : _buildAutomaticTimezoneSection(),
           ),
         ],
@@ -301,7 +316,8 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
     });
   }
 
-  Widget _buildManualTimezoneSection(SelectedDeviceProvider deviceProv) {
+  Widget _buildManualTimezoneSection(
+      SelectedDeviceProvider deviceProv, bool isOwner) {
     return Column(
       key: const ValueKey('manual'),
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -331,6 +347,10 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
             ),
             trailing: Icon(Icons.arrow_right, size: 24.h),
             onTap: () {
+              if (!isOwner) {
+                return;
+              }
+
               Navigator.of(context)
                   .push(TimeZoneSelectionModal.route(context))
                   .then((value) {

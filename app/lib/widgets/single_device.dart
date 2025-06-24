@@ -64,14 +64,16 @@ class _SingleDeviceState extends State<SingleDevice> {
     }
   }
 
-  Widget _getSelectedSection(int index) {
+  Widget _getSelectedSection(int index, bool isOwner) {
     switch (index) {
       case 0:
-        return ScheduleEntry(showAddDeviceSection: widget.showAddDeviceSection);
+        return ScheduleEntry(
+            showAddDeviceSection: widget.showAddDeviceSection,
+            isOwner: isOwner);
       case 1:
         return NotificationsSettings();
       case 2:
-        // Fetch share codes when share section is selected
+        // Fetch share codes when share section is selecRted
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (widget.device != null) {
             Provider.of<CaregiverProvider>(context, listen: false)
@@ -88,8 +90,48 @@ class _SingleDeviceState extends State<SingleDevice> {
         });
         return ShareDevice(device: widget.device);
       default:
-        return ScheduleEntry(showAddDeviceSection: widget.showAddDeviceSection);
+        return ScheduleEntry(
+            showAddDeviceSection: widget.showAddDeviceSection,
+            isOwner: isOwner);
     }
+  }
+
+  List<ButtonSegment> _getSegments(bool isOwner) {
+    return [
+      ButtonSegment(
+        value: 0,
+        label: Text(
+          AppLocalizations.of(context)!.settings,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w500,
+                fontSize: 12.h,
+                color: const Color(0xFF31454D),
+              ),
+        ),
+      ),
+      ButtonSegment(
+        value: 1,
+        label: Text(
+          AppLocalizations.of(context)!.notifications,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w500,
+                fontSize: 12.h,
+                color: const Color(0xFF31454D),
+              ),
+        ),
+      ),
+      ButtonSegment(
+        value: 2,
+        label: Text(
+          AppLocalizations.of(context)!.share,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w500,
+                fontSize: 12.h,
+                color: const Color(0xFF31454D),
+              ),
+        ),
+      )
+    ];
   }
 
   @override
@@ -97,6 +139,9 @@ class _SingleDeviceState extends State<SingleDevice> {
     return Consumer2<SelectedDeviceProvider, DeviceListProvider>(
       builder: (context, selectedDeviceProvider, deviceListProvider, child) {
         DeviceUser? currentDevice = widget.device;
+        bool isOwner = currentDevice?.owner ?? false;
+        List<ButtonSegment> segments = _getSegments(isOwner);
+
         if (widget.device != null && deviceListProvider.value != null) {
           currentDevice = deviceListProvider.value!.firstWhere(
               (d) => d.deviceID == widget.device!.deviceID,
@@ -149,120 +194,79 @@ class _SingleDeviceState extends State<SingleDevice> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          IconButton(
-                            icon: SvgPicture.asset(
-                              'lib/assets/SVG/pencilLight.svg',
-                              width: 24.w,
-                              height: 24.h,
+                          if (isOwner)
+                            IconButton(
+                              icon: SvgPicture.asset(
+                                'lib/assets/SVG/pencilLight.svg',
+                                width: 24.w,
+                                height: 24.h,
+                              ),
+                              color: Theme.of(context).primaryColor,
+                              onPressed: () {
+                                changeName(context, device: currentDevice);
+                              },
                             ),
-                            color: Theme.of(context).primaryColor,
-                            onPressed: () {
-                              changeName(context, device: currentDevice);
-                            },
-                          ),
                         ]),
                   ],
                 ),
               ),
-              Container(
-                padding: EdgeInsets.only(
-                  top: 12.h,
-                  bottom: 12.h,
-                  left: 20.w,
-                  right: 20.w,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: SegmentedButton(
-                        segments: <ButtonSegment>[
-                          ButtonSegment(
-                              icon: Icon(
-                                PhosphorIcons.gear,
-                                size: 18.h,
-                              ),
-                              value: 0,
-                              label: Text(
-                                AppLocalizations.of(context)!.settings,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(fontWeight: FontWeight.w500),
-                              )),
-                          ButtonSegment(
-                            icon: Icon(
-                              PhosphorIcons.bell_simple_ringing,
-                              size: 18.h,
+              if (isOwner)
+                Container(
+                  padding: EdgeInsets.only(
+                    top: 12.h,
+                    bottom: 12.h,
+                    left: 20.w,
+                    right: 20.w,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: SegmentedButton(
+                          showSelectedIcon: false,
+                          segments: segments,
+                          selected: {_selectedButtonIndex},
+                          onSelectionChanged: (Set newSelection) {
+                            setState(() {
+                              _selectedButtonIndex = newSelection.first;
+                            });
+                          },
+                          style: ButtonStyle(
+                            shape: MaterialStateProperty.all<OutlinedBorder>(
+                                RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadiusDirectional.circular(8.r))),
+                            side: MaterialStateProperty.resolveWith<BorderSide>(
+                                (Set<MaterialState> states) {
+                              return BorderSide(
+                                  color: const Color(0xFFBFD2DB), width: 1.h);
+                            }),
+                            backgroundColor:
+                                MaterialStateProperty.resolveWith<Color>(
+                                    (Set<MaterialState> states) {
+                              if (states.contains(MaterialState.selected)) {
+                                return const Color(0xFFF1F5F6);
+                              }
+                              return Colors.white;
+                            }),
+                            padding:
+                                MaterialStateProperty.all<EdgeInsetsGeometry>(
+                              EdgeInsets.symmetric(
+                                  vertical: 16.h, horizontal: 0.w),
                             ),
-                            value: 1,
-                            label: Text(
-                              AppLocalizations.of(context)!.notifications,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                          ButtonSegment(
-                            icon: SvgPicture.asset(
-                              'lib/assets/SVG/share.svg',
-                              width: 18.w,
-                              height: 18.h,
-                            ),
-                            value: 2,
-                            label: Text(
-                              AppLocalizations.of(context)!.share,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                        ],
-                        selected: {_selectedButtonIndex},
-                        selectedIcon:
-                            _getSelectedButtonIcon(_selectedButtonIndex),
-                        onSelectionChanged: (Set newSelection) {
-                          setState(() {
-                            _selectedButtonIndex = newSelection.first;
-                          });
-                        },
-                        style: ButtonStyle(
-                          shape: MaterialStateProperty.all<OutlinedBorder>(
-                              RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadiusDirectional.circular(8.r))),
-                          side: MaterialStateProperty.resolveWith<BorderSide>(
-                              (Set<MaterialState> states) {
-                            return BorderSide(
-                                color: const Color(0xFFBFD2DB), width: 2.h);
-                          }),
-                          backgroundColor:
-                              MaterialStateProperty.resolveWith<Color>(
-                                  (Set<MaterialState> states) {
-                            if (states.contains(MaterialState.selected)) {
-                              return const Color(0xFFE8EFF4);
-                            }
-                            return Colors.white;
-                          }),
-                          padding:
-                              MaterialStateProperty.all<EdgeInsetsGeometry>(
-                            EdgeInsets.symmetric(
-                                vertical: 16.h, horizontal: 12.w),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
               Expanded(
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: Padding(
                       padding: EdgeInsets.symmetric(
                           horizontal: 20.w, vertical: 20.h),
-                      child: _getSelectedSection(_selectedButtonIndex)),
+                      child:
+                          _getSelectedSection(_selectedButtonIndex, isOwner)),
                 ),
               )
             ],
