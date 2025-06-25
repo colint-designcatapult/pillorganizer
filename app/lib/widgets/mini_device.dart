@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../api/device.dart';
@@ -45,7 +46,7 @@ class _StateLed extends State<StateLed> {
             maintainSize: true,
             maintainAnimation: true,
             maintainState: true,
-            child: image!);
+            child: image);
   }
 
   void blink(Timer t) {

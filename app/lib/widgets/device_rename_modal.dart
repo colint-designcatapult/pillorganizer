@@ -1,4 +1,5 @@
 import 'package:app/api/device.dart';
+import 'package:app/provider/device_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
@@ -173,11 +174,9 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
           Provider.of<SelectedDeviceProvider>(context, listen: false).device;
 
       if (deviceToUpdate != null) {
-        await Provider.of<SelectedDeviceProvider>(context, listen: false)
-            .updateDeviceName(deviceToUpdate.deviceID, value!)
-            .then((value) =>
-                Provider.of<DeviceListProvider>(context, listen: false)
-                    .refresh());
+        final deviceProvider =
+            Provider.of<DeviceProvider>(context, listen: false);
+        await deviceProvider.updateDeviceName(deviceToUpdate.deviceID, value!);
       }
     }
   }

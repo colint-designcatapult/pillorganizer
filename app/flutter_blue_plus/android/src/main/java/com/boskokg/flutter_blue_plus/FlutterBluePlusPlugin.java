@@ -152,11 +152,6 @@ public class FlutterBluePlusPlugin implements FlutterPlugin, MethodCallHandler, 
       mBluetoothAdapter = mBluetoothManager.getAdapter();
       IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
       context.registerReceiver(mBluetoothStateReceiver, filter);
-      if (Build.VERSION.SDK_INT >= 33) { // TIRAMISU = 33
-        context.registerReceiver(mBluetoothStateReceiver, filter, 2); // RECEIVER_EXPORTED = 2
-      } else {
-        context.registerReceiver(mBluetoothStateReceiver, filter);
-      }
       try {
         stateHandler.setCachedBluetoothState(mBluetoothAdapter.getState());
       } catch (SecurityException e) {

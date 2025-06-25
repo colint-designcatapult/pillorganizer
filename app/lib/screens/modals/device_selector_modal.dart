@@ -1,10 +1,11 @@
+import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../api/device.dart';
 import '../../platform/bottom_modal.dart';
@@ -66,12 +67,12 @@ class DeviceSelectorModal extends StatelessWidget {
       cupertino: (_, __) => CupertinoPageScaffoldData(),
       body: SafeArea(
         bottom: false,
-        child: Consumer<DeviceListProvider>(
+        child: Consumer<DeviceProvider>(
           builder: (_, prov, __) {
-            Iterable<Widget> yourDevices = prov.value!
+            Iterable<Widget> yourDevices = prov.devices!
                 .where((element) => element.owner)
                 .map((e) => DeviceListEntry(device: e));
-            Iterable<Widget> otherDevices = prov.value!
+            Iterable<Widget> otherDevices = prov.devices!
                 .where((element) => !element.owner)
                 .map((e) => DeviceListEntry(device: e));
 
@@ -103,7 +104,7 @@ Future<DeviceUser?> showDeviceSelectorModal(BuildContext context) {
       context: context,
       expand: false,
       builder: (context) {
-        deviceRepo.deviceListProvider.refresh();
+        Provider.of<DeviceProvider>(context, listen: false).refresh();
         return const DeviceSelectorModal();
       });
 }

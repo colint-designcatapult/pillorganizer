@@ -1,4 +1,4 @@
-import 'package:app/api/device.dart';
+import 'package:app/provider/device_provider.dart';
 import 'package:app/service/provisioning_service.dart';
 import 'package:app/widgets/missing_permission_info_box.dart';
 import 'package:flutter/material.dart';
@@ -30,7 +30,7 @@ class ProvisionConnectingPage extends StatelessWidget {
           .finalize(context)
           .then((value) {
         if (value.stage == ProvisionStage.complete) {
-          Provider.of<DeviceListProvider>(context, listen: false).refresh();
+          Provider.of<DeviceProvider>(context, listen: false).refresh();
           Provider.of<SelectedDeviceProvider>(context, listen: false)
               .selectDeviceByID(value.deviceID!);
           Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(

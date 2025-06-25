@@ -1,4 +1,3 @@
-import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/auth/change_email.dart';
 import 'package:app/screens/auth/change_password.dart';
 import 'package:app/widgets/generic_yes_no_modal.dart';
@@ -9,6 +8,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 import '../../provider/authentication_provider.dart';
+import '../../provider/device_provider.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
@@ -24,10 +24,10 @@ class AccountScreen extends StatelessWidget {
                 subtitle: AppLocalizations.of(context)!.signingOutSubtitle,
                 saveWidgetText: AppLocalizations.of(context)!.signOut,
                 saveWidgetAction: () {
-                  Provider.of<SelectedDeviceProvider>(context, listen: false)
-                      .updateNotificationsForAll(false)
-                      .then((value) => Provider.of<AuthenticationProvider>(
-                              context,
+                  final deviceProvider =
+                      Provider.of<DeviceProvider>(context, listen: false);
+                  deviceProvider.updateNotificationsForAllDevices(false).then(
+                      (value) => Provider.of<AuthenticationProvider>(context,
                               listen: false)
                           .signOut(context));
                 },

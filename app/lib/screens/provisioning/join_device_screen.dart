@@ -1,5 +1,5 @@
-import 'package:app/api/device.dart';
 import 'package:app/provider/caregiver_provider.dart';
+import 'package:app/provider/device_provider.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -28,7 +28,7 @@ class _JoinDevicePageState extends State<JoinDevicePage> {
         Provider.of<CaregiverProvider>(context, listen: false);
 
     caregiverProvider.validateCaregiverCode(code: code).then((res) {
-      Provider.of<DeviceListProvider>(context, listen: false).refresh();
+      Provider.of<DeviceProvider>(context, listen: false).refresh();
       setState(() {
         joinedDeviceName = res.name;
         showCodeStep = false;

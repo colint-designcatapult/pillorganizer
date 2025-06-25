@@ -159,15 +159,10 @@ class DeviceState extends Equatable with _$DeviceState {
   List<Object?> get props => [id, lastSync, bins, dosePeriods];
 }
 
-typedef DeviceListProvider = RefreshableValueNotifier<List<DeviceUser>>;
-
 class DeviceRepository {
-  DeviceRepository({required this.client}) {
-    deviceListProvider = DeviceListProvider(null, myDevices);
-  }
+  DeviceRepository({required this.client});
 
   final RestClient client;
-  late final DeviceListProvider deviceListProvider;
 
   Future<List<DeviceUser>> myDevices() {
     return client.listMyDevices().then((res) => res

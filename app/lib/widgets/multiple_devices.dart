@@ -12,14 +12,10 @@ import 'package:provider/provider.dart';
 
 class MultipleDevices extends StatelessWidget {
   final List<DeviceUser> devices;
-  final int selectedButtonIndex;
-  final Function(int) onSelectionChanged;
 
   const MultipleDevices({
     super.key,
     required this.devices,
-    required this.selectedButtonIndex,
-    required this.onSelectionChanged,
   });
 
   @override

@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:app/api/api.dart';
 import 'package:app/api/device.dart';
-import 'package:app/service/time_service.dart';
+import 'package:app/provider/device_provider.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SelectedDeviceProvider with ChangeNotifier {
@@ -14,21 +14,14 @@ class SelectedDeviceProvider with ChangeNotifier {
   int? _prevID;
   int? _selectedID;
   static const String lastSelectedKeyName = "selectedDeviceID";
-  bool isUpdatedTimeZoneCalled = false;
 
   SelectedDeviceProvider() {
     _loadSaved();
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   SelectedDeviceProvider update(List<DeviceUser>? deviceList) {
     if (_devices != deviceList) {
       _devices = deviceList;
-      isUpdatedTimeZoneCalled = false;
       if (_selectedID != null) {
         _selectDeviceByID(_selectedID!);
       } else if (deviceList != null && deviceList.isNotEmpty) {
@@ -67,14 +60,17 @@ class SelectedDeviceProvider with ChangeNotifier {
 
   Future<void> removeDevice(context) async {
     try {
-      await client.removeDevice(_selectedDevice!.deviceID).then((value) async {
-        if (context.mounted) {
-          _devices = await deviceRepo.myDevices();
-          selectDevice(_devices!.first);
-          Navigator.of(context)
-              .pushNamedAndRemoveUntil('/index', (route) => false);
+      final deviceProvider =
+          Provider.of<DeviceProvider>(context, listen: false);
+      await deviceProvider.removeDevice(_selectedDevice!.deviceID);
+      if (context.mounted) {
+        if (deviceProvider.devices != null &&
+            deviceProvider.devices!.isNotEmpty) {
+          selectDevice(deviceProvider.devices!.first);
         }
-      });
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil('/index', (route) => false);
+      }
     } catch (error) {
       rethrow;
     }
@@ -87,46 +83,5 @@ class SelectedDeviceProvider with ChangeNotifier {
         _devices?.firstWhereOrNull((element) => element.deviceID == deviceID);
     _persistSaved();
     notifyListeners();
-  }
-
-  Future<void> updateName(String newName) async {
-    var newDevice =
-        await deviceRepo.update(_selectedDevice!.deviceID, name: newName);
-    _selectedDevice = newDevice;
-    notifyListeners();
-  }
-
-  Future<void> updateDeviceName(int deviceID, String newName) async {
-    var newDevice = await deviceRepo.update(deviceID, name: newName);
-    if (_selectedDevice?.deviceID == deviceID) {
-      _selectedDevice = newDevice;
-    }
-    notifyListeners();
-  }
-
-  Future<void> updateTimeZone(TimeZoneLocation newTZ) async {
-    var newDevice =
-        await deviceRepo.update(_selectedDevice!.deviceID, timezone: newTZ);
-    _selectedDevice = newDevice;
-    isUpdatedTimeZoneCalled = true;
-    notifyListeners();
-  }
-
-  Future<void> updateNotifications(bool notifications) async {
-    var newDevice = await deviceRepo.update(_selectedDevice!.deviceID,
-        notifications: notifications);
-    notifyListeners();
-    _selectedDevice = newDevice;
-  }
-
-  Future<void> updateNotificationsForAll(bool notifications) async {
-    if (_devices != null) {
-      for (var device in _devices!) {
-        var newDevice = await deviceRepo.update(device.deviceID,
-            notifications: notifications);
-        notifyListeners();
-        _selectedDevice = newDevice;
-      }
-    }
   }
 }

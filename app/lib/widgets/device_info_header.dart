@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:app/api/device.dart';
 import 'package:app/provider/ble_provider.dart';
+import 'package:app/provider/device_provider.dart';
 import 'package:app/service/device_information_service.dart';
 import 'package:app/widgets/switch_device.dart';
 import 'package:app_settings/app_settings.dart';
@@ -30,9 +31,8 @@ class DeviceInfoHeader extends StatelessWidget {
         bool isMissingPermission =
             bleProv.status == BLEConnectionStatus.missingPermission;
         var numberOfDevices =
-            Provider.of<DeviceListProvider>(context, listen: false)
-                .value
-                ?.length;
+            Provider.of<DeviceProvider>(context, listen: false).devices?.length;
+        bool isOwner = selectedDevice.device?.owner ?? false;
 
         if (wifiIsConnected(context, bleProv) && deviceState != null) {
           batteryLevel = deviceState.battery;
@@ -64,15 +64,39 @@ class DeviceInfoHeader extends StatelessWidget {
                 onTap: () => _showConnectionStatus(
                     context, bleProv, isMissingPermission),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
-                        selectedDevice.device?.name ??
-                            AppLocalizations.of(context)!.loadingState,
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24.h,
-                            fontWeight: FontWeight.w600)),
-                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Text(
+                          selectedDevice.device?.name ??
+                              AppLocalizations.of(context)!.loadingState,
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24.h,
+                              fontWeight: FontWeight.w600),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1),
+                    ),
+                    if (!isOwner) ...[
+                      SizedBox(width: 8.w),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 8.w, vertical: 4.h),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8F9FC),
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        child: Text(
+                          AppLocalizations.of(context)!.viewOnly,
+                          style: TextStyle(
+                            color: const Color(0xFF363F72),
+                            fontSize: 12.h,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ]
                   ],
                 )),
             if (deviceOffline &&

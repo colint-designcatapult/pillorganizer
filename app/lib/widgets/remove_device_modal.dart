@@ -1,10 +1,10 @@
+import 'package:app/provider/device_provider.dart';
 import 'package:app/service/error_handler.dart';
 import 'package:flutter/material.dart';
-import 'package:app/api/device.dart';
-import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 import '../provider/selected_device_provider.dart';
 
@@ -137,7 +137,7 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
     Provider.of<SelectedDeviceProvider>(context, listen: false)
         .removeDevice(context)
         .then((_) =>
-            Provider.of<DeviceListProvider>(context, listen: false).refresh())
+            Provider.of<DeviceProvider>(context, listen: false).refresh())
         .catchError((error) {
       showErrorDialog(context, "There was an error while removing the device.");
     });

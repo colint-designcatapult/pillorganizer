@@ -1,5 +1,6 @@
 import 'package:app/navigation/tab_bar.dart';
 import 'package:app/navigation/tab_bar_item.dart';
+import 'package:app/provider/device_provider.dart';
 import 'package:app/screens/tab/account.dart';
 import 'package:app/screens/tab/home.dart';
 import 'package:app/screens/tab/my_devices.dart';
@@ -20,6 +21,8 @@ import '../provider/time_provider.dart';
 const Color backgroundColor = Color(0xFF206B8B);
 const Color activeColor = Color(0xFFBFD2DB);
 
+enum TabType { home, pills, devices, account }
+
 class TabNavigator extends StatefulWidget {
   const TabNavigator({Key? key}) : super(key: key);
 
@@ -28,155 +31,195 @@ class TabNavigator extends StatefulWidget {
 }
 
 class _TabNavigatorState extends State<TabNavigator> {
-  int _currentIndex = 0;
+  TabType _currentTab = TabType.home;
 
-  final List<Widget> _tabs = [
-    Builder(builder: (context) => const HomeScreen()),
-    Builder(builder: (context) => const PillsScreen()),
-    Builder(builder: (context) => const MyDevicesScreen()),
-    Builder(builder: (context) => const AccountScreen()),
-  ];
+  List<TabType> _getAvailableTabs(bool isOwner, bool hasDevice) {
+    if (!hasDevice) {
+      return [TabType.home, TabType.account];
+    } else if (isOwner) {
+      return [TabType.home, TabType.pills, TabType.devices, TabType.account];
+    } else {
+      return [TabType.home, TabType.devices, TabType.account];
+    }
+  }
+
+  int _getTabIndex(TabType tab, bool isOwner, bool hasDevice) {
+    final availableTabs = _getAvailableTabs(isOwner, hasDevice);
+    return availableTabs.indexOf(tab);
+  }
+
+  Widget _getTabWidget(TabType tab) {
+    switch (tab) {
+      case TabType.home:
+        return Builder(
+            key: const ValueKey('home'),
+            builder: (context) => const HomeScreen());
+      case TabType.pills:
+        return Builder(
+            key: const ValueKey('pills'),
+            builder: (context) => const PillsScreen());
+      case TabType.devices:
+        return Builder(
+            key: const ValueKey('devices'),
+            builder: (context) => const MyDevicesScreen());
+      case TabType.account:
+        return Builder(
+            key: const ValueKey('account'),
+            builder: (context) => const AccountScreen());
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      deviceRepo.deviceListProvider.refresh();
-    });
+    Provider.of<DeviceProvider>(context, listen: false).loadDevices();
   }
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider<ScrollProvider>(
-          create: (_) => ScrollProvider(),
-        ),
-        ChangeNotifierProxyProvider2<MinuteBasedTimeProvider,
-            SelectedDeviceProvider, DeviceStateProvider>(
-          create: (_) => DeviceStateProvider(),
-          update: (_, time, selected, old) =>
-              old!.update(time.value, selected.device),
-        ),
-        ChangeNotifierProxyProvider<DeviceStateProvider,
-            DeviceConnectionStatusProvider>(
-          create: (_) => DeviceConnectionStatusProvider(),
-          update: (_, state, old) => old!.update(state.value),
-          lazy: false,
-        ),
-        ChangeNotifierProxyProvider2<DeviceStateProvider,
-            DeviceConnectionStatusProvider, DeviceNoticeProvider>(
-          create: (_) => DeviceNoticeProvider(),
-          update: (_, state, status, old) =>
-              old!.update(state.value, status.value),
-        )
-      ],
-      child: Scaffold(
-        body: Stack(
-          children: [
-            _tabs[_currentIndex],
-            Positioned(
-              left: 20.w,
-              right: 20.w,
-              bottom: 24.h,
-              child: Consumer<SelectedDeviceProvider>(
-                builder: (context, selectedDeviceProvider, child) {
-                  DeviceUser? device = selectedDeviceProvider.device;
+    return Consumer<SelectedDeviceProvider>(
+      builder: (context, selectedDeviceProvider, child) {
+        final device = selectedDeviceProvider.device;
+        final bool isOwner = device?.owner ?? false;
+        final bool hasDevice = device != null;
+        final availableTabTypes = _getAvailableTabs(isOwner, hasDevice);
 
-                  return CustomTabBar(
-                    currentIndex: _currentIndex,
+        if (!availableTabTypes.contains(_currentTab)) {
+          _currentTab = TabType.home;
+        }
+
+        final currentIndex = _getTabIndex(_currentTab, isOwner, hasDevice);
+
+        return MultiProvider(
+          providers: [
+            ChangeNotifierProvider<ScrollProvider>(
+              create: (_) => ScrollProvider(),
+            ),
+            ChangeNotifierProxyProvider2<MinuteBasedTimeProvider,
+                SelectedDeviceProvider, DeviceStateProvider>(
+              create: (_) => DeviceStateProvider(),
+              update: (_, time, selected, old) =>
+                  old!.update(time.value, selected.device),
+            ),
+            ChangeNotifierProxyProvider<DeviceStateProvider,
+                DeviceConnectionStatusProvider>(
+              create: (_) => DeviceConnectionStatusProvider(),
+              update: (_, state, old) => old!.update(state.value),
+              lazy: false,
+            ),
+            ChangeNotifierProxyProvider2<DeviceStateProvider,
+                DeviceConnectionStatusProvider, DeviceNoticeProvider>(
+              create: (_) => DeviceNoticeProvider(),
+              update: (_, state, status, old) =>
+                  old!.update(state.value, status.value),
+            )
+          ],
+          child: Scaffold(
+            body: Stack(
+              children: [
+                _getTabWidget(_currentTab),
+                Positioned(
+                  left: 20.w,
+                  right: 20.w,
+                  bottom: 24.h,
+                  child: CustomTabBar(
+                    currentIndex: currentIndex,
                     onTabSelected: (int index) {
                       setState(() {
-                        _currentIndex = index;
+                        _currentTab = availableTabTypes[index];
                       });
                     },
-                    tabs: [
-                      Expanded(
-                        child: CustomTabBarItem(
-                          icon: SvgPicture.asset(
-                            'lib/assets/SVG/tabs/house-outline.svg',
-                            height: 24.h,
-                          ),
-                          selectedIcon: SvgPicture.asset(
-                            'lib/assets/SVG/tabs/house-filled.svg',
-                            height: 24.h,
-                          ),
-                          label: AppLocalizations.of(context)!.tabHome,
-                          isSelected: _currentIndex == 0,
-                          onTap: () {
-                            setState(() {
-                              _currentIndex = 0;
-                            });
-                          },
-                        ),
-                      ),
-                      if (device != null)
-                        Expanded(
-                          child: CustomTabBarItem(
-                            icon: SvgPicture.asset(
-                              'lib/assets/SVG/tabs/pill-outline.svg',
-                              height: 24.h,
+                    tabs: availableTabTypes.map((tab) {
+                      switch (tab) {
+                        case TabType.home:
+                          return Expanded(
+                            child: CustomTabBarItem(
+                              icon: SvgPicture.asset(
+                                'lib/assets/SVG/tabs/house-outline.svg',
+                                height: 24.h,
+                              ),
+                              selectedIcon: SvgPicture.asset(
+                                'lib/assets/SVG/tabs/house-filled.svg',
+                                height: 24.h,
+                              ),
+                              label: AppLocalizations.of(context)!.tabHome,
+                              isSelected: _currentTab == TabType.home,
+                              onTap: () {
+                                setState(() {
+                                  _currentTab = TabType.home;
+                                });
+                              },
                             ),
-                            selectedIcon: SvgPicture.asset(
-                              'lib/assets/SVG/tabs/pill-filled.svg',
-                              height: 24.h,
+                          );
+                        case TabType.pills:
+                          return Expanded(
+                            child: CustomTabBarItem(
+                              icon: SvgPicture.asset(
+                                'lib/assets/SVG/tabs/pill-outline.svg',
+                                height: 24.h,
+                              ),
+                              selectedIcon: SvgPicture.asset(
+                                'lib/assets/SVG/tabs/pill-filled.svg',
+                                height: 24.h,
+                              ),
+                              label: AppLocalizations.of(context)!.tabPills,
+                              isSelected: _currentTab == TabType.pills,
+                              onTap: () {
+                                setState(() {
+                                  _currentTab = TabType.pills;
+                                });
+                              },
                             ),
-                            label: AppLocalizations.of(context)!.tabPills,
-                            isSelected: _currentIndex == 1,
-                            onTap: () {
-                              setState(() {
-                                _currentIndex = 1;
-                              });
-                            },
-                          ),
-                        ),
-                      if (device != null)
-                        Expanded(
-                          child: CustomTabBarItem(
-                            icon: SvgPicture.asset(
-                              'lib/assets/SVG/tabs/settings-outline.svg',
-                              height: 24.h,
+                          );
+                        case TabType.devices:
+                          return Expanded(
+                            child: CustomTabBarItem(
+                              icon: SvgPicture.asset(
+                                'lib/assets/SVG/tabs/settings-outline.svg',
+                                height: 24.h,
+                              ),
+                              selectedIcon: SvgPicture.asset(
+                                'lib/assets/SVG/tabs/settings-filled.svg',
+                                height: 24.h,
+                              ),
+                              label: AppLocalizations.of(context)!.tabSettings,
+                              isSelected: _currentTab == TabType.devices,
+                              onTap: () {
+                                setState(() {
+                                  _currentTab = TabType.devices;
+                                });
+                              },
                             ),
-                            selectedIcon: SvgPicture.asset(
-                              'lib/assets/SVG/tabs/settings-filled.svg',
-                              height: 24.h,
+                          );
+                        case TabType.account:
+                          return Expanded(
+                            child: CustomTabBarItem(
+                              icon: SvgPicture.asset(
+                                'lib/assets/SVG/tabs/user-outline.svg',
+                                height: 24.h,
+                              ),
+                              selectedIcon: SvgPicture.asset(
+                                'lib/assets/SVG/tabs/user-filled.svg',
+                                height: 24.h,
+                              ),
+                              label: AppLocalizations.of(context)!.tabAccount,
+                              isSelected: _currentTab == TabType.account,
+                              onTap: () {
+                                setState(() {
+                                  _currentTab = TabType.account;
+                                });
+                              },
                             ),
-                            label: AppLocalizations.of(context)!.tabSettings,
-                            isSelected: _currentIndex == 2,
-                            onTap: () {
-                              setState(() {
-                                _currentIndex = 2;
-                              });
-                            },
-                          ),
-                        ),
-                      Expanded(
-                        child: CustomTabBarItem(
-                          icon: SvgPicture.asset(
-                            'lib/assets/SVG/tabs/user-outline.svg',
-                            height: 24.h,
-                          ),
-                          selectedIcon: SvgPicture.asset(
-                            'lib/assets/SVG/tabs/user-filled.svg',
-                            height: 24.h,
-                          ),
-                          label: AppLocalizations.of(context)!.tabAccount,
-                          isSelected: _currentIndex == 3,
-                          onTap: () {
-                            setState(() {
-                              _currentIndex = 3;
-                            });
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
+                          );
+                      }
+                    }).toList(),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

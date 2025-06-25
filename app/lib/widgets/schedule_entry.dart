@@ -1,4 +1,6 @@
+import 'package:app/api/device.dart';
 import 'package:app/api/schedule.dart';
+import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/schedule_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
@@ -22,17 +24,19 @@ const double _subtitleContentSpacing = 16.0;
 class ScheduleEntry extends StatefulWidget {
   final bool showRemovalSection;
   final bool showAddDeviceSection;
+  final DeviceUser? device;
   final bool isOwner;
 
   const ScheduleEntry({
     super.key,
     this.showRemovalSection = true,
     this.showAddDeviceSection = true,
+    this.device,
     this.isOwner = false,
   });
 
   @override
-  State<StatefulWidget> createState() => _ScheduleEntyState();
+  State<StatefulWidget> createState() => _ScheduleEntryState();
 }
 
 void deleteDevice(context) {
@@ -42,19 +46,30 @@ void deleteDevice(context) {
   );
 }
 
-class _ScheduleEntyState extends State<ScheduleEntry> {
+class _ScheduleEntryState extends State<ScheduleEntry> {
   @override
   Widget build(BuildContext context) {
+    final targetDevice = widget.device ??
+        Provider.of<SelectedDeviceProvider>(context, listen: false).device;
+
+    if (targetDevice == null) {
+      return const SizedBox.shrink();
+    }
+
     return Consumer<ScheduleProvider>(
-      builder: (context, schedProv, _) {
+      builder: (context, scheduleProvider, _) {
+        scheduleProvider.load(targetDevice.deviceID);
+        final deviceSchedule =
+            scheduleProvider.getScheduleForDevice(targetDevice.deviceID);
+
         return ScreenUtilWrapper(
           child: Column(
             mainAxisSize: MainAxisSize.max,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTimeSetupSection(schedProv),
+              _buildTimeSetupSection(deviceSchedule, targetDevice),
               SizedBox(height: _sectionSpacing.h),
-              _buildTimezoneSection(),
+              _buildTimezoneSection(targetDevice),
               if (widget.showRemovalSection) ...[
                 SizedBox(height: _sectionSpacing.h),
                 const RemovalSection(),
@@ -71,7 +86,8 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
     );
   }
 
-  Widget _buildTimeSetupSection(ScheduleProvider schedProv) {
+  Widget _buildTimeSetupSection(
+      SimpleSchedule? deviceSchedule, DeviceUser targetDevice) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -88,11 +104,13 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
         Row(
           children: [
             Expanded(
-              child: _buildTimeBlock(DayPeriod.am, schedProv.schedule?.am),
+              child: _buildTimeBlock(
+                  DayPeriod.am, deviceSchedule?.am, targetDevice),
             ),
             SizedBox(width: 20.w),
             Expanded(
-              child: _buildTimeBlock(DayPeriod.pm, schedProv.schedule?.pm),
+              child: _buildTimeBlock(
+                  DayPeriod.pm, deviceSchedule?.pm, targetDevice),
             ),
           ],
         ),
@@ -100,7 +118,7 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
     );
   }
 
-  Widget _buildTimezoneSection() {
+  Widget _buildTimezoneSection(DeviceUser targetDevice) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -114,12 +132,13 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
           style: Theme.of(context).textTheme.bodySmall,
         ),
         SizedBox(height: _subtitleContentSpacing.h),
-        TimeZoneSelectionWidget(isOwner: widget.isOwner),
+        TimeZoneSelectionWidget(device: targetDevice, isOwner: widget.isOwner),
       ],
     );
   }
 
-  Widget _buildTimeBlock(DayPeriod dayPeriod, DispenseTime? entry) {
+  Widget _buildTimeBlock(
+      DayPeriod dayPeriod, DispenseTime? entry, DeviceUser device) {
     return GestureDetector(
         onTap: () {
           if (!widget.isOwner) {
@@ -133,7 +152,7 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
           ).then((value) {
             if (value != null) {
               Provider.of<ScheduleProvider>(context, listen: false)
-                  .updateTime(dayPeriod, value);
+                  .updateTime(dayPeriod, value, device.deviceID);
             }
           });
         },
@@ -211,9 +230,11 @@ class _ScheduleEntyState extends State<ScheduleEntry> {
 }
 
 class TimeZoneSelectionWidget extends StatefulWidget {
+  final DeviceUser device;
   final bool isOwner;
 
-  const TimeZoneSelectionWidget({super.key, required this.isOwner});
+  const TimeZoneSelectionWidget(
+      {super.key, required this.device, required this.isOwner});
 
   @override
   _TimeZoneSelectionWidgetState createState() =>
@@ -239,9 +260,24 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
     });
   }
 
+  Future<void> _updateDeviceTimezone(tz.Location location) async {
+    final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
+    await deviceProvider.updateDeviceTimeZone(widget.device.deviceID, location);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Consumer<SelectedDeviceProvider>(builder: (context, deviceProv, _) {
+    return Consumer<DeviceProvider>(builder: (context, deviceProvider, _) {
+      DeviceUser? currentDevice;
+      if (deviceProvider.devices != null) {
+        currentDevice = deviceProvider.devices!.firstWhere(
+          (device) => device.deviceID == widget.device.deviceID,
+          orElse: () => widget.device,
+        );
+      } else {
+        currentDevice = widget.device;
+      }
+
       return Column(
         children: [
           Row(
@@ -275,7 +311,7 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
                     setState(() {
                       selectedButtonIndex = newSelection.first;
                       if (selectedButtonIndex == 1) {
-                        deviceProv.updateTimeZone(phoneLocation);
+                        _updateDeviceTimezone(phoneLocation);
                       }
                     });
                   },
@@ -308,7 +344,7 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             child: selectedButtonIndex == 0
-                ? _buildManualTimezoneSection(deviceProv, widget.isOwner)
+                ? _buildManualTimezoneSection(currentDevice, widget.isOwner)
                 : _buildAutomaticTimezoneSection(),
           ),
         ],
@@ -316,8 +352,7 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
     });
   }
 
-  Widget _buildManualTimezoneSection(
-      SelectedDeviceProvider deviceProv, bool isOwner) {
+  Widget _buildManualTimezoneSection(DeviceUser currentDevice, bool isOwner) {
     return Column(
       key: const ValueKey('manual'),
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,7 +372,7 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
           ),
           child: ListTile(
             title: Text(
-              _buildTimeZoneName(deviceProv.device?.timezone),
+              _buildTimeZoneName(currentDevice.timezone),
               style: Theme.of(context).textTheme.displaySmall,
             ),
             leading: SvgPicture.asset(
@@ -345,7 +380,7 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
               width: 24.w,
               height: 24.h,
             ),
-            trailing: Icon(Icons.arrow_right, size: 24.h),
+            trailing: isOwner ? Icon(Icons.arrow_drop_down, size: 24.h) : null,
             onTap: () {
               if (!isOwner) {
                 return;
@@ -355,7 +390,7 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
                   .push(TimeZoneSelectionModal.route(context))
                   .then((value) {
                 if (value != null) {
-                  deviceProv.updateTimeZone(value);
+                  _updateDeviceTimezone(value);
                 }
               });
             },

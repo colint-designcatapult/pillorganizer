@@ -1,4 +1,4 @@
-import 'package:app/api/device.dart';
+import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/widgets/multiple_devices.dart';
 import 'package:app/widgets/single_device.dart';
@@ -15,13 +15,11 @@ class MyDevicesScreen extends StatefulWidget {
 }
 
 class _MyDevicesScreenState extends State<MyDevicesScreen> {
-  int selectedButtonIndex = 0;
-
   @override
   Widget build(BuildContext context) {
-    return Consumer2<SelectedDeviceProvider, DeviceListProvider>(
-      builder: (context, prov, deviceListProv, _) {
-        final deviceCount = deviceListProv.value?.length ?? 0;
+    return Consumer2<SelectedDeviceProvider, DeviceProvider>(
+      builder: (context, prov, deviceProvider, _) {
+        final deviceCount = deviceProvider.devices?.length ?? 0;
 
         return Scaffold(
           backgroundColor: const Color(0xFFBFD2DB),
@@ -47,19 +45,13 @@ class _MyDevicesScreenState extends State<MyDevicesScreen> {
                     Flexible(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0).w,
-                        child: deviceListProv.loading
+                        child: deviceProvider.isLoading
                             ? const Center(
                                 child: CircularProgressIndicator(),
                               )
                             : deviceCount > 1
                                 ? MultipleDevices(
-                                    devices: deviceListProv.value!,
-                                    selectedButtonIndex: selectedButtonIndex,
-                                    onSelectionChanged: (index) {
-                                      setState(() {
-                                        selectedButtonIndex = index;
-                                      });
-                                    },
+                                    devices: deviceProvider.devices!,
                                   )
                                 : SingleDevice(
                                     showAddDeviceSection: deviceCount == 1,

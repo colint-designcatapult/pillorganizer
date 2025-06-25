@@ -4,17 +4,14 @@ import 'package:app/api/schedule.dart';
 import 'package:flutter/material.dart';
 
 class ScheduleProvider with ChangeNotifier {
-  SimpleSchedule? get schedule => _schedule;
-  SimpleSchedule? _schedule;
-  Future<SimpleSchedule?>? get future => _future;
-  Future<SimpleSchedule?>? _future;
-  int? deviceID;
-  bool isUpdatedTimeCalled = false;
+  final Map<int, SimpleSchedule> _schedules = {};
+  final Map<int, Future<SimpleSchedule?>> _futures = {};
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
+  bool _isLoading = false;
+  bool _isUpdatingSchedule = false;
+
+  bool get isLoading => _isLoading;
+  bool get isUpdatingSchedule => _isUpdatingSchedule;
 
   final ScheduleRepository repo = ScheduleRepository(client: client);
 
@@ -22,13 +19,14 @@ class ScheduleProvider with ChangeNotifier {
     if (selected != null) {
       load(selected.deviceID);
     }
-    isUpdatedTimeCalled = false;
     return this;
   }
 
   ScheduleProvider(
       {SimpleSchedule? schedule, DeviceUser? selectedDevice, int? deviceID}) {
-    _schedule = schedule;
+    if (schedule != null && deviceID != null) {
+      _schedules[deviceID] = schedule;
+    }
     if (selectedDevice != null) {
       load(selectedDevice.deviceID);
     } else if (deviceID != null) {
@@ -36,34 +34,59 @@ class ScheduleProvider with ChangeNotifier {
     }
   }
 
-  Future<SimpleSchedule?> load(int deviceID) {
-    this.deviceID = deviceID;
-    var resp = repo.getDispenseTimes(deviceID).then((value) {
-      _schedule = value;
-      notifyListeners();
-      return _schedule;
-    });
-    _future = resp;
+  Future<SimpleSchedule?> load(int deviceID) async {
+    if (_schedules.containsKey(deviceID)) {
+      return _schedules[deviceID];
+    }
+
+    _isLoading = true;
     notifyListeners();
-    return resp;
+
+    try {
+      final value = await repo.getDispenseTimes(deviceID);
+      _schedules[deviceID] = value;
+      _futures[deviceID] = Future.value(value);
+      return value;
+    } catch (error) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
-  Future<SimpleSchedule?> updateTime(DayPeriod period, TimeOfDay tod) {
-    _schedule ??= const SimpleSchedule();
+  Future<SimpleSchedule?> updateTime(
+      DayPeriod period, TimeOfDay tod, int deviceID) async {
+    _isUpdatingSchedule = true;
+    notifyListeners();
+
+    SimpleSchedule currentSchedule =
+        _schedules[deviceID] ?? const SimpleSchedule();
+
     if (period == DayPeriod.am) {
-      _schedule = _schedule?.copyWith(
-          am: _schedule?.am?.copyWith(time: tod) ??
+      currentSchedule = currentSchedule.copyWith(
+          am: currentSchedule.am?.copyWith(time: tod) ??
               DispenseTime(time: tod, period: DayPeriod.am));
     } else if (period == DayPeriod.pm) {
-      _schedule = _schedule?.copyWith(
-          pm: _schedule?.pm?.copyWith(time: tod) ??
+      currentSchedule = currentSchedule.copyWith(
+          pm: currentSchedule.pm?.copyWith(time: tod) ??
               DispenseTime(time: tod, period: DayPeriod.pm));
     }
-    return repo.updateDispenseTimes(deviceID!, _schedule!).then((value) {
-      _schedule = value;
-      isUpdatedTimeCalled = true;
-      notifyListeners();
+
+    try {
+      final value = await repo.updateDispenseTimes(deviceID, currentSchedule);
+      _schedules[deviceID] = value;
+      _futures[deviceID] = Future.value(value);
       return value;
-    });
+    } catch (error) {
+      rethrow;
+    } finally {
+      _isUpdatingSchedule = false;
+      notifyListeners();
+    }
+  }
+
+  SimpleSchedule? getScheduleForDevice(int deviceID) {
+    return _schedules[deviceID];
   }
 }

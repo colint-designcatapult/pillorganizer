@@ -4,10 +4,10 @@ import 'package:app/provider/schedule_provider.dart';
 import 'package:app/widgets/medication_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 
 class MedicationCardEntry extends StatefulWidget {
   const MedicationCardEntry({
@@ -162,13 +162,18 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
             SizedBox(height: 12.h),
             Consumer<ScheduleProvider>(
                 builder: (context, scheduleProv, snapshot) {
+              final deviceID = provider.state.deviceID;
+              scheduleProv.load(deviceID);
+              final deviceSchedule =
+                  scheduleProv.getScheduleForDevice(deviceID);
+
               return Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  if (scheduleProv.schedule == null) ...[
+                  if (deviceSchedule == null) ...[
                     const CircularProgressIndicator()
                   ] else ...[
-                    ..._buildForSchedule(context, scheduleProv.schedule!,
+                    ..._buildForSchedule(context, deviceSchedule,
                         provider.state.assignedDispenseTimes, provider)
                   ]
                 ],

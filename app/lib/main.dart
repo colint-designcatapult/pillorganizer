@@ -1,8 +1,8 @@
-import 'package:app/api/device.dart';
 import 'package:app/navigation/provision_navigator.dart';
 import 'package:app/navigation/tab_navigator.dart';
 import 'package:app/provider/ble_provider.dart';
 import 'package:app/provider/caregiver_provider.dart';
+import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/medication_provider.dart';
 import 'package:app/provider/provision_provider.dart';
 import 'package:app/provider/time_provider.dart';
@@ -79,12 +79,12 @@ class MyApp extends StatelessWidget {
           ),
           ChangeNotifierProvider<UserRegistrationProvider>(
               create: (_) => UserRegistrationProvider()),
-          ChangeNotifierProvider<DeviceListProvider>.value(
-              value: deviceRepo.deviceListProvider),
-          ChangeNotifierProxyProvider<DeviceListProvider,
-              SelectedDeviceProvider>(
+          ChangeNotifierProvider<DeviceProvider>(
+              create: (_) => DeviceProvider()),
+          ChangeNotifierProxyProvider<DeviceProvider, SelectedDeviceProvider>(
             create: (context) => SelectedDeviceProvider(),
-            update: (context, list, prov) => prov!.update(list.value),
+            update: (context, deviceProv, selectedProv) =>
+                selectedProv!.update(deviceProv.devices),
           ),
           ChangeNotifierProxyProvider<SelectedDeviceProvider,
                   MedicationsProvider>(
@@ -94,7 +94,8 @@ class MyApp extends StatelessWidget {
               update: (context, device, old) => old!.update(device.device)),
           ChangeNotifierProxyProvider<SelectedDeviceProvider, ScheduleProvider>(
               create: (context) => ScheduleProvider(),
-              update: (context, dev, prov) => prov!.update(dev.device)),
+              update: (context, selectedDevice, prov) =>
+                  prov!.update(selectedDevice.device)),
           ChangeNotifierProvider<MinuteBasedTimeProvider>(
             create: (context) => MinuteBasedTimeProvider(),
           ),

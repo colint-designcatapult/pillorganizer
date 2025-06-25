@@ -1,3 +1,4 @@
+import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
@@ -104,8 +105,13 @@ class _NotificationsSettingsState extends State<NotificationsSettings>
   }
 
   void updateNotification(bool value) {
-    Provider.of<SelectedDeviceProvider>(context, listen: false)
-        .updateNotifications(value);
+    final selectedDevice =
+        Provider.of<SelectedDeviceProvider>(context, listen: false).device;
+    if (selectedDevice != null) {
+      final deviceProvider =
+          Provider.of<DeviceProvider>(context, listen: false);
+      deviceProvider.updateDeviceNotifications(selectedDevice.deviceID, value);
+    }
 
     setState(() {
       _notificationPreference = Future.value(value);

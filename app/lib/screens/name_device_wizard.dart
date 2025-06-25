@@ -1,4 +1,4 @@
-import 'package:app/api/device.dart';
+import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/schedule_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/service/provisioning_service.dart';
@@ -67,8 +67,10 @@ class _NameDeviceWizard extends State<NameDeviceWizard> {
         Provider.of<SelectedDeviceProvider>(context, listen: false);
 
     if (deviceName!.isNotEmpty) {
-      await selectedDeviceProvider.updateName(deviceName!).then((value) =>
-          Provider.of<DeviceListProvider>(context, listen: false).refresh());
+      final deviceProvider =
+          Provider.of<DeviceProvider>(context, listen: false);
+      await deviceProvider.updateDeviceName(
+          selectedDeviceProvider.device!.deviceID, deviceName!);
     }
 
     Navigator.of(context, rootNavigator: true)

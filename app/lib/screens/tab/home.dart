@@ -63,12 +63,12 @@ class HomeScreen extends StatelessWidget {
                           (BuildContext context, bool innerBoxIsScrolled) {
                         return <Widget>[
                           SliverAppBar(
-                            toolbarHeight: (hasNotice ? 250 : 130).h,
+                            toolbarHeight: (hasNotice ? 280 : 130).h,
                             backgroundColor: Colors.transparent,
                             flexibleSpace: FlexibleSpaceBar(
                               expandedTitleScale: 1.0,
                               titlePadding: EdgeInsets.symmetric(
-                                  horizontal: 10.0.w, vertical: 00.0.h),
+                                  horizontal: 20.0.w, vertical: 0.0.h),
                               title: Column(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
@@ -119,7 +119,7 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
           child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
@@ -215,7 +215,7 @@ class HomeScreen extends StatelessWidget {
                       .copyWith(fontWeight: FontWeight.w600),
                 )),
             Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 child: OutlinedButton(
                   onPressed: () => handleJoinExistingDevice(),
                   style: OutlinedButton.styleFrom(
@@ -224,9 +224,8 @@ class HomeScreen extends StatelessWidget {
                     ),
                     backgroundColor: const Color(0xff206B8B),
                     minimumSize: Size(double.infinity, 48.h),
-                    // Make it full width
                     side: const BorderSide(
-                      color: Color(0xff206B8B), // Change border color
+                      color: Color(0xff206B8B),
                     ),
                   ),
                   child: Text(

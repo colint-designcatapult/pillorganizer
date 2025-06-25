@@ -1,6 +1,7 @@
 import 'package:app/api/device.dart';
 import 'package:app/navigation/provision_navigator.dart';
 import 'package:app/provider/ble_provider.dart';
+import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/provisioning/join_device_screen.dart';
 import 'package:flutter/material.dart';
@@ -81,7 +82,7 @@ class _SwitchDeviceState extends State<SwitchDevice> {
   }
 
   void _showQuickSwitchDialog() {
-    var devices = Provider.of<DeviceListProvider>(context, listen: false).value;
+    var devices = Provider.of<DeviceProvider>(context, listen: false).devices;
 
     showDialog(
       context: context,

@@ -1,4 +1,5 @@
 import 'package:app/provider/authentication_provider.dart';
+import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/medication_provider.dart';
 import 'package:app/provider/new_medication_provider.dart';
 import 'package:app/provider/schedule_provider.dart';
@@ -42,13 +43,12 @@ class PostSetupWizard extends StatelessWidget {
       }
     }
 
-    return Consumer2<ScheduleProvider, SelectedDeviceProvider>(
-      builder: (context, scheduleProvider, selectedDeviceProvider, child) {
-        bool isUpdatedTimeCalled = scheduleProvider.isUpdatedTimeCalled;
-        bool isUpdatedTimeZoneCalled =
-            selectedDeviceProvider.isUpdatedTimeZoneCalled;
+    return Consumer2<ScheduleProvider, DeviceProvider>(
+      builder: (context, scheduleProvider, deviceProvider, child) {
+        bool isUpdatingSchedule = scheduleProvider.isUpdatingSchedule;
+        bool isUpdatingTimezone = deviceProvider.isUpdatingTimezone;
 
-        bool canGoNext = isUpdatedTimeCalled || isUpdatedTimeZoneCalled;
+        bool canGoNext = !isUpdatingSchedule && !isUpdatingTimezone;
 
         return WizardStep(
             provisionningProgress: provisionningProgress,
@@ -71,6 +71,7 @@ class PostSetupWizard extends StatelessWidget {
                       ScheduleEntry(
                         showRemovalSection: false,
                         showAddDeviceSection: false,
+                        isOwner: true,
                       ),
                       SizedBox(height: 72),
                     ],

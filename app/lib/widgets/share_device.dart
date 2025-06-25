@@ -27,6 +27,7 @@ class _ShareDeviceState extends State<ShareDevice> {
   @override
   void initState() {
     super.initState();
+    _fetchShareCodes();
   }
 
   @override
@@ -34,6 +35,14 @@ class _ShareDeviceState extends State<ShareDevice> {
     _countdownTimer?.cancel();
     _countdownNotifier.dispose();
     super.dispose();
+  }
+
+  void _fetchShareCodes() {
+    if (widget.device != null) {
+      final caregiverProvider =
+          Provider.of<CaregiverProvider>(context, listen: false);
+      caregiverProvider.fetchShareCodesForDevices([widget.device!.deviceID]);
+    }
   }
 
   void _startCountdownTimer() {

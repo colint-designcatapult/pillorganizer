@@ -27,11 +27,25 @@ class DosePeriodArea extends StatelessWidget {
       selector: (_, prov) => prov.value?.dosePeriods,
       builder: (_, list, __) {
         final now = DateTime.now();
+        final bool isOwner =
+            Provider.of<SelectedDeviceProvider>(context, listen: false)
+                    .device
+                    ?.owner ??
+                false;
+
         List<DosePeriod>? reversedList = list
-            ?.where((element) =>
-                element.status != BinStatus.DISABLED &&
-                element.scheduledTime != null &&
-                element.scheduledTime!.isAfter(now))
+            ?.where((element) {
+              if (element.status == BinStatus.DISABLED ||
+                  element.scheduledTime == null) {
+                return false;
+              }
+
+              if (isOwner) {
+                return element.scheduledTime!.isAfter(now);
+              } else {
+                return true;
+              }
+            })
             .toList()
             .reversed
             .toList();
@@ -134,9 +148,10 @@ class DosePeriodArea extends StatelessWidget {
 
   Widget _buildMed(context, DosePeriod period, ScheduledMedication? med,
       DeviceNoticeProvider deviceNoticeProv) {
-    final deviceID = Provider.of<SelectedDeviceProvider>(context, listen: false)
-        .device!
-        .deviceID;
+    final selectedDevice =
+        Provider.of<SelectedDeviceProvider>(context, listen: false);
+    final deviceID = selectedDevice.device!.deviceID;
+    final bool isOwner = selectedDevice.device?.owner ?? false;
 
     void onComplete() {
       Provider.of<MedicationsProvider>(context, listen: false).refresh();
@@ -144,28 +159,31 @@ class DosePeriodArea extends StatelessWidget {
 
     if (med != null) {
       return GestureDetector(
-        onTap: () {
-          showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: const Color(0xFFFBFCFF),
-              elevation: 0,
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width,
-              ),
-              builder: (context) {
-                return ChangeNotifierProvider<NewMedicationProvider>(
-                    create: (context) => NewMedicationProvider.fromExisting(
-                        deviceID, med, onComplete),
-                    child: MedicationModal(
-                        medicationID: med.id,
-                        onBack: () {
-                          Navigator.of(context).pop();
-                        },
-                        onNext: true,
-                        child: const MedicationCardEntry()));
-              });
-        },
+        onTap: isOwner
+            ? () {
+                showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: const Color(0xFFFBFCFF),
+                    elevation: 0,
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width,
+                    ),
+                    builder: (context) {
+                      return ChangeNotifierProvider<NewMedicationProvider>(
+                          create: (context) =>
+                              NewMedicationProvider.fromExisting(
+                                  deviceID, med, onComplete),
+                          child: MedicationModal(
+                              medicationID: med.id,
+                              onBack: () {
+                                Navigator.of(context).pop();
+                              },
+                              onNext: true,
+                              child: const MedicationCardEntry()));
+                    });
+              }
+            : null,
         child: Padding(
             padding: EdgeInsets.only(bottom: 12.h),
             child: Container(
@@ -211,15 +229,16 @@ class DosePeriodArea extends StatelessWidget {
                     CircularBinStatusIndicator(
                         status: period.status,
                         deviceStatus: deviceNoticeProv.value),
-                    SizedBox(width: 2.w),
-                    SizedBox(
-                      width: 20.w,
-                    ),
-                    SvgPicture.asset(
-                      'lib/assets/SVG/pencilLight.svg',
-                      width: 24.w,
-                      height: 24.h,
-                    ),
+                    if (isOwner) ...[
+                      SizedBox(
+                        width: 22.w,
+                      ),
+                      SvgPicture.asset(
+                        'lib/assets/SVG/pencilLight.svg',
+                        width: 24.w,
+                        height: 24.h,
+                      ),
+                    ]
                   ],
                 ))),
       );
