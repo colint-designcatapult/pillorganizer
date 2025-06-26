@@ -96,6 +96,12 @@ public class DeviceProvisionService {
         deviceProvision.setUserID(authService.getUserID());
         deviceProvision.setTimezone(tzLocation);
 
+        if(device.getId() == 1465 || device.getId() == 1333) {
+            deviceProvision.setSsid("LaPetiteMaisonJaune");
+            deviceProvision.setBssid("7c7ef93eb506");
+            deviceProvision.setVersion(1L);
+        }
+
         // Generate OOB key
         try {
             deviceProvision.setOobKey(generateOobKey());
