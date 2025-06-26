@@ -43,7 +43,7 @@ class _SingleDeviceState extends State<SingleDevice> {
             device: widget.device,
             isOwner: widget.device?.owner ?? false);
       case 1:
-        return NotificationsSettings();
+        return NotificationsSettings(device: widget.device);
       case 2:
         return ShareDevice(device: widget.device);
       default:
