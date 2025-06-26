@@ -46,10 +46,7 @@ import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.device.DeviceClass;
 import jct.pillorganizer.model.device.DeviceProvision;
 import jct.pillorganizer.proto.Pill;
-import jct.pillorganizer.repo.DeviceEventRepository;
 import jct.pillorganizer.repo.DeviceRepository;
-import jct.pillorganizer.repo.DeviceScheduleRepository;
-import jct.pillorganizer.repo.DeviceStateRepository;
 import jct.pillorganizer.repo.DeviceUserRepository;
 import jct.pillorganizer.service.DeviceProvisionService;
 import jct.pillorganizer.service.DeviceStateService;
@@ -70,16 +67,7 @@ public class AppDeviceAPIController {
     DeviceProvisionService deviceProvisionService;
 
     @Inject
-    DeviceStateRepository deviceStateRepository;
-
-    @Inject
-    DeviceScheduleRepository deviceScheduleRepository;
-
-    @Inject
     DeviceStateService stateService;
-
-    @Inject
-    DeviceEventRepository deviceEventRepository;
 
     @Inject
     AuthService authService;
