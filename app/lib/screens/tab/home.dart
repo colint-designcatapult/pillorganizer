@@ -67,14 +67,14 @@ class HomeScreen extends StatelessWidget {
                             backgroundColor: Colors.transparent,
                             flexibleSpace: FlexibleSpaceBar(
                               expandedTitleScale: 1.0,
-                              titlePadding: EdgeInsets.symmetric(
-                                  horizontal: 20.0.w, vertical: 0.0.h),
+                              titlePadding: const EdgeInsets.symmetric(
+                                  horizontal: 0, vertical: 0),
                               title: Column(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   Padding(
                                     padding: EdgeInsets.symmetric(
-                                        horizontal: 12.w, vertical: 12.h),
+                                        horizontal: 24.w, vertical: 12.h),
                                     child: DeviceInfoHeader(
                                         deviceOffline:
                                             deviceNoticeProvider.value ==
@@ -119,12 +119,12 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
           child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.only(bottom: 20.h),
+                  padding: EdgeInsets.symmetric(vertical: 24.h),
                   child: Consumer<MinuteBasedTimeProvider>(
                     builder: (context, minuteProvider, child) {
                       return Text(

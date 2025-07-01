@@ -1,4 +1,6 @@
+import 'package:app/api/device.dart';
 import 'package:app/provider/device_provider.dart';
+import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/service/error_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -6,10 +8,10 @@ import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
-import '../provider/selected_device_provider.dart';
-
 class RemoveDeviceDialog extends StatefulWidget {
-  const RemoveDeviceDialog({super.key});
+  final DeviceUser? device;
+
+  const RemoveDeviceDialog({super.key, this.device});
 
   @override
   State<StatefulWidget> createState() => _RemoveDeviceDialog();
@@ -133,13 +135,43 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
     );
   }
 
-  void _onDelete() {
-    Provider.of<SelectedDeviceProvider>(context, listen: false)
-        .removeDevice(context)
-        .then((_) =>
-            Provider.of<DeviceProvider>(context, listen: false).refresh())
-        .catchError((error) {
-      showErrorDialog(context, "There was an error while removing the device.");
-    });
+  void _onDelete() async {
+    try {
+      final selectedDeviceProvider =
+          Provider.of<SelectedDeviceProvider>(context, listen: false);
+      final deviceProvider =
+          Provider.of<DeviceProvider>(context, listen: false);
+
+      final currentSelectedDevice = selectedDeviceProvider.device;
+      final deviceToRemove = widget.device ?? currentSelectedDevice;
+
+      if (deviceToRemove == null) return;
+
+      final isRemovingSelectedDevice =
+          currentSelectedDevice?.deviceID == deviceToRemove.deviceID;
+
+      await deviceProvider.removeDevice(deviceToRemove.deviceID);
+
+      if (isRemovingSelectedDevice) {
+        if (deviceProvider.devices != null &&
+            deviceProvider.devices!.isNotEmpty) {
+          selectedDeviceProvider.selectDevice(deviceProvider.devices!.first);
+        } else {
+          selectedDeviceProvider.update(null);
+        }
+      }
+
+      if (context.mounted) {
+        Navigator.of(context).pop();
+        if (isRemovingSelectedDevice) {
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil('/index', (route) => false);
+        }
+      }
+    } catch (error) {
+      if (context.mounted) {
+        showErrorDialog(context, error.toString());
+      }
+    }
   }
 }

@@ -3,9 +3,9 @@ import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/modals/add_new_pills_modal.dart';
 import 'package:app/widgets/medication_card.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 class PillsScreen extends StatefulWidget {
   const PillsScreen({super.key});

@@ -43,7 +43,7 @@ class DeviceProvider with ChangeNotifier {
     return client.listMyDevices().then((res) => res
         .map((e) => DeviceUser.fromDTO(dto: e))
         .sortedBy<num>((element) => element.id)
-        .toList(growable: false));
+        .toList());
   }
 
   Future<DeviceUser> updateDeviceName(int deviceID, String newName) async {

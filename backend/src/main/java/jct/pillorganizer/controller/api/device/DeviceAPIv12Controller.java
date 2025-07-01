@@ -11,7 +11,6 @@ import jct.pillorganizer.auth.DeviceAuthService;
 import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.proto.Pill;
 import jct.pillorganizer.service.DeviceProvisionService;
-import jct.pillorganizer.service.DeviceService;
 import jct.pillorganizer.service.DeviceStateService;
 import lombok.extern.flogger.Flogger;
 
@@ -25,9 +24,6 @@ public class DeviceAPIv12Controller {
 
         @Inject
         DeviceStateService deviceStateService;
-
-        @Inject
-        DeviceService deviceService;
 
         @Inject
         DeviceAuthService deviceAuthService;

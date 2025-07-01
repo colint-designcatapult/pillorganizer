@@ -254,7 +254,9 @@ class BleScanManager(boss: Boss) : ActionManager(boss) {
       override fun onPeripheralFound(device: BluetoothDevice?, scanResult: ScanResult?) {
         device ?: return
         scanResult ?: return
-        boss.devices.put(device.name, BleConnector(device, scanResult))
+        device.name?.let { deviceName ->
+          boss.devices.put(deviceName, BleConnector(device, scanResult))
+        }
       }
 
       override fun scanCompleted() {

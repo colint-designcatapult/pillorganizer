@@ -57,11 +57,14 @@ class DosePeriodArea extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 40).h,
                   child: Center(child: _buildNotice(context))));
         } else {
-          return SliverList.builder(
-            itemBuilder: (BuildContext context, int index) {
-              return _buildPanel(context, reversedList?[index]);
-            },
-            itemCount: reversedList?.length ?? 0,
+          return SliverPadding(
+            padding: EdgeInsets.only(bottom: 90.h),
+            sliver: SliverList.builder(
+              itemBuilder: (BuildContext context, int index) {
+                return _buildPanel(context, reversedList?[index]);
+              },
+              itemCount: reversedList?.length ?? 0,
+            ),
           );
         }
       },

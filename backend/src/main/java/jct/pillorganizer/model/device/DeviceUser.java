@@ -9,15 +9,15 @@ import javax.persistence.*;
  * Relates a `BaseUser` to a `Device`. The role the user has to a device is recorded here, whether they are the
  * designated primary user of the device, etc. The notification token for push notification delivery is also stored
  * here. Thus, push notification delivery is routed on a per-device per-user basis.
+ * 
+ * Note: This entity has a partial unique constraint created via database migration:
+ * UNIQUE INDEX device_user_unique_not_deleted ON device_user (device_id, user_id) WHERE deleted = false
+ * This allows the same device_id + user_id combination to exist multiple times as long as only one has deleted = false.
+ * 
  * TODO: move notification token to another entity to resolve notification counter-intuitiveness
  */
 @Entity(name = "device_user")
-@Table(
-        name = "device_user",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "device_user_unique", columnNames = { "device_id", "user_id" })
-        }
-)
+@Table(name = "device_user")
 @Getter
 @Setter
 public class DeviceUser {

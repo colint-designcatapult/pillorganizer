@@ -72,7 +72,9 @@ class _TabNavigatorState extends State<TabNavigator> {
   @override
   void initState() {
     super.initState();
-    Provider.of<DeviceProvider>(context, listen: false).loadDevices();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<DeviceProvider>(context, listen: false).loadDevices();
+    });
   }
 
   @override
