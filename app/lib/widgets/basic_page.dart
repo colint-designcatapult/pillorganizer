@@ -312,7 +312,7 @@ class _SixDigitCodeInputState extends State<SixDigitCodeInput> {
       children: List.generate(
         6,
         (index) => SizedBox(
-          width: 50,
+          width: 46.w,
           child: TextField(
             controller: _controllers[index],
             onChanged: (value) {
@@ -333,8 +333,11 @@ class _SixDigitCodeInputState extends State<SixDigitCodeInput> {
             maxLength: 1,
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-                fontWeight: FontWeight.w500, height: 1.25, fontSize: 36),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  height: 1.25,
+                  fontSize: 36.sp,
+                ),
             decoration: InputDecoration(
               filled: true,
               fillColor: widget.inError
@@ -343,6 +346,10 @@ class _SixDigitCodeInputState extends State<SixDigitCodeInput> {
                       ? const Color(0xFFF1F5F6)
                       : Colors.transparent,
               // Transparent when empty and no error
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 9.w,
+                vertical: 16.h,
+              ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: widget.inError
