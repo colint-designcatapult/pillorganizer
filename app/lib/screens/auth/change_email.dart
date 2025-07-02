@@ -2,7 +2,6 @@ import 'package:app/provider/authentication_provider.dart';
 import 'package:app/service/error_handler.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -243,11 +242,9 @@ class _ChangeEmailModalState extends State<ChangeEmailModal> {
     } else {
       _changeEmail(authProv, currentEmail!, newEmail!).then((value) {
         if (value) {
-          SchedulerBinding.instance.addPostFrameCallback((_) {
-            showErrorDialog(
-                    context, AppLocalizations.of(context)!.emailChangedSuccess)
-                .then((value) => Navigator.pop(context));
-          });
+          showErrorDialog(
+                  context, AppLocalizations.of(context)!.emailChangedSuccess)
+              .then((value) => Navigator.pop(context));
         }
       }).catchError((err) {
         passwordHandleError(context, err);
