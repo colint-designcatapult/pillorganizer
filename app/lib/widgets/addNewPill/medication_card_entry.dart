@@ -47,24 +47,38 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
     );
   }
 
-  List<Widget> _buildForSchedule(context, SimpleSchedule sched,
-      Set<int>? checked, NewMedicationProvider provider) {
-    return [
-      if (sched.am != null)
-        Expanded(
-            child: _buildDose(context, sched.am!, checked, provider,
-                'lib/assets/SVG/sun.svg')),
-      if (sched.pm != null && sched.pm != null)
-        SizedBox(
-          width: 26.w,
+  Widget _buildForSchedule(context, SimpleSchedule sched, Set<int>? checked,
+      NewMedicationProvider provider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            if (sched.am != null)
+              Expanded(
+                  child: _buildDose(context, sched.am!, checked, provider,
+                      'lib/assets/SVG/sun.svg')),
+            if (sched.am != null && sched.pm != null)
+              SizedBox(
+                width: 26.w,
+              ),
+            if (sched.pm != null)
+              Expanded(
+                  child: _buildDose(context, sched.pm!, checked, provider,
+                      'lib/assets/SVG/moon.svg')),
+          ],
         ),
-      if (sched.pm != null)
-        Expanded(
-            child: _buildDose(context, sched.pm!, checked, provider,
-                'lib/assets/SVG/moon.svg')),
-      if (sched.am == null && sched.pm == null)
-        Text(AppLocalizations.of(context)!.setMedicationTime),
-    ];
+        if (sched.am == null && sched.pm == null) ...[
+          SizedBox(height: 12.h),
+          Text(
+            AppLocalizations.of(context)!.setMedicationTime,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF03012C),
+                ),
+          ),
+        ],
+      ],
+    );
   }
 
   @override
@@ -167,17 +181,12 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
               final deviceSchedule =
                   scheduleProv.getScheduleForDevice(deviceID);
 
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (deviceSchedule == null) ...[
-                    const CircularProgressIndicator()
-                  ] else ...[
-                    ..._buildForSchedule(context, deviceSchedule,
-                        provider.state.assignedDispenseTimes, provider)
-                  ]
-                ],
-              );
+              if (deviceSchedule == null) {
+                return const Center(child: CircularProgressIndicator());
+              } else {
+                return _buildForSchedule(context, deviceSchedule,
+                    provider.state.assignedDispenseTimes, provider);
+              }
             }),
             SizedBox(height: 96.h),
           ],

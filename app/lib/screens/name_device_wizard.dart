@@ -34,7 +34,7 @@ class _NameDeviceWizard extends State<NameDeviceWizard> {
     return Consumer2<ScheduleProvider, SelectedDeviceProvider>(
       builder: (context, scheduleProvider, selectedDeviceProvider, child) {
         return WizardStep(
-            height: 375.h,
+            height: 394.h,
             provisionningProgress: provisionningProgress,
             title: AppLocalizations.of(context)!.nameDeviceTitle,
             subtext: AppLocalizations.of(context)!.nameDeviceSubtext,
@@ -44,7 +44,7 @@ class _NameDeviceWizard extends State<NameDeviceWizard> {
             canGoNext: true,
             child: Expanded(
                 child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 0.h),
               child: _renameDevice(context),
             )));
       },
@@ -55,6 +55,7 @@ class _NameDeviceWizard extends State<NameDeviceWizard> {
     return Form(
         key: _formKey,
         child: BasicPageTextFormField(
+          paddingBottom: 0.h,
           labelText: AppLocalizations.of(context)!.nameDeviceHint,
           onSaved: (val) => deviceName = val,
         ));

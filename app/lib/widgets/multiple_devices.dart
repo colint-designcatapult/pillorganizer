@@ -1,7 +1,7 @@
 import 'package:app/api/device.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/widgets/add_device.dart';
-import 'package:app/widgets/single_device.dart';
+import 'package:app/widgets/single_device_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
@@ -203,10 +203,8 @@ class MultipleDevices extends StatelessWidget {
                                     showMaterialModalBottomSheet(
                                       context: context,
                                       backgroundColor: Colors.transparent,
-                                      builder: (context) => SingleDevice(
-                                        showAddDeviceSection: false,
-                                        device: device,
-                                        isModal: true,
+                                      builder: (context) => SingleDeviceModal(
+                                        deviceId: device.deviceID,
                                       ),
                                     );
                                   },
