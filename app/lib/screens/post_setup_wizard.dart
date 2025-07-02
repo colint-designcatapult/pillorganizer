@@ -228,7 +228,7 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width,
         ),
-        builder: (context) => device == null
+        builder: (context) => device != null
             ? ChangeNotifierProvider<NewMedicationProvider>(
                 create: (context) => NewMedicationProvider(
                     device!.deviceID, () => prov.update(device)),
