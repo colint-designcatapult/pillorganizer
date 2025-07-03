@@ -20,8 +20,8 @@ import java.io.Serializable;
 @Serdeable.Serializable
 @Introspected
 public class DeviceBinId implements Serializable {
-    @Column(name = "device_id", nullable = false, updatable = false)
-    private long deviceID;
+    @Column(name = "device_user_id", nullable = false, updatable = false)
+    private long device_user_id;
     @Column(name = "bin_id", nullable = false, updatable = false)
     private int binID;
 

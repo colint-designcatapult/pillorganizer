@@ -32,9 +32,9 @@ public class DeviceState {
     private long scheduledTime;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "device_id", referencedColumnName = "id", insertable = false, updatable = false)
+    @JoinColumn(name = "device_user_id", referencedColumnName = "id", insertable = false, updatable = false)
     @JsonIgnore
-    private Device device;
+    private DeviceUser deviceUser;
 
 
     @OneToOne(optional = true)

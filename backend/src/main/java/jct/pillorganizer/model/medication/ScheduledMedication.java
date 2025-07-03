@@ -2,7 +2,7 @@ package jct.pillorganizer.model.medication;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.serde.annotation.Serdeable;
-import jct.pillorganizer.model.device.Device;
+import jct.pillorganizer.model.device.DeviceUser;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -31,15 +31,15 @@ public class ScheduledMedication {
 
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "device_id", referencedColumnName = "id")
+    @JoinColumn(name = "device_user_id", referencedColumnName = "id")
     @JsonIgnore
-    private Device device;
+    private DeviceUser deviceUser;
 
     @OneToMany(targetEntity = MedicationDispenseTime.class, mappedBy = "medication", fetch = FetchType.LAZY, orphanRemoval = true)
     private Set<MedicationDispenseTime> dispenseTimes;
 
-    @Column(name = "device_id", insertable = false, updatable = false)
-    private long deviceID;
+    @Column(name = "device_user_id", insertable = false, updatable = false)
+    private long device_user_id;
 
 
     @Column(name = "med_name", nullable = false)

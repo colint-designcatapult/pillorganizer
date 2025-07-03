@@ -24,9 +24,9 @@ public class DeviceEvent {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "device_id", referencedColumnName = "id")
+    @JoinColumn(name = "device_user_id", referencedColumnName = "id")
     @JsonIgnore
-    private Device device;
+    private DeviceUser deviceUser;
 
     @Column(name = "ts", nullable = false)
     private Instant ts;

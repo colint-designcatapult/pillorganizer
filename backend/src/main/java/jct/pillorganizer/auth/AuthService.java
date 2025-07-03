@@ -34,6 +34,7 @@ public class AuthService {
 
     @Inject
     DeviceUserAsyncRepository asyncRepository;
+
     @Inject
     DeviceUserRepository deviceUserRepository;
 
@@ -90,8 +91,8 @@ public class AuthService {
     /**
      * New password just set the new password for the user.
      * 
-     * @param user     the user to change the password for
-     * @param password a character array of the password to check
+     * @param email     the user to change the password for
+     * @param newPassword a character array of the password to check
      * @return true if success, false otherwise
      */
     public void newPassword(String email, String newPassword) throws IllegalAccessException {

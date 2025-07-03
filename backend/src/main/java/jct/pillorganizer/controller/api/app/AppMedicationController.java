@@ -7,8 +7,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 import jct.pillorganizer.auth.AuthService;
 import jct.pillorganizer.dto.SaveMedicationDTO;
-import jct.pillorganizer.model.device.Device;
+import jct.pillorganizer.model.device.DeviceUser;
 import jct.pillorganizer.model.medication.ScheduledMedication;
+import jct.pillorganizer.repo.DeviceUserRepository;
 import jct.pillorganizer.repo.ScheduledMedicationRepository;
 import jct.pillorganizer.service.MedicationService;
 import lombok.extern.flogger.Flogger;
@@ -30,12 +31,16 @@ public class AppMedicationController {
     @Inject
     MedicationService medicationService;
 
+    @Inject
+    DeviceUserRepository deviceUserRepository;
+
     @Operation(summary = "List medications for a device")
     @Get("/{id}/medication")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public Flux<ScheduledMedication> medications(@PathVariable("id") long deviceID) {
-        Device d= authService.accessDevice(deviceID);
-        return Flux.fromIterable(scheduledMedicationRepository.retrieveByDevice(d));
+        long userId = authService.getUserID();
+        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userId, deviceID);
+        return Flux.fromIterable(scheduledMedicationRepository.retrieveByDeviceUser(deviceUser));
     }
 
     @Operation(summary = "Saves a medication")
@@ -43,8 +48,9 @@ public class AppMedicationController {
     @Secured(SecurityRule.IS_AUTHENTICATED)
     @Transactional
     public ScheduledMedication saveMedication(@PathVariable("id") long deviceID, @Body SaveMedicationDTO model) {
-        Device d = authService.accessDevice(deviceID);
-        return medicationService.saveFromDto(d, model);
+        long userId = authService.getUserID();
+        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userId, deviceID);
+        return medicationService.saveFromDto(deviceUser, model);
     }
 
 
@@ -52,16 +58,18 @@ public class AppMedicationController {
     @Delete("/{id}/medication/{med_id}")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public void deleteMedication(@PathVariable("id") long deviceID, @PathVariable("med_id") long medicationID) {
-        Device d = authService.accessDevice(deviceID);
-        medicationService.delete(medicationID, d);
+        long userId = authService.getUserID();
+        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userId, deviceID);
+        medicationService.delete(medicationID, deviceUser);
     }
 
     @Operation(summary = "Gets a medication by ID")
     @Get("/{id}/medication/{med_id}")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public Mono<ScheduledMedication> get(@PathVariable("id") long deviceID, @PathVariable("med_id") long medicationID) {
-        Device d= authService.accessDevice(deviceID);
-        ScheduledMedication med = scheduledMedicationRepository.retrieveByDeviceAndId(d, medicationID);
+        long userId = authService.getUserID();
+        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userId, deviceID);
+        ScheduledMedication med = scheduledMedicationRepository.retrieveByDeviceUserAndId(deviceUser, medicationID);
         return Mono.just(med);
     }
 

@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
+import jct.pillorganizer.model.device.DeviceUser;
 import org.zalando.problem.Problem;
 
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -166,7 +167,9 @@ public class AppDeviceAPIController {
     @Post("/{id}/reload")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public void reload(@QueryValue long id) {
-        stateService.wrapperOf(deviceRepository.findById(id).get())
+        long userId = authService.getUserID();
+        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userId, id);
+        stateService.wrapperOf(deviceRepository.findById(id).get(), deviceUser)
                 .reload();
     }
 
@@ -212,16 +215,17 @@ public class AppDeviceAPIController {
     @Transactional
     public HttpResponse<?> sync(@DeviceABAC(idType = DeviceABACIDType.DEVICE) @PathVariable("id") long deviceID,
             @Body String body) throws InvalidProtocolBufferException {
-        long userID = authService.getUserID();
+        long userId = authService.getUserID();
         Device device = deviceRepository.findById(deviceID)
                 .orElseThrow(() -> Problem.builder().withStatus(new HttpStatusType(HttpStatus.NOT_FOUND)).build());
+        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userId, deviceID);
 
         byte[] parsedBody = Base64.getDecoder().decode(body);
 
         Pill.SyncRequest req = Pill.SyncRequest.parseFrom(parsedBody);
         return HttpResponse.ok(
                 Base64.getEncoder().encode(deviceStateService
-                        .wrapperOf(device)
+                        .wrapperOf(device, deviceUser)
                         .sync(req, true)
                         .toByteArray()));
     }
@@ -232,18 +236,20 @@ public class AppDeviceAPIController {
     @DeviceABAC
     public DeviceStateDTO consolidatedState(@DeviceABAC(idType = DeviceABACIDType.DEVICE) @PathVariable long id,
             @QueryValue("date") String dateString) throws ParseException {
+        long userId = authService.getUserID();
         DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
         TemporalAccessor parsed = formatter.parse(dateString);
         LocalDate date = LocalDate.from(parsed);
 
         Device device = deviceRepository.findById(id)
                 .orElseThrow(() -> Problem.builder().withStatus(new HttpStatusType(HttpStatus.NOT_FOUND)).build());
+        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userId, id);
 
         return new DeviceStateDTO(
                 device.getId(),
                 device.getLastSync(),
-                deviceStateService.calculateStateFlags(device),
-                deviceStateService.buildDosePeriod(device, date),
+                deviceStateService.calculateStateFlags(deviceUser),
+                deviceStateService.buildDosePeriod(device, deviceUser, date),
                 device.getBattery(),
                 device.isCharging());
     }

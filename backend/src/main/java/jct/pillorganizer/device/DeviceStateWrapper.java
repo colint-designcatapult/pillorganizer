@@ -40,6 +40,7 @@ public class DeviceStateWrapper {
     private final DeviceEventRepository deviceEventRepository;
     private final FirmwareService firmwareService;
     private final Device device;
+    private final DeviceUser deviceUser;
 
     private List<DeviceSchedule> _schedule = null;
     private List<DeviceState> _stateList = null;
@@ -47,13 +48,14 @@ public class DeviceStateWrapper {
 
     public DeviceStateWrapper(DeviceRepository deviceRepository, DeviceScheduleRepository scheduleRepository,
             DeviceStateRepository stateRepository, DeviceEventRepository deviceEventRepository,
-            FirmwareService firmwareService, Device device) {
+            FirmwareService firmwareService, Device device, DeviceUser deviceUser) {
         this.deviceRepository = deviceRepository;
         this.scheduleRepository = scheduleRepository;
         this.stateRepository = stateRepository;
         this.deviceEventRepository = deviceEventRepository;
         this.firmwareService = firmwareService;
         this.device = device;
+        this.deviceUser = deviceUser;
     }
 
     private void lazyUpdateBin(DeviceState state, BinStatus status, long timestamp) {
@@ -191,7 +193,7 @@ public class DeviceStateWrapper {
     @Transactional
     public void reload() {
         // Clear current state
-        stateRepository.updateResetState(device.getId());
+        stateRepository.updateResetState(deviceUser.getId());
         rebuildStateSchedule();
     }
 
@@ -212,7 +214,7 @@ public class DeviceStateWrapper {
         Instant timeStamp = Instant.ofEpochSecond(0);
         for (Pill.RecordedEvent recEv : syncRequest.getEventsList()) {
             DeviceEvent ev = new DeviceEvent();
-            ev.setDevice(device);
+            ev.setDeviceUser(deviceUser);
             ev.setTs(Instant.ofEpochSecond(recEv.getTimestamp()));
             ev.setEventType(EventType.fromProtobuf(recEv.getType()));
 
@@ -359,7 +361,7 @@ public class DeviceStateWrapper {
             // todo
         } else {
             // Delete all state entities
-            stateRepository.deleteByDevice(device);
+            stateRepository.deleteByDeviceUser(deviceUser);
 
             int binCount = device.getDeviceClass().getBinCount();
             _stateList = new ArrayList<>(binCount);
@@ -367,7 +369,7 @@ public class DeviceStateWrapper {
             // Create state entity for each bin of this device
             for (int bin = 0; bin < binCount; bin++) {
                 DeviceState state = new DeviceState();
-                state.setId(new DeviceBinId(device.getId(), bin));
+                state.setId(new DeviceBinId(deviceUser.getId(), bin));
                 state.setBinStatus(BinStatus.DISABLED);
                 state.setScheduledTime(0);
                 _stateList.add(bin, stateRepository.save(state));
@@ -393,7 +395,7 @@ public class DeviceStateWrapper {
 
             for (int bin = 0; bin < binCount; bin++) {
                 DeviceSchedule schedule = new DeviceSchedule();
-                schedule.setId(new DeviceBinId(device.getId(), bin));
+                schedule.setId(new DeviceBinId(deviceUser.getId(), bin));
 
                 schedule.setDayOfWeek(DayOfWeek.DISABLED);
                 schedule.setSecondsFrom00(0);
@@ -462,8 +464,12 @@ public class DeviceStateWrapper {
      */
     public List<DeviceSchedule> getDeviceSchedule() {
         if (_schedule == null) {
-            _schedule = scheduleRepository.findByDevice(device);
-            _schedule.sort(Comparator.comparingInt(c -> c.getId().getBinID()));
+            _schedule = scheduleRepository.findByDeviceUser(deviceUser);
+            if (_schedule != null) {
+                _schedule.sort(Comparator.comparingInt(c -> c.getId().getBinID()));
+            } else {
+                _schedule = new ArrayList<>();
+            }
         }
         return _schedule;
     }
@@ -493,7 +499,7 @@ public class DeviceStateWrapper {
      */
     public List<DeviceState> getState() {
         if (_stateList == null) {
-            _stateList = stateRepository.findByDevice(device);
+            _stateList = stateRepository.findByDeviceUser(deviceUser);
             _stateList.sort(Comparator.comparingInt(c -> c.getId().getBinID()));
             validateOrRepairState();
         }

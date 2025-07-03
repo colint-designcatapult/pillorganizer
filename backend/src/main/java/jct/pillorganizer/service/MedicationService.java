@@ -4,7 +4,7 @@ import io.micronaut.context.annotation.Bean;
 import jakarta.inject.Inject;
 import jct.pillorganizer.dto.SaveMedicationDTO;
 import jct.pillorganizer.exceptions.MedicationNotFoundException;
-import jct.pillorganizer.model.device.Device;
+import jct.pillorganizer.model.device.DeviceUser;
 import jct.pillorganizer.model.medication.MedicationDispenseTime;
 import jct.pillorganizer.model.medication.ScheduledMedication;
 import jct.pillorganizer.repo.MedicationDispenseTimeRepository;
@@ -30,12 +30,12 @@ public class MedicationService {
     /**
      * Deletes a single ScheduledMedication (and their dependents) by ID.
      * @param medicationID the ID of the medication to delete
-     * @param device the device ID of the device the medication is associated with.
+     * @param deviceUser the device ID of the device the medication is associated with.
      */
     @Transactional
-    public void delete(long medicationID, Device device) {
+    public void delete(long medicationID, DeviceUser deviceUser) {
         Optional<ScheduledMedication> sm = scheduledMedicationRepository
-                .findByIdAndDevice(medicationID, device);
+                .findByIdAndDeviceUser(medicationID, deviceUser);
         if(sm.isPresent()) {
             dispenseTimeRepository.deleteAll(sm.get().getDispenseTimes());
             scheduledMedicationRepository.delete(sm.get());
@@ -47,19 +47,19 @@ public class MedicationService {
     /**
      * Creates or updates a medication associated with a device. If a medication exists with the ID specified in the DTO
      * object, it will be updated with the new information in the DTO. Otherwise, a new medication is created.
-     * @param d device the medication is associated with
+     * @param deviceUser device the medication is associated with
      * @param dto DTO object of the medication to persist
      * @return domain entity of the persisted medication
      */
     @Transactional
-    public ScheduledMedication saveFromDto(Device d, SaveMedicationDTO dto) {
+    public ScheduledMedication saveFromDto(DeviceUser deviceUser, SaveMedicationDTO dto) {
         ScheduledMedication med, res;
 
         if(dto.id() == null) {
             // New medication
             med = new ScheduledMedication();
-            med.setDevice(d);
-            med.setDeviceID(d.getId());
+            med.setDeviceUser(deviceUser);
+            med.setDevice_user_id(deviceUser.getId());
             med.setShape(dto.shape());
             med.setColor((int) dto.color());
             med.setMed_name(dto.name());
@@ -80,7 +80,7 @@ public class MedicationService {
         } else {
             // Update existing medication
 
-            med = scheduledMedicationRepository.retrieveByDeviceAndId(d, dto.id());
+            med = scheduledMedicationRepository.retrieveByDeviceUserAndId(deviceUser, dto.id());
             scheduledMedicationRepository
                     .update(med.getId(), dto.name(), dto.shape(), (int) dto.color());
             med.setMed_name(dto.name());

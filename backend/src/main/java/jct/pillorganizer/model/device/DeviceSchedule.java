@@ -24,9 +24,9 @@ public class DeviceSchedule {
     private DeviceBinId id;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "device_id", referencedColumnName = "id", insertable = false, updatable = false)
+    @JoinColumn(name = "device_user_id", referencedColumnName = "id", insertable = false, updatable = false)
     @JsonIgnore
-    private Device device;
+    private DeviceUser deviceUser;
 
     @Column(name = "day_of_week", nullable = false)
     private DayOfWeek dayOfWeek;

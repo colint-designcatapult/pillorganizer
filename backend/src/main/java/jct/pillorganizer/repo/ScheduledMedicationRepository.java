@@ -6,7 +6,7 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.repository.CrudRepository;
-import jct.pillorganizer.model.device.Device;
+import jct.pillorganizer.model.device.DeviceUser;
 import jct.pillorganizer.model.medication.MedicationShape;
 import jct.pillorganizer.model.medication.ScheduledMedication;
 
@@ -22,15 +22,13 @@ public interface ScheduledMedicationRepository extends CrudRepository<ScheduledM
 
 
     @EntityGraph(attributePaths = { "dispenseTimes", "dispenseTimes.dispense"})
-    List<ScheduledMedication> retrieveByDevice(Device device);
+    List<ScheduledMedication> retrieveByDeviceUser(DeviceUser deviceUser);
 
     @EntityGraph(attributePaths = { "dispenseTimes", "dispenseTimes.dispense"})
-    ScheduledMedication retrieveByDeviceAndId(Device device, long id);
-
-    void deleteByIdAndDevice(long id, Device device);
+    ScheduledMedication retrieveByDeviceUserAndId(DeviceUser deviceUser, long id);
 
     @Join("dispenseTimes")
-    Optional<ScheduledMedication> findByIdAndDevice(long id, Device device);
+    Optional<ScheduledMedication> findByIdAndDeviceUser(long id, DeviceUser deviceUser);
 
 
 }

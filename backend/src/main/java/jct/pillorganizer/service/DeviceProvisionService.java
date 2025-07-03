@@ -12,12 +12,13 @@ import jct.pillorganizer.exceptions.SsidMismatchException;
 import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.device.DeviceClass;
 import jct.pillorganizer.model.device.DeviceProvision;
+import jct.pillorganizer.model.device.DeviceUser;
 import jct.pillorganizer.proto.Pill;
 import jct.pillorganizer.repo.DeviceProvisionRepository;
 import jct.pillorganizer.repo.DeviceRepository;
 import jct.pillorganizer.repo.DeviceScheduleRepository;
+import jct.pillorganizer.repo.DeviceUserRepository;
 import lombok.extern.flogger.Flogger;
-import org.zalando.problem.Problem;
 
 import javax.transaction.Transactional;
 import java.security.NoSuchAlgorithmException;
@@ -56,6 +57,9 @@ public class DeviceProvisionService {
 
     @Inject
     FirmwareService firmwareService;
+
+    @Inject
+    DeviceUserRepository deviceUserRepository;
 
     private byte[] generateOobKey() throws NoSuchAlgorithmException {
         byte[] key = new byte[16];
@@ -191,8 +195,10 @@ public class DeviceProvisionService {
         log.atInfo().log("Provisioned device %d with SSID %s on timezone %s", device.getId(), req.getSsid(),
                 device.getBaseTZ());
 
+        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(201, device.getId());
+
         // Initialize the device state
-        DeviceStateWrapper wrapper = deviceStateService.wrapperOf(device);
+        DeviceStateWrapper wrapper = deviceStateService.wrapperOf(device, deviceUser);
         wrapper.initialize(null);
 
         // Respond with sync so the pill organizer has the latest data

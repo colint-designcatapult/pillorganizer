@@ -1,9 +1,14 @@
 package jct.pillorganizer.model.device;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.micronaut.core.annotation.Nullable;
+import jct.pillorganizer.model.device.schedule.DeviceBaseScheduleStrategy;
 import jct.pillorganizer.model.user.BaseUser;
 import lombok.Getter;
 import lombok.Setter;
 import javax.persistence.*;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Relates a `BaseUser` to a `Device`. The role the user has to a device is recorded here, whether they are the
@@ -53,5 +58,16 @@ public class DeviceUser {
     @Column(name = "deleted")
     private boolean deleted = false;
 
+    @OneToOne(fetch = FetchType.LAZY, mappedBy = "deviceUser", orphanRemoval = true, optional = true)
+    @JsonIgnore
+    @Nullable
+    private DeviceBaseScheduleStrategy scheduleStrategy;
 
+    @OneToMany(targetEntity = DeviceState.class, mappedBy = "deviceUser", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<DeviceState> state;
+
+    @OneToMany(targetEntity = DeviceEvent.class, mappedBy = "deviceUser", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<DeviceEvent> events;
 }

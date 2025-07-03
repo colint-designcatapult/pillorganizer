@@ -7,9 +7,12 @@ import io.micronaut.protobuf.codec.ProtobufferCodec;
 import io.micronaut.security.annotation.Secured;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
+import jct.pillorganizer.auth.AuthService;
 import jct.pillorganizer.auth.DeviceAuthService;
 import jct.pillorganizer.model.device.Device;
+import jct.pillorganizer.model.device.DeviceUser;
 import jct.pillorganizer.proto.Pill;
+import jct.pillorganizer.repo.DeviceUserRepository;
 import jct.pillorganizer.service.DeviceProvisionService;
 import jct.pillorganizer.service.DeviceStateService;
 import lombok.extern.flogger.Flogger;
@@ -31,6 +34,12 @@ public class DeviceAPIv12Controller {
         @Inject
         DeviceProvisionService deviceProvisionService;
 
+        @Inject
+        AuthService authService;
+
+        @Inject
+        DeviceUserRepository deviceUserRepository;
+
         @Operation(summary = "Syncs a device's state", description = "Performs a two-way device sync, accepting a device's state, processing events, and returning "
                         +
                         "the server's authoritative state.")
@@ -39,12 +48,14 @@ public class DeviceAPIv12Controller {
         @Consumes(ProtobufferCodec.PROTOBUFFER_ENCODED)
         @Secured({ "device" })
         public HttpResponse<?> sync(@Body byte[] body) throws InvalidProtocolBufferException {
+                long userId = authService.getUserID();
                 Pill.SyncRequest req = Pill.SyncRequest.parseFrom(body);
                 Device device = deviceAuthService.getDevice();
+                DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userId, device.getId());
                 log.atInfo().log("Device initiated sync, id: %d", device.getId());
                 return HttpResponse.ok(
                                 deviceStateService
-                                                .wrapperOf(device)
+                                                .wrapperOf(device, deviceUser)
                                                 .sync(req, false)
                                                 .toByteArray());
         }

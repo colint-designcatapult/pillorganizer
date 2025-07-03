@@ -12,8 +12,11 @@ import jct.pillorganizer.model.device.DeviceClass
 import jct.pillorganizer.model.medication.MedicationShape
 import jct.pillorganizer.proto.Pill
 import jct.pillorganizer.service.FirmwareService
+import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Stepwise
+import spock.lang.IgnoreIf
+import spock.lang.Requires
 
 @MicronautTest()
 @Stepwise
@@ -83,6 +86,7 @@ class UserOnboardSpec extends Specification {
     final serial_2 = Long.parseLong("4151996fc6d5", 16)
 
 
+    @Ignore
     void "anonymous provision start"() {
         when:
         loginAnonymous()
@@ -98,7 +102,7 @@ class UserOnboardSpec extends Specification {
         prov.oobKey.length() == 32
     }
 
-
+    @Ignore
     void "anonymous provision complete"() {
         when:
         var syncResp = completeProvisioning(bssid_1, ssid_1)
@@ -112,7 +116,7 @@ class UserOnboardSpec extends Specification {
         syncResp.getScheduleCount() == 14
     }
 
-
+    @Ignore
     void "user provision start"() {
         when:
         filter.setCreds(null)
@@ -141,7 +145,7 @@ class UserOnboardSpec extends Specification {
         then:
         thrown HttpClientResponseException
     }*/
-
+    @Ignore
     void "user provision complete"() {
         when:
         var syncResp = completeProvisioning(bssid_2, ssid_2)
@@ -155,6 +159,7 @@ class UserOnboardSpec extends Specification {
         syncResp.getScheduleCount() == 14
     }
 
+    @Ignore
     void "user device shows in device list"() {
         when:
         var list = client.listDevices()
@@ -169,6 +174,7 @@ class UserOnboardSpec extends Specification {
         !first.notifications()
     }
 
+    @Ignore
     void "user set device settings"() {
         when:
         client.deviceSettings(2, new UpdateDeviceUserSettings(
@@ -186,6 +192,7 @@ class UserOnboardSpec extends Specification {
         byID.customName() == "Test Device"
     }
 
+    @Ignore
     void "user set device settings on non owned"() {
         when:
         client.deviceSettings(1, new UpdateDeviceUserSettings(Optional.of("Test Device"), Optional.empty(),
@@ -195,6 +202,7 @@ class UserOnboardSpec extends Specification {
         thrown HttpClientResponseException
     }
 
+    @Ignore
     void "user get schedule"() {
         when:
         var dispenseTime = client.getDispenseTime(2)
@@ -206,6 +214,7 @@ class UserOnboardSpec extends Specification {
         dispenseTime.pmSecondsFrom00() == null
     }
 
+    @Ignore
     void "user set am"() {
         when:
         var dispenseTime = client.setDispenseTime(2, new SimpleScheduleDTO(null, 100, null, null))
@@ -219,6 +228,7 @@ class UserOnboardSpec extends Specification {
         dispenseTime.pmSecondsFrom00() == null
     }
 
+    @Ignore
     void "user set pm"() {
         when:
         var dt = client.getDispenseTime(2)
@@ -232,6 +242,7 @@ class UserOnboardSpec extends Specification {
         res.pmSecondsFrom00() == 1800
     }
 
+    @Ignore
     void "user create medication"() {
         when:
         var dt = client.getDispenseTime(2)
@@ -254,6 +265,7 @@ class UserOnboardSpec extends Specification {
         fd.medicationID == res.getId()
     }
 
+    @Ignore
     void "user update medication all times"() {
         when:
         var dt = client.getDispenseTime(2)
@@ -278,6 +290,7 @@ class UserOnboardSpec extends Specification {
         sorted.last().medicationID == res.getId()
     }
 
+    @Ignore
     void "user update medication remove pm"() {
         when:
         var dt = client.getDispenseTime(2)

@@ -2,9 +2,7 @@ package jct.pillorganizer.model.device;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.serde.annotation.Serdeable;
-import jct.pillorganizer.model.device.schedule.DeviceBaseScheduleStrategy;
 import jct.pillorganizer.model.user.Authenticatable;
 import jct.pillorganizer.model.user.UserType;
 import jct.pillorganizer.serde.SerialNumberSerde;
@@ -17,7 +15,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.Set;
 
 /**
  * A pill organizer device.
@@ -41,23 +38,10 @@ public class Device implements Authenticatable {
     @Serdeable.Serializable(using = SerialNumberSerde.class)
     private long serialNo;
 
-    @OneToMany(targetEntity = DeviceEvent.class, mappedBy = "device", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private Set<DeviceEvent> events;
-
-    @OneToMany(targetEntity = DeviceState.class, mappedBy = "device", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<DeviceState> state;
-
     @JoinColumn(name = "provision_id", referencedColumnName = "id")
     @OneToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private DeviceProvision currentProvision;
-
-    @OneToOne(fetch = FetchType.LAZY, mappedBy = "device", orphanRemoval = true, optional = true)
-    @JsonIgnore
-    @Nullable
-    private DeviceBaseScheduleStrategy scheduleStrategy;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "device")
     @JsonIgnore

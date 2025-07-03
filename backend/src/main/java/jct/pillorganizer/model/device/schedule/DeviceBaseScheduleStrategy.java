@@ -2,7 +2,7 @@ package jct.pillorganizer.model.device.schedule;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.serde.annotation.Serdeable;
-import jct.pillorganizer.model.device.Device;
+import jct.pillorganizer.model.device.DeviceUser;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -31,9 +31,9 @@ public abstract class DeviceBaseScheduleStrategy {
     private Long id;
 
     @OneToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "device_id", referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "device_user_id", referencedColumnName = "id", nullable = false)
     @JsonIgnore
-    private Device device;
+    private DeviceUser deviceUser;
 
     @OneToMany(targetEntity = DeviceBaseDispenseTime.class, mappedBy = "schedule", fetch = FetchType.LAZY)
     private Set<DeviceBaseDispenseTime> times;

@@ -1,12 +1,12 @@
 package jct.pillorganizer.service;
 
-import io.micronaut.transaction.TransactionDefinition;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.dto.SimpleScheduleDTO;
 import jct.pillorganizer.model.device.DayOfWeek;
 import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.device.DeviceBinId;
+import jct.pillorganizer.model.device.DeviceUser;
 import jct.pillorganizer.model.device.schedule.DeviceBaseDispenseTime;
 import jct.pillorganizer.model.device.schedule.DeviceBaseScheduleStrategy;
 import jct.pillorganizer.model.device.schedule.DeviceSimpleDispenseTime;
@@ -50,11 +50,11 @@ public class DeviceScheduleService {
     /**
      * Fetches a device's simplified schedule DTO. If the device has no schedule registered, an empty schedule is
      * returned.
-     * @param device the device to fetch the schedule for
+     * @param deviceUser the device to fetch the schedule for
      * @return specified device's schedule in simplified DTO format
      */
-    public SimpleScheduleDTO buildSimpleSchedule(Device device) {
-        return strategyRepository.findByDevice(device)
+    public SimpleScheduleDTO buildSimpleSchedule(DeviceUser deviceUser) {
+        return strategyRepository.findByDeviceUser(deviceUser)
                 .map(this::buildSimpleSchedule)
                 .orElseGet(SimpleScheduleDTO::empty);
     }
@@ -76,10 +76,10 @@ public class DeviceScheduleService {
      * @param dto a schedule DTO
      * @return a new schedule DTO that includes the new changes
      */
-    public SimpleScheduleDTO updateSchedule(Device device, SimpleScheduleDTO dto) {
-        DeviceBaseScheduleStrategy strat = strategyRepository.findByDevice(device)
-                .orElseGet(() -> buildDefaultSchedule(device));
-        return updateSchedule(device, strat, dto);
+    public SimpleScheduleDTO updateSchedule(Device device, DeviceUser deviceUser, SimpleScheduleDTO dto) {
+        DeviceBaseScheduleStrategy strat = strategyRepository.findByDeviceUser(deviceUser)
+                .orElseGet(() -> buildDefaultSchedule(deviceUser));
+        return updateSchedule(device, deviceUser, strat, dto);
     }
 
     /**
@@ -91,17 +91,17 @@ public class DeviceScheduleService {
         return LocalTime.MIDNIGHT.plusSeconds(secondsFrom00);
     }
 
-    private DeviceBaseScheduleStrategy buildDefaultSchedule(Device device) {
+    private DeviceBaseScheduleStrategy buildDefaultSchedule(DeviceUser deviceUser) {
         DeviceSimpleScheduleStrategy s = new DeviceSimpleScheduleStrategy();
         s.setTimes(Set.of());
-        s.setDevice(device);
+        s.setDeviceUser(deviceUser);
 
         return strategyRepository.save(s);
     }
 
-    private SimpleScheduleDTO updateSchedule(Device device, DeviceBaseScheduleStrategy strategy, SimpleScheduleDTO dto) {
+    private SimpleScheduleDTO updateSchedule(Device device, DeviceUser deviceUser, DeviceBaseScheduleStrategy strategy, SimpleScheduleDTO dto) {
         if(strategy instanceof DeviceSimpleScheduleStrategy) {
-            return updateSimpleSchedule(device, (DeviceSimpleScheduleStrategy) strategy, dto);
+            return updateSimpleSchedule(device, deviceUser, (DeviceSimpleScheduleStrategy) strategy, dto);
         } else {
             throw new IllegalArgumentException("Only simple strategy supported at this time");
         }
@@ -111,7 +111,7 @@ public class DeviceScheduleService {
 
 
     @Transactional
-    void updateDeviceSchedule(Device d, DeviceSimpleScheduleStrategy strategy, DayOfWeek dayOfWeek) {
+    void updateDeviceSchedule(Device d, DeviceUser deviceUser, DeviceSimpleScheduleStrategy strategy, DayOfWeek dayOfWeek) {
 
         // this is an ugly hack that needs to be removed
         // just get rid of DeviceSchedule already
@@ -119,8 +119,8 @@ public class DeviceScheduleService {
         DeviceSimpleDispenseTime am = strategy.amTime();
         DeviceSimpleDispenseTime pm = strategy.pmTime();
 
-        DeviceBinId amBin = new DeviceBinId(d.getId(), binService.getBinID(d.getDeviceClass(), dayOfWeek, 'A'));
-        DeviceBinId pmBin = new DeviceBinId(d.getId(), binService.getBinID(d.getDeviceClass(), dayOfWeek, 'P'));
+        DeviceBinId amBin = new DeviceBinId(deviceUser.getId(), binService.getBinID(d.getDeviceClass(), dayOfWeek, 'A'));
+        DeviceBinId pmBin = new DeviceBinId(deviceUser.getId(), binService.getBinID(d.getDeviceClass(), dayOfWeek, 'P'));
 
         if(am == null) {
             deviceScheduleRepository.update(
@@ -156,27 +156,27 @@ public class DeviceScheduleService {
     }
 
     @Transactional
-    void updateDeviceSchedule(Device d, DeviceBaseScheduleStrategy strategy, DayOfWeek dayOfWeek) {
+    void updateDeviceSchedule(Device d, DeviceUser deviceUser, DeviceBaseScheduleStrategy strategy, DayOfWeek dayOfWeek) {
         if(strategy instanceof DeviceSimpleScheduleStrategy) {
-            updateDeviceSchedule(d, (DeviceSimpleScheduleStrategy) strategy, dayOfWeek);
+            updateDeviceSchedule(d, deviceUser, (DeviceSimpleScheduleStrategy) strategy, dayOfWeek);
         } else {
             throw new RuntimeException("Unknown strategy");
         }
     }
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
-    void updateDeviceSchedule(Device d) {
-        DeviceBaseScheduleStrategy strategy = strategyRepository.findByDevice(d)
+    void updateDeviceSchedule(Device d, DeviceUser deviceUser) {
+        DeviceBaseScheduleStrategy strategy = strategyRepository.findByDeviceUser(deviceUser)
                 .orElseThrow();
 
         for(DayOfWeek dayOfWeek : DayOfWeek.values()) {
             if(dayOfWeek == DayOfWeek.DISABLED)
                 continue;
 
-            updateDeviceSchedule(d, strategy, dayOfWeek);
+            updateDeviceSchedule(d, deviceUser, strategy, dayOfWeek);
         }
 
-        deviceStateService.wrapperOf(d).rebuildStateSchedule();
+        deviceStateService.wrapperOf(d, deviceUser).rebuildStateSchedule();
 
     }
 
@@ -225,9 +225,9 @@ public class DeviceScheduleService {
         return new SimpleScheduleDTO(amID, am00, pmID, pm00);
     }
 
-    SimpleScheduleDTO updateSimpleSchedule(Device d, DeviceSimpleScheduleStrategy strategy, SimpleScheduleDTO dto) {
+    SimpleScheduleDTO updateSimpleSchedule(Device d, DeviceUser deviceUser, DeviceSimpleScheduleStrategy strategy, SimpleScheduleDTO dto) {
         SimpleScheduleDTO simpleScheduleDTO = updateDispenseTime( d,  strategy,  dto);
-        updateDeviceSchedule(d);
+        updateDeviceSchedule(d, deviceUser);
         return simpleScheduleDTO;
     }
 }

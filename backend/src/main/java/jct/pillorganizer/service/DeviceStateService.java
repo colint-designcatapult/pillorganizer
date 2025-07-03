@@ -8,6 +8,7 @@ import jct.pillorganizer.model.EventType;
 import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.device.DeviceEvent;
 import jct.pillorganizer.model.device.DeviceState;
+import jct.pillorganizer.model.device.DeviceUser;
 import jct.pillorganizer.model.medication.MedicationDispenseTime;
 import jct.pillorganizer.repo.DeviceEventRepository;
 import jct.pillorganizer.repo.DeviceRepository;
@@ -54,9 +55,9 @@ public class DeviceStateService {
      * @param device the device to create a wrapper around
      * @return a DeviceStateWrapper that operates on a particular device
      */
-    public DeviceStateWrapper wrapperOf(Device device) {
+    public DeviceStateWrapper wrapperOf(Device device, DeviceUser deviceUser) {
         return new DeviceStateWrapper(deviceRepository, deviceScheduleRepository,
-                deviceStateRepository, deviceEventRepository, firmwareService, device);
+                deviceStateRepository, deviceEventRepository, firmwareService, device, deviceUser);
     }
 
     /**
@@ -66,12 +67,12 @@ public class DeviceStateService {
      * integers. Instead we only need one
      * integer.
      * 
-     * @param device device to calculate the state flag on
+     * @param deviceUser device to calculate the state flag on
      * @return a long representing the packed status of every bin state
      */
-    public long calculateStateFlags(Device device) {
+    public long calculateStateFlags(DeviceUser deviceUser) {
         long flags = 0;
-        List<DeviceState> bins = deviceStateRepository.findByDevice(device);
+        List<DeviceState> bins = deviceStateRepository.findByDeviceUser(deviceUser);
 
         for (DeviceState bin : bins) {
             long statusInt = bin.getBinStatus().getIntValue();
@@ -99,11 +100,11 @@ public class DeviceStateService {
      *         date that medication is taken
      */
     @Transactional
-    public List<DosePeriodDTO> buildDosePeriod(Device device, LocalDate date) {
+    public List<DosePeriodDTO> buildDosePeriod(Device device, DeviceUser deviceUser, LocalDate date) {
         ZonedDateTime startOfDay = date.atStartOfDay(device.getTimeZone());
         ZonedDateTime endOfDay = startOfDay.plusDays(1);
 
-        List<DeviceState> states = deviceStateRepository.findByDeviceAndTimeBetween(device, startOfDay.toEpochSecond(),
+        List<DeviceState> states = deviceStateRepository.findByDeviceAndTimeBetween(deviceUser, startOfDay.toEpochSecond(),
                 endOfDay.toEpochSecond());
 
         List<DosePeriodDTO> dtos = new ArrayList<>(states.size());
@@ -114,8 +115,8 @@ public class DeviceStateService {
                     .toList();
 
             Optional<DeviceEvent> event = deviceEventRepository
-                    .findFirstByDeviceIdAndBinIdAndEventTypeClosedAndTsIsAfterOrderByTsAsc(
-                            device.getId(), state.getId().getBinID(), EventType.CLOSED,
+                    .findFirstByDeviceUserIdAndBinIdAndEventTypeClosedAndTsIsAfterOrderByTsAsc(
+                            deviceUser.getId(), state.getId().getBinID(), EventType.CLOSED,
                             Instant.ofEpochSecond(startOfDay.toEpochSecond()));
             String takenAtTime = null;
 
