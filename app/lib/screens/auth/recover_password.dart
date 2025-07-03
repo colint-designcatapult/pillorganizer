@@ -4,10 +4,10 @@ import 'package:app/service/error_handler.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:provider/provider.dart';
-import 'package:validatorless/validatorless.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
+import 'package:validatorless/validatorless.dart';
 
 class RecoverPassword extends StatefulWidget {
   final VoidCallback onBack;
@@ -59,7 +59,7 @@ class _RecoverPasswordState extends State<RecoverPassword> {
   }
 }
 
-class RecoverPasswordPrompt extends StatelessWidget {
+class RecoverPasswordPrompt extends StatefulWidget {
   final Future<void> Function(String) gotoRecoveryInput;
   final VoidCallback onBack;
   static const navFooterHeight = 72.0;
@@ -71,13 +71,81 @@ class RecoverPasswordPrompt extends StatelessWidget {
   });
 
   @override
+  State<RecoverPasswordPrompt> createState() => _RecoverPasswordPromptState();
+}
+
+class _RecoverPasswordPromptState extends State<RecoverPasswordPrompt> {
+  String? email;
+  final _formKey = GlobalKey<FormState>();
+
+  void submitForm(String mail) {
+    print("submitForm $mail");
+    widget.gotoRecoveryInput(mail);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    String? email;
     var authUser = Provider.of<AuthenticationProvider>(context, listen: false)
         .currentUser as User?;
 
-    void submitForm(String mail) {
-      gotoRecoveryInput(mail);
+    Widget buildNoUserForm() {
+      return Form(
+        key: _formKey,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 22, right: 0),
+                child: Text(
+                  AppLocalizations.of(context)!
+                      .sendRecoveryLinkSubtitleWithEmail,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              )),
+          Padding(
+            padding: const EdgeInsets.only(top: 36),
+            child: BasicPageTextFormField(
+              labelText: AppLocalizations.of(context)!.email,
+              validator: Validatorless.multiple([
+                Validatorless.email(
+                    AppLocalizations.of(context)!.emailNotValid),
+                Validatorless.required(
+                    AppLocalizations.of(context)!.emailRequired)
+              ]),
+              onChanged: (val) {
+                setState(() {
+                  email = val;
+                });
+              },
+              onSaved: (val) => email = val,
+            ),
+          ),
+        ]),
+      );
+    }
+
+    Widget buildLinkForm(String email) {
+      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 22, right: 0),
+              child: Text(
+                AppLocalizations.of(context)!.sendRecoveryLinkSubtitle,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            )),
+        const SizedBox(
+          height: 30,
+        ),
+        GestureDetector(
+            onTap: () => submitForm(email),
+            child: Text(AppLocalizations.of(context)!.sendRecoveryLink,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: const Color(0xFF206B8B),
+                    decoration: TextDecoration.underline,
+                    decorationColor: const Color(0xFF206B8B))))
+      ]);
     }
 
     return SizedBox(
@@ -134,121 +202,94 @@ class RecoverPasswordPrompt extends StatelessWidget {
                                 height: 8,
                               ),
                               if (authUser != null && authUser.email != null)
-                                Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Padding(
-                                            padding: const EdgeInsets.only(
-                                                top: 8, bottom: 22, right: 0),
-                                            child: Text(
-                                              AppLocalizations.of(context)!
-                                                  .sendRecoveryLinkSubtitle,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyMedium,
-                                            ),
-                                          )),
-                                      const SizedBox(
-                                        height: 30,
-                                      ),
-                                      GestureDetector(
-                                          onTap: () =>
-                                              submitForm(authUser.email!),
-                                          child: Text(
-                                              AppLocalizations.of(context)!
-                                                  .sendRecoveryLink,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .labelSmall
-                                                  ?.copyWith(
-                                                      color: const Color(
-                                                          0xFF206B8B),
-                                                      decoration: TextDecoration
-                                                          .underline,
-                                                      decorationColor:
-                                                          const Color(
-                                                              0xFF206B8B))))
-                                    ])
+                                buildLinkForm(authUser.email!)
                               else
-                                Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Padding(
-                                            padding: const EdgeInsets.only(
-                                                top: 8, bottom: 22, right: 0),
-                                            child: Text(
-                                              AppLocalizations.of(context)!
-                                                  .sendRecoveryLinkSubtitleWithEmail,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyMedium,
-                                            ),
-                                          )),
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 36),
-                                        child: BasicFormContainer(
-                                          buttonText:
-                                              AppLocalizations.of(context)!
-                                                  .sendRecoveryLink,
-                                          onSubmit: () => submitForm(email!),
-                                          children: [
-                                            BasicPageTextFormField(
-                                              labelText:
-                                                  AppLocalizations.of(context)!
-                                                      .email,
-                                              validator:
-                                                  Validatorless.multiple([
-                                                Validatorless.email(
-                                                    AppLocalizations.of(
-                                                            context)!
-                                                        .emailNotValid),
-                                                Validatorless.required(
-                                                    AppLocalizations.of(
-                                                            context)!
-                                                        .emailRequired)
-                                              ]),
-                                              onSaved: (val) => email = val,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ])
+                                buildNoUserForm()
                             ])))),
           ]),
           Align(
               alignment: Alignment.bottomCenter,
-              child: GestureDetector(
-                onTap: onBack,
-                child: Container(
-                  height: navFooterHeight,
-                  color: Theme.of(context).primaryColor,
-                  child: SizedBox(
-                    height: navFooterHeight,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.arrow_back,
-                          size: 24.h,
-                          color: Colors.white,
+              child: Container(
+                height: RecoverPasswordPrompt.navFooterHeight,
+                color: const Color(0xFFFBFCFF),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: SizedBox(
+                          height: RecoverPasswordPrompt.navFooterHeight,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.arrow_back,
+                                size: 24.h,
+                              ),
+                              SizedBox(
+                                width: 8.h,
+                              ),
+                              Text(AppLocalizations.of(context)!.back,
+                                  style:
+                                      Theme.of(context).textTheme.titleSmall),
+                            ],
+                          ),
                         ),
-                        const SizedBox(
-                          width: 8,
-                        ),
-                        Text(AppLocalizations.of(context)!.back,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleSmall
-                                ?.copyWith(color: Colors.white)),
-                      ],
+                      ),
                     ),
-                  ),
+                    Expanded(
+                      child: SizedBox(
+                          width: double.infinity,
+                          height: RecoverPasswordPrompt.navFooterHeight,
+                          child: FutureBuilder(
+                              future:
+                                  context.read<AuthenticationProvider>().future,
+                              builder: (context, snapshot) {
+                                return GestureDetector(
+                                  onTap: () {
+                                    if (_formKey.currentState?.validate() ??
+                                        false) {
+                                      _formKey.currentState?.save();
+                                      if (email != null && email!.isNotEmpty) {
+                                        submitForm(email!);
+                                      }
+                                    }
+                                  },
+                                  child: Container(
+                                    height:
+                                        RecoverPasswordPrompt.navFooterHeight,
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).primaryColor,
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(32),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(AppLocalizations.of(context)!.save,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleSmall
+                                                ?.copyWith(
+                                                    color: Colors.white)),
+                                        SizedBox(
+                                          width: 8.w,
+                                        ),
+                                        Icon(
+                                          Icons.check,
+                                          size: 24.h,
+                                          color: Colors.white,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              })),
+                    ),
+                  ],
                 ),
               )),
         ]));
@@ -491,88 +532,113 @@ class _RecoverPasswordInputState extends State<RecoverPasswordInput> {
                                             ])
                                 ])))),
               ]),
-              if (!showDigitCode)
-                Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Container(
-                      height: navFooterHeight,
-                      color: const Color(0xFFFBFCFF),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Expanded(
-                              child: GestureDetector(
-                            onTap: widget.onBack,
-                            child: SizedBox(
-                              height: navFooterHeight,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.arrow_back,
-                                    size: 24.h,
-                                  ),
-                                  const SizedBox(
-                                    width: 8,
-                                  ),
-                                  Text(AppLocalizations.of(context)!.back,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleSmall),
-                                ],
-                              ),
+              Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    height: navFooterHeight,
+                    color: const Color(0xFFFBFCFF),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                            child: GestureDetector(
+                          onTap: widget.onBack,
+                          child: SizedBox(
+                            height: navFooterHeight,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.arrow_back,
+                                  size: 24.h,
+                                ),
+                                const SizedBox(
+                                  width: 8,
+                                ),
+                                Text(AppLocalizations.of(context)!.back,
+                                    style:
+                                        Theme.of(context).textTheme.titleSmall),
+                              ],
                             ),
-                          )),
-                          Expanded(
-                            child: SizedBox(
-                                width: double.infinity,
-                                height: navFooterHeight,
-                                child: FutureBuilder(
-                                    future: context
-                                        .read<AuthenticationProvider>()
-                                        .future,
-                                    builder: (context, snapshot) {
-                                      return GestureDetector(
-                                        onTap: () => _onSubmit(context),
-                                        child: Container(
-                                          height: navFooterHeight,
-                                          decoration: BoxDecoration(
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                            borderRadius:
-                                                const BorderRadius.only(
-                                              topLeft: Radius.circular(32),
-                                            ),
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Text(
-                                                  AppLocalizations.of(context)!
-                                                      .save,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .titleSmall
-                                                      ?.copyWith(
-                                                          color: Colors.white)),
-                                              SizedBox(
-                                                width: 8.w,
-                                              ),
-                                              Icon(
-                                                Icons.check,
-                                                size: 24.h,
-                                                color: Colors.white,
-                                              ),
-                                            ],
+                          ),
+                        )),
+                        Expanded(
+                          child: SizedBox(
+                              width: double.infinity,
+                              height: navFooterHeight,
+                              child: FutureBuilder(
+                                  future: context
+                                      .read<AuthenticationProvider>()
+                                      .future,
+                                  builder: (context, snapshot) {
+                                    return GestureDetector(
+                                      onTap: () {
+                                        if (_formKey.currentState?.validate() ??
+                                            false) {
+                                          _formKey.currentState?.save();
+                                          if (newPassword != null &&
+                                              newPassword!.isNotEmpty) {
+                                            _changePassword(widget.usedEmail,
+                                                    newPassword!)
+                                                .then((value) {
+                                              if (value) {
+                                                SchedulerBinding.instance
+                                                    .addPostFrameCallback((_) {
+                                                  showErrorDialog(
+                                                          context,
+                                                          AppLocalizations.of(
+                                                                  context)!
+                                                              .passwordChangedSuccess)
+                                                      .then((value) =>
+                                                          Navigator.pop(
+                                                              context));
+                                                });
+                                              }
+                                            }).catchError((err) {
+                                              passwordHandleError(context, err)
+                                                  .then((value) =>
+                                                      Navigator.pop(context));
+                                            });
+                                          }
+                                        }
+                                      },
+                                      child: Container(
+                                        height: navFooterHeight,
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).primaryColor,
+                                          borderRadius: const BorderRadius.only(
+                                            topLeft: Radius.circular(32),
                                           ),
                                         ),
-                                      );
-                                    })),
-                          ),
-                        ],
-                      ),
-                    )),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                                AppLocalizations.of(context)!
+                                                    .save,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleSmall
+                                                    ?.copyWith(
+                                                        color: Colors.white)),
+                                            SizedBox(
+                                              width: 8.w,
+                                            ),
+                                            Icon(
+                                              Icons.check,
+                                              size: 24.h,
+                                              color: Colors.white,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  })),
+                        ),
+                      ],
+                    ),
+                  )),
             ])));
   }
 
@@ -600,24 +666,6 @@ class _RecoverPasswordInputState extends State<RecoverPasswordInput> {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         showErrorDialog(
                 context, AppLocalizations.of(context)!.errorTriedToManyTimes)
-            .then((value) => Navigator.pop(context));
-      });
-    }
-  }
-
-  void _onSubmit(BuildContext context) {
-    if (_formKey.currentState?.validate() ?? false) {
-      _formKey.currentState?.save();
-      _changePassword(widget.usedEmail, newPassword!).then((value) {
-        if (value) {
-          SchedulerBinding.instance.addPostFrameCallback((_) {
-            showErrorDialog(context,
-                    AppLocalizations.of(context)!.passwordChangedSuccess)
-                .then((value) => Navigator.pop(context));
-          });
-        }
-      }).catchError((err) {
-        passwordHandleError(context, err)
             .then((value) => Navigator.pop(context));
       });
     }

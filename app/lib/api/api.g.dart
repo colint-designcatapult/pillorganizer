@@ -937,7 +937,7 @@ class _RestClient implements RestClient {
     )
         .compose(
           _dio.options,
-          'user/new_password',
+          '/user/new_password',
           queryParameters: queryParameters,
           data: _data,
         )

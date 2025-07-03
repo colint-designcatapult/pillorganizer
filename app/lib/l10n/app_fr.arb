@@ -189,7 +189,7 @@
 	"selectManualTimezone": "Sélectionner manuellement le fuseau horaire :",
 	"sendRecoveryLink": "Envoyer le lien de récupération",
 	"sendRecoveryLinkSubtitle": "Cliquez ci-dessous pour que le lien de récupération soit envoyé à votre adresse courriel.",
-	"sendRecoveryLinkSubtitleWithEmail": "Veuillez fournir l'adresse courriel que vous avez utilisée lors de la création de votre compte",
+	"sendRecoveryLinkSubtitleWithEmail": "Cliquez ci-dessous pour recevoir le lien de récupération par e-mail.",
 	"setMedicationTime": "Veuillez définir les heures de médicamentation dans les paramètres de l'appareil",
 	"setTime": "Définir l'heure",
 	"settings": "Paramètres",

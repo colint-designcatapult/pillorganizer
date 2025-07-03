@@ -189,7 +189,7 @@
 	"selectManualTimezone": "Select manual time zone:",
 	"sendRecoveryLink": "Send Recovery Link",
 	"sendRecoveryLinkSubtitle": "Click below to have the recovery link sent to your email.",
-	"sendRecoveryLinkSubtitleWithEmail": "Please provide the email address that you used when you signed up for your account",
+	"sendRecoveryLinkSubtitleWithEmail": "Click below to have the recovery link sent to your email.",
 	"setMedicationTime": "Please set medication times in device settings",
 	"setTime": "Set time",
 	"settings": "Settings",

@@ -76,7 +76,7 @@ abstract class RestClient {
   @PUT("/user/change_email")
   Future<void> changeEmail(@Body() UserChangeEmailDTO reg);
 
-  @PUT("user/new_password")
+  @PUT("/user/new_password")
   Future<void> newPassword(@Body() UserNewPasswordDTO reg);
 
   @GET("/device/list")
