@@ -200,7 +200,8 @@ class WizardStep extends StatelessWidget {
       this.height,
       this.canGoNext = false,
       this.onBackPressed,
-      this.canScroll = false});
+      this.canScroll = false,
+      this.isLoading = false});
 
   final ProvisionningProgress provisionningProgress;
   final Widget? icon;
@@ -214,6 +215,7 @@ class WizardStep extends StatelessWidget {
   final double? height;
   final bool canGoNext;
   final bool canScroll;
+  final bool isLoading;
 
   static const navFooterHeight = 72.0;
 
@@ -359,7 +361,11 @@ class WizardStep extends StatelessWidget {
                       child: Container(
                         height: navFooterHeight,
                         decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
+                          color: (canGoNext &&
+                                  onNextPressed == null &&
+                                  isLoading)
+                              ? Theme.of(context).primaryColor.withOpacity(0.7)
+                              : Theme.of(context).primaryColor,
                           borderRadius: BorderRadius.only(
                             topLeft: const Radius.circular(32).r,
                           ),
@@ -367,23 +373,40 @@ class WizardStep extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              canGoNext
-                                  ? AppLocalizations.of(context)!.next
-                                  : AppLocalizations.of(context)!.skip,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(color: Colors.white),
-                            ),
-                            SizedBox(
-                              width: 8.w,
-                            ),
-                            Icon(
-                              Icons.arrow_forward,
-                              color: Colors.white,
-                              size: 24.h,
-                            ),
+                            if (canGoNext && onNextPressed == null && isLoading)
+                              SizedBox(
+                                width: 16.w,
+                                height: 16.h,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                ),
+                              )
+                            else
+                              Text(
+                                canGoNext
+                                    ? AppLocalizations.of(context)!.next
+                                    : AppLocalizations.of(context)!.skip,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(color: Colors.white),
+                              ),
+                            if (!(canGoNext &&
+                                onNextPressed == null &&
+                                isLoading))
+                              SizedBox(
+                                width: 8.w,
+                              ),
+                            if (!(canGoNext &&
+                                onNextPressed == null &&
+                                isLoading))
+                              Icon(
+                                Icons.arrow_forward,
+                                color: Colors.white,
+                                size: 24.h,
+                              ),
                           ],
                         ),
                       ),

@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:app/api/api.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 //Read-Write chracteristic on all device that is used to communicate the bin states
 const stateBinsState = '20ded876-5bf8-06b8-354c-759dae9d26c1';

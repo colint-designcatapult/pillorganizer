@@ -15,10 +15,6 @@ public interface UserRepository extends ReactorCrudRepository<User, Long> {
 
     Mono<Integer> countByEmail(String email);
 
-    @Query(nativeQuery = true, readOnly = false, value = "update users set user_type = 1, email = :email, " +
-            "password_hash = :passwordHash where id = :id and user_type = 2")
-    Mono<Integer> upgradeAnonymousUser(long id, String email, byte[] passwordHash);
-
     @Query(value = "select new jct.pillorganizer.dto.UserInfoDTO(id, email) from users where id = :id")
     Mono<UserInfoDTO> findUserInfoDTOFromID(long id);
 

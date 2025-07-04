@@ -141,16 +141,19 @@ class _RegisterPageState extends State<RegisterPage> {
   void _onSubmit(context) {
     var prov = Provider.of<UserRegistrationProvider>(context, listen: false);
     var authProv = Provider.of<AuthenticationProvider>(context, listen: false);
-    _registerFuture = _register(prov, authProv).catchError((err) {
-      registerHandleError(context, err);
-      return false;
-    }).then((value) {
-      if (value) {
-        SchedulerBinding.instance.addPostFrameCallback((_) {
-          Navigator.of(context)
-              .pushNamedAndRemoveUntil('/index', (route) => false);
-        });
-      }
+
+    setState(() {
+      _registerFuture = _register(prov, authProv).catchError((err) {
+        registerHandleError(context, err);
+        return false;
+      }).then((value) {
+        if (value) {
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            Navigator.of(context)
+                .pushNamedAndRemoveUntil('/index', (route) => false);
+          });
+        }
+      });
     });
   }
 

@@ -22,7 +22,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
 
-import '../models/user.dart';
 import '../widgets/basic_page.dart';
 
 class PostSetupWizard extends StatelessWidget {
@@ -32,15 +31,7 @@ class PostSetupWizard extends StatelessWidget {
   Widget build(BuildContext context) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(3, 1);
     void onSkip() {
-      var currentUser =
-          Provider.of<AuthenticationProvider>(context, listen: false)
-              .currentUser;
-      if (currentUser is AnonymousUser) {
-        Navigator.of(context).push(MedicationEntryStep.route(context));
-      } else {
-        Navigator.of(context)
-            .pushNamedAndRemoveUntil("/index", (route) => false);
-      }
+      Navigator.of(context).pushNamedAndRemoveUntil("/index", (route) => false);
     }
 
     return Consumer2<ScheduleProvider, DeviceProvider>(
@@ -125,15 +116,7 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
   Widget build(BuildContext context) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(3, 3);
     void onNext() {
-      var currentUser =
-          Provider.of<AuthenticationProvider>(context, listen: false)
-              .currentUser;
-      if (currentUser is AnonymousUser) {
-        Navigator.of(context).push(CreateAccountStep.route(context));
-      } else {
-        Navigator.of(context)
-            .pushNamedAndRemoveUntil("/index", (route) => false);
-      }
+      Navigator.of(context).pushNamedAndRemoveUntil("/index", (route) => false);
     }
 
     return WizardStep(
@@ -231,7 +214,7 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
         builder: (context) => device != null
             ? ChangeNotifierProvider<NewMedicationProvider>(
                 create: (context) => NewMedicationProvider(
-                    device!.deviceID, () => prov.update(device)),
+                    device.deviceID, () => prov.update(device)),
                 builder: (context, _) => MedicationModal(
                     onBack: () => Navigator.of(context).pop(),
                     onNext: true,
@@ -362,6 +345,7 @@ class CreateAccountStep extends StatefulWidget {
 
 class _CreateAccountStepState extends State<CreateAccountStep> {
   bool _obscureText = true;
+  Future<void>? _registerFuture;
 
   @override
   Widget build(BuildContext context) {
@@ -383,7 +367,7 @@ class _CreateAccountStepState extends State<CreateAccountStep> {
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: BasicForm(
                   onSubmit: () => _submit(context),
-                  future: Provider.of<UserRegistrationProvider>(context).future,
+                  future: _registerFuture,
                   buttonText: AppLocalizations.of(context)!.createAccount,
                   children: [
                     BasicPageTextFormField(
@@ -439,16 +423,19 @@ class _CreateAccountStepState extends State<CreateAccountStep> {
   void _submit(context) {
     var prov = Provider.of<UserRegistrationProvider>(context, listen: false);
     var authProv = Provider.of<AuthenticationProvider>(context, listen: false);
-    _register(prov, authProv).catchError((err) {
-      registerHandleError(context, err);
-      return false;
-    }).then((value) {
-      if (value) {
-        SchedulerBinding.instance.addPostFrameCallback((_) {
-          Navigator.of(context)
-              .pushNamedAndRemoveUntil('/index', (route) => false);
-        });
-      }
+
+    setState(() {
+      _registerFuture = _register(prov, authProv).catchError((err) {
+        registerHandleError(context, err);
+        return false;
+      }).then((value) {
+        if (value) {
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            Navigator.of(context)
+                .pushNamedAndRemoveUntil('/index', (route) => false);
+          });
+        }
+      });
     });
   }
 

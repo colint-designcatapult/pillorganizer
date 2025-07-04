@@ -280,20 +280,6 @@ Map<String, dynamic> _$DeviceDTOToJson(DeviceDTO instance) => <String, dynamic>{
       'lastSync': instance.lastSync,
     };
 
-AnonymousCredentialsDTO _$AnonymousCredentialsDTOFromJson(
-        Map<String, dynamic> json) =>
-    AnonymousCredentialsDTO(
-      id: json['id'] as int,
-      secret: json['secret'] as String,
-    );
-
-Map<String, dynamic> _$AnonymousCredentialsDTOToJson(
-        AnonymousCredentialsDTO instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'secret': instance.secret,
-    };
-
 JwtCredentials _$JwtCredentialsFromJson(Map<String, dynamic> json) =>
     JwtCredentials(
       username: json['username'] as String?,
@@ -697,29 +683,6 @@ class _RestClient implements RestClient {
   }
 
   @override
-  Future<AnonymousCredentialsDTO> registerAnonymous() async {
-    const _extra = <String, dynamic>{};
-    final queryParameters = <String, dynamic>{};
-    final _headers = <String, dynamic>{};
-    final Map<String, dynamic>? _data = null;
-    final _result = await _dio.fetch<Map<String, dynamic>>(
-        _setStreamType<AnonymousCredentialsDTO>(Options(
-      method: 'POST',
-      headers: _headers,
-      extra: _extra,
-    )
-            .compose(
-              _dio.options,
-              '/user/register_anonymous',
-              queryParameters: queryParameters,
-              data: _data,
-            )
-            .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
-    final value = AnonymousCredentialsDTO.fromJson(_result.data!);
-    return value;
-  }
-
-  @override
   Future<void> sendRecoveryCode(UserSendRecoveryCodeDTO dto) async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
@@ -760,30 +723,6 @@ class _RestClient implements RestClient {
         )
         .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
     final value = _result.data!;
-    return value;
-  }
-
-  @override
-  Future<JwtCredentials> loginAnonymous(AnonymousCredentialsDTO creds) async {
-    const _extra = <String, dynamic>{};
-    final queryParameters = <String, dynamic>{};
-    final _headers = <String, dynamic>{};
-    final _data = <String, dynamic>{};
-    _data.addAll(creds.toJson());
-    final _result = await _dio
-        .fetch<Map<String, dynamic>>(_setStreamType<JwtCredentials>(Options(
-      method: 'POST',
-      headers: _headers,
-      extra: _extra,
-    )
-            .compose(
-              _dio.options,
-              '/auth/login_anonymous',
-              queryParameters: queryParameters,
-              data: _data,
-            )
-            .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
-    final value = JwtCredentials.fromJson(_result.data!);
     return value;
   }
 
@@ -830,30 +769,6 @@ class _RestClient implements RestClient {
             )
             .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
     final value = UserInfoDTO.fromJson(_result.data!);
-    return value;
-  }
-
-  @override
-  Future<UserDTO> upgradeAnonymous(UserRegistrationDTO reg) async {
-    const _extra = <String, dynamic>{};
-    final queryParameters = <String, dynamic>{};
-    final _headers = <String, dynamic>{};
-    final _data = <String, dynamic>{};
-    _data.addAll(reg.toJson());
-    final _result =
-        await _dio.fetch<Map<String, dynamic>>(_setStreamType<UserDTO>(Options(
-      method: 'POST',
-      headers: _headers,
-      extra: _extra,
-    )
-            .compose(
-              _dio.options,
-              '/user/anonymous_upgrade',
-              queryParameters: queryParameters,
-              data: _data,
-            )
-            .copyWith(baseUrl: baseUrl ?? _dio.options.baseUrl)));
-    final value = UserDTO.fromJson(_result.data!);
     return value;
   }
 

@@ -1,5 +1,13 @@
 package jct.pillorganizer.service;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.HexFormat;
+import java.util.Objects;
+import java.util.Optional;
+
+import javax.transaction.Transactional;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.auth.AuthService;
@@ -16,16 +24,8 @@ import jct.pillorganizer.model.device.DeviceUser;
 import jct.pillorganizer.proto.Pill;
 import jct.pillorganizer.repo.DeviceProvisionRepository;
 import jct.pillorganizer.repo.DeviceRepository;
-import jct.pillorganizer.repo.DeviceScheduleRepository;
 import jct.pillorganizer.repo.DeviceUserRepository;
 import lombok.extern.flogger.Flogger;
-
-import javax.transaction.Transactional;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.HexFormat;
-import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Business logic for dealing with device provisioning.
@@ -100,12 +100,6 @@ public class DeviceProvisionService {
         deviceProvision.setUserID(authService.getUserID());
         deviceProvision.setTimezone(tzLocation);
 
-        if(device.getId() == 1465 || device.getId() == 1333) {
-            deviceProvision.setSsid("LaPetiteMaisonJaune");
-            deviceProvision.setBssid("7c7ef93eb506");
-            deviceProvision.setVersion(1L);
-        }
-
         // Generate OOB key
         try {
             deviceProvision.setOobKey(generateOobKey());
@@ -174,6 +168,7 @@ public class DeviceProvisionService {
     public Pill.SyncResponse completeProvisioning(Pill.DeviceProvisionRequest req) {
         Device device = deviceAuthService.getDevice();
         DeviceProvision provision = device.getCurrentProvision();
+        long userId = provision.getUserID();
 
         // Update timezone
         deviceRepository.updateBaseTZById(device.getId(), provision.getTimezone());
@@ -181,21 +176,15 @@ public class DeviceProvisionService {
         // Update provision record with SSID/BSSID
         byte[] bssid = req.getBssid().toByteArray();
         String bssidHex = HexFormat.of().formatHex(bssid);
-
-        if(device.getId() == 1465 || device.getId() == 1333) {
-            deviceProvisionRepository.update(provision.getId(), 1L, "7c7ef93eb506", "LaPetiteMaisonJaune");
-        } else {
-            deviceProvisionRepository.update(provision.getId(), provision.getVersion(), bssidHex, req.getSsid());
-        }
-
+        deviceProvisionRepository.update(provision.getId(), provision.getVersion(), bssidHex, req.getSsid());
 
         // Add user to device
-        deviceUserService.addUserToDevice(provision.getUserID(), device.getId(), true, false);
+        deviceUserService.addUserToDevice(userId, device.getId(), true, false);
 
         log.atInfo().log("Provisioned device %d with SSID %s on timezone %s", device.getId(), req.getSsid(),
                 device.getBaseTZ());
 
-        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(201, device.getId());
+        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userId, device.getId());
 
         // Initialize the device state
         DeviceStateWrapper wrapper = deviceStateService.wrapperOf(device, deviceUser);

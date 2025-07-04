@@ -3,14 +3,12 @@ import 'dart:convert';
 
 import 'package:app/api/api.dart';
 import 'package:app/api/provision.dart';
-import 'package:app/provider/authentication_provider.dart';
 import 'package:app/service/provisioning_service.dart';
 import 'package:app/utils/provision_utils.dart';
 import 'package:convert/convert.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_esp_ble_prov/flutter_esp_ble_prov.dart';
-import 'package:provider/provider.dart';
 
 class ProvisionProvider extends ChangeNotifier {
   late ProvisionState _state;
@@ -231,15 +229,6 @@ class ProvisionProvider extends ChangeNotifier {
     if (_state.provisionID != null && _state.serialNo != null) {
       // Perform key exchange
       return;
-    }
-
-    if (!(await credentialManager.isLoggedIn())) {
-      if (context.mounted) {
-        var prov = Provider.of<AuthenticationProvider>(context, listen: false);
-        await prov.createAnonymous();
-      } else {
-        return Future.error(ProvisionError.errorContextGone);
-      }
     }
 
     var sn = await _getSerialNo();

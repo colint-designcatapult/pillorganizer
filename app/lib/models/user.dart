@@ -6,10 +6,6 @@ class BaseUser {
   });
 }
 
-class AnonymousUser extends BaseUser {
-  AnonymousUser({required super.id});
-}
-
 class User extends BaseUser {
   final String? email;
 

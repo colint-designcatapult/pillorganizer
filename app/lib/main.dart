@@ -13,6 +13,7 @@ import 'package:app/screens/first_launch.dart';
 import 'package:app/screens/name_device_wizard.dart';
 import 'package:app/screens/post_setup_wizard.dart';
 import 'package:app/service/credential_manager.dart';
+import 'package:app/service/deep_link_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -29,6 +30,7 @@ import 'package:timezone/data/latest.dart' as tz;
 
 import 'firebase_options.dart';
 import 'provider/authentication_provider.dart';
+import 'provider/deep_link_provider.dart';
 import 'provider/schedule_provider.dart';
 import 'provider/selected_device_provider.dart';
 import 'screens/auth/launch_page_login.dart';
@@ -63,6 +65,9 @@ Future<void> main() async {
   };
   tz.initializeTimeZones();
   await dotenv.load();
+
+  DeepLinkService().initialize();
+
   runApp(const MyApp());
 }
 
@@ -76,6 +81,9 @@ class MyApp extends StatelessWidget {
         providers: [
           ChangeNotifierProvider(
             create: (context) => AuthenticationProvider(),
+          ),
+          ChangeNotifierProvider(
+            create: (context) => DeepLinkProvider(),
           ),
           ChangeNotifierProvider<UserRegistrationProvider>(
               create: (_) => UserRegistrationProvider()),
@@ -113,134 +121,200 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProvider<CaregiverProvider>(
               create: (_) => CaregiverProvider()),
         ],
-        child: MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              textScaleFactor: 1.0,
-            ),
-            child: PlatformProvider(
-              settings: PlatformSettingsData(iosUsesMaterialWidgets: true),
-              builder: (context) => MaterialApp(
-                title: 'Cabinet Pills',
-                themeMode: ThemeMode.system,
-                onGenerateRoute: (settings) {
-                  if (settings.name?.startsWith('/name_new_device') == true) {
-                    final uri = Uri.parse(settings.name!);
-                    final deviceId = uri.queryParameters['id'] != null
-                        ? int.parse(uri.queryParameters['id']!)
-                        : null;
-
-                    return MaterialPageRoute(
-                      builder: (context) =>
-                          ChangeNotifierProvider<ProvisionProvider>(
-                        create: (context) => ProvisionProvider(),
-                        child: NameDeviceWizard(deviceId: deviceId),
-                      ),
-                    );
-                  }
-
-                  // Handle other routes that might need query parameters here
-                  return null; // Let the routes table handle other routes
-                },
-                routes: {
-                  '/': (context) {
-                    return FutureBuilder<bool>(
-                      future: _checkIfAccountExists(context),
-                      builder:
-                          (BuildContext context, AsyncSnapshot<bool> snapshot) {
-                        if (snapshot.hasData && snapshot.data!) {
-                          return const LaunchPageLogin();
-                        } else {
-                          return const FirstLaunchPage();
-                        }
-                      },
-                    );
-                  },
-                  '/provision': (context) => const ProvisionNavigator(),
-                  '/index': (context) => const TabNavigator(),
-                  '/post_setup': (context) => const PostSetupWizard(),
-                  '/register': (context) => const RegisterPage()
-                },
-                supportedLocales: const [Locale('en'), Locale('fr')],
-                localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
-                  AppLocalizations.delegate,
-                  GlobalMaterialLocalizations.delegate,
-                  GlobalWidgetsLocalizations.delegate,
-                  GlobalCupertinoLocalizations.delegate,
-                ],
-                debugShowCheckedModeBanner: false,
-                theme: ThemeData(
-                  useMaterial3: true,
-                  colorScheme:
-                      ColorScheme.fromSeed(seedColor: const Color(0xff206b8b)),
-                  primaryColor: const Color(0xff206b8b),
-                  secondaryHeaderColor: const Color(0xFFBFD2DB),
-                  fontFamily: 'Poppins',
-                  textTheme: TextTheme(
-                    titleSmall: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16.h,
-                    ),
-                    titleMedium: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 20.h,
-                    ),
-                    titleLarge: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 24.h,
-                    ),
-                    labelSmall: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 16.h,
-                        fontWeight: FontWeight.w600),
-                    labelMedium: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 18.h,
-                        fontWeight: FontWeight.w600),
-                    labelLarge: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 20.h,
-                        fontWeight: FontWeight.w600),
-                    displaySmall: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 16.h,
-                        fontWeight: FontWeight.w500),
-                    displayMedium: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 20.h,
-                        fontWeight: FontWeight.w500),
-                    displayLarge: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 32.h,
-                        fontWeight: FontWeight.w500),
-                    bodySmall: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 14.h,
-                        fontWeight: FontWeight.w400),
-                    bodyMedium: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 16.h,
-                        fontWeight: FontWeight.w400),
-                    bodyLarge: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 20.h,
-                        fontWeight: FontWeight.w400),
-                  ),
-                ),
-                navigatorObservers: [routeObserver],
+        child: DeepLinkWrapper(
+          child: MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaleFactor: 1.0,
               ),
-            )),
+              child: PlatformProvider(
+                settings: PlatformSettingsData(iosUsesMaterialWidgets: true),
+                builder: (context) => MaterialApp(
+                  title: 'Cabinet Pills',
+                  themeMode: ThemeMode.system,
+                  onGenerateRoute: (settings) {
+                    if (settings.name?.startsWith('/name_new_device') == true) {
+                      final uri = Uri.parse(settings.name!);
+                      final deviceId = uri.queryParameters['id'] != null
+                          ? int.parse(uri.queryParameters['id']!)
+                          : null;
+
+                      return MaterialPageRoute(
+                        builder: (context) =>
+                            ChangeNotifierProvider<ProvisionProvider>(
+                          create: (context) => ProvisionProvider(),
+                          child: NameDeviceWizard(deviceId: deviceId),
+                        ),
+                      );
+                    }
+
+                    // Handle other routes that might need query parameters here
+                    return null; // Let the routes table handle other routes
+                  },
+                  routes: {
+                    '/': (context) {
+                      return const AppInitializer();
+                    },
+                    '/provision': (context) => const ProvisionNavigator(),
+                    '/index': (context) => const TabNavigator(),
+                    '/post_setup': (context) => const PostSetupWizard(),
+                    '/register': (context) => const RegisterPage()
+                  },
+                  supportedLocales: const [Locale('en'), Locale('fr')],
+                  localizationsDelegates: const <LocalizationsDelegate<
+                      dynamic>>[
+                    AppLocalizations.delegate,
+                    GlobalMaterialLocalizations.delegate,
+                    GlobalWidgetsLocalizations.delegate,
+                    GlobalCupertinoLocalizations.delegate,
+                  ],
+                  debugShowCheckedModeBanner: false,
+                  theme: ThemeData(
+                    useMaterial3: true,
+                    colorScheme: ColorScheme.fromSeed(
+                        seedColor: const Color(0xff206b8b)),
+                    primaryColor: const Color(0xff206b8b),
+                    secondaryHeaderColor: const Color(0xFFBFD2DB),
+                    fontFamily: 'Poppins',
+                    textTheme: TextTheme(
+                      titleSmall: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16.h,
+                      ),
+                      titleMedium: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 20.h,
+                      ),
+                      titleLarge: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 24.h,
+                      ),
+                      labelSmall: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 16.h,
+                          fontWeight: FontWeight.w600),
+                      labelMedium: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 18.h,
+                          fontWeight: FontWeight.w600),
+                      labelLarge: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 20.h,
+                          fontWeight: FontWeight.w600),
+                      displaySmall: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 16.h,
+                          fontWeight: FontWeight.w500),
+                      displayMedium: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 20.h,
+                          fontWeight: FontWeight.w500),
+                      displayLarge: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 32.h,
+                          fontWeight: FontWeight.w500),
+                      bodySmall: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 14.h,
+                          fontWeight: FontWeight.w400),
+                      bodyMedium: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 16.h,
+                          fontWeight: FontWeight.w400),
+                      bodyLarge: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 20.h,
+                          fontWeight: FontWeight.w400),
+                    ),
+                  ),
+                  navigatorObservers: [routeObserver],
+                ),
+              )),
+        ),
       ),
     );
   }
+}
 
-  Future<bool> _checkIfAccountExists(BuildContext context) async {
+class DeepLinkWrapper extends StatefulWidget {
+  final Widget child;
+
+  const DeepLinkWrapper({Key? key, required this.child}) : super(key: key);
+
+  @override
+  State<DeepLinkWrapper> createState() => _DeepLinkWrapperState();
+}
+
+class _DeepLinkWrapperState extends State<DeepLinkWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    _initializeDeepLinks();
+  }
+
+  void _initializeDeepLinks() {
+    final deepLinkService = DeepLinkService();
+
+    deepLinkService.setPatientDeepLinkHandler((String patientId) {
+      final deepLinkProvider =
+          Provider.of<DeepLinkProvider>(context, listen: false);
+      deepLinkProvider.setPatientId(patientId);
+    });
+
+    _checkInitialDeepLink();
+  }
+
+  void _checkInitialDeepLink() async {
+    final deepLinkService = DeepLinkService();
+    final initialLink = await deepLinkService.getInitialLink();
+
+    if (initialLink != null && deepLinkService.isPatientDeepLink(initialLink)) {
+      final patientId = deepLinkService.extractPatientId(initialLink);
+      if (patientId != null) {
+        final deepLinkProvider =
+            Provider.of<DeepLinkProvider>(context, listen: false);
+        deepLinkProvider.setPatientId(patientId);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
+}
+
+class AppInitializer extends StatelessWidget {
+  const AppInitializer({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _checkIfAccountExists(),
+      builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+        if (snapshot.hasData) {
+          if (snapshot.data!) {
+            return const LaunchPageLogin();
+          } else {
+            return const FirstLaunchPage();
+          }
+        } else {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+      },
+    );
+  }
+
+  Future<bool> _checkIfAccountExists() async {
     final prefs = await SharedPreferences.getInstance();
     CredentialManager cred = CredentialManager();
 
-    // Storage in keypass: clean at first use
     if (prefs.getBool('first_run') ?? true) {
       await cred.cleanCredentials();
       prefs.setBool('first_run', false);

@@ -46,26 +46,17 @@ abstract class RestClient {
   @POST("/device/{id}/reload")
   Future<void> reload(@Path("id") int id);
 
-  @POST("/user/register_anonymous")
-  Future<AnonymousCredentialsDTO> registerAnonymous();
-
   @POST("/mail/send_recovery_code")
   Future<void> sendRecoveryCode(@Body() UserSendRecoveryCodeDTO dto);
 
   @POST("/mail/validate_recovery_code")
   Future<bool> validateRecoveryCode(@Body() UserValidateRecoveryCodeDTO dto);
 
-  @POST("/auth/login_anonymous")
-  Future<JwtCredentials> loginAnonymous(@Body() AnonymousCredentialsDTO creds);
-
   @POST("/auth/login")
   Future<JwtCredentials> login(@Body() EmailPasswordCredentialsDTO creds);
 
   @GET("/user/me")
   Future<UserInfoDTO> authStatus();
-
-  @POST("/user/anonymous_upgrade")
-  Future<UserDTO> upgradeAnonymous(@Body() UserRegistrationDTO reg);
 
   @POST("/user/register")
   Future<UserDTO> register(@Body() UserRegistrationDTO reg);
@@ -469,19 +460,6 @@ class DeviceDTO {
       return "Device #${id}";
     }
   }
-}
-
-@JsonSerializable()
-class AnonymousCredentialsDTO {
-  final int id;
-  final String secret;
-
-  AnonymousCredentialsDTO({required this.id, required this.secret});
-
-  factory AnonymousCredentialsDTO.fromJson(Map<String, dynamic> json) =>
-      _$AnonymousCredentialsDTOFromJson(json);
-
-  Map<String, dynamic> toJson() => _$AnonymousCredentialsDTOToJson(this);
 }
 
 @freezed

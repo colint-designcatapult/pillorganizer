@@ -46,16 +46,6 @@ public class LoginController {
     @Inject
     AccessRefreshTokenGenerator accessRefreshTokenGenerator;
 
-
-    @Operation(summary = "Signs in an anonymous user with their ID/secret credential pair")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Post("/api/v1/auth/login_anonymous")
-    @Secured(SecurityRule.IS_ANONYMOUS)
-    public Publisher<MutableHttpResponse<?>> loginAnonymous(@Valid @Body AnonymousAuthenticationRequest creds,
-                                                   HttpRequest<?> request) {
-        return loginInternal(creds, request);
-    }
-
     @Operation(summary = "Signs in a standard user with their email/password credential pair")
     @Consumes({MediaType.APPLICATION_FORM_URLENCODED, MediaType.APPLICATION_JSON})
         @Post("/api/v1/auth/login")

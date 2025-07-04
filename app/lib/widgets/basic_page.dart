@@ -382,6 +382,8 @@ class BasicPageTextFormField extends StatelessWidget {
   final VoidCallback? onRevealText;
   final bool obscureText;
   final double? paddingBottom;
+  final TextEditingController? controller;
+  final String? initialValue;
 
   const BasicPageTextFormField(
       {super.key,
@@ -394,7 +396,9 @@ class BasicPageTextFormField extends StatelessWidget {
       this.onChanged,
       this.onRevealText,
       this.obscureText = false,
-      this.paddingBottom});
+      this.paddingBottom,
+      this.controller,
+      this.initialValue});
 
   ValueChanged<String>? _onFieldSubmitted(context) {
     if (onFieldSubmitted == null) {
@@ -414,6 +418,8 @@ class BasicPageTextFormField extends StatelessWidget {
     return Column(
       children: [
         TextFormField(
+          controller: controller,
+          initialValue: controller == null ? initialValue : null,
           autofocus: autofocus,
           validator: validator,
           onSaved: onSaved,

@@ -79,6 +79,7 @@ dependencies:
   flutter_screenutil: ^5.9.0
   pixel_perfect: any
   app_settings: 4.2.0
+  app_links: ^3.5.1
 
 dev_dependencies:
   flutter_test:

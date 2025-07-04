@@ -14,7 +14,7 @@ import '../service/credential_manager.dart';
 
 final CredentialManager credentialManager = CredentialManager();
 
-enum AuthenticationState { unknown, unauthenticated, anonymous, authenticated }
+enum AuthenticationState { unknown, unauthenticated, authenticated }
 
 class AuthenticationProvider with ChangeNotifier {
   BaseUser? get currentUser => _user;
@@ -67,28 +67,6 @@ class AuthenticationProvider with ChangeNotifier {
     return _future;
   }
 
-  Future<void> createAnonymous() async {
-    var reg = await client.registerAnonymous();
-    await logInAnonymous(id: reg.id, secret: reg.secret);
-  }
-
-  Future<void> logInAnonymous({
-    required int id,
-    required String secret,
-  }) async {
-    var creds = AnonymousCredentialsDTO(id: id, secret: secret);
-
-    return client
-        .loginAnonymous(creds)
-        .then((value) => credentialManager.updateJWT(value))
-        .then((v) => credentialManager.updateAnonymousCreds(creds))
-        .then((v) async {
-      if (!await checkAuthStatus()) {
-        throw AuthFailedException();
-      }
-    });
-  }
-
   Future<void> signOut(BuildContext context) async {
     return credentialManager.signOut().then((value) {
       _user = null;
@@ -122,9 +100,8 @@ class AuthenticationProvider with ChangeNotifier {
 
   Future<bool> checkAuthStatus() {
     return client.authStatus().then((user) {
-      _user = user.email != null
-          ? User(id: user.id, email: user.email)
-          : AnonymousUser(id: user.id);
+      _user = User(id: user.id, email: user.email);
+
       notifyListeners();
       return true;
     }).catchError((err) {

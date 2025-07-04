@@ -57,29 +57,6 @@ public class AppUserController {
         return userRepo.findUserInfoDTOFromID(userID);
     }
 
-    @Operation(summary = "Upgrades an anonymous account into a standard account", description = "Performs an in-place upgrade of an anonymous account into a standard account with an email and "
-            +
-            "password. The user ID is preserved.")
-    @Post("/anonymous_upgrade")
-    @Secured({ "anon" })
-    public Mono<User> upgradeAnonymous(@Body @Valid UserRegistration registration) {
-        long userID = anonAuthService.getUserID();
-        byte[] hash = authService.hashPassword(registration.getPassword().toCharArray());
-        return userRepo.countByEmail(registration.getEmail())
-                .flatMap(number -> {
-                    if (number > 0)
-                        return Mono.error(Problem.builder().withTitle("A user with that email already exists").build());
-                    return Mono.just(number);
-                })
-                .then(userRepo.upgradeAnonymousUser(userID, registration.getEmail(), hash))
-                .flatMap(number -> {
-                    if (number == 0)
-                        return Mono.error(Problem.builder().withTitle("Already a full user").build());
-                    return Mono.empty();
-                })
-                .then(userRepo.findById(userID));
-    }
-
     @Operation(summary = "Register a standard account.")
     @Post("/register")
     @Secured(SecurityRule.IS_ANONYMOUS)
