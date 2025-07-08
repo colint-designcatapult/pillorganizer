@@ -83,7 +83,7 @@ jobs:
           heroku container:release web -a cabinet-staging
 
   push-to-heroku:
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/production'
     name: Push image to Heroku
     runs-on: ubuntu-latest
     needs: build-with-maven
