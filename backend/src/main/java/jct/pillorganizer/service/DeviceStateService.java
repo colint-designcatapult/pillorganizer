@@ -11,13 +11,19 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 
+import org.zalando.problem.Problem;
+
+import io.micronaut.http.HttpStatus;
+import io.micronaut.problem.HttpStatusType;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jct.pillorganizer.auth.DeviceAuthService;
 import jct.pillorganizer.device.DeviceStateWrapper;
 import jct.pillorganizer.dto.DosePeriodDTO;
 import jct.pillorganizer.model.EventType;
 import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.device.DeviceEvent;
+import jct.pillorganizer.model.device.DeviceProvision;
 import jct.pillorganizer.model.device.DeviceState;
 import jct.pillorganizer.model.device.DeviceUser;
 import jct.pillorganizer.model.medication.MedicationDispenseTime;
@@ -25,6 +31,7 @@ import jct.pillorganizer.repo.DeviceEventRepository;
 import jct.pillorganizer.repo.DeviceRepository;
 import jct.pillorganizer.repo.DeviceScheduleRepository;
 import jct.pillorganizer.repo.DeviceStateRepository;
+import jct.pillorganizer.repo.DeviceUserRepository;
 import lombok.extern.flogger.Flogger;
 
 /**
@@ -47,6 +54,12 @@ public class DeviceStateService {
     DeviceEventRepository deviceEventRepository;
 
     @Inject
+    DeviceUserRepository deviceUserRepository;
+
+    @Inject
+    DeviceAuthService deviceAuthService;
+
+    @Inject
     FirmwareService firmwareService;
 
     /**
@@ -58,6 +71,31 @@ public class DeviceStateService {
     public DeviceStateWrapper wrapperOf(Device device, DeviceUser deviceUser) {
         return new DeviceStateWrapper(deviceRepository, deviceScheduleRepository,
                 deviceStateRepository, deviceEventRepository, firmwareService, device, deviceUser);
+    }
+
+    /**
+     * Creates a DeviceStateWrapper for device sync operations.
+     * 
+     * @return DeviceStateWrapper ready for sync operations
+     * @throws Problem if the device or device user relationship doesn't exist or the device is not provisioned
+     */
+    @Transactional
+    public DeviceStateWrapper getDeviceStateWrapperForDeviceSync() {
+        Device device = deviceAuthService.getDevice();
+        
+        DeviceProvision deviceProvision = device.getCurrentProvision();
+        if (deviceProvision == null) {
+            throw Problem.builder()
+                .withStatus(new HttpStatusType(HttpStatus.PRECONDITION_FAILED))
+                .withTitle("Device not provisioned")
+                .withDetail("Device must be provisioned before syncing")
+                .build();
+        }
+        
+        long userId = deviceProvision.getUserID();
+        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, device.getId());
+        
+        return wrapperOf(device, deviceUser);
     }
 
     /**
