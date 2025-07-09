@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
-import jct.pillorganizer.model.device.DeviceUser;
 import org.zalando.problem.Problem;
 
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -46,6 +45,7 @@ import jct.pillorganizer.dto.VerifyProvision;
 import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.device.DeviceClass;
 import jct.pillorganizer.model.device.DeviceProvision;
+import jct.pillorganizer.model.device.DeviceUser;
 import jct.pillorganizer.proto.Pill;
 import jct.pillorganizer.repo.DeviceRepository;
 import jct.pillorganizer.repo.DeviceUserRepository;
@@ -168,7 +168,7 @@ public class AppDeviceAPIController {
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public void reload(@QueryValue long id) {
         long userId = authService.getUserID();
-        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userId, id);
+        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, id);
         stateService.wrapperOf(deviceRepository.findById(id).get(), deviceUser)
                 .reload();
     }
@@ -181,7 +181,7 @@ public class AppDeviceAPIController {
             @DeviceABAC(idType = DeviceABACIDType.DEVICE) @PathVariable("id") long deviceID,
             @Body UpdateDeviceUserSettings dto) {
         long userID = authService.getUserID();
-        var devUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userID, deviceID);
+        var devUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userID, deviceID);
 
         if (dto.deviceName().isPresent()) {
             deviceRepository.update(deviceID, dto.deviceName().get());
@@ -218,7 +218,7 @@ public class AppDeviceAPIController {
         long userId = authService.getUserID();
         Device device = deviceRepository.findById(deviceID)
                 .orElseThrow(() -> Problem.builder().withStatus(new HttpStatusType(HttpStatus.NOT_FOUND)).build());
-        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userId, deviceID);
+        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, deviceID);
 
         byte[] parsedBody = Base64.getDecoder().decode(body);
 
@@ -243,7 +243,7 @@ public class AppDeviceAPIController {
 
         Device device = deviceRepository.findById(id)
                 .orElseThrow(() -> Problem.builder().withStatus(new HttpStatusType(HttpStatus.NOT_FOUND)).build());
-        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userId, id);
+        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, id);
 
         return new DeviceStateDTO(
                 device.getId(),

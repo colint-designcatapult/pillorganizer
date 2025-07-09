@@ -48,6 +48,19 @@ void deleteDevice(context) {
 
 class _ScheduleEntryState extends State<ScheduleEntry> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final targetDevice = widget.device ??
+          Provider.of<SelectedDeviceProvider>(context, listen: false).device;
+      if (targetDevice != null) {
+        Provider.of<ScheduleProvider>(context, listen: false)
+            .load(targetDevice.deviceID);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final targetDevice = widget.device ??
         Provider.of<SelectedDeviceProvider>(context, listen: false).device;
@@ -58,7 +71,6 @@ class _ScheduleEntryState extends State<ScheduleEntry> {
 
     return Consumer<ScheduleProvider>(
       builder: (context, scheduleProvider, _) {
-        scheduleProvider.load(targetDevice.deviceID);
         final deviceSchedule =
             scheduleProvider.getScheduleForDevice(targetDevice.deviceID);
 

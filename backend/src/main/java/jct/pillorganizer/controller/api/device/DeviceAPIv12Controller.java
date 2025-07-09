@@ -1,8 +1,13 @@
 package jct.pillorganizer.controller.api.device;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.annotation.*;
+import io.micronaut.http.annotation.Body;
+import io.micronaut.http.annotation.Consumes;
+import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Post;
+import io.micronaut.http.annotation.Produces;
 import io.micronaut.protobuf.codec.ProtobufferCodec;
 import io.micronaut.security.annotation.Secured;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,7 +56,7 @@ public class DeviceAPIv12Controller {
                 long userId = authService.getUserID();
                 Pill.SyncRequest req = Pill.SyncRequest.parseFrom(body);
                 Device device = deviceAuthService.getDevice();
-                DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userId, device.getId());
+                DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, device.getId());
                 log.atInfo().log("Device initiated sync, id: %d", device.getId());
                 return HttpResponse.ok(
                                 deviceStateService

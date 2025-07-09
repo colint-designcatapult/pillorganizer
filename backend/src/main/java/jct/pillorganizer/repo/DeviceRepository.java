@@ -1,5 +1,11 @@
 package jct.pillorganizer.repo;
 
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.Optional;
+
+import javax.annotation.Nullable;
+
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
@@ -7,12 +13,6 @@ import io.micronaut.data.annotation.Version;
 import io.micronaut.data.repository.CrudRepository;
 import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.device.DeviceProvision;
-import jct.pillorganizer.proto.Pill;
-
-import javax.annotation.Nullable;
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface DeviceRepository extends CrudRepository<Device, Long> {

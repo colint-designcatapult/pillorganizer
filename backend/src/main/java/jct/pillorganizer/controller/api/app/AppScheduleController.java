@@ -1,6 +1,10 @@
 package jct.pillorganizer.controller.api.app;
 
-import io.micronaut.http.annotation.*;
+import io.micronaut.http.annotation.Body;
+import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.PathVariable;
+import io.micronaut.http.annotation.Post;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,7 +35,7 @@ public class AppScheduleController {
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public SimpleScheduleDTO dispenseTimes(@PathVariable("id") long deviceID) {
         long userId = authService.getUserID();
-        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userId, deviceID);
+        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, deviceID);
         return deviceScheduleService.buildSimpleSchedule(deviceUser);
     }
 
@@ -41,7 +45,7 @@ public class AppScheduleController {
     public SimpleScheduleDTO updateDispenseTime(@PathVariable("id") long deviceID, @Body SimpleScheduleDTO dto) {
         long userID = authService.getUserID();
         Device d = authService.accessDevice(deviceID);
-        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userID, deviceID);
+        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userID, deviceID);
         return deviceScheduleService.updateSchedule(d, deviceUser, dto);
     }
 

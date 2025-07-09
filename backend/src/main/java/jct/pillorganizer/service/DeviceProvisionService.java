@@ -184,7 +184,8 @@ public class DeviceProvisionService {
         log.atInfo().log("Provisioned device %d with SSID %s on timezone %s", device.getId(), req.getSsid(),
                 device.getBaseTZ());
 
-        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userId, device.getId());
+        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalse(userId, device.getId())
+                .orElseThrow(() -> new RuntimeException("Device user relationship does not exists"));
 
         // Initialize the device state
         DeviceStateWrapper wrapper = deviceStateService.wrapperOf(device, deviceUser);

@@ -19,6 +19,17 @@ class MedicationCardEntry extends StatefulWidget {
 }
 
 class _MedicationCardEntryState extends State<MedicationCardEntry> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider =
+          Provider.of<NewMedicationProvider>(context, listen: false);
+      Provider.of<ScheduleProvider>(context, listen: false)
+          .load(provider.state.deviceID);
+    });
+  }
+
   Widget _buildDose(context, DispenseTime time, Set<int>? checked,
       NewMedicationProvider provider, String imageUrl) {
     bool selected = checked?.contains(time.id) ?? false;
@@ -177,7 +188,6 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
             Consumer<ScheduleProvider>(
                 builder: (context, scheduleProv, snapshot) {
               final deviceID = provider.state.deviceID;
-              scheduleProv.load(deviceID);
               final deviceSchedule =
                   scheduleProv.getScheduleForDevice(deviceID);
 

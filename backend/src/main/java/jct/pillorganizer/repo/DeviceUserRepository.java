@@ -3,11 +3,15 @@ package jct.pillorganizer.repo;
 import java.util.Optional;
 import java.util.Set;
 
+import org.zalando.problem.Problem;
+
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.problem.HttpStatusType;
 import jct.pillorganizer.dto.DeviceUserDTO;
 import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.device.DeviceUser;
@@ -29,7 +33,16 @@ public interface DeviceUserRepository extends CrudRepository<DeviceUser, Long> {
     void updateNotificationTokenById(@Id Long id, @Nullable String notificationToken);
 
 
-    DeviceUser findByUserIDAndDeviceIDAndDeletedFalse(long user, long device);
+    Optional<DeviceUser> findByUserIDAndDeviceIDAndDeletedFalse(long user, long device);
+    
+    default DeviceUser findByUserIDAndDeviceIDAndDeletedFalseOrThrow(long user, long device) {
+        return findByUserIDAndDeviceIDAndDeletedFalse(user, device)
+                .orElseThrow(() -> Problem.builder()
+                        .withStatus(new HttpStatusType(HttpStatus.PRECONDITION_FAILED))
+                        .withTitle("Device not provisioned")
+                        .withDetail("Device must be fully provisioned before this operation can be performed")
+                        .build());
+    }
 
     Optional<Device> retrieveDeviceByUserIDAndDeviceIDAndDeletedFalse(long userID, long deviceID);
 

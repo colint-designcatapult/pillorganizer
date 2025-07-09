@@ -1,8 +1,33 @@
 package jct.pillorganizer.device;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.zip.CRC32;
+
+import javax.annotation.Nullable;
+import javax.transaction.Transactional;
+
 import jct.pillorganizer.model.EventType;
+import jct.pillorganizer.model.device.BinStatus;
 import jct.pillorganizer.model.device.DayOfWeek;
-import jct.pillorganizer.model.device.*;
+import jct.pillorganizer.model.device.Device;
+import jct.pillorganizer.model.device.DeviceBinId;
+import jct.pillorganizer.model.device.DeviceEvent;
+import jct.pillorganizer.model.device.DeviceSchedule;
+import jct.pillorganizer.model.device.DeviceState;
+import jct.pillorganizer.model.device.DeviceUser;
 import jct.pillorganizer.model.device.schedule.DeviceBaseDispenseTime;
 import jct.pillorganizer.proto.Pill;
 import jct.pillorganizer.repo.DeviceEventRepository;
@@ -11,15 +36,6 @@ import jct.pillorganizer.repo.DeviceScheduleRepository;
 import jct.pillorganizer.repo.DeviceStateRepository;
 import jct.pillorganizer.service.FirmwareService;
 import lombok.extern.flogger.Flogger;
-
-import javax.annotation.Nullable;
-import javax.transaction.Transactional;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.sql.Timestamp;
-import java.time.*;
-import java.util.*;
-import java.util.zip.CRC32;
 
 /**
  * Device state business logic.
@@ -237,8 +253,7 @@ public class DeviceStateWrapper {
         }
 
         long deltaCtr = syncRequest.getEventCtr() - device.getEventCounter();
-        if (deltaCtr > EVENT_CTR_DELTA_THRESHOLD
-                || (isBluetooth && Timestamp.from(timeStamp).after(device.getLastSync()))) {
+        if (deltaCtr > EVENT_CTR_DELTA_THRESHOLD) {
             log.atInfo().log("Delta counter past threshold or is on bluetooth accepting client state");
             // Server is too far out of date for us to catch up, so we just accept the
             // client state as truth
