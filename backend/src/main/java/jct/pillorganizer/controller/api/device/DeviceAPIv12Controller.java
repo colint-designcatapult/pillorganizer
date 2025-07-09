@@ -57,8 +57,8 @@ public class DeviceAPIv12Controller {
                 Pill.SyncRequest req = Pill.SyncRequest.parseFrom(body);
                 Device device = deviceAuthService.getDevice();
                 DeviceProvision provision = device.getCurrentProvision();
-                System.out.println("Provision: " + provision.toString());
                 long userId = provision.getUserID();
+                log.atInfo().log("User ID: %d", userId);
                 DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, device.getId());
                 log.atInfo().log("Device initiated sync, id: %d", device.getId());
                 return HttpResponse.ok(
