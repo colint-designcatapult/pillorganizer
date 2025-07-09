@@ -53,15 +53,15 @@ public class DeviceAPIv12Controller {
         @Consumes(ProtobufferCodec.PROTOBUFFER_ENCODED)
         @Secured({ "device" })
         public HttpResponse<?> sync(@Body byte[] body) throws InvalidProtocolBufferException {
-                long userId = authService.getUserID();
                 Pill.SyncRequest req = Pill.SyncRequest.parseFrom(body);
                 Device device = deviceAuthService.getDevice();
+                long userId = device.getCurrentProvision().getUserID();
                 DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, device.getId());
                 log.atInfo().log("Device initiated sync, id: %d", device.getId());
                 return HttpResponse.ok(
                                 deviceStateService
                                                 .wrapperOf(device, deviceUser)
-                                                .sync(req, false)
+                                                .sync(req)
                                                 .toByteArray());
         }
 

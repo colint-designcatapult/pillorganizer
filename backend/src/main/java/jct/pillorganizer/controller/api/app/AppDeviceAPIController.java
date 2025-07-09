@@ -226,7 +226,7 @@ public class AppDeviceAPIController {
         return HttpResponse.ok(
                 Base64.getEncoder().encode(deviceStateService
                         .wrapperOf(device, deviceUser)
-                        .sync(req, true)
+                        .sync(req)
                         .toByteArray()));
     }
 

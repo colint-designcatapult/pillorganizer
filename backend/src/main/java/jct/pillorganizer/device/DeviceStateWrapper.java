@@ -222,12 +222,11 @@ public class DeviceStateWrapper {
      *         its internal state with
      */
     @Transactional
-    public Pill.SyncResponse sync(Pill.SyncRequest syncRequest, boolean isBluetooth) {
+    public Pill.SyncResponse sync(Pill.SyncRequest syncRequest) {
         Pill.SyncResponse.Builder builder = Pill.SyncResponse.newBuilder();
 
         // Load all events
         long ctr = device.getEventCounter();
-        Instant timeStamp = Instant.ofEpochSecond(0);
         for (Pill.RecordedEvent recEv : syncRequest.getEventsList()) {
             DeviceEvent ev = new DeviceEvent();
             ev.setDeviceUser(deviceUser);
@@ -241,7 +240,6 @@ public class DeviceStateWrapper {
 
             deviceEventRepository.save(ev);
             handleBinEvent(ev);
-            timeStamp = Instant.ofEpochSecond(recEv.getTimestamp());
             log.atInfo().log("Device initiated event, bin: %d event: %s", recEv.getBin(),
                     EventType.fromProtobuf(recEv.getType()).toString());
             ctr++;
