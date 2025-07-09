@@ -1,5 +1,16 @@
 package jct.pillorganizer.service;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import javax.transaction.Transactional;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.device.DeviceStateWrapper;
@@ -15,17 +26,6 @@ import jct.pillorganizer.repo.DeviceRepository;
 import jct.pillorganizer.repo.DeviceScheduleRepository;
 import jct.pillorganizer.repo.DeviceStateRepository;
 import lombok.extern.flogger.Flogger;
-
-import javax.transaction.Transactional;
-
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Business logic for dealing with device state.
@@ -135,5 +135,4 @@ public class DeviceStateService {
         }
         return dtos;
     }
-
 }

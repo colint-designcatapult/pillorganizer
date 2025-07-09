@@ -1,5 +1,7 @@
 package jct.pillorganizer.controller.api.device;
 
+import javax.transaction.Transactional;
+
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import io.micronaut.http.HttpResponse;
@@ -53,12 +55,12 @@ public class DeviceAPIv12Controller {
         @Produces(ProtobufferCodec.PROTOBUFFER_ENCODED)
         @Consumes(ProtobufferCodec.PROTOBUFFER_ENCODED)
         @Secured({ "device" })
+        @Transactional
         public HttpResponse<?> sync(@Body byte[] body) throws InvalidProtocolBufferException {
                 Pill.SyncRequest req = Pill.SyncRequest.parseFrom(body);
                 Device device = deviceAuthService.getDevice();
                 DeviceProvision provision = device.getCurrentProvision();
                 long userId = provision.getUserID();
-                log.atInfo().log("User ID: %d", userId);
                 DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, device.getId());
                 log.atInfo().log("Device initiated sync, id: %d", device.getId());
                 return HttpResponse.ok(
