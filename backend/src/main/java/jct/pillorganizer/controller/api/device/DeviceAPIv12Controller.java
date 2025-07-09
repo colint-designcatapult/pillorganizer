@@ -15,6 +15,7 @@ import jakarta.inject.Inject;
 import jct.pillorganizer.auth.AuthService;
 import jct.pillorganizer.auth.DeviceAuthService;
 import jct.pillorganizer.model.device.Device;
+import jct.pillorganizer.model.device.DeviceProvision;
 import jct.pillorganizer.model.device.DeviceUser;
 import jct.pillorganizer.proto.Pill;
 import jct.pillorganizer.repo.DeviceUserRepository;
@@ -55,7 +56,9 @@ public class DeviceAPIv12Controller {
         public HttpResponse<?> sync(@Body byte[] body) throws InvalidProtocolBufferException {
                 Pill.SyncRequest req = Pill.SyncRequest.parseFrom(body);
                 Device device = deviceAuthService.getDevice();
-                long userId = device.getCurrentProvision().getUserID();
+                DeviceProvision provision = device.getCurrentProvision();
+                System.out.println("Provision: " + provision);
+                long userId = provision.getUserID();
                 DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, device.getId());
                 log.atInfo().log("Device initiated sync, id: %d", device.getId());
                 return HttpResponse.ok(
