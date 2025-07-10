@@ -69,10 +69,10 @@ class DeviceSelectorModal extends StatelessWidget {
         bottom: false,
         child: Consumer<DeviceProvider>(
           builder: (_, prov, __) {
-            Iterable<Widget> yourDevices = prov.devices!
+            Iterable<Widget> yourDevices = prov.devices
                 .where((element) => element.owner)
                 .map((e) => DeviceListEntry(device: e));
-            Iterable<Widget> otherDevices = prov.devices!
+            Iterable<Widget> otherDevices = prov.devices
                 .where((element) => !element.owner)
                 .map((e) => DeviceListEntry(device: e));
 

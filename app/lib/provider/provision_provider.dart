@@ -198,6 +198,7 @@ class ProvisionProvider extends ChangeNotifier {
     if (res != null) {
       return hex.encode(res);
     }
+    return null;
   }
 
   String extractHost(String apiUrl) {
@@ -263,7 +264,6 @@ class ProvisionProvider extends ChangeNotifier {
     final int iterations =
         completionTimeout.inSeconds ~/ completionCheckPeriod.inSeconds;
 
-    int errCt = 0;
     for (int i = 0; i < iterations; i++) {
       await Future.delayed(completionCheckPeriod);
 
@@ -288,7 +288,6 @@ class ProvisionProvider extends ChangeNotifier {
           return _state;
         }
       } catch (ex) {
-        errCt++;
         debugPrint(ex.toString());
       }
     }

@@ -12,11 +12,11 @@ class SingleDeviceModal extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<DeviceProvider>(
       builder: (context, deviceProvider, _) {
-        if (deviceProvider.devices == null) {
+        if (deviceProvider.devices.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final device = deviceProvider.devices!.firstWhere(
+        final device = deviceProvider.devices.firstWhere(
           (d) => d.deviceID == deviceId,
           orElse: () => throw StateError('Device not found'),
         );

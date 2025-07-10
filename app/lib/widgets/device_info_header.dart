@@ -15,298 +15,330 @@ import 'package:provider/provider.dart';
 import '../provider/selected_device_provider.dart';
 
 class DeviceInfoHeader extends StatelessWidget {
-  final bool deviceOffline;
-
-  const DeviceInfoHeader({Key? key, required this.deviceOffline})
-      : super(key: key);
+  const DeviceInfoHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<SelectedDeviceProvider>(builder: (_, selectedDevice, __) {
-      return Consumer<DeviceBluetoothProvider>(builder: (_, bleProv, __) {
-        int? batteryLevel;
-        bool? batteryCharging;
-        DeviceState? deviceState =
-            Provider.of<DeviceStateProvider>(context, listen: false).value;
-        bool isMissingPermission =
-            bleProv.status == BLEConnectionStatus.missingPermission;
-        var numberOfDevices =
-            Provider.of<DeviceProvider>(context, listen: false).devices?.length;
-        bool isOwner = selectedDevice.device?.owner ?? false;
+    return Consumer4<SelectedDeviceProvider, DeviceBluetoothProvider,
+            DeviceStateProvider, DeviceProvider>(
+        builder: (_, selectedDeviceProvider, bleProvider, deviceStateProvider,
+            deviceProvider, __) {
+      int? batteryLevel;
+      bool? batteryCharging;
+      DeviceState? deviceState = deviceStateProvider.value;
+      int numberOfDevices = deviceProvider.devices.length;
+      bool isOwner = selectedDeviceProvider.device?.owner ?? false;
+      String deviceName = selectedDeviceProvider.device?.name ??
+          AppLocalizations.of(context)!.loadingState;
 
-        if (wifiIsConnected(context, bleProv) && deviceState != null) {
-          batteryLevel = deviceState.battery;
-          batteryCharging = deviceState.charging;
-        } else {
-          batteryLevel = bleProv.batteryLevel;
-          batteryCharging = bleProv.batteryCharging;
-        }
+      bool isMissingPermission =
+          bleProvider.status == BLEConnectionStatus.missingPermission;
+      bool isConnecting = bleProvider.status == BLEConnectionStatus.connecting;
 
-        if (deviceState == null) {
-          return Padding(
-              padding: const EdgeInsets.only(bottom: 20),
+      if (wifiIsConnected(context, bleProvider.status) && deviceState != null) {
+        batteryLevel = deviceState.battery;
+        batteryCharging = deviceState.charging;
+      } else {
+        batteryLevel = bleProvider.batteryLevel;
+        batteryCharging = bleProvider.batteryCharging;
+      }
+
+      if (deviceState == null) {
+        return Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: Row(
+              children: [
+                Text(AppLocalizations.of(context)!.welcome,
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 36.h,
+                        fontWeight: FontWeight.w700)),
+              ],
+            ));
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          GestureDetector(
+              onTap: () => _showConnectionStatus(context),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(AppLocalizations.of(context)!.welcome,
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 36.h,
-                          fontWeight: FontWeight.w700)),
-                ],
-              ));
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            GestureDetector(
-                onTap: () => _showConnectionStatus(
-                    context, bleProv, isMissingPermission),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Text(
-                          selectedDevice.device?.name ??
-                              AppLocalizations.of(context)!.loadingState,
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 24.h,
-                              fontWeight: FontWeight.w600),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1),
-                    ),
-                    if (!isOwner) ...[
-                      SizedBox(width: 8.w),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 8.w, vertical: 4.h),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8F9FC),
-                          borderRadius: BorderRadius.circular(12.r),
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(deviceName,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 24.h,
+                                fontWeight: FontWeight.w600),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1),
+                        SizedBox(width: 8.w),
+                        Container(
+                          decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                  width: 2.h,
+                                  color: isMissingPermission
+                                      ? Colors.red
+                                      : const Color.fromARGB(0, 0, 0, 0))),
+                          child:
+                              Icon(Icons.info, color: Colors.white, size: 16.h),
                         ),
-                        child: Text(
-                          AppLocalizations.of(context)!.viewOnly,
-                          style: TextStyle(
-                            color: const Color(0xFF363F72),
-                            fontSize: 12.h,
-                            fontWeight: FontWeight.w500,
-                          ),
+                      ],
+                    ),
+                  ),
+                  if (!isOwner) ...[
+                    SizedBox(width: 8.w),
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8F9FC),
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context)!.viewOnly,
+                        style: TextStyle(
+                          color: const Color(0xFF363F72),
+                          fontSize: 12.h,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                    ]
-                  ],
-                )),
-            if (deviceOffline &&
-                bleProv.status == BLEConnectionStatus.connecting)
-              Column(
-                children: [
-                  SizedBox(height: 8.h),
-                  Row(children: [
-                    SizedBox(
-                        height: 16.h,
-                        width: 16.w,
-                        child: const CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        )),
-                    SizedBox(width: 8.w),
-                    Text(AppLocalizations.of(context)!.bluetoothConnecting,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: Colors.white)),
-                    SizedBox(width: 8.w),
-                    Icon(
-                      PhosphorIcons.bluetooth_fill,
-                      size: 20.h,
-                      color: Colors.white,
                     ),
-                    SizedBox(width: 8.w),
-                  ]),
+                  ]
                 ],
-              ),
-            if (numberOfDevices != null && numberOfDevices > 1)
-              Column(
-                children: [SizedBox(height: 8.h), SwitchDevice()],
-              ),
-            if (batteryLevel != null)
-              Column(
-                children: [
-                  SizedBox(height: 8.h),
-                  Row(children: [
-                    Text(AppLocalizations.of(context)!.batteryLevel,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: Colors.white)),
-                    SizedBox(width: 8.w),
-                    Icon(
-                      batteryIcon(batteryLevel, batteryCharging),
-                      size: 20.h,
-                      color: Colors.white,
-                    ),
-                    SizedBox(width: 8.w),
-                    Text(
-                      "${batteryLevel.toString()} %",
+              )),
+          if (isConnecting)
+            Column(
+              children: [
+                SizedBox(height: 8.h),
+                Row(children: [
+                  SizedBox(
+                      height: 16.h,
+                      width: 16.w,
+                      child: const CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      )),
+                  SizedBox(width: 8.w),
+                  Text(AppLocalizations.of(context)!.bluetoothConnecting,
                       style: Theme.of(context)
                           .textTheme
-                          .displaySmall
-                          ?.copyWith(fontSize: 14.h, color: Colors.white),
-                    )
-                  ]),
-                ],
-              )
-            else
-              SizedBox(height: 12.h),
-          ],
-        );
-      });
+                          .bodySmall
+                          ?.copyWith(color: Colors.white)),
+                  SizedBox(width: 8.w),
+                  Icon(
+                    PhosphorIcons.bluetooth_fill,
+                    size: 20.h,
+                    color: Colors.white,
+                  ),
+                  SizedBox(width: 8.w),
+                ]),
+              ],
+            ),
+          if (numberOfDevices > 1)
+            Column(
+              children: [SizedBox(height: 8.h), SwitchDevice()],
+            ),
+          if (batteryLevel != null)
+            Column(
+              children: [
+                SizedBox(height: 8.h),
+                Row(children: [
+                  Text(AppLocalizations.of(context)!.batteryLevel,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: Colors.white)),
+                  SizedBox(width: 8.w),
+                  Icon(
+                    batteryIcon(batteryLevel, batteryCharging),
+                    size: 20.h,
+                    color: Colors.white,
+                  ),
+                  SizedBox(width: 8.w),
+                  Text(
+                    "${batteryLevel.toString()} %",
+                    style: Theme.of(context)
+                        .textTheme
+                        .displaySmall
+                        ?.copyWith(fontSize: 14.h, color: Colors.white),
+                  )
+                ]),
+              ],
+            )
+          else
+            SizedBox(height: 12.h),
+        ],
+      );
     });
   }
 
-  void _showConnectionStatus(BuildContext context,
-      DeviceBluetoothProvider bleProv, bool isMissingPermission) {
-    String bleText = bluetoothText(context, bleProv);
-    const int maxLength = 30;
+  void _showConnectionStatus(
+    BuildContext context,
+  ) {
     showDialog(
-      context: context,
-      builder: (_) => Dialog(
-          insetPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-          elevation: 0,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 32.h),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Align(
-                  alignment: Alignment.topRight,
-                  child: GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: Icon(
-                        PhosphorIcons.x_bold,
-                        size: 24.h,
-                        color: const Color(0XFF101828),
-                      )),
-                ),
-                Column(
-                  children: [
-                    Icon(
-                      PhosphorIcons.hard_drives_fill,
-                      size: 48.h,
-                      color: const Color(0xFF206B8B),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  AppLocalizations.of(context)!.deviceInfo,
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelMedium
-                      ?.copyWith(color: const Color(0XFF101828)),
-                ),
-                SizedBox(height: 8.h),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  child: Text(
-                    AppLocalizations.of(context)!.deviceInfoSubtitle,
-                    style: Theme.of(context).textTheme.bodySmall,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12).r,
-                      border: Border.all(
-                          color: const Color(0xFFBFD2DB), width: 2.w),
-                      color: const Color(0xFFF1F3F6),
-                    ),
-                    height: 58.h,
-                    child: Padding(
-                        padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 16.h),
-                        child: Row(
+        context: context,
+        builder: (_) =>
+            Consumer<DeviceBluetoothProvider>(builder: (_, bleProv, __) {
+              String bleText = bluetoothText(context, bleProv.status);
+              String wrlText = wirelessText(context, bleProv.status);
+              bool isMissingPermission =
+                  bleProv.status == BLEConnectionStatus.missingPermission;
+              return Dialog(
+                  insetPadding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                  elevation: 0,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 32.h),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: Icon(
+                                PhosphorIcons.x_bold,
+                                size: 24.h,
+                                color: const Color(0XFF101828),
+                              )),
+                        ),
+                        Column(
                           children: [
                             Icon(
-                              PhosphorIcons.wifi_high,
-                              size: 24.h,
-                              color: const Color(0xFF191B1D),
+                              PhosphorIcons.hard_drives_fill,
+                              size: 48.h,
+                              color: const Color(0xFF206B8B),
                             ),
-                            SizedBox(width: 12.w),
-                            Text(
-                              wirelessText(context, bleProv),
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            )
                           ],
-                        ))),
-                SizedBox(height: 12.h),
-                Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12).r,
-                      border: Border.all(
-                          color: const Color(0xFFBFD2DB), width: 2.w),
-                      color: const Color(0xFFF1F3F6),
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          AppLocalizations.of(context)!.deviceInfo,
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelMedium
+                              ?.copyWith(color: const Color(0XFF101828)),
+                        ),
+                        SizedBox(height: 8.h),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 20.w),
+                          child: Text(
+                            AppLocalizations.of(context)!.deviceInfoSubtitle,
+                            style: Theme.of(context).textTheme.bodySmall,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        SizedBox(height: 24.h),
+                        Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12).r,
+                              border: Border.all(
+                                  color: const Color(0xFFBFD2DB), width: 2.w),
+                              color: const Color(0xFFF1F3F6),
+                            ),
+                            height: 58.h,
+                            child: Padding(
+                                padding:
+                                    EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 16.h),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      PhosphorIcons.wifi_high,
+                                      size: 24.h,
+                                      color: const Color(0xFF191B1D),
+                                    ),
+                                    SizedBox(width: 12.w),
+                                    Expanded(
+                                      child: Text(
+                                        wrlText,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    )
+                                  ],
+                                ))),
+                        SizedBox(height: 12.h),
+                        Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12).r,
+                              border: Border.all(
+                                  color: const Color(0xFFBFD2DB), width: 2.w),
+                              color: const Color(0xFFF1F3F6),
+                            ),
+                            height: 58.h,
+                            child: Padding(
+                                padding:
+                                    EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 16.h),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      PhosphorIcons.bluetooth_fill,
+                                      size: 24.h,
+                                      color: const Color(0xFF191B1D),
+                                    ),
+                                    SizedBox(width: 12.w),
+                                    Expanded(
+                                      child: Text(
+                                        bleText,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    )
+                                  ],
+                                ))),
+                        if (isMissingPermission)
+                          SizedBox(
+                              height: 125.w,
+                              child: Padding(
+                                  padding:
+                                      EdgeInsets.symmetric(horizontal: 10.w),
+                                  child: Column(children: [
+                                    SizedBox(
+                                      height: 10.h,
+                                    ),
+                                    Text(
+                                        Platform.isIOS
+                                            ? AppLocalizations.of(context)!
+                                                .missingBlePermissionTextIos
+                                            : AppLocalizations.of(context)!
+                                                .missingBlePermissionTextAndroid,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall),
+                                    Padding(
+                                      padding: EdgeInsets.all(6.h),
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          AppSettings.openAppSettings();
+                                        },
+                                        child: Text(
+                                            AppLocalizations.of(context)!
+                                                .openSettings,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .displaySmall),
+                                      ),
+                                    ),
+                                  ])))
+                      ],
                     ),
-                    height: 58.h,
-                    child: Padding(
-                        padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 16.h),
-                        child: Row(
-                          children: [
-                            Icon(
-                              PhosphorIcons.bluetooth_fill,
-                              size: 24.h,
-                              color: const Color(0xFF191B1D),
-                            ),
-                            SizedBox(width: 12.w),
-                            Text(
-                              bleText,
-                              style: bleText.length > maxLength
-                                  ? Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(fontSize: 13.h)
-                                  : Theme.of(context).textTheme.bodyMedium,
-                            )
-                          ],
-                        ))),
-                if (isMissingPermission)
-                  SizedBox(
-                      height: 125.w,
-                      child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 10.w),
-                          child: Column(children: [
-                            SizedBox(
-                              height: 10.h,
-                            ),
-                            Text(
-                                Platform.isIOS
-                                    ? AppLocalizations.of(context)!
-                                        .missingBlePermissionTextIos
-                                    : AppLocalizations.of(context)!
-                                        .missingBlePermissionTextAndroid,
-                                style: Theme.of(context).textTheme.bodySmall),
-                            Padding(
-                              padding: EdgeInsets.all(6.h),
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  AppSettings.openAppSettings();
-                                },
-                                child: Text(
-                                    AppLocalizations.of(context)!.openSettings,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .displaySmall),
-                              ),
-                            ),
-                          ])))
-              ],
-            ),
-          )),
-    );
+                  ));
+            }));
   }
 }

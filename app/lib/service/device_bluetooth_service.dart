@@ -32,12 +32,18 @@ class DeviceBluetoothController {
 
     device = null;
     _stateChr = null;
+    _target = null;
+    _deviceID = null;
     onDisconnect?.call();
   }
 
   void setTarget(String deviceName, int deviceID) {
     _target = deviceName;
     _deviceID = deviceID;
+  }
+
+  bool hasTarget() {
+    return _target != null && _deviceID != null;
   }
 
   void handleSyncData(List<int> data) {

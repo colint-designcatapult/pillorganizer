@@ -6,18 +6,18 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:provider/provider.dart';
 
-String wirelessText(BuildContext context, DeviceBluetoothProvider bleProv) {
+String wirelessText(BuildContext context, BLEConnectionStatus bleStatus) {
   if (Provider.of<DeviceNoticeProvider>(context, listen: false).value ==
           DeviceNotice.disconnected ||
-      bleProv.status == BLEConnectionStatus.connected) {
+      bleStatus == BLEConnectionStatus.connected) {
     return AppLocalizations.of(context)!.wirelessDisconnected;
   } else {
     return AppLocalizations.of(context)!.wirelessConnected;
   }
 }
 
-String bluetoothText(BuildContext context, DeviceBluetoothProvider bleProv) {
-  switch (bleProv.status) {
+String bluetoothText(BuildContext context, BLEConnectionStatus bleStatus) {
+  switch (bleStatus) {
     case BLEConnectionStatus.connected:
       return AppLocalizations.of(context)!.bluetoothConnected;
     case BLEConnectionStatus.connecting:
@@ -46,8 +46,8 @@ IconData batteryIcon(int level, bool? charging) {
   return PhosphorIcons.battery_full;
 }
 
-bool wifiIsConnected(BuildContext context, DeviceBluetoothProvider bleProv) {
+bool wifiIsConnected(BuildContext context, BLEConnectionStatus bleStatus) {
   return Provider.of<DeviceNoticeProvider>(context, listen: false).value !=
           DeviceNotice.disconnected &&
-      bleProv.status != BLEConnectionStatus.connected;
+      bleStatus != BLEConnectionStatus.connected;
 }

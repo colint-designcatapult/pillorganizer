@@ -153,9 +153,8 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
       await deviceProvider.removeDevice(deviceToRemove.deviceID);
 
       if (isRemovingSelectedDevice) {
-        if (deviceProvider.devices != null &&
-            deviceProvider.devices!.isNotEmpty) {
-          selectedDeviceProvider.selectDevice(deviceProvider.devices!.first);
+        if (deviceProvider.devices.isNotEmpty) {
+          selectedDeviceProvider.selectDevice(deviceProvider.devices.first);
         } else {
           selectedDeviceProvider.update(null);
         }

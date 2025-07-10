@@ -281,8 +281,8 @@ class _TimeZoneSelectionWidgetState extends State<TimeZoneSelectionWidget> {
   Widget build(BuildContext context) {
     return Consumer<DeviceProvider>(builder: (context, deviceProvider, _) {
       DeviceUser? currentDevice;
-      if (deviceProvider.devices != null) {
-        currentDevice = deviceProvider.devices!.firstWhere(
+      if (deviceProvider.devices.isNotEmpty) {
+        currentDevice = deviceProvider.devices.firstWhere(
           (device) => device.deviceID == widget.device.deviceID,
           orElse: () => widget.device,
         );

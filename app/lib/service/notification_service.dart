@@ -5,8 +5,7 @@ Future<String> enablePushNotifications() async {
   await FirebaseMessaging.instance.requestPermission();
   final fcmToken = await FirebaseMessaging.instance.getToken();
 
-  NotificationSettings settings =
-      await FirebaseMessaging.instance.requestPermission(
+  await FirebaseMessaging.instance.requestPermission(
     alert: true,
     announcement: false,
     badge: true,

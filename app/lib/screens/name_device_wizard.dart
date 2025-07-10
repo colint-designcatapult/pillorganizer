@@ -25,8 +25,6 @@ class _NameDeviceWizard extends State<NameDeviceWizard> {
   void initState() {
     super.initState();
 
-    _populateDeviceName();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.deviceId != null) {
         final selectedDeviceProvider =
@@ -34,16 +32,6 @@ class _NameDeviceWizard extends State<NameDeviceWizard> {
         selectedDeviceProvider.selectDeviceByID(widget.deviceId!);
       }
     });
-  }
-
-  void _populateDeviceName() {
-    final selectedDeviceProvider =
-        Provider.of<SelectedDeviceProvider>(context, listen: false);
-    if (selectedDeviceProvider.device != null) {
-      final currentName = selectedDeviceProvider.device!.name;
-      _textController.text = currentName;
-      _initialDeviceName = currentName;
-    }
   }
 
   @override

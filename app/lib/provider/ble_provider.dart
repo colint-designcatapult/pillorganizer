@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:app/service/device_bluetooth_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
+
 import '../api/device.dart';
 
 enum BLEConnectionStatus {
@@ -40,6 +42,7 @@ class DeviceBluetoothProvider with ChangeNotifier {
   }
 
   Future<void> suppress() async {
+    _heartbeat?.cancel();
     await _controller.disconnect();
     _status = BLEConnectionStatus.suppressed;
     notifyListeners();
@@ -61,8 +64,9 @@ class DeviceBluetoothProvider with ChangeNotifier {
       _controller.sync();
       _status = BLEConnectionStatus.connected;
       notifyListeners();
-    } else if (status == BLEConnectionStatus.disconnected ||
-        status == BLEConnectionStatus.missingPermission) {
+    } else if ((status == BLEConnectionStatus.disconnected ||
+            status == BLEConnectionStatus.missingPermission) &&
+        _hasTargetDevice()) {
       _connect();
     }
   }
@@ -103,6 +107,8 @@ class DeviceBluetoothProvider with ChangeNotifier {
   void createDevice(DeviceUser? newUser) {
     if (newUser != null) {
       _createDevice(_getDeviceName(newUser), newUser.deviceID);
+    } else {
+      suppress();
     }
   }
 
@@ -117,7 +123,7 @@ class DeviceBluetoothProvider with ChangeNotifier {
     if (newUser != null) {
       _changeDevice(_getDeviceName(newUser), newUser.deviceID);
     } else {
-      _controller.disconnect();
+      suppress();
     }
   }
 
@@ -127,6 +133,10 @@ class DeviceBluetoothProvider with ChangeNotifier {
     await _controller.disconnect();
     _controller.setTarget(deviceName, deviceID);
     _resetTimer();
+  }
+
+  bool _hasTargetDevice() {
+    return _controller.hasTarget();
   }
 
   String _getDeviceName(DeviceUser d) {

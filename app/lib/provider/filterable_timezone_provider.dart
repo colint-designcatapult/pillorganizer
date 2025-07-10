@@ -20,7 +20,7 @@ class FilterableTimeZoneProvider extends ChangeNotifier {
   Future<List<tz.Location>> filter(String? filterBy) {
     String? fb = filterBy?.toLowerCase().replaceAll(RegExp("[^a-z0-9]"), "");
     _filter = filterBy;
-    if (filterBy == null || filterBy!.isEmpty) {
+    if (filterBy == null || filterBy.isEmpty) {
       _filteredZones = List.empty(growable: false);
       notifyListeners();
       return Future.value(_filteredZones);

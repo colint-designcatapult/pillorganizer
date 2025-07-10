@@ -5,7 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 
 class DeviceProvider with ChangeNotifier {
-  List<DeviceUser>? _devices;
+  List<DeviceUser> _devices = [];
   bool _isLoading = false;
   bool _isUpdatingTimezone = false;
   bool _isUpdatingName = false;
@@ -13,7 +13,7 @@ class DeviceProvider with ChangeNotifier {
   bool _isUpdatingAllNotifications = false;
   bool _isRemovingDevice = false;
 
-  List<DeviceUser>? get devices => _devices;
+  List<DeviceUser> get devices => _devices;
   bool get isLoading => _isLoading;
   bool get isUpdatingTimezone => _isUpdatingTimezone;
   bool get isUpdatingName => _isUpdatingName;
@@ -102,8 +102,8 @@ class DeviceProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      if (_devices != null) {
-        for (var device in _devices!) {
+      if (_devices.isNotEmpty) {
+        for (var device in _devices) {
           final updatedDevice = await deviceRepo.update(device.deviceID,
               notifications: notifications);
           _updateDeviceInList(updatedDevice);
@@ -123,7 +123,7 @@ class DeviceProvider with ChangeNotifier {
 
     try {
       await client.removeDevice(deviceID);
-      _devices?.removeWhere((device) => device.deviceID == deviceID);
+      _devices.removeWhere((device) => device.deviceID == deviceID);
     } catch (error) {
       rethrow;
     } finally {
@@ -133,11 +133,11 @@ class DeviceProvider with ChangeNotifier {
   }
 
   void _updateDeviceInList(DeviceUser updatedDevice) {
-    if (_devices != null) {
-      final index = _devices!
+    if (_devices.isNotEmpty) {
+      final index = _devices
           .indexWhere((device) => device.deviceID == updatedDevice.deviceID);
       if (index != -1) {
-        _devices![index] = updatedDevice;
+        _devices[index] = updatedDevice;
       }
     }
   }

@@ -19,7 +19,7 @@ class _MyDevicesScreenState extends State<MyDevicesScreen> {
   Widget build(BuildContext context) {
     return Consumer2<SelectedDeviceProvider, DeviceProvider>(
       builder: (context, prov, deviceProvider, _) {
-        final deviceCount = deviceProvider.devices?.length ?? 0;
+        final deviceCount = deviceProvider.devices.length;
 
         return Scaffold(
           backgroundColor: const Color(0xFFBFD2DB),
@@ -51,7 +51,7 @@ class _MyDevicesScreenState extends State<MyDevicesScreen> {
                               )
                             : deviceCount > 1
                                 ? MultipleDevices(
-                                    devices: deviceProvider.devices!,
+                                    devices: deviceProvider.devices,
                                   )
                                 : SingleDevice(
                                     showAddDeviceSection: deviceCount == 1,

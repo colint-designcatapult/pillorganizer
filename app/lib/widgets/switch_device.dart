@@ -124,7 +124,7 @@ class _SwitchDeviceState extends State<SwitchDevice> {
                         color: Color(0xff31454D),
                         fontFamily: 'Poppins')),
                 const SizedBox(height: 24),
-                ...devices!.map((device) => _deviceSelectButton(device)),
+                ...devices.map((device) => _deviceSelectButton(device)),
                 _deviceJoinButton(
                     AppLocalizations.of(context)!.quickSwitchNewDevice,
                     _handleConnectNewDevice),

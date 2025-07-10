@@ -27,9 +27,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    DeviceUser? device =
-        Provider.of<SelectedDeviceProvider>(context, listen: false).device;
-
     return StatefulWrapper(
         onInit: () {
           _askPermissions(context);
@@ -38,10 +35,11 @@ class HomeScreen extends StatelessWidget {
             child: AutoRefresh(
           refreshable: Provider.of<DeviceStateProvider>(context),
           refreshInterval: const Duration(seconds: 3),
-          child: Consumer<DeviceNoticeProvider>(
-            builder: (context, deviceNoticeProvider, child) {
+          child: Consumer2<DeviceNoticeProvider, SelectedDeviceProvider>(
+            builder: (context, deviceNoticeProvider, selectedDevice, child) {
               final bool hasNotice =
-                  deviceNoticeProvider.value != DeviceNotice.none;
+                  deviceNoticeProvider.value != DeviceNotice.none &&
+                      selectedDevice.device?.owner == true;
               return ScreenUtilWrapper(
                 child: Scaffold(
                   body: Stack(children: [
@@ -64,7 +62,7 @@ class HomeScreen extends StatelessWidget {
                           (BuildContext context, bool innerBoxIsScrolled) {
                         return <Widget>[
                           SliverAppBar(
-                            toolbarHeight: (hasNotice ? 280 : 130).h,
+                            toolbarHeight: (hasNotice ? 280 : 160).h,
                             backgroundColor: Colors.transparent,
                             flexibleSpace: FlexibleSpaceBar(
                               expandedTitleScale: 1.0,
@@ -76,10 +74,7 @@ class HomeScreen extends StatelessWidget {
                                   Padding(
                                     padding: EdgeInsets.symmetric(
                                         horizontal: 24.w, vertical: 12.h),
-                                    child: DeviceInfoHeader(
-                                        deviceOffline:
-                                            deviceNoticeProvider.value ==
-                                                DeviceNotice.disconnected),
+                                    child: const DeviceInfoHeader(),
                                   ),
                                   hasNotice
                                       ? DeviceAlert(
@@ -97,7 +92,7 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ];
                       },
-                      body: device == null
+                      body: selectedDevice.device == null
                           ? _noDeviceScreen(context)
                           : _homeBody(context, hasNotice),
                     ),
