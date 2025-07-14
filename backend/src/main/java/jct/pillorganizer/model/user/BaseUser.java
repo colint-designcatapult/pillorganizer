@@ -69,7 +69,7 @@ public class BaseUser {
     @JsonIgnore
     private Long recoveryCode;
 
-    @Column(name = "patient_id")
+    @Column(name = "takecare_patient_id")
     @JsonIgnore
-    private String patientId;
+    private String takecarePatientId;
 }
