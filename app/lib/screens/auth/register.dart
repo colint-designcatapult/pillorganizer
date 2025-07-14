@@ -118,6 +118,7 @@ class _RegisterPageState extends State<RegisterPage> {
               Validatorless.between(
                   6, 48, AppLocalizations.of(context)!.passwordLengthValidation)
             ]),
+            errorMaxLines: 2,
             onRevealText: () {
               setState(() {
                 _obscureText = !_obscureText;

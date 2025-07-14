@@ -384,6 +384,7 @@ class BasicPageTextFormField extends StatelessWidget {
   final double? paddingBottom;
   final TextEditingController? controller;
   final String? initialValue;
+  final int? errorMaxLines;
 
   const BasicPageTextFormField(
       {super.key,
@@ -398,7 +399,8 @@ class BasicPageTextFormField extends StatelessWidget {
       this.obscureText = false,
       this.paddingBottom,
       this.controller,
-      this.initialValue});
+      this.initialValue,
+      this.errorMaxLines});
 
   ValueChanged<String>? _onFieldSubmitted(context) {
     if (onFieldSubmitted == null) {
@@ -429,6 +431,7 @@ class BasicPageTextFormField extends StatelessWidget {
               Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 18.h),
           textInputAction: textInputAction,
           decoration: InputDecoration(
+              errorMaxLines: errorMaxLines ?? 1,
               suffixIcon: onRevealText != null
                   ? IconButton(
                       icon: Icon(
