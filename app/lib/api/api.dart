@@ -125,6 +125,9 @@ abstract class RestClient {
   @GET("/caregiver/codes")
   Future<List<DeviceCaregiverCodeDTO>> getShareCodes(
       @Query("deviceIds") List<int> deviceIds);
+
+  @POST("/takecare/link/{patientID}")
+  Future<void> linkTakecarePatient(@Path("patientID") String patientID);
 }
 
 @JsonSerializable()

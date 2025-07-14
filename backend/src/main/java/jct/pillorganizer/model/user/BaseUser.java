@@ -1,16 +1,29 @@
 package jct.pillorganizer.model.user;
 
+import java.sql.Timestamp;
+import java.util.List;
+
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorType;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.serde.annotation.Serdeable;
 import jct.pillorganizer.model.device.DeviceUser;
 import lombok.Getter;
 import lombok.Setter;
-
-import javax.persistence.*;
-import java.sql.Timestamp;
-import java.util.List;
 
 /**
  * A generic human user account that can log in to the system. A BaseUser has a
@@ -56,4 +69,7 @@ public class BaseUser {
     @JsonIgnore
     private Long recoveryCode;
 
+    @Column(name = "patient_id")
+    @JsonIgnore
+    private String patientId;
 }

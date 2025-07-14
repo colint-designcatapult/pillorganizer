@@ -1,12 +1,13 @@
 package jct.pillorganizer.repo;
 
+import javax.annotation.Nullable;
+
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.repository.reactive.ReactorCrudRepository;
 import jct.pillorganizer.dto.UserInfoDTO;
 import jct.pillorganizer.model.user.User;
 import reactor.core.publisher.Mono;
-import javax.annotation.Nullable;
 
 @Repository
 public interface UserRepository extends ReactorCrudRepository<User, Long> {
@@ -20,6 +21,9 @@ public interface UserRepository extends ReactorCrudRepository<User, Long> {
 
     @Query("UPDATE users u SET u.recoveryCode = :recoveryCode WHERE u.email = :email")
     void updateUserRecoveryCode(@Nullable Long recoveryCode, String email);
+
+    @Query("UPDATE users u SET u.takecarePatientId = :takecarePatientId WHERE u.id = :userId")
+    Mono<Integer> updateTakecarePatientIdById(String takecarePatientId, Long userId);
 
     Mono<Long> getRecoveryCodeByEmail(String email);
 

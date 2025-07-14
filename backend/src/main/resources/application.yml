@@ -88,3 +88,7 @@ sendgrid:
   api-key: ${SENDGRID_API_KEY}
 email:
   sender: ${SENDGRID_SENDER}
+takecare:
+  api:
+    url: ${TAKECARE_API_URL:https://ca.takecareapi.com}
+    token: ${TAKECARE_API_TOKEN}

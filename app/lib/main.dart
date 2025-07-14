@@ -128,108 +128,134 @@ class MyApp extends StatelessWidget {
               ),
               child: PlatformProvider(
                 settings: PlatformSettingsData(iosUsesMaterialWidgets: true),
-                builder: (context) => MaterialApp(
-                  title: 'Cabinet Pills',
-                  themeMode: ThemeMode.system,
-                  onGenerateRoute: (settings) {
-                    if (settings.name?.startsWith('/name_new_device') == true) {
-                      final uri = Uri.parse(settings.name!);
-                      final deviceId = uri.queryParameters['id'] != null
-                          ? int.parse(uri.queryParameters['id']!)
-                          : null;
+                builder: (context) => Consumer<DeepLinkProvider>(
+                  builder: (context, deepLinkProvider, child) {
+                    return Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        MaterialApp(
+                          title: 'Cabinet Pills',
+                          themeMode: ThemeMode.system,
+                          onGenerateRoute: (settings) {
+                            if (settings.name?.startsWith('/name_new_device') ==
+                                true) {
+                              final uri = Uri.parse(settings.name!);
+                              final deviceId = uri.queryParameters['id'] != null
+                                  ? int.parse(uri.queryParameters['id']!)
+                                  : null;
 
-                      return MaterialPageRoute(
-                        builder: (context) =>
-                            ChangeNotifierProvider<ProvisionProvider>(
-                          create: (context) => ProvisionProvider(),
-                          child: NameDeviceWizard(deviceId: deviceId),
+                              return MaterialPageRoute(
+                                builder: (context) =>
+                                    ChangeNotifierProvider<ProvisionProvider>(
+                                  create: (context) => ProvisionProvider(),
+                                  child: NameDeviceWizard(deviceId: deviceId),
+                                ),
+                              );
+                            }
+
+                            // Handle other routes that might need query parameters here
+                            return null; // Let the routes table handle other routes
+                          },
+                          routes: {
+                            '/': (context) {
+                              return const AppInitializer();
+                            },
+                            '/provision': (context) =>
+                                const ProvisionNavigator(),
+                            '/index': (context) => const TabNavigator(),
+                            '/post_setup': (context) => const PostSetupWizard(),
+                            '/register': (context) => const RegisterPage()
+                          },
+                          supportedLocales: const [Locale('en'), Locale('fr')],
+                          localizationsDelegates: const <LocalizationsDelegate<
+                              dynamic>>[
+                            AppLocalizations.delegate,
+                            GlobalMaterialLocalizations.delegate,
+                            GlobalWidgetsLocalizations.delegate,
+                            GlobalCupertinoLocalizations.delegate,
+                          ],
+                          debugShowCheckedModeBanner: false,
+                          theme: ThemeData(
+                            useMaterial3: true,
+                            colorScheme: ColorScheme.fromSeed(
+                                seedColor: const Color(0xff206b8b)),
+                            primaryColor: const Color(0xff206b8b),
+                            secondaryHeaderColor: const Color(0xFFBFD2DB),
+                            fontFamily: 'Poppins',
+                            textTheme: TextTheme(
+                              titleSmall: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16.h,
+                              ),
+                              titleMedium: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 20.h,
+                              ),
+                              titleLarge: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 24.h,
+                              ),
+                              labelSmall: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 16.h,
+                                  fontWeight: FontWeight.w600),
+                              labelMedium: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 18.h,
+                                  fontWeight: FontWeight.w600),
+                              labelLarge: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 20.h,
+                                  fontWeight: FontWeight.w600),
+                              displaySmall: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 16.h,
+                                  fontWeight: FontWeight.w500),
+                              displayMedium: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 20.h,
+                                  fontWeight: FontWeight.w500),
+                              displayLarge: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 32.h,
+                                  fontWeight: FontWeight.w500),
+                              bodySmall: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 14.h,
+                                  fontWeight: FontWeight.w400),
+                              bodyMedium: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 16.h,
+                                  fontWeight: FontWeight.w400),
+                              bodyLarge: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 20.h,
+                                  fontWeight: FontWeight.w400),
+                            ),
+                          ),
+                          navigatorObservers: [routeObserver],
                         ),
-                      );
-                    }
-
-                    // Handle other routes that might need query parameters here
-                    return null; // Let the routes table handle other routes
+                        if (deepLinkProvider.isValidating)
+                          Container(
+                            color: Colors.black.withOpacity(0.5),
+                            child: const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
                   },
-                  routes: {
-                    '/': (context) {
-                      return const AppInitializer();
-                    },
-                    '/provision': (context) => const ProvisionNavigator(),
-                    '/index': (context) => const TabNavigator(),
-                    '/post_setup': (context) => const PostSetupWizard(),
-                    '/register': (context) => const RegisterPage()
-                  },
-                  supportedLocales: const [Locale('en'), Locale('fr')],
-                  localizationsDelegates: const <LocalizationsDelegate<
-                      dynamic>>[
-                    AppLocalizations.delegate,
-                    GlobalMaterialLocalizations.delegate,
-                    GlobalWidgetsLocalizations.delegate,
-                    GlobalCupertinoLocalizations.delegate,
-                  ],
-                  debugShowCheckedModeBanner: false,
-                  theme: ThemeData(
-                    useMaterial3: true,
-                    colorScheme: ColorScheme.fromSeed(
-                        seedColor: const Color(0xff206b8b)),
-                    primaryColor: const Color(0xff206b8b),
-                    secondaryHeaderColor: const Color(0xFFBFD2DB),
-                    fontFamily: 'Poppins',
-                    textTheme: TextTheme(
-                      titleSmall: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16.h,
-                      ),
-                      titleMedium: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 20.h,
-                      ),
-                      titleLarge: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 24.h,
-                      ),
-                      labelSmall: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 16.h,
-                          fontWeight: FontWeight.w600),
-                      labelMedium: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 18.h,
-                          fontWeight: FontWeight.w600),
-                      labelLarge: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 20.h,
-                          fontWeight: FontWeight.w600),
-                      displaySmall: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 16.h,
-                          fontWeight: FontWeight.w500),
-                      displayMedium: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 20.h,
-                          fontWeight: FontWeight.w500),
-                      displayLarge: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 32.h,
-                          fontWeight: FontWeight.w500),
-                      bodySmall: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 14.h,
-                          fontWeight: FontWeight.w400),
-                      bodyMedium: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 16.h,
-                          fontWeight: FontWeight.w400),
-                      bodyLarge: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 20.h,
-                          fontWeight: FontWeight.w400),
-                    ),
-                  ),
-                  navigatorObservers: [routeObserver],
                 ),
               )),
         ),
@@ -252,6 +278,47 @@ class _DeepLinkWrapperState extends State<DeepLinkWrapper> {
   void initState() {
     super.initState();
     _initializeDeepLinks();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _listenForValidationErrors();
+  }
+
+  void _listenForValidationErrors() {
+    final deepLinkProvider =
+        Provider.of<DeepLinkProvider>(context, listen: false);
+
+    deepLinkProvider.addListener(() {
+      if (deepLinkProvider.validationError != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showValidationErrorDialog(deepLinkProvider.validationError!);
+          deepLinkProvider.clearValidationError();
+        });
+      }
+    });
+  }
+
+  void _showValidationErrorDialog(String error) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Validation Error'),
+          content: Text(
+            'Failed to validate patient from deep link:\n\n$error',
+            style: const TextStyle(fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _initializeDeepLinks() {
@@ -278,6 +345,11 @@ class _DeepLinkWrapperState extends State<DeepLinkWrapper> {
         deepLinkProvider.setPatientId(patientId);
       }
     }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
