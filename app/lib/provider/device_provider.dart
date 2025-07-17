@@ -47,6 +47,13 @@ class DeviceProvider with ChangeNotifier {
   }
 
   Future<DeviceUser> updateDeviceName(int deviceID, String newName) async {
+    DeviceUser? currentDevice =
+        _devices.firstWhereOrNull((device) => device.deviceID == deviceID);
+
+    if (currentDevice != null && currentDevice.name == newName) {
+      return currentDevice;
+    }
+
     _isUpdatingName = true;
     notifyListeners();
 
@@ -64,6 +71,13 @@ class DeviceProvider with ChangeNotifier {
 
   Future<DeviceUser> updateDeviceTimeZone(
       int deviceID, TimeZoneLocation newTZ) async {
+    DeviceUser? currentDevice =
+        _devices.firstWhereOrNull((device) => device.deviceID == deviceID);
+
+    if (currentDevice != null && currentDevice.timezone?.name == newTZ.name) {
+      return currentDevice;
+    }
+
     _isUpdatingTimezone = true;
     notifyListeners();
 
@@ -81,6 +95,13 @@ class DeviceProvider with ChangeNotifier {
 
   Future<DeviceUser> updateDeviceNotifications(
       int deviceID, bool notifications) async {
+    DeviceUser? currentDevice =
+        _devices.firstWhereOrNull((device) => device.deviceID == deviceID);
+
+    if (currentDevice != null && currentDevice.notifications == notifications) {
+      return currentDevice;
+    }
+
     _isUpdatingNotifications = true;
     notifyListeners();
 

@@ -8,10 +8,12 @@ class ScheduleProvider with ChangeNotifier {
   final Map<int, Future<SimpleSchedule?>> _futures = {};
 
   bool _isLoading = false;
-  bool _isUpdatingSchedule = false;
+  bool _isUpdatingAMSchedule = false;
+  bool _isUpdatingPMSchedule = false;
 
   bool get isLoading => _isLoading;
-  bool get isUpdatingSchedule => _isUpdatingSchedule;
+  bool get isUpdatingAMSchedule => _isUpdatingAMSchedule;
+  bool get isUpdatingPMSchedule => _isUpdatingPMSchedule;
 
   final ScheduleRepository repo = ScheduleRepository(client: client);
 
@@ -57,11 +59,28 @@ class ScheduleProvider with ChangeNotifier {
 
   Future<SimpleSchedule?> updateTime(
       DayPeriod period, TimeOfDay tod, int deviceID) async {
-    _isUpdatingSchedule = true;
-    notifyListeners();
-
     SimpleSchedule currentSchedule =
         _schedules[deviceID] ?? const SimpleSchedule();
+
+    TimeOfDay? existingTime;
+    if (period == DayPeriod.am) {
+      existingTime = currentSchedule.am?.time;
+    } else if (period == DayPeriod.pm) {
+      existingTime = currentSchedule.pm?.time;
+    }
+
+    if (existingTime != null &&
+        existingTime.hour == tod.hour &&
+        existingTime.minute == tod.minute) {
+      return currentSchedule;
+    }
+
+    if (period == DayPeriod.am) {
+      _isUpdatingAMSchedule = true;
+    } else if (period == DayPeriod.pm) {
+      _isUpdatingPMSchedule = true;
+    }
+    notifyListeners();
 
     if (period == DayPeriod.am) {
       currentSchedule = currentSchedule.copyWith(
@@ -81,7 +100,8 @@ class ScheduleProvider with ChangeNotifier {
     } catch (error) {
       rethrow;
     } finally {
-      _isUpdatingSchedule = false;
+      _isUpdatingAMSchedule = false;
+      _isUpdatingPMSchedule = false;
       notifyListeners();
     }
   }

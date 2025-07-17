@@ -36,10 +36,10 @@ class PostSetupWizard extends StatelessWidget {
 
     return Consumer2<ScheduleProvider, DeviceProvider>(
       builder: (context, scheduleProvider, deviceProvider, child) {
-        bool isUpdatingSchedule = scheduleProvider.isUpdatingSchedule;
+        bool isLoadingSchedule = scheduleProvider.isLoading;
         bool isUpdatingTimezone = deviceProvider.isUpdatingTimezone;
 
-        bool canGoNext = !isUpdatingSchedule && !isUpdatingTimezone;
+        bool canGoNext = !isLoadingSchedule && !isUpdatingTimezone;
 
         return WizardStep(
             provisionningProgress: provisionningProgress,
