@@ -358,6 +358,25 @@ class _DeepLinkWrapperState extends State<DeepLinkWrapper> {
   }
 }
 
+class KeyboardDismissWrapper extends StatelessWidget {
+  final Widget child;
+
+  const KeyboardDismissWrapper({Key? key, required this.child})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () {
+        // Close keyboard when tapping outside input fields
+        FocusScope.of(context).unfocus();
+      },
+      child: child,
+    );
+  }
+}
+
 class AppInitializer extends StatelessWidget {
   const AppInitializer({Key? key}) : super(key: key);
 

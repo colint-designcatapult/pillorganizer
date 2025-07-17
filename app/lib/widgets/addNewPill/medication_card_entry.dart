@@ -1,4 +1,5 @@
 import 'package:app/api/schedule.dart';
+import 'package:app/main.dart';
 import 'package:app/provider/new_medication_provider.dart';
 import 'package:app/provider/schedule_provider.dart';
 import 'package:app/widgets/medication_icon.dart';
@@ -99,7 +100,8 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
       return SingleChildScrollView(
           child: Padding(
         padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 32.w),
-        child: Column(
+        child: KeyboardDismissWrapper(
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
@@ -200,7 +202,7 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
             }),
             SizedBox(height: 96.h),
           ],
-        ),
+        )),
       ));
     });
   }

@@ -1,4 +1,5 @@
 import 'package:app/api/device.dart';
+import 'package:app/main.dart';
 import 'package:app/provider/device_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -28,7 +29,8 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       insetPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
-      child: Form(
+      child: KeyboardDismissWrapper(
+          child: Form(
         key: _formKey,
         child: FormSubmitCallback(
           callback: _onSubmit,
@@ -157,7 +159,7 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 

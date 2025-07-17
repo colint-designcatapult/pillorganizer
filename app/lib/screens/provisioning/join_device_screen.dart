@@ -1,3 +1,4 @@
+import 'package:app/main.dart';
 import 'package:app/provider/caregiver_provider.dart';
 import 'package:app/provider/device_provider.dart';
 import 'package:app/widgets/basic_page.dart';
@@ -94,7 +95,8 @@ class _JoinDevicePageState extends State<JoinDevicePage> {
     return Scaffold(
         resizeToAvoidBottomInset: true,
         backgroundColor: const Color(0xFFBFD2DB),
-        body: Container(
+        body: KeyboardDismissWrapper(
+            child: Container(
           constraints: BoxConstraints.expand(
             height: MediaQuery.of(context).size.height,
           ),
@@ -141,7 +143,7 @@ class _JoinDevicePageState extends State<JoinDevicePage> {
               ),
             ],
           ),
-        ),
+        )),
         bottomNavigationBar: Container(
           height: 72.h,
           color: Theme.of(context).secondaryHeaderColor,

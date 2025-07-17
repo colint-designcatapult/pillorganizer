@@ -1,3 +1,4 @@
+import 'package:app/main.dart';
 import 'package:app/provider/authentication_provider.dart';
 import 'package:app/screens/auth/recover_password.dart';
 import 'package:app/screens/auth/register.dart';
@@ -55,75 +56,77 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFBFD2DB),
-      body: SingleChildScrollView(
-          child: SizedBox(
-              height: MediaQuery.of(context).size.height,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(left: 24.w, top: 100.h),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          AppLocalizations.of(context)!.signInAction,
-                          textAlign: TextAlign.left,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(fontSize: 32.h),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                      padding: const EdgeInsets.only(top: 36),
-                      child: _formComponent()),
-                  Align(
-                    alignment: Alignment.center,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 20),
-                      child: Text(
-                        AppLocalizations.of(context)!.dontHaveAccountAlready,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () {
-                          _handleRegisterRedirect();
-                        },
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.0).r,
-                          ),
-                          backgroundColor: const Color(0xFFBFD2DB),
-                          minimumSize: Size(double.infinity, 48.h),
-                          // Make it full width
-                          side: const BorderSide(
-                            color: Color(0xff206B8B), // Change border color
-                          ),
-                        ),
-                        child: Text(
-                          AppLocalizations.of(context)!.createAnAccount,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(color: Color(0xff445860))
-                              .copyWith(fontWeight: FontWeight.w600),
+      body: KeyboardDismissWrapper(
+          child: SingleChildScrollView(
+              child: SizedBox(
+                  height: MediaQuery.of(context).size.height,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(left: 24.w, top: 100.h),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppLocalizations.of(context)!.signInAction,
+                              textAlign: TextAlign.left,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(fontSize: 32.h),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                  ),
-                ],
-              ))),
+                      Padding(
+                          padding: const EdgeInsets.only(top: 36),
+                          child: _formComponent()),
+                      Align(
+                        alignment: Alignment.center,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 20),
+                          child: Text(
+                            AppLocalizations.of(context)!
+                                .dontHaveAccountAlready,
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 24.w, vertical: 8.h),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              _handleRegisterRedirect();
+                            },
+                            style: OutlinedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.0).r,
+                              ),
+                              backgroundColor: const Color(0xFFBFD2DB),
+                              minimumSize: Size(double.infinity, 48.h),
+                              // Make it full width
+                              side: const BorderSide(
+                                color: Color(0xff206B8B), // Change border color
+                              ),
+                            ),
+                            child: Text(
+                              AppLocalizations.of(context)!.createAnAccount,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(color: Color(0xff445860))
+                                  .copyWith(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )))),
     );
   }
 

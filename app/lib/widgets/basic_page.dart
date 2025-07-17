@@ -1,4 +1,6 @@
+import 'package:app/main.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -15,35 +17,37 @@ class BasicPage extends StatelessWidget {
     return PlatformScaffold(
       backgroundColor: bgColor,
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 20),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    icon: const Icon(Icons.close),
-                  ),
-                  if (title != null)
-                    DefaultTextStyle.merge(
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(fontSize: 18.sp),
-                      child: title!,
+        child: KeyboardDismissWrapper(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      icon: const Icon(Icons.close),
                     ),
-                ],
+                    if (title != null)
+                      DefaultTextStyle.merge(
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(fontSize: 18.sp),
+                        child: title!,
+                      ),
+                  ],
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: child,
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: child,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -276,6 +280,7 @@ class _SixDigitCodeInputState extends State<SixDigitCodeInput> {
   bool _shouldReset = false;
   final List<TextEditingController> _controllers =
       List.generate(6, (_) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
   // Track filled state for each digit
   final List<bool> _isFilled = List.generate(6, (_) => false);
@@ -285,6 +290,9 @@ class _SixDigitCodeInputState extends State<SixDigitCodeInput> {
     for (var controller in _controllers) {
       controller.dispose();
     }
+    for (var focusNode in _focusNodes) {
+      focusNode.dispose();
+    }
     super.dispose();
   }
 
@@ -292,8 +300,13 @@ class _SixDigitCodeInputState extends State<SixDigitCodeInput> {
     for (var controller in _controllers) {
       controller.clear();
     }
-
-    FocusScope.of(context).requestFocus(FocusNode());
+    for (var focusNode in _focusNodes) {
+      focusNode.unfocus();
+    }
+    // Focus on the first field after reset
+    if (_focusNodes.isNotEmpty) {
+      _focusNodes[0].requestFocus();
+    }
   }
 
   @override
@@ -313,56 +326,110 @@ class _SixDigitCodeInputState extends State<SixDigitCodeInput> {
         6,
         (index) => SizedBox(
           width: 46.w,
-          child: TextField(
-            controller: _controllers[index],
-            onChanged: (value) {
-              // Update filled state
-              setState(() {
-                _isFilled[index] = value.isNotEmpty;
-              });
-
-              if (value.length == 1 && index < 5) {
-                FocusScope.of(context).nextFocus();
+          child: Focus(
+            onKeyEvent: (node, event) {
+              // Handle backspace when field is empty
+              if (event is KeyDownEvent &&
+                  event.logicalKey == LogicalKeyboardKey.backspace &&
+                  _controllers[index].text.isEmpty &&
+                  index > 0) {
+                _focusNodes[index - 1].requestFocus();
+                // Select all text in previous field if it has content
+                if (_controllers[index - 1].text.isNotEmpty) {
+                  _controllers[index - 1].selection = TextSelection(
+                    baseOffset: 0,
+                    extentOffset: _controllers[index - 1].text.length,
+                  );
+                }
+                return KeyEventResult.handled;
               }
-              if (index == 5 && value.isNotEmpty) {
-                String code = '';
-                _controllers.forEach((controller) => code += controller.text);
-                widget.onSubmitted(code);
-              }
+              return KeyEventResult.ignored;
             },
-            maxLength: 1,
-            keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  height: 1.25,
-                  fontSize: 36.sp,
+            child: TextField(
+              controller: _controllers[index],
+              focusNode: _focusNodes[index],
+              onChanged: (value) {
+                // Update filled state
+                setState(() {
+                  _isFilled[index] = value.isNotEmpty;
+                });
+
+                // Handle auto-focus to next field
+                if (value.length == 1 && index < 5) {
+                  _focusNodes[index + 1].requestFocus();
+                }
+
+                // Handle backspace to previous field
+                if (value.isEmpty && index > 0) {
+                  // Move to previous field when current field becomes empty
+                  _focusNodes[index - 1].requestFocus();
+                  // Select all text in previous field if it has content
+                  if (_controllers[index - 1].text.isNotEmpty) {
+                    _controllers[index - 1].selection = TextSelection(
+                      baseOffset: 0,
+                      extentOffset: _controllers[index - 1].text.length,
+                    );
+                  }
+                }
+
+                // Check if all fields are filled
+                if (index == 5 && value.isNotEmpty) {
+                  String code = '';
+                  _controllers.forEach((controller) => code += controller.text);
+                  widget.onSubmitted(code);
+                }
+              },
+              onTap: () {
+                // When tapping on a field, select all text if it has content
+                if (_controllers[index].text.isNotEmpty) {
+                  _controllers[index].selection = TextSelection(
+                    baseOffset: 0,
+                    extentOffset: _controllers[index].text.length,
+                  );
+                }
+              },
+              onEditingComplete: () {
+                // Move to next field when editing is complete
+                if (index < 5) {
+                  _focusNodes[index + 1].requestFocus();
+                }
+              },
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+              ],
+              maxLength: 1,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 36.sp,
+                  ),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: widget.inError
+                    ? const Color(0xffFEF3F2) // Light red for error
+                    : _isFilled[index]
+                        ? const Color(0xFFF1F5F6)
+                        : Colors.transparent,
+                // Transparent when empty and no error
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 9.w,
+                  vertical: 16.h,
                 ),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: widget.inError
-                  ? const Color(0xffFEF3F2) // Light red for error
-                  : _isFilled[index]
-                      ? const Color(0xFFF1F5F6)
-                      : Colors.transparent,
-              // Transparent when empty and no error
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 9.w,
-                vertical: 16.h,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: widget.inError
+                      ? const BorderSide(color: Color(0xffFAD2CF), width: 2)
+                      : const BorderSide(color: Color(0xffBED4D8), width: 2),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: widget.inError
+                      ? const BorderSide(color: Color(0xffFAD2CF), width: 2)
+                      : const BorderSide(color: Color(0xff206B8B), width: 2),
+                ),
+                counterText: '',
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: widget.inError
-                    ? const BorderSide(color: Color(0xffFAD2CF), width: 2)
-                    : const BorderSide(color: Color(0xffBED4D8), width: 2),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: widget.inError
-                    ? const BorderSide(color: Color(0xffFAD2CF), width: 2)
-                    : const BorderSide(color: Color(0xff206B8B), width: 2),
-              ),
-              counterText: '',
             ),
           ),
         ),

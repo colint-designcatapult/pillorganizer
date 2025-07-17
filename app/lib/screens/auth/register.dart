@@ -1,3 +1,4 @@
+import 'package:app/main.dart';
 import 'package:app/provider/authentication_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
 import 'package:app/screens/auth/launch_page_login.dart';
@@ -28,67 +29,73 @@ class _RegisterPageState extends State<RegisterPage> {
         create: (_) => UserRegistrationProvider(),
         child: Scaffold(
             backgroundColor: const Color(0xFFBFD2DB),
-            body: SingleChildScrollView(
-                child: SizedBox(
-                    height: MediaQuery.of(context).size.height,
-                    child: Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.only(left: 24.w, top: 100.h),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  AppLocalizations.of(context)!.createAnAccount,
-                                  textAlign: TextAlign.left,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleLarge
-                                      ?.copyWith(fontSize: 32.h),
+            body: KeyboardDismissWrapper(
+                child: SingleChildScrollView(
+                    child: SizedBox(
+                        height: MediaQuery.of(context).size.height,
+                        child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.max,
+                            children: [
+                              Padding(
+                                padding:
+                                    EdgeInsets.only(left: 24.w, top: 100.h),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      AppLocalizations.of(context)!
+                                          .createAnAccount,
+                                      textAlign: TextAlign.left,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(fontSize: 32.h),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                              padding: const EdgeInsets.only(top: 36),
-                              child: _formComponent()),
-                          Align(
-                              alignment: Alignment.center,
-                              child: Padding(
-                                  padding: const EdgeInsets.only(top: 20),
-                                  child: Text(AppLocalizations.of(context)!
-                                      .haveAccountAlready))),
-                          Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 24.w, vertical: 8.h),
-                              child: OutlinedButton(
-                                onPressed: () {
-                                  _handleSignInRedirect();
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8.0).r,
-                                  ),
-                                  backgroundColor: const Color(0xFFBFD2DB),
-                                  minimumSize: Size(double.infinity, 48.h),
-                                  // Make it full width
-                                  side: const BorderSide(
-                                    color: Color(
-                                        0xff206B8B), // Change border color
-                                  ),
-                                ),
-                                child: Text(
-                                    AppLocalizations.of(context)!.signInAction,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(color: Color(0xff445860))
-                                        .copyWith(fontWeight: FontWeight.w600)),
-                              ))
-                        ])))));
+                              ),
+                              Padding(
+                                  padding: const EdgeInsets.only(top: 36),
+                                  child: _formComponent()),
+                              Align(
+                                  alignment: Alignment.center,
+                                  child: Padding(
+                                      padding: const EdgeInsets.only(top: 20),
+                                      child: Text(AppLocalizations.of(context)!
+                                          .haveAccountAlready))),
+                              Padding(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 24.w, vertical: 8.h),
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      _handleSignInRedirect();
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8.0).r,
+                                      ),
+                                      backgroundColor: const Color(0xFFBFD2DB),
+                                      minimumSize: Size(double.infinity, 48.h),
+                                      // Make it full width
+                                      side: const BorderSide(
+                                        color: Color(
+                                            0xff206B8B), // Change border color
+                                      ),
+                                    ),
+                                    child: Text(
+                                        AppLocalizations.of(context)!
+                                            .signInAction,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(color: Color(0xff445860))
+                                            .copyWith(
+                                                fontWeight: FontWeight.w600)),
+                                  ))
+                            ]))))));
   }
 
   Widget _formComponent() {
