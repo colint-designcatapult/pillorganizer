@@ -1,26 +1,20 @@
-import 'package:app/navigation/provision_navigator.dart';
-import 'package:app/provider/ble_provider.dart';
-import 'package:app/provider/deep_link_provider.dart';
+import 'package:app/api/api.dart';
 import 'package:app/provider/selected_device_provider.dart';
-import 'package:app/provider/time_provider.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
-import 'package:app/screens/provisioning/join_device_screen.dart';
-import 'package:app/widgets/device_alert.dart';
 import 'package:app/widgets/device_info_header.dart';
+import 'package:app/widgets/homeBodies/home_body.dart';
+import 'package:app/widgets/homeBodies/home_disconnected_body.dart';
+import 'package:app/widgets/homeBodies/home_empty_device_body.dart';
+import 'package:app/widgets/homeBodies/home_no_device_body.dart';
 import 'package:app/widgets/stateful_wrapper.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
-import '../../api/api.dart';
 import '../../api/device.dart';
 import '../../platform/ble_auto_supress.dart';
 import '../../provider/device_notice_provider.dart';
-import '../../widgets/dose_period_area.dart';
-import '../../widgets/pillbox/pill_box.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -34,12 +28,17 @@ class HomeScreen extends StatelessWidget {
         child: BLEAutoSuppress(
             child: AutoRefresh(
           refreshable: Provider.of<DeviceStateProvider>(context),
-          refreshInterval: const Duration(seconds: 3),
-          child: Consumer2<DeviceNoticeProvider, SelectedDeviceProvider>(
-            builder: (context, deviceNoticeProvider, selectedDevice, child) {
-              final bool hasNotice =
-                  deviceNoticeProvider.value != DeviceNotice.none &&
-                      selectedDevice.device?.owner == true;
+          child: Consumer3<DeviceNoticeProvider, SelectedDeviceProvider,
+              DeviceStateProvider>(
+            builder: (context, deviceNoticeProvider, selectedDevice,
+                deviceStateProvider, child) {
+              final bool isDisconnected =
+                  (deviceNoticeProvider.value ?? DeviceNotice.none) ==
+                      DeviceNotice.disconnected;
+              final dosePeriods = deviceStateProvider.value?.dosePeriods ?? [];
+              final bool isEmpty = !dosePeriods
+                  .any((element) => element.medicationIDs.isNotEmpty);
+
               return ScreenUtilWrapper(
                 child: Scaffold(
                   body: Stack(children: [
@@ -62,7 +61,7 @@ class HomeScreen extends StatelessWidget {
                           (BuildContext context, bool innerBoxIsScrolled) {
                         return <Widget>[
                           SliverAppBar(
-                            toolbarHeight: (hasNotice ? 280 : 160).h,
+                            toolbarHeight: 160.h,
                             backgroundColor: Colors.transparent,
                             flexibleSpace: FlexibleSpaceBar(
                               expandedTitleScale: 1.0,
@@ -76,15 +75,6 @@ class HomeScreen extends StatelessWidget {
                                         horizontal: 24.w, vertical: 12.h),
                                     child: const DeviceInfoHeader(),
                                   ),
-                                  hasNotice
-                                      ? DeviceAlert(
-                                          notice: deviceNoticeProvider.value,
-                                          onReload: () =>
-                                              deviceNoticeProvider.reload(),
-                                          reloadFuture: () =>
-                                              deviceNoticeProvider.reloadFuture,
-                                        )
-                                      : SizedBox(height: 8.h),
                                 ],
                               ),
                             ),
@@ -92,9 +82,8 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ];
                       },
-                      body: selectedDevice.device == null
-                          ? _noDeviceScreen(context)
-                          : _homeBody(context, hasNotice),
+                      body: _getHomeBody(
+                          context, selectedDevice, isDisconnected, isEmpty),
                     ),
                   ]),
                 ),
@@ -104,178 +93,25 @@ class HomeScreen extends StatelessWidget {
         )));
   }
 
-  Widget _homeBody(BuildContext context, bool hasNotice) {
-    return ClipRRect(
-      borderRadius: BorderRadius.only(topRight: const Radius.circular(40.0).r),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topRight: const Radius.circular(40.0).r,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24.h),
-                  child: Consumer<MinuteBasedTimeProvider>(
-                    builder: (context, minuteProvider, child) {
-                      return Text(
-                        AppLocalizations.of(context)!.localeName == 'fr'
-                            ? DateFormat('EEEE, d MMMM', 'fr')
-                                .format(minuteProvider.value)
-                            : DateFormat('EEEE, d MMMM', 'en')
-                                .format(minuteProvider.value),
-                        style: Theme.of(context).textTheme.labelLarge,
-                      );
-                    },
-                  ),
-                ),
-              ),
-              // TEMPORARY DEBUG: Show patient ID from deep link
-              SliverToBoxAdapter(
-                child: Consumer<DeepLinkProvider>(
-                  builder: (context, deepLinkProvider, child) {
-                    if (deepLinkProvider.hasPatientId) {
-                      return Container(
-                        margin: EdgeInsets.only(bottom: 16.h),
-                        padding: EdgeInsets.all(16.w),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8.r),
-                          border: Border.all(color: Colors.green, width: 2),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.check_circle, color: Colors.green),
-                            SizedBox(width: 8.w),
-                            Expanded(
-                              child: Text(
-                                '🎉 Deep Link Success!\nPatient ID: ${deepLinkProvider.patientId}',
-                                style: TextStyle(
-                                  color: Colors.green[800],
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                deepLinkProvider.clearPatientId();
-                              },
-                              icon: Icon(Icons.close, color: Colors.green),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-              ),
-              const SliverToBoxAdapter(child: Pillbox()),
-              if (!hasNotice &&
-                  Provider.of<DeviceStateProvider>(context, listen: false)
-                          .value !=
-                      null)
-                const DosePeriodArea(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _noDeviceScreen(BuildContext context) {
-    var date = DateTime.now();
-
-    void handleConnectNewDevice() {
-      Provider.of<DeviceBluetoothProvider>(context, listen: false).suppress();
-      startProvisioning(context);
+  Widget _getHomeBody(
+      BuildContext context,
+      SelectedDeviceProvider selectedDevice,
+      bool isDisconnected,
+      bool isEmpty) {
+    final noDevice = selectedDevice.device == null;
+    if (isDisconnected) {
+      return disconnectedDeviceScreen(context, selectedDevice);
     }
 
-    void handleJoinExistingDevice() {
-      Navigator.of(context).push(JoinDevicePage.route(context));
+    if (isEmpty) {
+      return emptyDeviceScreen(context, selectedDevice);
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.only(topRight: const Radius.circular(40.0).r),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topRight: const Radius.circular(40.0).r,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(
-              AppLocalizations.of(context)!.localeName == 'fr'
-                  ? DateFormat('EEEE, d MMMM', 'fr').format(date)
-                  : DateFormat('EEEE, d MMMM', 'en').format(date),
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Text(AppLocalizations.of(context)!.noDeviceDescription,
-                  style: Theme.of(context).textTheme.bodyMedium),
-            ),
-            OutlinedButton(
-                onPressed: () => handleConnectNewDevice(),
-                style: OutlinedButton.styleFrom(
-                    minimumSize: Size(double.infinity, 48.h),
-                    side: const BorderSide(
-                      color:
-                          Color(0xff8BCAE5), // Change border color to #8BCAE5
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 18, vertical: 12),
-                    backgroundColor: const Color(0xFFFFFFFF),
-                    foregroundColor: Colors.white,
-                    disabledForegroundColor: Colors.white,
-                    disabledBackgroundColor:
-                        Theme.of(context).primaryColor.withAlpha(127)),
-                child: Text(
-                  AppLocalizations.of(context)!.quickSwitchNewDevice,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: Color(0xff206B8B))
-                      .copyWith(fontWeight: FontWeight.w600),
-                )),
-            Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: OutlinedButton(
-                  onPressed: () => handleJoinExistingDevice(),
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0).r,
-                    ),
-                    backgroundColor: const Color(0xff206B8B),
-                    minimumSize: Size(double.infinity, 48.h),
-                    side: const BorderSide(
-                      color: Color(0xff206B8B),
-                    ),
-                  ),
-                  child: Text(
-                      AppLocalizations.of(context)!.quickSwitchExistingDevice,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(color: Colors.white)
-                          .copyWith(fontWeight: FontWeight.w600)),
-                ))
-          ]),
-        ),
-      ),
-    );
+    if (noDevice) {
+      return noDeviceScreen(context);
+    }
+
+    return homeBody(context);
   }
 
   Future<void> _askPermissions(BuildContext context) async {

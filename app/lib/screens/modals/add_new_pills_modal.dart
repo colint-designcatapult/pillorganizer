@@ -1,15 +1,15 @@
 import 'package:app/provider/new_medication_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/widgets/addNewPill/add_new_pills.dart';
+import 'package:app/widgets/addNewPill/medication_card_entry.dart';
 import 'package:app/widgets/button_icon_text.dart';
 import 'package:app/widgets/generic_yes_no_modal.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
-import 'package:app/widgets/addNewPill/medication_card_entry.dart';
-import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 class AddNewPillModal extends StatefulWidget {
   const AddNewPillModal({super.key, required this.onAdd});

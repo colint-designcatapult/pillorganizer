@@ -1,3 +1,4 @@
+import 'package:app/api/device.dart';
 import 'package:app/provider/medication_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/modals/add_new_pills_modal.dart';
@@ -17,6 +18,7 @@ class PillsScreen extends StatefulWidget {
 class _PillsScreenState extends State<PillsScreen> {
   void _addNewPillUpdate() {
     Provider.of<MedicationsProvider>(context, listen: false).refresh();
+    Provider.of<DeviceStateProvider>(context, listen: false).refresh();
   }
 
   @override

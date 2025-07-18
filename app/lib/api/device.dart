@@ -278,7 +278,7 @@ class DeviceStateProvider extends RefreshableValueNotifier<DeviceState?> {
       _device = selected;
       loadFunction = _load;
       value = null;
-      //refresh();
+      // refresh();
       notifyListeners();
     }
     return this;
