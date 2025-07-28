@@ -62,6 +62,9 @@ public class DeviceStateService {
     @Inject
     FirmwareService firmwareService;
 
+    @Inject
+    TakecareService takecareService;
+
     /**
      * Creates a `DeviceStateWrapper` for a particular device.
      * 
@@ -70,7 +73,7 @@ public class DeviceStateService {
      */
     public DeviceStateWrapper wrapperOf(Device device, DeviceUser deviceUser) {
         return new DeviceStateWrapper(deviceRepository, deviceScheduleRepository,
-                deviceStateRepository, deviceEventRepository, firmwareService, device, deviceUser);
+                deviceStateRepository, deviceEventRepository, firmwareService, takecareService, device, deviceUser);
     }
 
     /**

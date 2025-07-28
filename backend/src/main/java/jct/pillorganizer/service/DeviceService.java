@@ -1,13 +1,12 @@
 package jct.pillorganizer.service;
 
+import javax.transaction.Transactional;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.device.DeviceClass;
 import jct.pillorganizer.repo.DeviceRepository;
-import jct.pillorganizer.repo.DeviceStateRepository;
-
-import javax.transaction.Transactional;
 
 /**
  * Business logic for operations on Device objects.
@@ -18,10 +17,6 @@ public class DeviceService {
 
     @Inject
     DeviceRepository deviceRepository;
-
-    @Inject
-    DeviceStateRepository deviceStateRepository;
-
 
     /**
      * Fetches a Device object by serial number and class, if such device already exists, and if not, creates a new

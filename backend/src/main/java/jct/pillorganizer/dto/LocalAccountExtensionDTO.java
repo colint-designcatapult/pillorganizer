@@ -1,5 +1,7 @@
 package jct.pillorganizer.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
 import lombok.AllArgsConstructor;
@@ -11,8 +13,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Introspected
 @Serdeable
-public class LocalAccountIdentifierAssignerReferenceDto {
+public class LocalAccountExtensionDTO {
     private String id;
-    private String reference;
-    private String display;
+    
+    @JsonProperty("polymorphic_ctype")
+    private Integer polymorphicCtype;
+    
+    private String account;
 } 

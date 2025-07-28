@@ -1,9 +1,5 @@
 package jct.pillorganizer.dto;
 
-import java.time.LocalDateTime;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
 import lombok.AllArgsConstructor;
@@ -15,12 +11,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Introspected
 @Serdeable
-public class PatientCommunicationDto {
+public class PatientGeneralPractitionerReferenceDTO {
     private String id;
-    private LanguageDto language;
-    
-    @JsonProperty("deleted_at")
-    private LocalDateTime deletedAt;
-    
-    private Boolean preferred;
+    private String reference;
+    private String display;
 } 

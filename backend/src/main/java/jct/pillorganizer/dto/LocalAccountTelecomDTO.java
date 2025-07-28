@@ -27,7 +27,7 @@ enum LocalAccountTelecomUse
 @AllArgsConstructor
 @Introspected
 @Serdeable
-public class LocalAccountTelecomDto {
+public class LocalAccountTelecomDTO {
     private String id;
     private Map<String, Object> period;
     

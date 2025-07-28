@@ -18,12 +18,12 @@ enum LocalAccountIdentifierUse
 @AllArgsConstructor
 @Introspected
 @Serdeable
-public class LocalAccountIdentifierDto {
+public class LocalAccountIdentifierDTO {
     private String id;
     private String value;
     private LocalAccountIdentifierUse use;
     private Object type;
     private String system;
     private Map<String, Object> period;
-    private LocalAccountIdentifierAssignerReferenceDto assigner;
+    private LocalAccountIdentifierAssignerReferenceDTO assigner;
 } 

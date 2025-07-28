@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Introspected
 @Serdeable
-public class FhirMetaDto {
+public class FhirMetaDTO {
     private Integer versionId;
     private String lastUpdated;
-} 
+}

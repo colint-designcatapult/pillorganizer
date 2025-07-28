@@ -12,14 +12,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-enum LocalAccountAddressUse
-{
-    home, work, temp, old, billing
-}
 
-enum LocalAccountAddressType
+enum LocalAccountHumanUse
 {
-    postal, physical, both
+    usual, official, temp, nickname, anonymous, old, maiden
 }
 
 @Data
@@ -27,20 +23,16 @@ enum LocalAccountAddressType
 @AllArgsConstructor
 @Introspected
 @Serdeable
-public class LocalAccountAddressDto {
+public class LocalAccountHumanDTO {
     private String id;
     private Map<String, Object> period;
     
     @JsonProperty("deleted_at")
     private LocalDateTime deletedAt;
     
-    private LocalAccountAddressUse use;
-    private LocalAccountAddressType type;
-    private String text;
-    private List<String> line;
-    private String city;
-    private String district;
-    private String state;
-    private String postalCode;
-    private String country;
+    private LocalAccountHumanUse use;
+    private String family;
+    private List<String> given;
+    private List<String> prefix;
+    private List<String> suffix;
 } 

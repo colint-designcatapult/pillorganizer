@@ -1,5 +1,7 @@
 package jct.pillorganizer.dto;
 
+import java.util.List;
+
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
 import lombok.AllArgsConstructor;
@@ -11,8 +13,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Introspected
 @Serdeable
-public class PatientGeneralPractitionerReferenceDto {
-    private String id;
-    private String reference;
-    private String display;
+public class LanguageDTO {
+    private List<LanguageCodingDTO> coding;
 } 

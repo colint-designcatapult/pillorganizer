@@ -14,14 +14,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Introspected
 @Serdeable
-public class PatientContactDto {
+public class PatientContactDTO {
     private String id;
     private String patient;
     private List<Object> relationship;
-    private LocalAccountHumanDto name;
-    private List<LocalAccountTelecomDto> telecom;
-    private LocalAccountAddressDto address;
-    private PatientGeneralPractitionerReferenceDto organization;
+    private LocalAccountHumanDTO name;
+    private List<LocalAccountTelecomDTO> telecom;
+    private LocalAccountAddressDTO address;
+    private PatientGeneralPractitionerReferenceDTO organization;
     private Map<String, Object> period;
     private String gender;
 } 

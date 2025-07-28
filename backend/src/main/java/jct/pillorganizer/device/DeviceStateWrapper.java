@@ -19,6 +19,8 @@ import java.util.zip.CRC32;
 import javax.annotation.Nullable;
 import javax.transaction.Transactional;
 
+import org.zalando.problem.Problem;
+
 import jct.pillorganizer.model.EventType;
 import jct.pillorganizer.model.device.BinStatus;
 import jct.pillorganizer.model.device.DayOfWeek;
@@ -35,7 +37,10 @@ import jct.pillorganizer.repo.DeviceRepository;
 import jct.pillorganizer.repo.DeviceScheduleRepository;
 import jct.pillorganizer.repo.DeviceStateRepository;
 import jct.pillorganizer.service.FirmwareService;
+import jct.pillorganizer.service.TakecareService;
 import lombok.extern.flogger.Flogger;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 /**
  * Device state business logic.
@@ -55,6 +60,7 @@ public class DeviceStateWrapper {
     private final DeviceRepository deviceRepository;
     private final DeviceEventRepository deviceEventRepository;
     private final FirmwareService firmwareService;
+    private final TakecareService takecareService;
     private final Device device;
     private final DeviceUser deviceUser;
 
@@ -64,12 +70,13 @@ public class DeviceStateWrapper {
 
     public DeviceStateWrapper(DeviceRepository deviceRepository, DeviceScheduleRepository scheduleRepository,
             DeviceStateRepository stateRepository, DeviceEventRepository deviceEventRepository,
-            FirmwareService firmwareService, Device device, DeviceUser deviceUser) {
+            FirmwareService firmwareService, TakecareService takecareService, Device device, DeviceUser deviceUser) {
         this.deviceRepository = deviceRepository;
         this.scheduleRepository = scheduleRepository;
         this.stateRepository = stateRepository;
         this.deviceEventRepository = deviceEventRepository;
         this.firmwareService = firmwareService;
+        this.takecareService = takecareService;
         this.device = device;
         this.deviceUser = deviceUser;
     }
@@ -139,10 +146,11 @@ public class DeviceStateWrapper {
      * Processes an event sourced from a device, with all state effects.
      *
      * @param event event to process
+     * @return Mono that completes when all processing is done
      */
-    public void handleBinEvent(DeviceEvent event) {
+    public Mono<Void> handleBinEvent(DeviceEvent event) {
         DeviceState state = getState().get(event.getBin());
-
+        
         if (EventType.CLOSED.equals(event.getEventType())) {
             switch (state.getBinStatus()) {
                 case PENDING:
@@ -176,13 +184,65 @@ public class DeviceStateWrapper {
                 case TAKE_NOW:
                     stateRepository.update(state.getId(), state.getVersion(), BinStatus.TAKEN, event);
                     state.setBinStatus(BinStatus.TAKEN);
+                    
+                    return createObservationForTakenPill(event);
+                default:
                     break;
             }
         } else if (EventType.MISSED.equals(event.getEventType())) {
-
             stateRepository.update(state.getId(), state.getVersion(), BinStatus.MISSED, event);
             state.setBinStatus(BinStatus.MISSED);
+
+            return createObservationForMissedPill(event);
         }
+        
+        return Mono.empty();
+    }
+
+    /**
+     * Creates an observation when a pill is taken
+     * @param event the device event for the taken pill
+     * @return Mono that completes when observation creation is done
+     */
+    private Mono<Void> createObservationForTakenPill(DeviceEvent event) {
+        String patientId = deviceUser.getUser().getTakecarePatientId();
+
+        return takecareService.createObservation(patientId, event.getTs(), device.getTimeZone(), "pillbox_open_time")
+                .subscribeOn(Schedulers.boundedElastic())
+                .then()
+                .onErrorResume(throwable -> {
+                    Problem problem = Problem.builder()
+                            .withTitle("Failed to create observation for taken pill")
+                            .withDetail("Error occurred while creating observation for patient: " + patientId + ". Cause: " + throwable.getMessage())
+                            .build();
+                    
+                    log.atWarning().withCause(throwable).log("Problem creating observation: %s", problem.getDetail());
+                    
+                    return Mono.empty();
+                });
+    }
+
+    /**
+     * Creates an observation when a pill is missed
+     * @param event the device event for the missed pill
+     * @return Mono that completes when observation creation is done
+     */
+    private Mono<Void> createObservationForMissedPill(DeviceEvent event) {
+        String patientId = deviceUser.getUser().getTakecarePatientId();
+
+        return takecareService.createObservation(patientId, event.getTs(), device.getTimeZone(), "pillbox_missed_time")
+                .subscribeOn(Schedulers.boundedElastic())
+                .then()
+                .onErrorResume(throwable -> {
+                    Problem problem = Problem.builder()
+                            .withTitle("Failed to create observation for missed pill")
+                            .withDetail("Error occurred while creating observation for patient: " + patientId + ". Cause: " + throwable.getMessage())
+                            .build();
+                    
+                    log.atWarning().withCause(throwable).log("Problem creating observation: %s", problem.getDetail());
+                    
+                    return Mono.empty();
+                });
     }
 
     /**
@@ -239,7 +299,10 @@ public class DeviceStateWrapper {
                 ev.setBin(-1);
 
             deviceEventRepository.save(ev);
-            handleBinEvent(ev);
+            
+            // Handle bin event and subscribe to execute observation creation
+            handleBinEvent(ev).subscribe();
+            
             log.atInfo().log("Device initiated event, bin: %d event: %s", recEv.getBin(),
                     EventType.fromProtobuf(recEv.getType()).toString());
             ctr++;

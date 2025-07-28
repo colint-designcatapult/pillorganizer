@@ -18,19 +18,19 @@ enum FhirPatientGender
 @AllArgsConstructor
 @Introspected
 @Serdeable
-public class FhirPatientDto {
+public class FhirPatientDTO {
     private String id;
-    private FhirMetaDto meta;
+    private FhirMetaDTO meta;
     private String resourceType;
-    private List<LocalAccountIdentifierDto> identifier;
-    private List<LocalAccountHumanDto> name;
-    private List<LocalAccountTelecomDto> telecom;
-    private List<LocalAccountAddressDto> address;
+    private List<LocalAccountIdentifierDTO> identifier;
+    private List<LocalAccountHumanDTO> name;
+    private List<LocalAccountTelecomDTO> telecom;
+    private List<LocalAccountAddressDTO> address;
     private Boolean active;
-    private List<PatientCommunicationDto> communication;
+    private List<PatientCommunicationDTO> communication;
     private FhirPatientGender gender;
     private String birthDate;
-    private List<LocalAccountExtensionDto> extension;
-    private List<PatientGeneralPractitionerReferenceDto> generalPractitioner;
-    private List<PatientContactDto> contact;
+    private List<LocalAccountExtensionDTO> extension;
+    private List<PatientGeneralPractitionerReferenceDTO> generalPractitioner;
+    private List<PatientContactDTO> contact;
 } 
