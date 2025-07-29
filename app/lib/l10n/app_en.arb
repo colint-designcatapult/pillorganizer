@@ -28,6 +28,8 @@
 	"changeName": "Change Name",
 	"changePassword": "Change Password",
 	"changePasswordSubtitle": "Please enter your current password in order to set up a new one.",
+	"changeLanguage": "Language",
+	"selectLanguage": "Select Language",
 	"color": "Color",
 	"confirmNewPassword": "Confirm new password",
 	"connectNewDevice": "Connect a new device",

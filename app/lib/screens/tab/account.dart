@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 
 import '../../provider/authentication_provider.dart';
 import '../../provider/device_provider.dart';
+import '../../provider/language_provider.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
@@ -66,6 +67,59 @@ class AccountScreen extends StatelessWidget {
           builder: (context) => const ChangeEmail());
     }
 
+    void changeLanguage() {
+      final languageProvider =
+          Provider.of<LanguageProvider>(context, listen: false);
+
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(16.r),
+          ),
+        ),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width,
+        ),
+        builder: (context) => Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                AppLocalizations.of(context)!.selectLanguage,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              SizedBox(height: 24.h),
+              ...languageProvider.supportedLanguages.map(
+                (lang) => ListTile(
+                  title: Text(lang['name']!),
+                  leading: Radio<String>(
+                    value: lang['code']!,
+                    groupValue: languageProvider.locale.languageCode,
+                    onChanged: (value) {
+                      if (value != null) {
+                        languageProvider.setLanguage(value);
+                        Navigator.of(context).pop();
+                      }
+                    },
+                  ),
+                  onTap: () {
+                    languageProvider.setLanguage(lang['code']!);
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ),
+              SizedBox(height: 24.h),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFBFD2DB),
       body: SafeArea(
@@ -113,6 +167,15 @@ class AccountScreen extends StatelessWidget {
                                     .changePassword,
                                 onPressed: () {
                                   changePassword();
+                                },
+                              ),
+                              SquareButton(
+                                color: const Color(0xFF043C4D),
+                                icon: PhosphorIcons.translate,
+                                label: AppLocalizations.of(context)!
+                                    .changeLanguage,
+                                onPressed: () {
+                                  changeLanguage();
                                 },
                               ),
                               SquareButton(

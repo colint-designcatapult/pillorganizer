@@ -31,6 +31,7 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'firebase_options.dart';
 import 'provider/authentication_provider.dart';
 import 'provider/deep_link_provider.dart';
+import 'provider/language_provider.dart';
 import 'provider/schedule_provider.dart';
 import 'provider/selected_device_provider.dart';
 import 'screens/auth/launch_page_login.dart';
@@ -85,6 +86,9 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProvider(
             create: (context) => DeepLinkProvider(),
           ),
+          ChangeNotifierProvider(
+            create: (context) => LanguageProvider(),
+          ),
           ChangeNotifierProvider<UserRegistrationProvider>(
               create: (_) => UserRegistrationProvider()),
           ChangeNotifierProvider<DeviceProvider>(
@@ -128,14 +132,17 @@ class MyApp extends StatelessWidget {
               ),
               child: PlatformProvider(
                 settings: PlatformSettingsData(iosUsesMaterialWidgets: true),
-                builder: (context) => Consumer<DeepLinkProvider>(
-                  builder: (context, deepLinkProvider, child) {
+                builder: (context) =>
+                    Consumer2<DeepLinkProvider, LanguageProvider>(
+                  builder:
+                      (context, deepLinkProvider, languageProvider, child) {
                     return Stack(
                       alignment: Alignment.center,
                       children: [
                         MaterialApp(
                           title: 'Cabinet Pills',
                           themeMode: ThemeMode.system,
+                          locale: languageProvider.locale,
                           onGenerateRoute: (settings) {
                             if (settings.name?.startsWith('/name_new_device') ==
                                 true) {
