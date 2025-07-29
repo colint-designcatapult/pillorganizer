@@ -46,6 +46,9 @@ class DeviceBluetoothController {
     return _target != null && _deviceID != null;
   }
 
+  String? get currentTarget => _target;
+  int? get currentDeviceID => _deviceID;
+
   void handleSyncData(List<int> data) {
     String encoded = base64Encode(data);
     client.deviceSync(_deviceID!, encoded).then((value) {

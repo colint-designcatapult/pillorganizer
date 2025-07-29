@@ -116,6 +116,8 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
   Widget build(BuildContext context) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(3, 3);
     void onNext() {
+      Provider.of<MedicationsProvider>(context, listen: false).refresh();
+
       Navigator.of(context).pushNamedAndRemoveUntil("/index", (route) => false);
     }
 

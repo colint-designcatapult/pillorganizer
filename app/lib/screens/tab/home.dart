@@ -99,16 +99,16 @@ class HomeScreen extends StatelessWidget {
       bool isDisconnected,
       bool isEmpty) {
     final noDevice = selectedDevice.device == null;
+    if (noDevice) {
+      return noDeviceScreen(context);
+    }
+
     if (isDisconnected) {
       return disconnectedDeviceScreen(context, selectedDevice);
     }
 
     if (isEmpty) {
       return emptyDeviceScreen(context, selectedDevice);
-    }
-
-    if (noDevice) {
-      return noDeviceScreen(context);
     }
 
     return homeBody(context);

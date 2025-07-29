@@ -4,6 +4,7 @@ import 'package:app/provider/schedule_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
 import 'package:app/widgets/add_device.dart';
+import 'package:app/widgets/custom_time_picker.dart';
 import 'package:app/widgets/remove_device_modal.dart';
 import 'package:app/widgets/timezone_selection.dart';
 import 'package:flutter/material.dart';
@@ -165,14 +166,23 @@ class _ScheduleEntryState extends State<ScheduleEntry> {
             return;
           }
 
-          showTimePicker(
-            initialTime: entry?.time ?? TimeOfDay.now(),
+          showDialog<TimeOfDay>(
             context: context,
-            initialEntryMode: TimePickerEntryMode.input,
-          ).then((value) {
-            if (value != null) {
+            builder: (BuildContext context) {
+              return Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                child: CustomTimePicker(
+                  initialTime: entry?.time ?? TimeOfDay.now(),
+                  isAM: dayPeriod == DayPeriod.am,
+                ),
+              );
+            },
+          ).then((selectedTime) {
+            if (selectedTime != null) {
               Provider.of<ScheduleProvider>(context, listen: false)
-                  .updateTime(dayPeriod, value, device.deviceID);
+                  .updateTime(dayPeriod, selectedTime, device.deviceID);
             }
           });
         },

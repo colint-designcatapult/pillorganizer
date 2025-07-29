@@ -121,7 +121,13 @@ class DeviceBluetoothProvider with ChangeNotifier {
 
   void changeDevice(DeviceUser? newUser) {
     if (newUser != null) {
-      _changeDevice(_getDeviceName(newUser), newUser.deviceID);
+      String newDeviceName = _getDeviceName(newUser);
+      int newDeviceID = newUser.deviceID;
+
+      if (_controller.currentTarget != newDeviceName ||
+          _controller.currentDeviceID != newDeviceID) {
+        _changeDevice(newDeviceName, newDeviceID);
+      }
     } else {
       suppress();
     }
