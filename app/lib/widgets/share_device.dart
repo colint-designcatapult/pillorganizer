@@ -6,8 +6,8 @@ import 'package:app/provider/selected_device_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 
 class ShareDevice extends StatefulWidget {
@@ -336,7 +336,7 @@ class _ShareDeviceState extends State<ShareDevice> {
                             ),
                           )
                         : Icon(
-                            PhosphorIcons.arrows_clockwise,
+                            PhosphorIconsRegular.arrowClockwise,
                             size: 20.h,
                             color: _errorMessage != null
                                 ? Theme.of(context).colorScheme.error
@@ -367,7 +367,7 @@ class _ShareDeviceState extends State<ShareDevice> {
                       padding: EdgeInsets.symmetric(horizontal: 8.w),
                     ),
                     icon: Icon(
-                      PhosphorIcons.copy,
+                      PhosphorIconsRegular.copy,
                       size: 20.h,
                       color: const Color(0xFF206B8B),
                     ),

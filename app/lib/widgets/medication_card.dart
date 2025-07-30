@@ -1,17 +1,17 @@
 import 'package:app/api/medication.dart';
 import 'package:app/widgets/medication_icon.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:provider/provider.dart';
 
 import '../provider/medication_provider.dart';
 import '../provider/new_medication_provider.dart';
 import '../provider/selected_device_provider.dart';
 import '../screens/modals/add_new_pills_modal.dart';
 import 'addNewPill/medication_card_entry.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class MedicationCard extends StatelessWidget {
   final ScheduledMedication med;
@@ -130,7 +130,7 @@ class MedicationCard extends StatelessWidget {
                     width: 8.w,
                   ),
                   Icon(
-                    PhosphorIcons.dots_three_vertical,
+                    PhosphorIconsRegular.dotsThreeVertical,
                     size: 24.h,
                   )
                 ],

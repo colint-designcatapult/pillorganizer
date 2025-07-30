@@ -4,10 +4,10 @@ import 'package:app/widgets/add_device.dart';
 import 'package:app/widgets/single_device_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 
 class MultipleDevices extends StatelessWidget {
@@ -159,7 +159,7 @@ class MultipleDevices extends StatelessWidget {
                                   IconButton(
                                     padding: const EdgeInsets.all(12),
                                     icon: Icon(
-                                      PhosphorIcons.arrows_left_right,
+                                      PhosphorIconsRegular.arrowsLeftRight,
                                       size: 24.h,
                                     ),
                                     color: const Color(0xFF206B8B),
@@ -191,7 +191,7 @@ class MultipleDevices extends StatelessWidget {
                                   padding: const EdgeInsets.all(12),
                                   icon: isDeviceReadOnly
                                       ? Icon(
-                                          PhosphorIcons.eye,
+                                          PhosphorIconsRegular.eye,
                                           size: 24.h,
                                         )
                                       : SvgPicture.asset(

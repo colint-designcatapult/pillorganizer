@@ -1,10 +1,10 @@
 import 'package:app/api/medication.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class MedicationIcon extends StatelessWidget {
   const MedicationIcon(
@@ -240,7 +240,7 @@ class MedicationColorSelector extends StatelessWidget {
                 color: Colors.white30,
                 selected: selected != null && !commonColors.contains(selected),
                 icon: Icon(
-                  PhosphorIcons.eyedropper_sample,
+                  PhosphorIconsRegular.eyedropperSample,
                   size: 24.w,
                 ),
                 onTap: (_) {

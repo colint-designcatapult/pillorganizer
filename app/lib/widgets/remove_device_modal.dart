@@ -4,8 +4,8 @@ import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/service/error_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 
 class RemoveDeviceDialog extends StatefulWidget {
@@ -40,7 +40,7 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
                       Navigator.of(context).pop();
                     },
                     icon: Icon(
-                      PhosphorIcons.x_bold,
+                      PhosphorIconsBold.x,
                       size: 24.h,
                     ),
                     color: const Color(0XFF101828),
@@ -48,7 +48,7 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
                 ],
               ),
               Icon(
-                PhosphorIcons.warning,
+                PhosphorIconsRegular.warning,
                 color: const Color(0XFF7A2C2C),
                 size: 48.h,
               ),

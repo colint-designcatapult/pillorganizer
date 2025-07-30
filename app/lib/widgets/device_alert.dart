@@ -1,8 +1,8 @@
 import 'package:app/widgets/button_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../api/device.dart';
 
@@ -102,11 +102,11 @@ class DeviceAlert extends StatelessWidget {
   Icon _getIcon(DeviceNotice notice) {
     switch (notice) {
       case DeviceNotice.disconnected:
-        return Icon(PhosphorIcons.plugs_bold, color: Colors.black, size: 20.h);
+        return Icon(PhosphorIconsBold.plugs, color: Colors.black, size: 20.h);
       case DeviceNotice.empty:
-        return Icon(PhosphorIcons.pill_bold, color: Colors.black, size: 20.h);
+        return Icon(PhosphorIconsBold.pill, color: Colors.black, size: 20.h);
       default:
-        return Icon(PhosphorIcons.pill_bold, color: Colors.black, size: 20.h);
+        return Icon(PhosphorIconsBold.pill, color: Colors.black, size: 20.h);
     }
   }
 

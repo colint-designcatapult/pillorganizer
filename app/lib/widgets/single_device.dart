@@ -5,9 +5,9 @@ import 'package:app/widgets/schedule_entry.dart';
 import 'package:app/widgets/share_device.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 void changeName(context, {DeviceUser? device}) {
   showDialog(
@@ -124,7 +124,7 @@ class _SingleDeviceState extends State<SingleDevice> {
                 if (widget.isModal)
                   IconButton(
                     icon: Icon(
-                      PhosphorIcons.x,
+                      PhosphorIconsRegular.x,
                       size: 24.h,
                     ),
                     onPressed: () => Navigator.pop(context),

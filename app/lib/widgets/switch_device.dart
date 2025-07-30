@@ -6,8 +6,8 @@ import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/provisioning/join_device_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 
 class SwitchDevice extends StatefulWidget {
@@ -103,7 +103,7 @@ class _SwitchDeviceState extends State<SwitchDevice> {
                         Navigator.of(context).pop();
                       },
                       child: Icon(
-                        PhosphorIcons.x_bold,
+                        PhosphorIconsBold.x,
                         size: 24.h,
                         color: const Color(0XFF101828),
                       )),
@@ -184,7 +184,7 @@ class _SwitchDeviceState extends State<SwitchDevice> {
                   style: TextStyle(fontSize: 12, fontFamily: 'Poppins'),
                 )),
           const SizedBox(width: 8), // Spacing between icon and text
-          const Icon(PhosphorIcons.arrow_right,
+          const Icon(PhosphorIconsRegular.arrowRight,
               size: 20, color: Color(0xff206B8B)), // Icon
         ]),
       ),

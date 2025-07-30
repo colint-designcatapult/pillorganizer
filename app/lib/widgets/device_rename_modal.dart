@@ -3,8 +3,8 @@ import 'package:app/main.dart';
 import 'package:app/provider/device_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
 
@@ -52,7 +52,7 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
                         Navigator.of(context).pop();
                       },
                       icon: Icon(
-                        PhosphorIcons.x_bold,
+                        PhosphorIconsBold.x,
                         size: 20.h,
                       ),
                       color: const Color(0XFF101828),
@@ -60,7 +60,7 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
                   ],
                 ),
                 Icon(
-                  PhosphorIcons.hard_drives,
+                  PhosphorIconsRegular.hardDrives,
                   size: 48.h,
                 ),
                 SizedBox(height: 8.h),

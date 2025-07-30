@@ -7,8 +7,8 @@ import 'package:app/widgets/generic_yes_no_modal.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 
 class AddNewPillModal extends StatefulWidget {
@@ -203,7 +203,7 @@ class MedicationModal extends StatelessWidget {
                           padding: const EdgeInsets.only(left: 8).w,
                           child: ButtonIconText(
                               text: AppLocalizations.of(context)!.delete,
-                              iconData: PhosphorIcons.trash_simple,
+                              iconData: PhosphorIconsRegular.trashSimple,
                               onPressed: () => deleteMedication(context))),
                     IconButton(
                       icon: Icon(
@@ -277,8 +277,8 @@ class MedicationModal extends StatelessWidget {
                                 children: [
                                   Icon(
                                     medicationID != null
-                                        ? PhosphorIcons.check
-                                        : PhosphorIcons.plus,
+                                        ? PhosphorIconsRegular.check
+                                        : PhosphorIconsRegular.plus,
                                     size: 24.h,
                                     color: Colors.white,
                                   ),
@@ -308,7 +308,7 @@ class MedicationModal extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => GenericYesNoModal(
-          icon: PhosphorIcons.power_fill,
+          icon: PhosphorIconsFill.power,
           title: AppLocalizations.of(context)!.deleteMedication,
           subtitle: AppLocalizations.of(context)!.deleteMedicationConfirmation,
           saveWidgetText: AppLocalizations.of(context)!.delete,

@@ -8,8 +8,8 @@ import 'package:app/widgets/switch_device.dart';
 import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../provider/selected_device_provider.dart';
@@ -134,7 +134,7 @@ class DeviceInfoHeader extends StatelessWidget {
                           ?.copyWith(color: Colors.white)),
                   SizedBox(width: 8.w),
                   Icon(
-                    PhosphorIcons.bluetooth_fill,
+                    PhosphorIconsRegular.bluetooth,
                     size: 20.h,
                     color: Colors.white,
                   ),
@@ -207,7 +207,7 @@ class DeviceInfoHeader extends StatelessWidget {
                                 Navigator.of(context).pop();
                               },
                               child: Icon(
-                                PhosphorIcons.x_bold,
+                                PhosphorIconsBold.x,
                                 size: 24.h,
                                 color: const Color(0XFF101828),
                               )),
@@ -215,7 +215,7 @@ class DeviceInfoHeader extends StatelessWidget {
                         Column(
                           children: [
                             Icon(
-                              PhosphorIcons.hard_drives_fill,
+                              PhosphorIconsFill.hardDrives,
                               size: 48.h,
                               color: const Color(0xFF206B8B),
                             ),
@@ -253,7 +253,7 @@ class DeviceInfoHeader extends StatelessWidget {
                                 child: Row(
                                   children: [
                                     Icon(
-                                      PhosphorIcons.wifi_high,
+                                      PhosphorIconsRegular.wifiHigh,
                                       size: 24.h,
                                       color: const Color(0xFF191B1D),
                                     ),
@@ -285,7 +285,7 @@ class DeviceInfoHeader extends StatelessWidget {
                                 child: Row(
                                   children: [
                                     Icon(
-                                      PhosphorIcons.bluetooth_fill,
+                                      PhosphorIconsRegular.bluetooth,
                                       size: 24.h,
                                       color: const Color(0xFF191B1D),
                                     ),

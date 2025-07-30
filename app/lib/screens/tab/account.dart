@@ -3,8 +3,8 @@ import 'package:app/screens/auth/change_password.dart';
 import 'package:app/widgets/generic_yes_no_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_phosphor_icons/flutter_phosphor_icons.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../../provider/authentication_provider.dart';
@@ -20,7 +20,7 @@ class AccountScreen extends StatelessWidget {
       showDialog(
           context: context,
           builder: (_) => GenericYesNoModal(
-                icon: PhosphorIcons.power_fill,
+                icon: PhosphorIconsFill.power,
                 title: AppLocalizations.of(context)!.signingOut,
                 subtitle: AppLocalizations.of(context)!.signingOutSubtitle,
                 saveWidgetText: AppLocalizations.of(context)!.signOut,
@@ -153,7 +153,7 @@ class AccountScreen extends StatelessWidget {
                             children: [
                               SquareButton(
                                 color: const Color(0xFF043C4D),
-                                icon: PhosphorIcons.envelope_simple_fill,
+                                icon: PhosphorIconsFill.envelopeSimple,
                                 label:
                                     AppLocalizations.of(context)!.changeEmail,
                                 onPressed: () {
@@ -162,7 +162,7 @@ class AccountScreen extends StatelessWidget {
                               ),
                               SquareButton(
                                 color: const Color(0xFF043C4D),
-                                icon: PhosphorIcons.key_fill,
+                                icon: PhosphorIconsFill.key,
                                 label: AppLocalizations.of(context)!
                                     .changePassword,
                                 onPressed: () {
@@ -171,7 +171,7 @@ class AccountScreen extends StatelessWidget {
                               ),
                               SquareButton(
                                 color: const Color(0xFF043C4D),
-                                icon: PhosphorIcons.translate,
+                                icon: PhosphorIconsRegular.translate,
                                 label: AppLocalizations.of(context)!
                                     .changeLanguage,
                                 onPressed: () {
@@ -180,7 +180,7 @@ class AccountScreen extends StatelessWidget {
                               ),
                               SquareButton(
                                 color: const Color(0xFF7A2C2C),
-                                icon: PhosphorIcons.power_fill,
+                                icon: PhosphorIconsFill.power,
                                 label: AppLocalizations.of(context)!.signOut,
                                 onPressed: () {
                                   signout(context);

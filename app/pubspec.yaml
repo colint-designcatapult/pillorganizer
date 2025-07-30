@@ -72,7 +72,7 @@ dependencies:
   flutter_native_timezone: ^1.0.7
   dotted_border: ^2.1.0
   flutter_dotenv: ^5.1.0
-  flutter_phosphor_icons: ^0.0.1+6
+  phosphor_flutter: ^2.1.0
   flutter_colorpicker: ^1.0.3
   firebase_crashlytics: ^3.4.3
   permission_handler: ^11.0.1
