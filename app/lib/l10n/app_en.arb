@@ -93,7 +93,7 @@
 	"genericToday": " - Today",
 	"genericTryAgain": "Try Again",
 	"homeDisconnectedTitle": "Pill organizer disconnected",
-	"homeDisconnectedSubtext": "It appears that there are curently no pill organizers linked to your account. Please ensure that your pill organizer is powered and nearby.",
+	"homeDisconnectedSubtext": "Please ensure that your pill organizer is powered and nearby.",
 	"homeEmpyTite": "Pill organizer empty",
 	"homeEmptySubtextOwner": "It appears that there is currently no active prescription in your pill organizer. Please add new pills below.",
 	"homeEmptySubtextCaregiver": "It appears that there is currently no active prescription in your pill organizer.",
