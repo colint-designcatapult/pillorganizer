@@ -5,6 +5,69 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+// Custom formatter to detect backspace on empty fields
+class BackspaceDetectorFormatter extends TextInputFormatter {
+  static const String _invisibleChar = '\u200B';
+  final VoidCallback onBackspaceDetected;
+
+  BackspaceDetectorFormatter({required this.onBackspaceDetected});
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // Detect backspace on invisible character (virtual keyboard)
+    if (oldValue.text == _invisibleChar && newValue.text.isEmpty) {
+      // Trigger callback after current frame
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        onBackspaceDetected();
+      });
+      // Return invisible char to maintain state
+      return const TextEditingValue(
+        text: _invisibleChar,
+        selection: TextSelection.collapsed(offset: 0),
+      );
+    }
+
+    // If user typed a digit when field had invisible char, replace with just the digit
+    if (oldValue.text == _invisibleChar &&
+        newValue.text.length == 2 &&
+        newValue.text.startsWith(_invisibleChar) &&
+        RegExp(r'\d').hasMatch(newValue.text[1])) {
+      return TextEditingValue(
+        text: newValue.text[1],
+        selection: const TextSelection.collapsed(offset: 1),
+      );
+    }
+
+    // If field becomes truly empty, add invisible character
+    if (newValue.text.isEmpty) {
+      return const TextEditingValue(
+        text: _invisibleChar,
+        selection: TextSelection.collapsed(offset: 0),
+      );
+    }
+
+    // If user types a digit directly, allow it
+    if (RegExp(r'^\d$').hasMatch(newValue.text)) {
+      return newValue;
+    }
+
+    // If user deletes a digit, field should go back to invisible char
+    if (oldValue.text.length == 1 &&
+        RegExp(r'\d').hasMatch(oldValue.text) &&
+        newValue.text.isEmpty) {
+      return const TextEditingValue(
+        text: _invisibleChar,
+        selection: TextSelection.collapsed(offset: 0),
+      );
+    }
+
+    return newValue;
+  }
+}
+
 class BasicPage extends StatelessWidget {
   const BasicPage({super.key, required this.child, this.title, this.bgColor});
 
@@ -278,12 +341,18 @@ class SixDigitCodeInput extends StatefulWidget {
 
 class _SixDigitCodeInputState extends State<SixDigitCodeInput> {
   bool _shouldReset = false;
+  static const String _invisibleChar = '\u200B'; // Zero-width space
   final List<TextEditingController> _controllers =
-      List.generate(6, (_) => TextEditingController());
+      List.generate(6, (_) => TextEditingController(text: _invisibleChar));
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
   // Track filled state for each digit
   final List<bool> _isFilled = List.generate(6, (_) => false);
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -298,11 +367,17 @@ class _SixDigitCodeInputState extends State<SixDigitCodeInput> {
 
   void _resetNumber() {
     for (var controller in _controllers) {
-      controller.clear();
+      controller.text = _invisibleChar;
     }
     for (var focusNode in _focusNodes) {
       focusNode.unfocus();
     }
+    // Reset filled state
+    setState(() {
+      for (int i = 0; i < _isFilled.length; i++) {
+        _isFilled[i] = false;
+      }
+    });
     // Focus on the first field after reset
     if (_focusNodes.isNotEmpty) {
       _focusNodes[0].requestFocus();
@@ -328,17 +403,22 @@ class _SixDigitCodeInputState extends State<SixDigitCodeInput> {
           width: 46.w,
           child: Focus(
             onKeyEvent: (node, event) {
-              // Handle backspace when field is empty
+              // Handle backspace when field is empty (or has only invisible char)
+              final currentText = _controllers[index].text;
               if (event is KeyDownEvent &&
                   event.logicalKey == LogicalKeyboardKey.backspace &&
-                  _controllers[index].text.isEmpty &&
+                  (currentText.isEmpty || currentText == _invisibleChar) &&
                   index > 0) {
+                // Test: Set current field to '1' when backspace is detected
+                _controllers[index].text = _invisibleChar;
+                // Also move focus to previous field
                 _focusNodes[index - 1].requestFocus();
-                // Select all text in previous field if it has content
-                if (_controllers[index - 1].text.isNotEmpty) {
+                // Select all text in previous field if it has actual content
+                final prevText = _controllers[index - 1].text;
+                if (prevText.isNotEmpty && prevText != _invisibleChar) {
                   _controllers[index - 1].selection = TextSelection(
                     baseOffset: 0,
-                    extentOffset: _controllers[index - 1].text.length,
+                    extentOffset: prevText.length,
                   );
                 }
                 return KeyEventResult.handled;
@@ -349,42 +429,54 @@ class _SixDigitCodeInputState extends State<SixDigitCodeInput> {
               controller: _controllers[index],
               focusNode: _focusNodes[index],
               onChanged: (value) {
-                // Update filled state
+                // Update filled state (ignore invisible character)
                 setState(() {
-                  _isFilled[index] = value.isNotEmpty;
+                  _isFilled[index] =
+                      value.isNotEmpty && value != _invisibleChar;
                 });
 
-                // Handle auto-focus to next field
-                if (value.length == 1 && index < 5) {
+                // Handle auto-focus to next field (only for actual digits)
+                if (value.length == 1 && value != _invisibleChar && index < 5) {
                   _focusNodes[index + 1].requestFocus();
                 }
 
-                // Handle backspace to previous field
-                if (value.isEmpty && index > 0) {
-                  // Move to previous field when current field becomes empty
+                // Handle when field becomes empty or has invisible char (backspace was pressed)
+                if ((value.isEmpty || value == _invisibleChar) && index > 0) {
+                  // Test: Set current field to '1'
+                  _controllers[index].text = _invisibleChar;
+                  // Move focus to previous field
                   _focusNodes[index - 1].requestFocus();
-                  // Select all text in previous field if it has content
-                  if (_controllers[index - 1].text.isNotEmpty) {
+                  // Select all text in previous field if it has actual content
+                  final prevText = _controllers[index - 1].text;
+                  if (prevText.isNotEmpty && prevText != _invisibleChar) {
                     _controllers[index - 1].selection = TextSelection(
                       baseOffset: 0,
-                      extentOffset: _controllers[index - 1].text.length,
+                      extentOffset: prevText.length,
                     );
                   }
                 }
 
-                // Check if all fields are filled
-                if (index == 5 && value.isNotEmpty) {
+                // Check if all fields are filled (ignore invisible characters)
+                if (index == 5 && value.isNotEmpty && value != _invisibleChar) {
                   String code = '';
-                  _controllers.forEach((controller) => code += controller.text);
-                  widget.onSubmitted(code);
+                  for (var controller in _controllers) {
+                    final text = controller.text;
+                    if (text.isNotEmpty && text != _invisibleChar) {
+                      code += text;
+                    }
+                  }
+                  if (code.length == 6) {
+                    widget.onSubmitted(code);
+                  }
                 }
               },
               onTap: () {
-                // When tapping on a field, select all text if it has content
-                if (_controllers[index].text.isNotEmpty) {
+                // When tapping on a field, select all text if it has actual content
+                final text = _controllers[index].text;
+                if (text.isNotEmpty && text != _invisibleChar) {
                   _controllers[index].selection = TextSelection(
                     baseOffset: 0,
-                    extentOffset: _controllers[index].text.length,
+                    extentOffset: text.length,
                   );
                 }
               },
@@ -396,6 +488,23 @@ class _SixDigitCodeInputState extends State<SixDigitCodeInput> {
               },
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
+                // Add backspace detector for virtual keyboards
+                if (index > 0)
+                  BackspaceDetectorFormatter(
+                    onBackspaceDetected: () {
+                      // Test: Set current field to '1' when backspace is detected
+                      _controllers[index].text = _invisibleChar;
+                      // Also move focus to previous field
+                      _focusNodes[index - 1].requestFocus();
+                      final prevText = _controllers[index - 1].text;
+                      if (prevText.isNotEmpty && prevText != _invisibleChar) {
+                        _controllers[index - 1].selection = TextSelection(
+                          baseOffset: 0,
+                          extentOffset: prevText.length,
+                        );
+                      }
+                    },
+                  ),
               ],
               maxLength: 1,
               keyboardType: TextInputType.number,
