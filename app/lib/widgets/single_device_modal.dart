@@ -18,7 +18,7 @@ class SingleDeviceModal extends StatelessWidget {
 
         final device = deviceProvider.devices.firstWhere(
           (d) => d.deviceID == deviceId,
-          orElse: () => throw StateError('Device not found'),
+          orElse: () => deviceProvider.devices.first,
         );
 
         return SingleDevice(
