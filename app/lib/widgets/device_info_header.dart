@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:app/api/device.dart';
 import 'package:app/provider/ble_provider.dart';
 import 'package:app/provider/device_provider.dart';
+import 'package:app/provider/device_state_provider.dart';
 import 'package:app/service/device_information_service.dart';
 import 'package:app/widgets/switch_device.dart';
 import 'package:app_settings/app_settings.dart';

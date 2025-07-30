@@ -264,33 +264,4 @@ class DeviceUser extends Equatable with _$DeviceUser {
 
 enum DeviceConnectionStatus { undefined, offline, online, loading }
 
-class DeviceStateProvider extends RefreshableValueNotifier<DeviceState?> {
-  DateTime? _baseDate;
-  DeviceUser? _device;
-
-  DeviceStateProvider() : super(null, () => Future.value(null));
-
-  DeviceStateProvider update(DateTime? date, DeviceUser? selected) {
-    if (date != null) {
-      _baseDate = date;
-    }
-    if (selected != null && selected.id != _device?.id) {
-      _device = selected;
-      loadFunction = _load;
-      value = null;
-      // refresh();
-      notifyListeners();
-    }
-    return this;
-  }
-
-  Future<DeviceState?> _load() {
-    if (_device == null || _baseDate == null) {
-      return Future.value(null);
-    } else {
-      return deviceRepo.deviceState(_device!.deviceID, _baseDate!);
-    }
-  }
-}
-
 enum DeviceNotice { none, disconnected, empty }

@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 
 import '../../api/device.dart';
 import '../../provider/device_notice_provider.dart';
+import '../../provider/device_state_provider.dart';
 import '../../provider/medication_provider.dart';
 import '../../provider/selected_device_provider.dart';
 import '../../widgets/addNewPill/medication_card_entry.dart';
@@ -257,28 +258,60 @@ class DosePeriodArea extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8.0).r,
                   border: Border.all(
                     color: const Color(0xFF206B8B),
-                    width: 2.w,
+                    width: 2.h,
                   ),
                 ),
-                alignment: Alignment.center,
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                 child: ShimmerPlaceholder(
                   loading: true,
+                  baseColor: Colors.grey.shade300,
+                  highlightColor: Colors.grey.shade200,
                   builder: (BuildContext context, bool loading) {
-                    return ListTile(
-                      leading: Container(
-                        decoration: const BoxDecoration(
-                            shape: BoxShape.circle, color: Colors.white),
-                        height: 44.w,
-                        width: 44.w,
-                      ),
-                      title: Container(
-                          width: 70.w, height: 40.h, color: Colors.white),
-                      trailing: Container(
-                        decoration: const BoxDecoration(
-                            shape: BoxShape.circle, color: Colors.white),
-                        height: 20.w,
-                        width: 20.w,
-                      ),
+                    return Row(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.grey.shade400,
+                          ),
+                          height: 44.w,
+                          width: 44.w,
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 140.w,
+                                height: 14.h,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade400,
+                                  borderRadius: BorderRadius.circular(4.r),
+                                ),
+                              ),
+                              SizedBox(height: 8.h),
+                              Container(
+                                width: 100.w,
+                                height: 12.h,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade400,
+                                  borderRadius: BorderRadius.circular(4.r),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.grey.shade400,
+                          ),
+                          height: 24.w,
+                          width: 24.w,
+                        ),
+                      ],
                     );
                   },
                 )),

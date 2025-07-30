@@ -11,9 +11,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
-import '../api/device.dart';
 import '../provider/device_connection_status_provider.dart';
 import '../provider/device_notice_provider.dart';
+import '../provider/device_state_provider.dart';
 import '../provider/scroll_provider.dart';
 import '../provider/selected_device_provider.dart';
 import '../provider/time_provider.dart';

@@ -1,4 +1,4 @@
-import 'package:app/api/device.dart';
+import 'package:app/provider/device_state_provider.dart';
 import 'package:app/provider/medication_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/modals/add_new_pills_modal.dart';

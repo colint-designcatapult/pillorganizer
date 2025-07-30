@@ -1,14 +1,15 @@
 import 'package:app/api/device.dart';
 import 'package:app/provider/device_notice_provider.dart';
+import 'package:app/provider/device_state_provider.dart';
 import 'package:app/provider/time_provider.dart';
+import 'package:app/service/time_service.dart';
 import 'package:app/widgets/pillbox/bin_column.dart';
 import 'package:app/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
-import 'package:app/service/time_service.dart';
-import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
 class Pillbox extends StatelessWidget {
