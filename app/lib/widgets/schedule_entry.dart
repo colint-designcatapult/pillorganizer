@@ -84,8 +84,10 @@ class _ScheduleEntryState extends State<ScheduleEntry> {
                   isLoadingSchedule,
                   isUpdatingAMSchedule,
                   isUpdatingPMSchedule),
-              SizedBox(height: _sectionSpacing.h),
-              _buildTimezoneSection(targetDevice),
+              if (widget.isOwner) ...[
+                SizedBox(height: _sectionSpacing.h),
+                _buildTimezoneSection(targetDevice),
+              ],
               if (widget.showRemovalSection) ...[
                 SizedBox(height: _sectionSpacing.h),
                 const RemovalSection(),
