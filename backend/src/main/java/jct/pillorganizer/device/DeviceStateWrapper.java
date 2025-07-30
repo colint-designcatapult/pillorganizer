@@ -3,12 +3,7 @@ package jct.pillorganizer.device;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -324,6 +319,19 @@ public class DeviceStateWrapper {
             // if(device.getStateHash() != syncRequest.getStateHash()) {
             builder.setBinState(buildStateProtobuf());
             // }
+        }
+
+        // Rebuild device schedule if all states are expired
+        ZoneOffset tz = device.getTimeZone();
+        ZonedDateTime startOfDay = LocalDate.now(tz).atStartOfDay(tz);
+        ZonedDateTime endOfDay = startOfDay.plusDays(1);
+        long epochEndOfDay = endOfDay.toEpochSecond();
+
+        List<DeviceState> deviceUserState = stateRepository.findByDeviceUser(deviceUser);
+        List<DeviceState> expiredDeviceUserState = deviceUserState.stream().filter(s -> s.getScheduledTime() < epochEndOfDay).toList();
+
+        if (!deviceUserState.isEmpty() && deviceUserState.size() == expiredDeviceUserState.size()) {
+            rebuildStateSchedule();
         }
 
         builder.addAllSchedule(buildBinSchedule());

@@ -846,7 +846,7 @@ class AutoRefresh extends StatefulWidget {
       {super.key,
       required this.refreshable,
       required this.child,
-      this.refreshInterval = const Duration(seconds: 10)});
+      this.refreshInterval = const Duration(seconds: 3)});
 
   final Refreshable refreshable;
   final Widget child;
