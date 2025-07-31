@@ -126,9 +126,9 @@ class MultipleDevices extends StatelessWidget {
                                             ],
                                           ),
                                         ),
+                                        SizedBox(width: 4.w),
                                       ],
                                       if (isDeviceReadOnly) ...[
-                                        SizedBox(width: 4.w),
                                         Container(
                                             decoration: BoxDecoration(
                                               color: const Color(0xffF8F9FC),
@@ -165,6 +165,9 @@ class MultipleDevices extends StatelessWidget {
                                     color: const Color(0xFF206B8B),
                                     onPressed: () {
                                       selectedDeviceProv.selectDevice(device);
+                                      Navigator.of(context)
+                                          .pushNamedAndRemoveUntil(
+                                              '/index', (route) => false);
                                     },
                                     style: ButtonStyle(
                                       shape: MaterialStateProperty.all<

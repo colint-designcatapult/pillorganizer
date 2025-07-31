@@ -9,9 +9,10 @@ class AddNewPills extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 48.w),
+      padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 24.w),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
             AppLocalizations.of(context)!.addMedications,
@@ -23,7 +24,6 @@ class AddNewPills extends StatelessWidget {
           SizedBox(height: 16.h),
           Text(
             AppLocalizations.of(context)!.addMedicationsSubtitle,
-            textAlign: TextAlign.center,
             style: Theme.of(context)
                 .textTheme
                 .bodyMedium
@@ -33,7 +33,6 @@ class AddNewPills extends StatelessWidget {
           GestureDetector(
               onTap: onAddMedicationClick,
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: onAddMedicationClick,
