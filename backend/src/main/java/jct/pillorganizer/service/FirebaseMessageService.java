@@ -46,20 +46,18 @@ public class FirebaseMessageService {
         log.atInfo().log("Sending to %s", details.notificationToken());
 
         try {
-
             Message message = Message.builder()
-                    .setNotification(Notification.builder()
-                            .setTitle("Pill Organizer")
-                            .setBody("It's time to take your pills!")
-                            .build())
+                    .putData("data", "{\"titleKey\":\"REMINDER_TITLE\",\"bodyKey\":\"REMINDER_BODY\"}")
                     .setAndroidConfig(AndroidConfig.builder()
                             .setTtl(3600)
-                            .setNotification(AndroidNotification.builder()
-                                    .setColor("#f45342")
-                                    .build())
                             .build())
                     .setApnsConfig(ApnsConfig.builder()
-                            .setAps(Aps.builder().build())
+                            .putHeader("apns-priority", "10")
+                            .putHeader("apns-push-type", "background")
+                            .setAps(Aps.builder()
+                                    .setContentAvailable(true)
+                                    .setMutableContent(true)
+                                    .build())
                             .build())
                     .setToken(details.notificationToken())
                     .build();
