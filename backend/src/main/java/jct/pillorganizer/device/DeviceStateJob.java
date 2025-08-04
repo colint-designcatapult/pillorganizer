@@ -29,6 +29,7 @@ public class DeviceStateJob {
     @Scheduled(fixedDelay = "10s")
     public void execute() {
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+
         stateRepository.updateBinStateFromTime(4, 3, now.toEpochSecond(ZoneOffset.UTC))
                 .forEach(messageService::sendPillReminderNotification);
         stateRepository.updateBinStateFromTime(2, 4, now.minusMinutes(10).toEpochSecond(ZoneOffset.UTC))

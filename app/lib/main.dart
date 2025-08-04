@@ -14,6 +14,7 @@ import 'package:app/screens/name_device_wizard.dart';
 import 'package:app/screens/post_setup_wizard.dart';
 import 'package:app/service/credential_manager.dart';
 import 'package:app/service/deep_link_service.dart';
+import 'package:app/service/notification_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -42,6 +43,9 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     name: 'Cabinet',
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Handle the background message with translation
+  await BackgroundNotificationTranslator.handleBackgroundMessage(message);
 }
 
 final RouteObserver<ModalRoute<void>> routeObserver =
