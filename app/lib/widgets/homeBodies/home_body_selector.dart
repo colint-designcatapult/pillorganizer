@@ -49,12 +49,12 @@ class HomeBodySelector extends StatelessWidget {
           return const HomeLoadingBody();
         }
 
-        if (isEmpty && hasInitiallyLoadedDeviceState) {
-          return HomeEmptyDeviceBody(isOwner: isOwner);
-        }
-
         if (isDisconnected) {
           return const HomeDisconnectedBody();
+        }
+
+        if (isEmpty && hasInitiallyLoadedDeviceState) {
+          return HomeEmptyDeviceBody(isOwner: isOwner);
         }
 
         if (!isEmpty && !isDisconnected) {

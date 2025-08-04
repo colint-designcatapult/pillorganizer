@@ -130,13 +130,15 @@ class _SingleDeviceState extends State<SingleDevice> {
                     onPressed: () => Navigator.pop(context),
                   ),
                 Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-                  Text(
-                    widget.device?.name ??
-                        AppLocalizations.of(context)!.loadingState,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 30.h,
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Text(
+                      widget.device?.name ??
+                          AppLocalizations.of(context)!.loadingState,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 30.h,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   if (isOwner)

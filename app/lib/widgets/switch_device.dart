@@ -166,12 +166,15 @@ class _SwitchDeviceState extends State<SwitchDevice> {
           padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 18.w),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text(device.name,
-              style: const TextStyle(
-                  color: Color(0xff206B8B),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Poppins')),
+          Flexible(
+            child: Text(device.name,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    color: Color(0xff206B8B),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Poppins')),
+          ),
           if (!device.owner)
             Container(
                 decoration: BoxDecoration(

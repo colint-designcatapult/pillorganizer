@@ -72,13 +72,15 @@ class DeviceInfoHeader extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text(deviceName,
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 24.h,
-                                fontWeight: FontWeight.w600),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1),
+                        Flexible(
+                          child: Text(deviceName,
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24.h,
+                                  fontWeight: FontWeight.w600),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1),
+                        ),
                         SizedBox(width: 8.w),
                         Container(
                           decoration: BoxDecoration(

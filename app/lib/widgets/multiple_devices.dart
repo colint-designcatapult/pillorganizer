@@ -78,6 +78,7 @@ class MultipleDevices extends StatelessWidget {
                                 children: [
                                   Text(
                                     device.name,
+                                    overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontSize: 16.h,
                                       fontWeight: FontWeight.w600,
