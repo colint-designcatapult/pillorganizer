@@ -1,4 +1,3 @@
-import 'package:app/provider/deep_link_provider.dart';
 import 'package:app/provider/time_provider.dart';
 import 'package:app/widgets/dose_period_area.dart';
 import 'package:app/widgets/pillbox/pill_box.dart';
@@ -44,46 +43,46 @@ class HomeBody extends StatelessWidget {
                 ),
               ),
               // TEMPORARY DEBUG: Show patient ID from deep link
-              SliverToBoxAdapter(
-                child: Consumer<DeepLinkProvider>(
-                  builder: (context, deepLinkProvider, child) {
-                    if (deepLinkProvider.hasPatientId) {
-                      return Container(
-                        margin: EdgeInsets.only(bottom: 16.h),
-                        padding: EdgeInsets.all(16.w),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8.r),
-                          border: Border.all(color: Colors.green, width: 2),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.check_circle, color: Colors.green),
-                            SizedBox(width: 8.w),
-                            Expanded(
-                              child: Text(
-                                '🎉 Deep Link Success!\nPatient ID: ${deepLinkProvider.patientId}',
-                                style: TextStyle(
-                                  color: Colors.green[800],
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                deepLinkProvider.clearPatientId();
-                              },
-                              icon:
-                                  const Icon(Icons.close, color: Colors.green),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-              ),
+              // SliverToBoxAdapter(
+              //   child: Consumer<DeepLinkProvider>(
+              //     builder: (context, deepLinkProvider, child) {
+              //       if (deepLinkProvider.hasPatientId) {
+              //         return Container(
+              //           margin: EdgeInsets.only(bottom: 16.h),
+              //           padding: EdgeInsets.all(16.w),
+              //           decoration: BoxDecoration(
+              //             color: Colors.green.withOpacity(0.1),
+              //             borderRadius: BorderRadius.circular(8.r),
+              //             border: Border.all(color: Colors.green, width: 2),
+              //           ),
+              //           child: Row(
+              //             children: [
+              //               const Icon(Icons.check_circle, color: Colors.green),
+              //               SizedBox(width: 8.w),
+              //               Expanded(
+              //                 child: Text(
+              //                   '🎉 Deep Link Success!\nPatient ID: ${deepLinkProvider.patientId}',
+              //                   style: TextStyle(
+              //                     color: Colors.green[800],
+              //                     fontWeight: FontWeight.bold,
+              //                   ),
+              //                 ),
+              //               ),
+              //               IconButton(
+              //                 onPressed: () {
+              //                   deepLinkProvider.clearPatientId();
+              //                 },
+              //                 icon:
+              //                     const Icon(Icons.close, color: Colors.green),
+              //               ),
+              //             ],
+              //           ),
+              //         );
+              //       }
+              //       return const SizedBox.shrink();
+              //     },
+              //   ),
+              // ),
               const SliverToBoxAdapter(child: Pillbox()),
               const DosePeriodArea(),
             ],
