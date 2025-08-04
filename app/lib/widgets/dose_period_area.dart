@@ -34,25 +34,23 @@ class DosePeriodArea extends StatelessWidget {
                     ?.owner ??
                 false;
 
-        List<DosePeriod>? reversedList = list
+        List<DosePeriod>? dosePeriods = list
             ?.where((element) {
-              if (element.status == BinStatus.DISABLED ||
-                  element.scheduledTime == null) {
-                return false;
-              }
-
               if (isOwner) {
+                if (element.status == BinStatus.DISABLED ||
+                    element.scheduledTime == null) {
+                  return false;
+                }
                 return element.scheduledTime!.isAfter(now);
               } else {
-                return true;
+                return element.scheduledTime != null;
               }
             })
             .toList()
-            .reversed
             .toList();
         if (Provider.of<DeviceNoticeProvider>(context, listen: false).value !=
                 DeviceNotice.empty &&
-            (reversedList == null || reversedList.isEmpty)) {
+            (dosePeriods == null || dosePeriods.isEmpty)) {
           return SliverToBoxAdapter(
               child: Padding(
                   padding: const EdgeInsets.only(top: 40).h,
@@ -62,9 +60,9 @@ class DosePeriodArea extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 90.h),
             sliver: SliverList.builder(
               itemBuilder: (BuildContext context, int index) {
-                return _buildPanel(context, reversedList?[index]);
+                return _buildPanel(context, dosePeriods?[index]);
               },
-              itemCount: reversedList?.length ?? 0,
+              itemCount: dosePeriods?.length ?? 0,
             ),
           );
         }
