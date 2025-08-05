@@ -1,5 +1,7 @@
 package jct.pillorganizer.controller.api.app;
 
+import java.util.Optional;
+
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
@@ -36,7 +38,16 @@ public class AppScheduleController {
     public SimpleScheduleDTO dispenseTimes(@PathVariable("id") long deviceID) {
         long userId = authService.getUserID();
         DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, deviceID);
-        return deviceScheduleService.buildSimpleSchedule(deviceUser);
+        
+        DeviceUser scheduleDeviceUser = deviceUser;
+        if (!deviceUser.isOwner()) {
+            Optional<DeviceUser> ownerOptional = deviceUserRepository.findByDeviceIDAndOwnerTrueAndDeletedFalse(deviceID);
+            if (ownerOptional.isPresent()) {
+                scheduleDeviceUser = ownerOptional.get();
+            }
+        }
+        
+        return deviceScheduleService.buildSimpleSchedule(scheduleDeviceUser);
     }
 
     @Operation(summary = "Update dispense times")
