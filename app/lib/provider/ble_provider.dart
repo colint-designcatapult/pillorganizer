@@ -106,6 +106,10 @@ class DeviceBluetoothProvider with ChangeNotifier {
 
   void createDevice(DeviceUser? newUser) {
     if (newUser != null) {
+      if (!newUser.owner) {
+        suppress();
+        return;
+      }
       _createDevice(_getDeviceName(newUser), newUser.deviceID);
     } else {
       suppress();
@@ -121,6 +125,11 @@ class DeviceBluetoothProvider with ChangeNotifier {
 
   void changeDevice(DeviceUser? newUser) {
     if (newUser != null) {
+      if (!newUser.owner) {
+        suppress();
+        return;
+      }
+
       String newDeviceName = _getDeviceName(newUser);
       int newDeviceID = newUser.deviceID;
 

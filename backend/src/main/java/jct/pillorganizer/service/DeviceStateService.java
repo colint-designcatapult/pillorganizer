@@ -113,7 +113,16 @@ public class DeviceStateService {
      */
     public long calculateStateFlags(DeviceUser deviceUser) {
         long flags = 0;
-        List<DeviceState> bins = deviceStateRepository.findByDeviceUser(deviceUser);
+        
+        DeviceUser stateDeviceUser = deviceUser;
+        if (!deviceUser.isOwner()) {
+            Optional<DeviceUser> ownerOptional = deviceUserRepository.findByDeviceIDAndOwnerTrueAndDeletedFalse(deviceUser.getDeviceID());
+            if (ownerOptional.isPresent()) {
+                stateDeviceUser = ownerOptional.get();
+            }
+        }
+        
+        List<DeviceState> bins = deviceStateRepository.findByDeviceUser(stateDeviceUser);
 
         for (DeviceState bin : bins) {
             long statusInt = bin.getBinStatus().getIntValue();

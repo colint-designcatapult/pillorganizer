@@ -43,7 +43,8 @@ class DosePeriodArea extends StatelessWidget {
                 }
                 return element.scheduledTime!.isAfter(now);
               } else {
-                return element.scheduledTime != null;
+                return element.scheduledTime != null &&
+                    element.medicationIDs.isNotEmpty;
               }
             })
             .toList()
