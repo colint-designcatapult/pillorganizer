@@ -1,5 +1,7 @@
 package jct.pillorganizer.controller.api.app;
 
+import java.util.Optional;
+
 import javax.transaction.Transactional;
 
 import io.micronaut.http.annotation.Body;
@@ -45,7 +47,16 @@ public class AppMedicationController {
     public Flux<ScheduledMedication> medications(@PathVariable("id") long deviceID) {
         long userId = authService.getUserID();
         DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, deviceID);
-        return Flux.fromIterable(scheduledMedicationRepository.retrieveByDeviceUser(deviceUser));
+        
+        DeviceUser medicationDeviceUser = deviceUser;
+        if (!deviceUser.isOwner()) {
+            Optional<DeviceUser> ownerOptional = deviceUserRepository.findByDeviceIDAndOwnerTrueAndDeletedFalse(deviceID);
+            if (ownerOptional.isPresent()) {
+                medicationDeviceUser = ownerOptional.get();
+            }
+        }
+        
+        return Flux.fromIterable(scheduledMedicationRepository.retrieveByDeviceUser(medicationDeviceUser));
     }
 
     @Operation(summary = "Saves a medication")

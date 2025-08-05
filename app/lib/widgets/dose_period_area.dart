@@ -47,6 +47,7 @@ class DosePeriodArea extends StatelessWidget {
               }
             })
             .toList()
+            .reversed
             .toList();
         if (Provider.of<DeviceNoticeProvider>(context, listen: false).value !=
                 DeviceNotice.empty &&
@@ -78,6 +79,7 @@ class DosePeriodArea extends StatelessWidget {
     Color? color = Theme.of(context).indicatorColor;
     var medProv = Provider.of<MedicationsProvider>(context);
     var deviceNoticeProv = Provider.of<DeviceNoticeProvider>(context);
+
     return Padding(
       padding: const EdgeInsets.only(top: 28.0, bottom: 16.0).h,
       child: Column(
