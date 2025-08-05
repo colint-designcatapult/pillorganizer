@@ -145,7 +145,15 @@ public class DeviceStateService {
         ZonedDateTime startOfDay = date.atStartOfDay(device.getTimeZone());
         ZonedDateTime endOfDay = startOfDay.plusDays(1);
 
-        List<DeviceState> states = deviceStateRepository.findByDeviceAndTimeBetween(deviceUser, startOfDay.toEpochSecond(),
+        DeviceUser stateDeviceUser = deviceUser;
+        if (!deviceUser.isOwner()) {
+            Optional<DeviceUser> ownerOptional = deviceUserRepository.findByDeviceIDAndOwnerTrueAndDeletedFalse(device.getId());
+            if (ownerOptional.isPresent()) {
+                stateDeviceUser = ownerOptional.get();
+            }
+        }
+
+        List<DeviceState> states = deviceStateRepository.findByDeviceAndTimeBetween(stateDeviceUser, startOfDay.toEpochSecond(),
                 endOfDay.toEpochSecond());
 
         List<DosePeriodDTO> dtos = new ArrayList<>(states.size());
