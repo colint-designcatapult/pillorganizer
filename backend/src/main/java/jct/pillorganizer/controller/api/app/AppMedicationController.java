@@ -85,7 +85,16 @@ public class AppMedicationController {
     public Mono<ScheduledMedication> get(@PathVariable("id") long deviceID, @PathVariable("med_id") long medicationID) {
         long userId = authService.getUserID();
         DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, deviceID);
-        ScheduledMedication med = scheduledMedicationRepository.retrieveByDeviceUserAndId(deviceUser, medicationID);
+        
+        DeviceUser medicationDeviceUser = deviceUser;
+        if (!deviceUser.isOwner()) {
+            Optional<DeviceUser> ownerOptional = deviceUserRepository.findByDeviceIDAndOwnerTrueAndDeletedFalse(deviceID);
+            if (ownerOptional.isPresent()) {
+                medicationDeviceUser = ownerOptional.get();
+            }
+        }
+        
+        ScheduledMedication med = scheduledMedicationRepository.retrieveByDeviceUserAndId(medicationDeviceUser, medicationID);
         return Mono.just(med);
     }
 
