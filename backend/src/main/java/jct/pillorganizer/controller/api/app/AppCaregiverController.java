@@ -18,11 +18,15 @@ import io.micronaut.security.rules.SecurityRule;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 import jct.pillorganizer.auth.AuthService;
+import jct.pillorganizer.device.DeviceStateWrapper;
 import jct.pillorganizer.dto.DeviceCaregiverCodeDTO;
 import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.device.DeviceCaregiverCode;
+import jct.pillorganizer.model.device.DeviceUser;
+import jct.pillorganizer.repo.DeviceUserRepository;
 import jct.pillorganizer.service.CaregiverService;
 import jct.pillorganizer.service.DeviceService;
+import jct.pillorganizer.service.DeviceStateService;
 import jct.pillorganizer.service.DeviceUserService;
 import lombok.extern.flogger.Flogger;
 
@@ -44,6 +48,12 @@ public class AppCaregiverController {
     @Inject
     private DeviceService deviceService;
 
+    @Inject
+    private DeviceStateService deviceStateService;
+
+    @Inject
+    private DeviceUserRepository deviceUserRepository;
+
     @Operation(summary = "Validate caregiver's code")
     @Post("/validate/{code}")
     @Secured(SecurityRule.IS_AUTHENTICATED)
@@ -64,6 +74,11 @@ public class AppCaregiverController {
         caregiverService.deleteCaregiverCode(caregiverCode.getId());
 
         Device device = deviceService.findById(caregiverCode.getDeviceID());
+        
+        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userID, caregiverCode.getDeviceID());
+        DeviceStateWrapper wrapper = deviceStateService.wrapperOf(device, deviceUser);
+        wrapper.initialize(null);
+
         String name = device.getCustomName() == null ? "Device #" + device.getId() : device.getCustomName();
 
         return HttpResponse.ok(Map.of("name", name));
