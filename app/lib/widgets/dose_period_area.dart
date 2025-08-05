@@ -81,6 +81,22 @@ class DosePeriodArea extends StatelessWidget {
     var medProv = Provider.of<MedicationsProvider>(context);
     var deviceNoticeProv = Provider.of<DeviceNoticeProvider>(context);
 
+    if (period != null && period.medicationIDs.isNotEmpty) {
+      bool hasMissingMedications = false;
+      for (int medID in period.medicationIDs) {
+        if (medProv.byID(medID) == null) {
+          hasMissingMedications = true;
+          break;
+        }
+      }
+
+      if (hasMissingMedications && !medProv.loading) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          medProv.refresh();
+        });
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.only(top: 28.0, bottom: 16.0).h,
       child: Column(
