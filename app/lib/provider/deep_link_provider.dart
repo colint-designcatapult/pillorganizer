@@ -4,36 +4,43 @@ import 'package:flutter/foundation.dart';
 class DeepLinkProvider extends ChangeNotifier {
   String? _patientId;
   bool _isValidating = false;
-  String? _validationError;
+  bool _pendingNavigation = false;
 
   String? get patientId => _patientId;
   bool get hasPatientId => _patientId != null && _patientId!.isNotEmpty;
   bool get isValidating => _isValidating;
-  String? get validationError => _validationError;
+  bool get hasPendingNavigation => _pendingNavigation;
 
-  void setPatientId(String? patientId) {
+  void setPatientId(String? patientId, {bool shouldAutoValidate = false}) {
     if (_patientId != patientId) {
       _patientId = patientId;
-      _validationError = null;
+      _pendingNavigation = patientId != null && patientId.isNotEmpty;
       notifyListeners();
-
-      if (patientId != null && patientId.isNotEmpty) {
-        linkTakecarePatient(patientId);
-      }
     }
   }
 
-  Future<void> linkTakecarePatient(String patientId) async {
-    // deeplink: cabinet://patient?patientId=0679ac91-b803-4d1b-aafb-060dc505ab60
+  Future<void> validateAndLinkTakecarePatient({
+    required String patientId,
+    required String firstName,
+    required String lastName,
+    required String birthDate,
+  }) async {
     _isValidating = true;
-    _validationError = null;
     notifyListeners();
 
     try {
-      await client.linkTakecarePatient(patientId);
-    } catch (e) {
+      final validationRequest = PatientValidationRequest(
+        firstName: firstName,
+        lastName: lastName,
+        birthDate: birthDate,
+      );
+
+      await client.validateAndLinkTakecarePatient(patientId, validationRequest);
+
       _patientId = null;
-      _validationError = e.toString();
+      _pendingNavigation = false;
+    } catch (e) {
+      rethrow;
     } finally {
       _isValidating = false;
       notifyListeners();
@@ -43,14 +50,21 @@ class DeepLinkProvider extends ChangeNotifier {
   void clearPatientId() {
     if (_patientId != null) {
       _patientId = null;
-      _validationError = null;
+      _pendingNavigation = false;
       notifyListeners();
     }
   }
 
-  void clearValidationError() {
-    if (_validationError != null) {
-      _validationError = null;
+  void clearPendingNavigation() {
+    if (_pendingNavigation) {
+      _pendingNavigation = false;
+      notifyListeners();
+    }
+  }
+
+  void setPendingNavigation(bool pending) {
+    if (_pendingNavigation != pending) {
+      _pendingNavigation = pending;
       notifyListeners();
     }
   }

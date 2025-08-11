@@ -5,5 +5,5 @@ import io.micronaut.serde.annotation.Serdeable;
 
 @Introspected
 @Serdeable.Serializable
-public record UserInfoDTO(long id, String email) {
+public record UserInfoDTO(long id, String email, boolean isLinkedToTakecare) {
 }

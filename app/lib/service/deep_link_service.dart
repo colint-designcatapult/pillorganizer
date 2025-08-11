@@ -26,9 +26,8 @@ class DeepLinkService {
       (Uri uri) {
         _handleIncomingLink(uri);
       },
-      onError: (err, stackTrace) {
-        print('Deep link error: $err');
-        print('Stack trace: $stackTrace');
+      onError: (err) {
+        print('Error in deep link service: $err');
       },
     );
   }
@@ -37,24 +36,17 @@ class DeepLinkService {
     try {
       return await _appLinks.getInitialAppLink();
     } catch (e) {
-      print('Error getting initial app link: $e');
       return null;
     }
   }
 
   void _handleIncomingLink(Uri uri) {
-    print('Received deep link: $uri');
-
     String? patientId = uri.queryParameters['patientId'];
 
     if (patientId != null && patientId.isNotEmpty) {
-      print('Patient ID found in deep link: $patientId');
-
       if (_onPatientDeepLink != null) {
         _onPatientDeepLink!(patientId);
       }
-    } else {
-      print('No patientId found in deep link');
     }
   }
 

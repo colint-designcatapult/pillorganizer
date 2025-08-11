@@ -126,8 +126,10 @@ abstract class RestClient {
   Future<List<DeviceCaregiverCodeDTO>> getShareCodes(
       @Query("deviceIds") List<int> deviceIds);
 
-  @POST("/takecare/link/{patientID}")
-  Future<void> linkTakecarePatient(@Path("patientID") String patientID);
+  @POST("/takecare/validate/{patientID}")
+  Future<void> validateAndLinkTakecarePatient(
+      @Path("patientID") String patientID,
+      @Body() PatientValidationRequest validationRequest);
 }
 
 @JsonSerializable()
@@ -306,6 +308,21 @@ class UserValidateRecoveryCodeDTO {
 }
 
 @JsonSerializable()
+class PatientValidationRequest {
+  final String firstName;
+  final String lastName;
+  final String birthDate; // Format: YYYY-MM-DD
+
+  PatientValidationRequest({
+    required this.firstName,
+    required this.lastName,
+    required this.birthDate,
+  });
+
+  Map<String, dynamic> toJson() => _$PatientValidationRequestToJson(this);
+}
+
+@JsonSerializable()
 class ProvisionStart {
   final String serialNo;
   final String deviceClass;
@@ -340,8 +357,9 @@ class VerifyProvision {
 class UserInfoDTO {
   final int id;
   final String? email;
+  final bool isLinkedToTakecare;
 
-  UserInfoDTO({required this.id, this.email});
+  UserInfoDTO({required this.id, this.email, required this.isLinkedToTakecare});
 
   factory UserInfoDTO.fromJson(Map<String, dynamic> json) =>
       _$UserInfoDTOFromJson(json);

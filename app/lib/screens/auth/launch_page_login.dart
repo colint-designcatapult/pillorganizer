@@ -3,6 +3,7 @@ import 'package:app/provider/authentication_provider.dart';
 import 'package:app/screens/auth/recover_password.dart';
 import 'package:app/screens/auth/register.dart';
 import 'package:app/service/error_handler.dart';
+import 'package:app/utils/takecare_link_util.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -176,7 +177,7 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
 
   Future<bool> _handleAuthSuccess(bool status) async {
     if (status) {
-      Navigator.of(context).pushNamedAndRemoveUntil("/index", (route) => false);
+      _handleSuccessfulLogin();
     }
     return status;
   }
@@ -225,10 +226,15 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
         prov.logIn(username: username ?? '', password: password ?? '');
 
     _loginFuture!.then((_) {
-      Navigator.of(context).pushNamedAndRemoveUntil("/index", (route) => false);
+      _handleSuccessfulLogin();
     }).catchError((err) {
       loginHandleError(context, err);
     });
+  }
+
+  void _handleSuccessfulLogin() async {
+    final route = await TakecareLinkUtil.handlePostAuthNavigation(context);
+    Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => false);
   }
 
   @override

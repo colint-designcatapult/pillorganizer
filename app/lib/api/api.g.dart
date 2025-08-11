@@ -130,6 +130,22 @@ Map<String, dynamic> _$UserValidateRecoveryCodeDTOToJson(
       'email': instance.email,
     };
 
+PatientValidationRequest _$PatientValidationRequestFromJson(
+        Map<String, dynamic> json) =>
+    PatientValidationRequest(
+      firstName: json['firstName'] as String,
+      lastName: json['lastName'] as String,
+      birthDate: json['birthDate'] as String,
+    );
+
+Map<String, dynamic> _$PatientValidationRequestToJson(
+        PatientValidationRequest instance) =>
+    <String, dynamic>{
+      'firstName': instance.firstName,
+      'lastName': instance.lastName,
+      'birthDate': instance.birthDate,
+    };
+
 ProvisionStart _$ProvisionStartFromJson(Map<String, dynamic> json) =>
     ProvisionStart(
       serialNo: json['serialNo'] as String,
@@ -169,12 +185,14 @@ Map<String, dynamic> _$VerifyProvisionToJson(VerifyProvision instance) =>
 UserInfoDTO _$UserInfoDTOFromJson(Map<String, dynamic> json) => UserInfoDTO(
       id: json['id'] as int,
       email: json['email'] as String?,
+      isLinkedToTakecare: json['isLinkedToTakecare'] as bool,
     );
 
 Map<String, dynamic> _$UserInfoDTOToJson(UserInfoDTO instance) =>
     <String, dynamic>{
       'id': instance.id,
       'email': instance.email,
+      'isLinkedToTakecare': instance.isLinkedToTakecare,
     };
 
 ProvisionStatus _$ProvisionStatusFromJson(Map<String, dynamic> json) =>
@@ -1236,11 +1254,15 @@ class _RestClient implements RestClient {
   }
 
   @override
-  Future<void> linkTakecarePatient(String patientID) async {
+  Future<void> validateAndLinkTakecarePatient(
+    String patientID,
+    PatientValidationRequest validationRequest,
+  ) async {
     const _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
-    final Map<String, dynamic>? _data = null;
+    final _data = <String, dynamic>{};
+    _data.addAll(validationRequest.toJson());
     await _dio.fetch<void>(_setStreamType<void>(Options(
       method: 'POST',
       headers: _headers,
@@ -1248,7 +1270,7 @@ class _RestClient implements RestClient {
     )
         .compose(
           _dio.options,
-          '/takecare/link/${patientID}',
+          '/takecare/validate/${patientID}',
           queryParameters: queryParameters,
           data: _data,
         )

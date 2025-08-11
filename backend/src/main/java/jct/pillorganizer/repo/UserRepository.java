@@ -16,7 +16,7 @@ public interface UserRepository extends ReactorCrudRepository<User, Long> {
 
     Mono<Integer> countByEmail(String email);
 
-    @Query(value = "select new jct.pillorganizer.dto.UserInfoDTO(id, email) from users where id = :id")
+    @Query(value = "select new jct.pillorganizer.dto.UserInfoDTO(id, email, case when takecarePatientId is not null then true else false end) from users where id = :id")
     Mono<UserInfoDTO> findUserInfoDTOFromID(long id);
 
     @Query("UPDATE users u SET u.recoveryCode = :recoveryCode WHERE u.email = :email")

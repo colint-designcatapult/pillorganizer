@@ -51,11 +51,8 @@ public class TakecareClient {
                     .header("authorization", "Token " + takecareApiToken)
                     .header("accept", "application/json")
                     .header("content-type", "application/json");
-            
-            log.atInfo().log("Requesting patient with ID: %s", patientId);
 
             return Mono.from(httpClient.retrieve(request, FhirPatientDTO.class))
-                    .doOnSuccess(patient -> log.atInfo().log("Successfully retrieved patient with ID: %s", patientId))
                     .doOnError(error -> {
                         Problem problem = Problem.builder()
                                 .withTitle("HTTP error during patient retrieval")

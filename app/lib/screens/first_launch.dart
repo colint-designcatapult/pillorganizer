@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:app/provider/authentication_provider.dart';
 import 'package:app/screens/auth/launch_page_login.dart';
+import 'package:app/utils/takecare_link_util.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -145,9 +146,14 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
 
   Future<bool> _handleAuthSuccess(bool status) async {
     if (status) {
-      Navigator.of(context).pushNamedAndRemoveUntil("/index", (route) => false);
+      _handleSuccessfulAuth();
     }
     return status;
+  }
+
+  void _handleSuccessfulAuth() async {
+    final route = await TakecareLinkUtil.handlePostAuthNavigation(context);
+    Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => false);
   }
 
   bool _handleAuthFailure(dynamic err) {

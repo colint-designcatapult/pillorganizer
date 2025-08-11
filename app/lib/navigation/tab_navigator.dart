@@ -1,10 +1,12 @@
 import 'package:app/navigation/tab_bar.dart';
 import 'package:app/navigation/tab_bar_item.dart';
+import 'package:app/provider/deep_link_provider.dart';
 import 'package:app/provider/device_provider.dart';
 import 'package:app/screens/tab/account.dart';
 import 'package:app/screens/tab/home.dart';
 import 'package:app/screens/tab/my_devices.dart';
 import 'package:app/screens/tab/pills_screen.dart';
+import 'package:app/utils/takecare_link_util.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -32,6 +34,7 @@ class TabNavigator extends StatefulWidget {
 
 class _TabNavigatorState extends State<TabNavigator> {
   TabType _currentTab = TabType.home;
+  DeepLinkProvider? _deepLinkProvider;
 
   List<TabType> _getAvailableTabs(bool isOwner, bool hasDevice) {
     if (!hasDevice) {
@@ -74,7 +77,28 @@ class _TabNavigatorState extends State<TabNavigator> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<DeviceProvider>(context, listen: false).loadDevices();
+      _setupDeepLinkListener();
+      _checkForPendingNavigation();
     });
+  }
+
+  void _setupDeepLinkListener() {
+    _deepLinkProvider = Provider.of<DeepLinkProvider>(context, listen: false);
+    _deepLinkProvider!.addListener(_onDeepLinkChange);
+  }
+
+  void _onDeepLinkChange() async {
+    await TakecareLinkUtil.handleDeepLinkInApp(context);
+  }
+
+  @override
+  void dispose() {
+    _deepLinkProvider?.removeListener(_onDeepLinkChange);
+    super.dispose();
+  }
+
+  void _checkForPendingNavigation() async {
+    await TakecareLinkUtil.handleDeepLinkInApp(context);
   }
 
   @override

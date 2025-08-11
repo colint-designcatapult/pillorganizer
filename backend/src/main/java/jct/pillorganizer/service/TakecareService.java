@@ -13,6 +13,7 @@ import jakarta.inject.Singleton;
 import jct.pillorganizer.auth.AuthService;
 import jct.pillorganizer.dto.FhirPatientDTO;
 import jct.pillorganizer.dto.ObservationDTO;
+import jct.pillorganizer.dto.PatientValidationRequestDTO;
 import jct.pillorganizer.repo.UserRepository;
 import lombok.extern.flogger.Flogger;
 import reactor.core.publisher.Mono;
@@ -31,39 +32,64 @@ public class TakecareService {
     AuthService authService;
 
     /**
-     * Links a Takecare patient to the current user
+     * Validates and links a Takecare patient to the current user with form validation
      * @param patientID The patient ID to link
-     * @return Mono that completes when linking is successful or throws Problem if linking fails
+     * @param validationRequest The form data to validate against the patient
+     * @return Mono that completes when linking is successful or throws Problem if validation fails
      */
-    public Mono<Void> linkTakecarePatient(String patientID) {
-        long userID = authService.getUserID();
-        log.atInfo().log("Validating Takecare patient %s for user %d", patientID, userID);
-        
+    public Mono<Void> validateAndLinkTakecarePatient(String patientID, PatientValidationRequestDTO validationRequest) {
         return takecareClient.getPatient(patientID)
                 .switchIfEmpty(Mono.defer(() -> {
-                    log.atWarning().log("Patient not found: %s", patientID);
                     return Mono.error(Problem.builder()
-                            .withStatus(new HttpStatusType(HttpStatus.NOT_FOUND))
-                            .withTitle("Patient not found")
+                            .withStatus(new HttpStatusType(HttpStatus.BAD_REQUEST))
+                            .withTitle("Validation failed")
+                            .withDetail("Invalid patient information provided")
                             .build());
                 }))
                 .flatMap(patient -> {
-                    validatePatientActive(patient, patientID);
-                    String patientEmail = extractPatientEmail(patient, patientID);
-                    
-                    return userRepository.findUserInfoDTOFromID(userID)
+                    return userRepository.findUserInfoDTOFromID(authService.getUserID())
                             .switchIfEmpty(Mono.defer(() -> {
-                                log.atWarning().log("User not found: %d", userID);
                                 return Mono.error(Problem.builder()
-                                        .withStatus(new HttpStatusType(HttpStatus.NOT_FOUND))
-                                        .withTitle("User not found")
+                                        .withStatus(new HttpStatusType(HttpStatus.BAD_REQUEST))
+                                        .withTitle("Validation failed")
+                                        .withDetail("Invalid patient information provided")
                                         .build());
                             }))
-                            .doOnNext(user -> validateEmailsMatch(user.email(), patientEmail, patientID))
-                            .then(storePatientIdInUser(userID, patientID));
-                })
-                .doOnSuccess(ignored -> log.atInfo().log("Successfully validated Takecare patient %s for user %d", patientID, userID));
+                            .flatMap(user -> {
+                                if (!isValidPatient(patient, validationRequest, patientID, user.email())) {
+                                    return Mono.error(Problem.builder()
+                                            .withStatus(new HttpStatusType(HttpStatus.BAD_REQUEST))
+                                            .withTitle("Validation failed")
+                                            .withDetail("Invalid patient information provided")
+                                            .build());
+                                }
+                                
+                                return storePatientIdInUser(user.id(), patientID);
+                            });
+                });
     }
+
+    /**
+     * Validates patient data against the provided form data and user email
+     * @return true if all validations pass, false otherwise
+     */
+    private boolean isValidPatient(FhirPatientDTO patient, PatientValidationRequestDTO validationRequest, String patientID, String userEmail) {
+        Optional<String> patientFirstNameOpt = getPatientFirstName(patient);
+        Optional<String> patientLastNameOpt = getPatientLastName(patient);
+        Optional<String> patientEmailOpt = getPatientEmail(patient);
+        
+        return patient.getActive() != null && patient.getActive() &&
+               patientFirstNameOpt.isPresent() &&
+               patientFirstNameOpt.get().equalsIgnoreCase(validationRequest.getFirstName()) &&
+               patientLastNameOpt.isPresent() &&
+               patientLastNameOpt.get().equalsIgnoreCase(validationRequest.getLastName()) &&
+               patient.getBirthDate() != null && !patient.getBirthDate().trim().isEmpty() &&
+               patient.getBirthDate().equals(validationRequest.getBirthDate()) &&
+               patientEmailOpt.isPresent() &&
+               patientEmailOpt.get().equals(userEmail);
+    }
+
+
 
     /**
      * Creates an observation for a patient
@@ -113,44 +139,8 @@ public class TakecareService {
                                 .withTitle("User not found")
                                 .build());
                     }
-                    log.atInfo().log("Stored patient ID %s for user %d", patientID, userID);
-                    return Mono.<Void>empty();
+                    return Mono.empty();
                 });
-    }
-
-    private void validatePatientActive(FhirPatientDTO patient, String patientID) {
-        boolean isActive = patient.getActive() != null && patient.getActive();
-        log.atInfo().log("Patient active: %s", isActive);
-        if (!isActive) {
-            log.atWarning().log("Patient is inactive: %s", patientID);
-            throw Problem.builder()
-                .withStatus(new HttpStatusType(HttpStatus.BAD_REQUEST))
-                .withTitle("Patient is inactive")
-                .build();
-        }
-    }
-
-    private String extractPatientEmail(FhirPatientDTO patient, String patientID) {
-        Optional<String> emailOpt = getPatientEmail(patient);
-        if (emailOpt.isEmpty()) {
-            log.atWarning().log("Patient has no email: %s", patientID);
-            throw Problem.builder()
-                .withStatus(new HttpStatusType(HttpStatus.BAD_REQUEST))
-                .withTitle("Patient has no email")
-                .build();
-        }
-        return emailOpt.get();
-    }
-
-    private void validateEmailsMatch(String userEmail, String patientEmail, String patientID) {
-        if (!userEmail.equals(patientEmail)) {
-            log.atWarning().log("Email mismatch for patient %s: user=%s, patient=%s", 
-                patientID, userEmail, patientEmail);
-            throw Problem.builder()
-                .withStatus(new HttpStatusType(HttpStatus.BAD_REQUEST))
-                .withTitle("Patient email does not match user email")
-                .build();
-        }
     }
 
     private Optional<String> getPatientEmail(FhirPatientDTO patient) {
@@ -162,6 +152,34 @@ public class TakecareService {
                 .filter(telecom -> telecom.getValue() != null && 
                         telecom.getValue().contains("@"))
                 .map(telecom -> telecom.getValue())
+                .findFirst();
+    }
+
+    private Optional<String> getPatientFirstName(FhirPatientDTO patient) {
+        if (patient.getName() == null || patient.getName().isEmpty()) {
+            return Optional.empty();
+        }
+
+        return patient.getName().stream()
+                .filter(name -> name.getUse() == null || 
+                               String.valueOf(name.getUse()).equals("official") || 
+                               String.valueOf(name.getUse()).equals("usual"))
+                .filter(name -> name.getGiven() != null && !name.getGiven().isEmpty())
+                .map(name -> name.getGiven().get(0))
+                .findFirst();
+    }
+
+    private Optional<String> getPatientLastName(FhirPatientDTO patient) {
+        if (patient.getName() == null || patient.getName().isEmpty()) {
+            return Optional.empty();
+        }
+
+        return patient.getName().stream()
+                .filter(name -> name.getUse() == null || 
+                               String.valueOf(name.getUse()).equals("official") || 
+                               String.valueOf(name.getUse()).equals("usual"))
+                .filter(name -> name.getFamily() != null && !name.getFamily().trim().isEmpty())
+                .map(name -> name.getFamily())
                 .findFirst();
     }
 } 

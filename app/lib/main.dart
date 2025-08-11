@@ -36,6 +36,7 @@ import 'provider/language_provider.dart';
 import 'provider/schedule_provider.dart';
 import 'provider/selected_device_provider.dart';
 import 'screens/auth/launch_page_login.dart';
+import 'screens/auth/patient_confirmation.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -175,7 +176,9 @@ class MyApp extends StatelessWidget {
                                 const ProvisionNavigator(),
                             '/index': (context) => const TabNavigator(),
                             '/post_setup': (context) => const PostSetupWizard(),
-                            '/register': (context) => const RegisterPage()
+                            '/register': (context) => const RegisterPage(),
+                            '/patient_confirmation': (context) =>
+                                const PatientConfirmationPage()
                           },
                           supportedLocales: const [Locale('en'), Locale('fr')],
                           localizationsDelegates: const <LocalizationsDelegate<
@@ -249,21 +252,6 @@ class MyApp extends StatelessWidget {
                           ),
                           navigatorObservers: [routeObserver],
                         ),
-                        if (deepLinkProvider.isValidating)
-                          Container(
-                            color: Colors.black.withOpacity(0.5),
-                            child: const Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
                       ],
                     );
                   },
@@ -291,54 +279,11 @@ class _DeepLinkWrapperState extends State<DeepLinkWrapper> {
     _initializeDeepLinks();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _listenForValidationErrors();
-  }
-
-  void _listenForValidationErrors() {
-    final deepLinkProvider =
-        Provider.of<DeepLinkProvider>(context, listen: false);
-
-    deepLinkProvider.addListener(() {
-      if (deepLinkProvider.validationError != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showValidationErrorDialog(deepLinkProvider.validationError!);
-          deepLinkProvider.clearValidationError();
-        });
-      }
-    });
-  }
-
-  void _showValidationErrorDialog(String error) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Validation Error'),
-          content: Text(
-            'Failed to validate patient from deep link:\n\n$error',
-            style: const TextStyle(fontSize: 14),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   void _initializeDeepLinks() {
     final deepLinkService = DeepLinkService();
 
     deepLinkService.setPatientDeepLinkHandler((String patientId) {
-      final deepLinkProvider =
-          Provider.of<DeepLinkProvider>(context, listen: false);
-      deepLinkProvider.setPatientId(patientId);
+      _handlePatientDeepLink(patientId);
     });
 
     _checkInitialDeepLink();
@@ -351,11 +296,17 @@ class _DeepLinkWrapperState extends State<DeepLinkWrapper> {
     if (initialLink != null && deepLinkService.isPatientDeepLink(initialLink)) {
       final patientId = deepLinkService.extractPatientId(initialLink);
       if (patientId != null) {
-        final deepLinkProvider =
-            Provider.of<DeepLinkProvider>(context, listen: false);
-        deepLinkProvider.setPatientId(patientId);
+        _handlePatientDeepLink(patientId);
       }
     }
+  }
+
+  void _handlePatientDeepLink(String patientId) {
+    final deepLinkProvider =
+        Provider.of<DeepLinkProvider>(context, listen: false);
+
+    deepLinkProvider.setPatientId(patientId, shouldAutoValidate: false);
+    deepLinkProvider.setPendingNavigation(true);
   }
 
   @override

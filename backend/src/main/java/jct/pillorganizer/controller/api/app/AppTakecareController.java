@@ -5,6 +5,7 @@ import org.zalando.problem.Problem;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpResponse;
+import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
@@ -13,6 +14,7 @@ import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
+import jct.pillorganizer.dto.PatientValidationRequestDTO;
 import jct.pillorganizer.service.TakecareService;
 import lombok.extern.flogger.Flogger;
 import reactor.core.publisher.Mono;
@@ -24,12 +26,15 @@ public class AppTakecareController {
     @Inject
     TakecareService takecareService;
 
-    @Operation(summary = "Link a Takecare patient")
-    @Post("/link/{patientID}")
+    @Operation(summary = "Validate and link a Takecare patient with form data")
+    @Post("/validate/{patientID}")
     @Secured(SecurityRule.IS_AUTHENTICATED)
-    public Mono<MutableHttpResponse<Object>> linkTakecarePatient(@PathVariable String patientID) {
-        return takecareService.linkTakecarePatient(patientID)
-                .map(ignored -> HttpResponse.ok())
+    public Mono<MutableHttpResponse<Object>> validateAndLinkTakecarePatient(
+            @PathVariable String patientID, 
+            @Body PatientValidationRequestDTO validationRequest) {
+        return takecareService.validateAndLinkTakecarePatient(patientID, validationRequest)
+                .doOnSuccess(ignored -> log.atInfo().log("Successfully validated and linked Takecare patient"))
+                .thenReturn(HttpResponse.ok())
                 .onErrorResume(throwable -> {
                     if (throwable instanceof Problem) {
                         return Mono.error(throwable);

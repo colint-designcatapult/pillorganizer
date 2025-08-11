@@ -17,8 +17,8 @@ final CredentialManager credentialManager = CredentialManager();
 enum AuthenticationState { unknown, unauthenticated, authenticated }
 
 class AuthenticationProvider with ChangeNotifier {
-  BaseUser? get currentUser => _user;
-  BaseUser? _user;
+  User? get currentUser => _user;
+  User? _user;
 
   Future<void> _future = Future.value();
 
@@ -100,7 +100,10 @@ class AuthenticationProvider with ChangeNotifier {
 
   Future<bool> checkAuthStatus() {
     return client.authStatus().then((user) {
-      _user = User(id: user.id, email: user.email);
+      _user = User(
+          id: user.id,
+          email: user.email,
+          isLinkedToTakecare: user.isLinkedToTakecare);
 
       notifyListeners();
       return true;

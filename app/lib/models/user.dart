@@ -8,6 +8,10 @@ class BaseUser {
 
 class User extends BaseUser {
   final String? email;
+  final bool isLinkedToTakecare;
 
-  User({required super.id, required this.email});
+  User(
+      {required super.id,
+      required this.email,
+      required this.isLinkedToTakecare});
 }
