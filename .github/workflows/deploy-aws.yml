@@ -111,7 +111,7 @@ jobs:
           echo "Environment: ${{ needs.determine-environment.outputs.environment }}"
           echo "Ref: ${{ github.ref }}"
           echo "Expected sub claim: repo:${{ github.repository }}:environment:${{ needs.determine-environment.outputs.environment }}"
-          echo "Role ARN: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GitHubActions-${{ vars.GITHUB_REPOSITORY_NAME || 'cabinet' }}-${{ needs.determine-environment.outputs.environment }}"
+          echo "Role ARN: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID || secrets.AWS_ACCOUNT_ID }}:role/GitHubActions-${{ vars.GITHUB_REPOSITORY_NAME || 'cabinet' }}-${{ needs.determine-environment.outputs.environment }}"
           echo "=============================="
 
       - name: Configure AWS credentials (OIDC)
