@@ -2,12 +2,15 @@ package jct.pillorganizer.model.medication;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.micronaut.data.annotation.DateCreated;
+import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.serde.annotation.Serdeable;
 import jct.pillorganizer.model.device.schedule.DeviceBaseDispenseTime;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.time.Instant;
 
 /**
  * Relates a `ScheduledMedication` to a `DeviceBaseDispenseTime`. Also contains the quantity of medication to be taken
@@ -52,4 +55,17 @@ public class MedicationDispenseTime {
     @Column(name = "quantity")
     private int quantity;
 
+    @DateCreated
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @JsonIgnore
+    private Instant createdAt;
+
+    @DateUpdated
+    @Column(name = "updated_at", nullable = false)
+    @JsonIgnore
+    private Instant updatedAt;
+
+    @Column(name = "deleted_at")
+    @JsonIgnore
+    private Instant deletedAt;
 }

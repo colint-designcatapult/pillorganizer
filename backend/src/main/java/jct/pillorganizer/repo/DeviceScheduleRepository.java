@@ -8,14 +8,21 @@ import io.micronaut.data.jpa.repository.JpaRepository;
 import jct.pillorganizer.model.device.*;
 import jct.pillorganizer.model.device.schedule.DeviceBaseDispenseTime;
 
+import java.time.Instant;
 import java.util.List;
 
 @Repository
 public interface DeviceScheduleRepository extends JpaRepository<DeviceSchedule, DeviceBinId> {
     @Nullable
-    @Query("SELECT ds FROM device_schedule ds WHERE ds.deviceUser = :deviceUser")
+    @Query("SELECT ds FROM device_schedule ds WHERE ds.deviceUser = :deviceUser AND ds.deletedAt IS NULL")
     List<DeviceSchedule> findByDeviceUser(DeviceUser deviceUser);
 
     int update(@Id DeviceBinId id, DayOfWeek dayOfWeek, int secondsFrom00, @Nullable DeviceBaseDispenseTime dispenseTime);
 
+    @Query("UPDATE device_schedule ds SET ds.deletedAt = :now WHERE ds.id = :id")
+    void softDelete(@Id DeviceBinId id, Instant now);
+
+    default void softDelete(@Id DeviceBinId id) {
+        softDelete(id, Instant.now());
+    }
 }

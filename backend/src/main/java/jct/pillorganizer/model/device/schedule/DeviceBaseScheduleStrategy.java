@@ -1,12 +1,15 @@
 package jct.pillorganizer.model.device.schedule;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.micronaut.data.annotation.DateCreated;
+import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.serde.annotation.Serdeable;
 import jct.pillorganizer.model.device.DeviceUser;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.time.Instant;
 import java.util.Set;
 
 /**
@@ -37,6 +40,20 @@ public abstract class DeviceBaseScheduleStrategy {
 
     @OneToMany(targetEntity = DeviceBaseDispenseTime.class, mappedBy = "schedule", fetch = FetchType.LAZY)
     private Set<DeviceBaseDispenseTime> times;
+
+    @DateCreated
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @JsonIgnore
+    private Instant createdAt;
+
+    @DateUpdated
+    @Column(name = "updated_at", nullable = false)
+    @JsonIgnore
+    private Instant updatedAt;
+
+    @Column(name = "deleted_at")
+    @JsonIgnore
+    private Instant deletedAt;
 
     /**
      * Converts the schedule into a data transfer object for JSON serialization.

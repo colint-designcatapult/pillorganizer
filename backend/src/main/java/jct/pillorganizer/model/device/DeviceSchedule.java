@@ -1,12 +1,15 @@
 package jct.pillorganizer.model.device;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.micronaut.data.annotation.DateCreated;
+import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.serde.annotation.Serdeable;
 import jct.pillorganizer.model.device.schedule.DeviceBaseDispenseTime;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.time.Instant;
 
 /**
  * Represents the schedule a single bin on a particular pill organizer should follow, such as the day of the week and
@@ -42,6 +45,20 @@ public class DeviceSchedule {
     @io.micronaut.data.annotation.Version
     @JsonIgnore
     private Long version = 0L;
+
+    @DateCreated
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @JsonIgnore
+    private Instant createdAt;
+
+    @DateUpdated
+    @Column(name = "updated_at", nullable = false)
+    @JsonIgnore
+    private Instant updatedAt;
+
+    @Column(name = "deleted_at")
+    @JsonIgnore
+    private Instant deletedAt;
 
     public int getBinID() {
         return id.getBinID();

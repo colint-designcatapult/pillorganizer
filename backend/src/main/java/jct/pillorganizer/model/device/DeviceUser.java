@@ -9,6 +9,10 @@ import lombok.Setter;
 import javax.persistence.*;
 import java.util.List;
 import java.util.Set;
+import io.micronaut.data.annotation.DateCreated;
+import io.micronaut.data.annotation.DateUpdated;
+
+import java.sql.Timestamp;
 
 /**
  * Relates a `BaseUser` to a `Device`. The role the user has to a device is recorded here, whether they are the
@@ -57,6 +61,20 @@ public class DeviceUser {
 
     @Column(name = "deleted")
     private boolean deleted = false;
+
+    @DateCreated
+    @Column(name = "created_at")
+    @JsonIgnore
+    private Timestamp createdAt;
+
+    @DateUpdated
+    @Column(name = "updated_at")
+    @JsonIgnore
+    private Timestamp updatedAt;
+
+    @Column(name = "deleted_at")
+    @JsonIgnore
+    private Timestamp deletedAt;
 
     @OneToOne(fetch = FetchType.LAZY, mappedBy = "deviceUser", orphanRemoval = true, optional = true)
     @JsonIgnore

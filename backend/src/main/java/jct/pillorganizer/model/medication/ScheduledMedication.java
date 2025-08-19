@@ -1,6 +1,8 @@
 package jct.pillorganizer.model.medication;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.micronaut.data.annotation.DateCreated;
+import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.serde.annotation.Serdeable;
 import jct.pillorganizer.model.device.DeviceUser;
 import lombok.Getter;
@@ -10,6 +12,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.time.Instant;
 import java.util.Set;
 
 /**
@@ -55,5 +58,17 @@ public class ScheduledMedication {
     @Column(name = "color", nullable = true)
     private Integer color;
 
+    @DateCreated
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @JsonIgnore
+    private Instant createdAt;
 
+    @DateUpdated
+    @Column(name = "updated_at", nullable = false)
+    @JsonIgnore
+    private Instant updatedAt;
+
+    @Column(name = "deleted_at")
+    @JsonIgnore
+    private Instant deletedAt;
 }
