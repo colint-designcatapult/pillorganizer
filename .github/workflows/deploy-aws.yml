@@ -150,10 +150,15 @@ jobs:
           echo "repository_url=$ECR_URL" >> $GITHUB_OUTPUT
 
       # Build and push Docker image
-      - name: Build application with Maven
+      - name: Build application JAR with Maven
         run: |
           cd backend
-          mvn --batch-mode --update-snapshots clean package -Dpackaging=docker -DskipTests
+          mvn --batch-mode --update-snapshots clean package -DskipTests
+
+      - name: Build Docker image
+        run: |
+          cd backend
+          docker build -t backend:latest .
 
       - name: Login to Amazon ECR
         id: login-ecr
