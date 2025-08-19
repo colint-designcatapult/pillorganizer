@@ -50,7 +50,7 @@ micronaut:
         mapping: /swagger-ui/**
       firmware:
         enabled: true
-        mapping: "/static/firmware/**"
+        mapping: '/static/firmware/**'
         paths: classpath:firmware
       help:
         enabled: true
@@ -58,9 +58,9 @@ micronaut:
         paths: classpath:help
 datasources:
   default:
-    url: jdbc:postgresql://${DB_HOSTNAME}:${DB_PORT}/${DB_DATABASE}?stringtype=unspecified
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: jdbc:postgresql://${DB_HOSTNAME:localhost}:${DB_PORT:5432}/${DB_DATABASE:cabinet}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:root}
     driverClassName: org.postgresql.Driver
     schema-generate: NONE
     dialect: org.hibernate.dialect.PostgreSQLDialect
