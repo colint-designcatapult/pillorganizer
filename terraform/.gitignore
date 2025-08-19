@@ -17,6 +17,10 @@ crash.*.log
 !terraform.tfvars.example
 !*.tfvars.template
 
+# Allow environment-specific configuration files (no sensitive data)
+!terraform.staging.tfvars
+!terraform.production.tfvars
+
 # Ignore override files as they are usually used to override resources locally and so
 # are not checked in
 override.tf
