@@ -223,43 +223,65 @@ jobs:
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/production' || github.event_name == 'workflow_dispatch'
         run: |
           cd terraform
-          terraform apply -auto-approve ${{ env.ENVIRONMENT }}.tfplan
+          echo "⚠️ Skipping Terraform apply - infrastructure already exists"
+          echo "Will update ECS service directly with new container image"
+          # terraform apply -auto-approve ${{ env.ENVIRONMENT }}.tfplan
 
       # Force ECS service update to pull new image
       - name: Update ECS Service
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/production' || github.event_name == 'workflow_dispatch'
         run: |
-          cd terraform
-          CLUSTER_NAME=$(terraform output -raw ecs_cluster_id)
-          SERVICE_NAME=$(terraform output -raw ecs_service_id | cut -d'/' -f2)
+          # Use known resource names since infrastructure already exists
+          CLUSTER_NAME="cabinet-${{ env.ENVIRONMENT }}-cluster"
+          SERVICE_NAME="cabinet-${{ env.ENVIRONMENT }}-service"
 
-          echo "Updating ECS service: $SERVICE_NAME in cluster: $CLUSTER_NAME"
-          aws ecs update-service \
-            --cluster $CLUSTER_NAME \
-            --service $SERVICE_NAME \
-            --force-new-deployment \
-            --region ${{ env.AWS_REGION }}
+          echo "🚀 Updating ECS service: $SERVICE_NAME in cluster: $CLUSTER_NAME"
 
-          echo "Waiting for deployment to complete..."
-          aws ecs wait services-stable \
-            --cluster $CLUSTER_NAME \
-            --services $SERVICE_NAME \
-            --region ${{ env.AWS_REGION }}
+          # Check if cluster and service exist first
+          if aws ecs describe-clusters --clusters $CLUSTER_NAME --region ${{ env.AWS_REGION }} | grep -q "ACTIVE"; then
+            echo "✅ Found ECS cluster: $CLUSTER_NAME"
+            
+            if aws ecs describe-services --cluster $CLUSTER_NAME --services $SERVICE_NAME --region ${{ env.AWS_REGION }} | grep -q "ACTIVE"; then
+              echo "✅ Found ECS service: $SERVICE_NAME"
+              
+              echo "🔄 Forcing new deployment with latest container image..."
+              aws ecs update-service \
+                --cluster $CLUSTER_NAME \
+                --service $SERVICE_NAME \
+                --force-new-deployment \
+                --region ${{ env.AWS_REGION }}
+
+              echo "⏳ Waiting for deployment to complete..."
+              aws ecs wait services-stable \
+                --cluster $CLUSTER_NAME \
+                --services $SERVICE_NAME \
+                --region ${{ env.AWS_REGION }}
+              
+              echo "🎉 Deployment completed successfully!"
+            else
+              echo "❌ ECS service $SERVICE_NAME not found"
+              exit 1
+            fi
+          else
+            echo "❌ ECS cluster $CLUSTER_NAME not found"
+            exit 1
+          fi
 
       # Get deployment outputs
       - name: Get Deployment Outputs
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/production' || github.event_name == 'workflow_dispatch'
         run: |
-          cd terraform
-          echo "### 🚀 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 ECS Service Update Successful!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Environment:** ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Application URL:** $(terraform output -raw application_url)" >> $GITHUB_STEP_SUMMARY
-          echo "**Load Balancer DNS:** $(terraform output -raw load_balancer_dns_name)" >> $GITHUB_STEP_SUMMARY
-          echo "**ECR Repository:** $(terraform output -raw ecr_repository_url)" >> $GITHUB_STEP_SUMMARY
-          echo "**Docker Image:** $(terraform output -raw ecr_repository_url):${{ env.IMAGE_TAG }}" >> $GITHUB_STEP_SUMMARY
+          echo "**ECS Cluster:** cabinet-${{ env.ENVIRONMENT }}-cluster" >> $GITHUB_STEP_SUMMARY
+          echo "**ECS Service:** cabinet-${{ env.ENVIRONMENT }}-service" >> $GITHUB_STEP_SUMMARY
+          echo "**ECR Repository:** ${{ steps.ecr.outputs.repository_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Docker Image:** ${{ steps.ecr.outputs.repository_url }}:${{ env.IMAGE_TAG }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**CloudWatch Logs:** https://console.aws.amazon.com/cloudwatch/home?region=${{ env.AWS_REGION }}#logsV2:log-groups/log-group/$(terraform output -raw cloudwatch_log_group_name | sed 's/\//%2F/g')" >> $GITHUB_STEP_SUMMARY
+          echo "**CloudWatch Logs:** https://console.aws.amazon.com/cloudwatch/home?region=${{ env.AWS_REGION }}#logsV2:log-groups/log-group/%2Fecs%2Fcabinet-${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "ℹ️ **Note:** Skipped Terraform apply since infrastructure already exists." >> $GITHUB_STEP_SUMMARY
 
   # Cleanup old images
   cleanup-images:
