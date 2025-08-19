@@ -143,15 +143,10 @@ jobs:
         id: ecr
         run: |
           cd terraform
-          # Try to get ECR URL from Terraform state, handle all error cases
-          if terraform output ecr_repository_url >/dev/null 2>&1; then
-            ECR_URL=$(terraform output -raw ecr_repository_url)
-            echo "✅ Found existing ECR repository: $ECR_URL"
-          else
-            echo "⚠️  ECR repository not found in terraform state, will create during deployment"
-            ECR_URL="${{ vars.AWS_ACCOUNT_ID || secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/cabinet"
-            echo "📦 Using ECR URL: $ECR_URL"
-          fi
+          # For first deployment, always use constructed ECR URL since Terraform hasn't created it yet
+          echo "⚠️  First deployment - using constructed ECR URL"
+          ECR_URL="${{ vars.AWS_ACCOUNT_ID || secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/cabinet"
+          echo "📦 Using ECR URL: $ECR_URL"
           echo "repository_url=$ECR_URL" >> $GITHUB_OUTPUT
 
       # Build and push Docker image
