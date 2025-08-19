@@ -95,3 +95,16 @@ variable "health_check_path" {
   type        = string
   default     = "/health"
 }
+
+# Slack Configuration for AWS Chatbot
+variable "slack_channel_id" {
+  description = "Slack channel ID for CloudWatch alerts (e.g., C1234567890)"
+  type        = string
+  default     = "C09BUJL8JLQ"
+}
+
+variable "slack_team_id" {
+  description = "Slack team/workspace ID (e.g., T1234567890)"
+  type        = string
+  default     = "T03AT4BS2"
+}
