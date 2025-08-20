@@ -145,7 +145,7 @@ jobs:
           cd terraform
           # For first deployment, always use constructed ECR URL since Terraform hasn't created it yet
           echo "⚠️  First deployment - using constructed ECR URL"
-          ECR_URL="${{ vars.AWS_ACCOUNT_ID || secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/cabinet"
+          ECR_URL="${{ vars.AWS_ACCOUNT_ID || secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/cabinet-${{ env.ENVIRONMENT }}"
           echo "📦 Using ECR URL: $ECR_URL"
           echo "repository_url=$ECR_URL" >> $GITHUB_OUTPUT
 
@@ -175,8 +175,8 @@ jobs:
           docker tag backend:latest ${{ steps.ecr.outputs.repository_url }}:${{ env.ENVIRONMENT }}-latest
 
           # Create ECR repository if it doesn't exist
-          aws ecr describe-repositories --repository-names cabinet --region ${{ env.AWS_REGION }} || \
-          aws ecr create-repository --repository-name cabinet --region ${{ env.AWS_REGION }}
+          aws ecr describe-repositories --repository-names cabinet-${{ env.ENVIRONMENT }} --region ${{ env.AWS_REGION }} || \
+          aws ecr create-repository --repository-name cabinet-${{ env.ENVIRONMENT }} --region ${{ env.AWS_REGION }}
 
           # Push images
           docker push ${{ steps.ecr.outputs.repository_url }}:${{ env.IMAGE_TAG }}
@@ -308,7 +308,7 @@ jobs:
         run: |
           # Keep last 10 images per environment
           aws ecr list-images \
-            --repository-name cabinet \
+            --repository-name cabinet-${{ needs.determine-environment.outputs.environment }} \
             --filter tagStatus=TAGGED \
             --query 'imageIds[?starts_with(imageTag, `${{ needs.determine-environment.outputs.environment }}-`) && imageTag != `${{ needs.determine-environment.outputs.environment }}-latest`]' \
             --output json | \
@@ -317,7 +317,7 @@ jobs:
             if [ ! -z "$digest" ] && [ "$digest" != "null" ]; then
               echo "Deleting old image with digest: $digest"
               aws ecr batch-delete-image \
-                --repository-name cabinet \
+                --repository-name cabinet-${{ needs.determine-environment.outputs.environment }} \
                 --image-ids imageDigest=$digest || true
             fi
           done
