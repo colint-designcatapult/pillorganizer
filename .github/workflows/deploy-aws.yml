@@ -296,20 +296,12 @@ jobs:
       contents: read
 
     steps:
-      - name: Set environment-specific variables
-        run: |
-          if [ "${{ needs.determine-environment.outputs.environment }}" == "staging" ]; then
-            echo "AWS_ACCOUNT_ID=${{ vars.AWS_ACCOUNT_ID_STAGING || secrets.AWS_ACCOUNT_ID_PRODUCTION }}" >> $GITHUB_ENV
-          else
-            echo "AWS_ACCOUNT_ID=${{ vars.AWS_ACCOUNT_ID_PRODUCTION || secrets.AWS_ACCOUNT_ID_PRODUCTION }}" >> $GITHUB_ENV
-          fi
-
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID || secrets.AWS_ACCOUNT_ID }}:role/GitHubActions-${{ vars.GITHUB_REPOSITORY_NAME || 'cabinet' }}-${{ needs.determine-environment.outputs.environment }}
           role-session-name: GitHubActions-Cleanup-${{ github.run_id }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ca-central-1
 
       - name: Clean up old ECR images
         run: |
