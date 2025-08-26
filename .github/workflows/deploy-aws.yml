@@ -150,27 +150,18 @@ jobs:
           echo "repository_url=$ECR_URL" >> $GITHUB_OUTPUT
 
       # Build and push Docker image
-      - name: Build application JAR with Maven
+      - name: Build Docker image with Micronaut Maven Plugin
         run: |
           cd backend
-          mvn --batch-mode --update-snapshots clean package -DskipTests
-
-      - name: Build Docker image
-        run: |
-          cd backend
-          docker build -t backend:latest .
+          mvn --batch-mode --update-snapshots clean package -Dpackaging=docker -DskipTests
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build, tag, and push Docker image
+      - name: Tag and push Docker image
         run: |
-          # Build image
-          cd backend
-          docker build -t backend .
-
-          # Tag for ECR
+          # Tag the Micronaut-generated image for ECR
           docker tag backend:latest ${{ steps.ecr.outputs.repository_url }}:${{ env.IMAGE_TAG }}
           docker tag backend:latest ${{ steps.ecr.outputs.repository_url }}:${{ env.ENVIRONMENT }}-latest
 
