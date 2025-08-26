@@ -47,7 +47,9 @@ jobs:
       - name: Build with Maven
         working-directory: backend
         run: |
+          mv Dockerfile Dockerfile.aws
           mvn --batch-mode --update-snapshots package -Dpackaging=docker
+          mv Dockerfile.aws Dockerfile
 
       - name: Install Heroku CLI
         run: |
@@ -79,7 +81,9 @@ jobs:
       - name: Build with Maven
         working-directory: backend
         run: |
+          mv Dockerfile Dockerfile.aws
           mvn --batch-mode --update-snapshots package -Dpackaging=docker
+          mv Dockerfile.aws Dockerfile
 
       - name: Install Heroku CLI
         run: |
