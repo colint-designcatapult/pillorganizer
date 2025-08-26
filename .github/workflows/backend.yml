@@ -43,15 +43,9 @@ jobs:
         with:
           java-version: '17'
           distribution: 'adopt'
-      - name: Build JAR with Maven
+      - name: Build with Maven
         run: |
-          cd backend
-          mvn --batch-mode --update-snapshots clean package -DskipTests
-
-      - name: Build Docker image
-        run: |
-          cd backend
-          docker build -t backend .
+          mvn --batch-mode --update-snapshots package -Dpackaging=docker
 
       - name: Install Heroku CLI
         run: |
@@ -80,15 +74,9 @@ jobs:
         with:
           java-version: '17'
           distribution: 'adopt'
-      - name: Build JAR with Maven
+      - name: Build with Maven
         run: |
-          cd backend
-          mvn --batch-mode --update-snapshots clean package -DskipTests
-
-      - name: Build Docker image
-        run: |
-          cd backend
-          docker build -t backend .
+          mvn --batch-mode --update-snapshots package -Dpackaging=docker
 
       - name: Install Heroku CLI
         run: |
