@@ -151,7 +151,7 @@ public class DeviceStateService {
      */
     @Transactional
     public List<DosePeriodDTO> buildDosePeriod(Device device, DeviceUser deviceUser, LocalDate date) {
-        ZonedDateTime startOfDay = date.atStartOfDay(device.getTimeZone());
+        ZonedDateTime startOfDay = date.atStartOfDay(device.getTimeZoneId());
         ZonedDateTime endOfDay = startOfDay.plusDays(1);
 
         DeviceUser stateDeviceUser = deviceUser;

@@ -2,12 +2,17 @@ package jct.pillorganizer.service;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.ZoneId;
 import java.util.HexFormat;
 import java.util.Objects;
 import java.util.Optional;
 
 import javax.transaction.Transactional;
 
+import org.zalando.problem.Problem;
+
+import io.micronaut.http.HttpStatus;
+import io.micronaut.problem.HttpStatusType;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.auth.AuthService;
@@ -67,6 +72,18 @@ public class DeviceProvisionService {
         return key;
     }
 
+    private boolean isValidTimezone(String tzLocation) {
+        if (tzLocation == null || tzLocation.trim().isEmpty()) {
+            return false;
+        }
+        try {
+            ZoneId.of(tzLocation);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     /**
      * Initiates the provisioning flow. If no Device record exists with the
      * specified serial number, a new Device is
@@ -89,6 +106,14 @@ public class DeviceProvisionService {
     @Transactional
     public DeviceProvision startProvisioning(long serialNo, DeviceClass deviceClass, String tzLocation) {
         Device device = deviceService.findOrCreateDevice(serialNo, deviceClass);
+
+        if (!isValidTimezone(tzLocation)) {
+            throw Problem.builder()
+                .withStatus(new HttpStatusType(HttpStatus.BAD_REQUEST))
+                .withTitle("Invalid timezone")
+                .withDetail("The provided timezone '" + tzLocation + "' is not valid")
+                .build();
+        }
 
         // Deactivate all previous `device_provision` entities
         deviceProvisionRepository.updateActiveByDeviceAndActive(device, true, false);
