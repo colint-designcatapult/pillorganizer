@@ -1,25 +1,6 @@
 package jct.pillorganizer.model.device;
 
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.util.List;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
 import jct.pillorganizer.model.user.Authenticatable;
@@ -27,6 +8,13 @@ import jct.pillorganizer.model.user.UserType;
 import jct.pillorganizer.serde.SerialNumberSerde;
 import lombok.Getter;
 import lombok.Setter;
+
+import javax.persistence.*;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.List;
 
 /**
  * A pill organizer device.
@@ -115,21 +103,13 @@ public class Device implements Authenticatable {
 
     @JsonIgnore
     @Transient
-    public ZoneId getTimeZoneId() {
+    public ZoneOffset getTimeZone() {
         if (getBaseTZ() == null) {
-            return ZoneId.of("UTC");
+            return ZoneOffset.UTC;
         } else {
-            try {
-                return ZoneId.of(getBaseTZ());
-            } catch (Exception e) {
-                return ZoneId.of("UTC");
-            }
+            // TODO: rethink how to persist timezones to avoid this mess
+            return ZoneId.of(getBaseTZ()).getRules().getOffset(Instant.now());
         }
     }
 
-    @JsonIgnore
-    @Transient
-    public ZoneOffset getTimeZone() {
-        return getTimeZoneId().getRules().getOffset(Instant.now());
-    }
 }

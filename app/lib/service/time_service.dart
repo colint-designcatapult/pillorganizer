@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:timezone/standalone.dart' as tz;
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 enum DayOfWeek {
   monday,
@@ -84,12 +84,16 @@ class TimeService {
     'SUNDAY'
   ];
 
+  DateTime now = DateTime.now();
+
   DateTime serverTime(int timestamp) {
     return DateTime.fromMillisecondsSinceEpoch(timestamp, isUtc: true);
   }
 
   DateTime timeToLocal(DateTime serverTime) {
-    return serverTime.toLocal();
+    return serverTime
+        //.add(now.timeZoneOffset)
+        .toLocal();
   }
 
   DateTime serverTimeToLocal(int timestamp) {
@@ -108,7 +112,7 @@ class TimeService {
 TimeOfDay timeOfDayFromSecondsFrom00(int secondsFrom00, {bool isUTC = true}) {
   DateTime dt;
   if (isUTC) {
-    dt = DateTime.utc(0, 1, 1, 0, 0, secondsFrom00);
+    dt = DateTime.utc(0, 1, 1, 0, 0, secondsFrom00).toLocal();
   } else {
     dt = DateTime(0, 1, 1, 0, 0, secondsFrom00);
   }
@@ -149,61 +153,36 @@ class TimeOfDayOfWeek {
     duration = Duration(seconds: offsetFrom00);
   }
 
-  TimeOfDayOfWeek convertTimezone(
-      {tz.Location? targetLocation, required bool toUTC}) {
-    if (isUTC == toUTC) {
-      return this;
-    }
+  TimeOfDayOfWeek adjust(bool positive, bool isUTC) {
+    int tzOffset = DateTime.now().timeZoneOffset.inSeconds;
+    var dur = Duration(
+        seconds: positive ? offsetFrom00 + tzOffset : offsetFrom00 - tzOffset);
 
-    tz.Location location = targetLocation ?? tz.getLocation('UTC');
+    var epoch = DateTime.fromMillisecondsSinceEpoch(1, isUtc: true);
+    var relativeToEpoch = epoch.add(dur);
 
-    DateTime now = DateTime.now();
-    DateTime monday = now.subtract(Duration(days: now.weekday - 1));
-    DateTime baseDate = DateTime(monday.year, monday.month, monday.day);
-
-    DateTime targetDateTime =
-        baseDate.add(Duration(days: dayOfWeek, seconds: offsetFrom00));
-
-    tz.TZDateTime tzDateTime;
-    DateTime convertedDateTime;
-
-    if (isUTC && !toUTC) {
-      tzDateTime = tz.TZDateTime.from(targetDateTime.toUtc(), location);
-      convertedDateTime = tzDateTime;
-    } else {
-      tzDateTime = tz.TZDateTime(
-          location,
-          targetDateTime.year,
-          targetDateTime.month,
-          targetDateTime.day,
-          targetDateTime.hour,
-          targetDateTime.minute,
-          targetDateTime.second);
-      convertedDateTime = tzDateTime.toUtc();
-    }
-
-    int newDayOfWeek = (convertedDateTime.weekday - 1) % 7;
-    int newOffsetFrom00 = (convertedDateTime.hour * 3600) +
-        (convertedDateTime.minute * 60) +
-        convertedDateTime.second;
+    int deltaDays = relativeToEpoch.weekday - epoch.weekday;
 
     return TimeOfDayOfWeek(
-        dayOfWeek: newDayOfWeek, offsetFrom00: newOffsetFrom00, isUTC: toUTC);
+        dayOfWeek: (dayOfWeek + deltaDays) % 7,
+        offsetFrom00: (relativeToEpoch.hour * 3600) +
+            (relativeToEpoch.minute * 60) +
+            relativeToEpoch.second,
+        isUTC: isUTC);
   }
 
-  TimeOfDayOfWeek toLocal({tz.Location? location}) {
+  TimeOfDayOfWeek toLocal() {
     if (!isUTC) {
       return this;
     }
-    tz.Location targetLocation = location ?? tz.getLocation('UTC');
-    return convertTimezone(targetLocation: targetLocation, toUTC: false);
+    return adjust(true, false);
   }
 
-  TimeOfDayOfWeek toUTC({tz.Location? location}) {
+  TimeOfDayOfWeek toUTC() {
     if (isUTC) {
       return this;
     }
-    return convertTimezone(targetLocation: location, toUTC: true);
+    return adjust(false, true);
   }
 
   String dayOfWeekString() {
@@ -220,23 +199,15 @@ typedef TimeZone = tz.TimeZone;
 typedef TimeZoneLocation = tz.Location;
 
 TimeZone? lookupTimeZone(String? tzString) {
-  if (tzString == null || tzString.isEmpty) {
+  if (tzString == null) {
     return null;
   }
-  try {
-    return tz.timeZoneDatabase.locations[tzString]?.currentTimeZone;
-  } catch (e) {
-    return null;
-  }
+  return tz.timeZoneDatabase.locations[tzString]?.currentTimeZone;
 }
 
 TimeZoneLocation? lookupTimeZoneLocation(String? tzString) {
-  if (tzString == null || tzString.isEmpty) {
+  if (tzString == null) {
     return null;
   }
-  try {
-    return tz.timeZoneDatabase.locations[tzString];
-  } catch (e) {
-    return null;
-  }
+  return tz.timeZoneDatabase.locations[tzString];
 }

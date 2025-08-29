@@ -3,12 +3,7 @@ package jct.pillorganizer.device;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -207,7 +202,7 @@ public class DeviceStateWrapper {
     private Mono<Void> createObservationForTakenPill(DeviceEvent event) {
         String patientId = deviceUser.getUser().getTakecarePatientId();
 
-        return takecareService.createObservation(patientId, event.getTs(), device.getTimeZoneId(), "pillbox_open_time")
+        return takecareService.createObservation(patientId, event.getTs(), device.getTimeZone(), "pillbox_open_time")
                 .subscribeOn(Schedulers.boundedElastic())
                 .then()
                 .onErrorResume(throwable -> {
@@ -230,7 +225,7 @@ public class DeviceStateWrapper {
     private Mono<Void> createObservationForMissedPill(DeviceEvent event) {
         String patientId = deviceUser.getUser().getTakecarePatientId();
 
-        return takecareService.createObservation(patientId, event.getTs(), device.getTimeZoneId(), "pillbox_missed_time")
+        return takecareService.createObservation(patientId, event.getTs(), device.getTimeZone(), "pillbox_missed_time")
                 .subscribeOn(Schedulers.boundedElastic())
                 .then()
                 .onErrorResume(throwable -> {
@@ -327,8 +322,8 @@ public class DeviceStateWrapper {
         }
 
         // Rebuild device schedule if all states are expired
-        ZoneId tzId = device.getTimeZoneId();
-        ZonedDateTime startOfDay = LocalDate.now(tzId).atStartOfDay(tzId);
+        ZoneOffset tz = device.getTimeZone();
+        ZonedDateTime startOfDay = LocalDate.now(tz).atStartOfDay(tz);
         ZonedDateTime endOfDay = startOfDay.plusDays(1);
         long epochEndOfDay = endOfDay.toEpochSecond();
 
@@ -501,23 +496,23 @@ public class DeviceStateWrapper {
      */
     @Transactional
     public void rebuildStateSchedule() {
-        ZoneId tzId = device.getTimeZoneId();
-        LocalDate ld = LocalDate.now(tzId);
-        ZonedDateTime ldt = ZonedDateTime.now(tzId);
+        ZoneOffset tz = device.getTimeZone();
+        LocalDate ld = LocalDate.now(tz);
+        OffsetDateTime ldt = OffsetDateTime.now(tz);
 
         // Normalize day of week to start the week on Monday
         int day = Math.floorMod((ld.getDayOfWeek().getValue() - 1), 7);
-        ZonedDateTime base = ld
+        OffsetDateTime base = ld
                 .minusDays(day)
                 .atTime(0, 0, 0, 0)
-                .atZone(tzId);
+                .atOffset(tz);
 
         List<DeviceState> states = getState();
         for (DeviceSchedule schedule : getDeviceSchedule()) {
-            ZonedDateTime dispenseTime = base
+            OffsetDateTime dispenseTime = base
                     .plusDays(schedule.getDayOfWeek().getIntValue())
                     .plusSeconds(schedule.getSecondsFrom00());
-            LocalDateTime dispenseLDT = dispenseTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+            LocalDateTime dispenseLDT = dispenseTime.atZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
 
             DeviceState state = states.get(schedule.getBinID());
 
@@ -530,7 +525,7 @@ public class DeviceStateWrapper {
                 // Never rebuild a taken bin
             } else if (BinStatus.MISSED.equals(status) || BinStatus.PENDING.equals(status)
                     || BinStatus.TAKE_NOW.equals(status) || BinStatus.DISABLED.equals(status)) {
-                ZonedDateTime lateThresholdTime = dispenseTime.plusMinutes(10);
+                OffsetDateTime lateThresholdTime = dispenseTime.plusMinutes(10);
 
                 // Only rebuild a missed dose if the scheduled time is today or after now
                 if (lateThresholdTime.isAfter(ldt)) {
