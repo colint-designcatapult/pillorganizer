@@ -179,7 +179,7 @@ jobs:
           # Push images
           docker push ${{ steps.ecr.outputs.repository_url }}:${{ env.IMAGE_TAG }}
           docker push ${{ steps.ecr.outputs.repository_url }}:${{ env.ENVIRONMENT }}-latest
-          docker push ${{ steps.ecr.outputs.repository_url }}:${{ env.ENVIRONMENT }}
+          docker push ${{ steps.ecr.outputs.repository_url }}:${{ env.ENVIRONMENT }}  # ECS needs this plain tag
 
       # Plan and apply Terraform
       - name: Terraform Plan
