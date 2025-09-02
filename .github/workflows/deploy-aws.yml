@@ -149,9 +149,8 @@ jobs:
         id: ecr
         run: |
           cd terraform
-          # For first deployment, always use constructed ECR URL since Terraform hasn't created it yet
-          echo "⚠️  First deployment - using constructed ECR URL"
-          ECR_URL="${{ vars.AWS_ACCOUNT_ID || secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/cabinet-${{ env.ENVIRONMENT }}"
+          # Get ECR repository URL from Terraform output to match what task definition expects
+          ECR_URL=$(terraform output -raw ecr_repository_url 2>/dev/null || echo "${{ vars.AWS_ACCOUNT_ID || secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/cabinet")
           echo "📦 Using ECR URL: $ECR_URL"
           echo "repository_url=$ECR_URL" >> $GITHUB_OUTPUT
 
@@ -172,9 +171,9 @@ jobs:
           docker tag backend:latest ${{ steps.ecr.outputs.repository_url }}:${{ env.ENVIRONMENT }}-latest
           docker tag backend:latest ${{ steps.ecr.outputs.repository_url }}:${{ env.ENVIRONMENT }}  # ECS task definition expects this tag
 
-          # Create ECR repository if it doesn't exist
-          aws ecr describe-repositories --repository-names cabinet-${{ env.ENVIRONMENT }} --region ${{ env.AWS_REGION }} || \
-          aws ecr create-repository --repository-name cabinet-${{ env.ENVIRONMENT }} --region ${{ env.AWS_REGION }}
+          # Create ECR repository if it doesn't exist (use same name as Terraform)
+          aws ecr describe-repositories --repository-names cabinet --region ${{ env.AWS_REGION }} || \
+          aws ecr create-repository --repository-name cabinet --region ${{ env.AWS_REGION }}
 
           # Push images
           docker push ${{ steps.ecr.outputs.repository_url }}:${{ env.IMAGE_TAG }}
@@ -314,9 +313,9 @@ jobs:
 
       - name: Clean up old ECR images
         run: |
-          # Keep last 10 images per environment
+          # Keep last 10 images per environment (use correct repository name)
           aws ecr list-images \
-            --repository-name cabinet-${{ needs.determine-environment.outputs.environment }} \
+            --repository-name cabinet \
             --filter tagStatus=TAGGED \
             --query 'imageIds[?starts_with(imageTag, `${{ needs.determine-environment.outputs.environment }}-`) && imageTag != `${{ needs.determine-environment.outputs.environment }}-latest`]' \
             --output json | \
@@ -325,7 +324,7 @@ jobs:
             if [ ! -z "$digest" ] && [ "$digest" != "null" ]; then
               echo "Deleting old image with digest: $digest"
               aws ecr batch-delete-image \
-                --repository-name cabinet-${{ needs.determine-environment.outputs.environment }} \
+                --repository-name cabinet \
                 --image-ids imageDigest=$digest || true
             fi
           done
