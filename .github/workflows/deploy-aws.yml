@@ -148,9 +148,8 @@ jobs:
       - name: Get ECR repository URL
         id: ecr
         run: |
-          cd terraform
-          # Get ECR repository URL from Terraform output to match what task definition expects
-          ECR_URL=$(terraform output -raw ecr_repository_url 2>/dev/null || echo "${{ vars.AWS_ACCOUNT_ID || secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/cabinet")
+          # Use correct ECR repository name that matches task definition
+          ECR_URL="${{ vars.AWS_ACCOUNT_ID || secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/cabinet"
           echo "📦 Using ECR URL: $ECR_URL"
           echo "repository_url=$ECR_URL" >> $GITHUB_OUTPUT
 
