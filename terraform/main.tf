@@ -211,11 +211,23 @@ resource "aws_security_group" "rds" {
     security_groups = [aws_security_group.ecs.id]
   }
 
+  # Allow public access for database tools (DBeaver, etc.)
+  # Note: For production, consider restricting to specific IP addresses
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Public PostgreSQL access for development tools"
+  }
+
   tags = {
     Name        = "${var.app_name}-${var.environment}-rds-sg"
     Environment = var.environment
   }
 }
+
+
 
 # ACM Certificate for HTTPS
 resource "aws_acm_certificate" "main" {
@@ -404,6 +416,10 @@ resource "aws_ecs_task_definition" "main" {
         {
           name  = "PORT"
           value = tostring(var.container_port)
+        },
+        {
+          name  = "TAKECARE_API_URL"
+          value = var.takecare_api_url
         }
       ]
 
@@ -411,6 +427,34 @@ resource "aws_ecs_task_definition" "main" {
         {
           name      = "DB_PASSWORD"
           valueFrom = data.aws_secretsmanager_secret.db_password.arn
+        },
+        {
+          name      = "FIREBASE_PRIVATE_KEY"
+          valueFrom = data.aws_secretsmanager_secret.firebase_private_key.arn
+        },
+        {
+          name      = "FIREBASE_PROJECT_ID"
+          valueFrom = data.aws_secretsmanager_secret.firebase_project_id.arn
+        },
+        {
+          name      = "FIREBASE_CLIENT_EMAIL"
+          valueFrom = data.aws_secretsmanager_secret.firebase_client_email.arn
+        },
+        {
+          name      = "JWT_GENERATOR_SIGNATURE_SECRET"
+          valueFrom = data.aws_secretsmanager_secret.jwt_secret.arn
+        },
+        {
+          name      = "SENDGRID_API_KEY"
+          valueFrom = data.aws_secretsmanager_secret.sendgrid_api_key.arn
+        },
+        {
+          name      = "SENDGRID_SENDER"
+          valueFrom = data.aws_secretsmanager_secret.sendgrid_sender.arn
+        },
+        {
+          name      = "TAKECARE_API_TOKEN"
+          valueFrom = data.aws_secretsmanager_secret.takecare_api_token.arn
         }
       ]
 
@@ -534,7 +578,54 @@ resource "aws_cloudwatch_log_group" "main" {
   }
 }
 
-# Data source for existing database password from Secrets Manager
+# ===========================================================================
+# AWS SECRETS MANAGER CONFIGURATION
+# ===========================================================================
+# The following secrets must be manually created in AWS Secrets Manager
+# before applying this Terraform configuration. Use the AWS CLI or console:
+#
+# Required secrets for each environment (replace {environment} with 'staging' or 'production'):
+#
+# 1. Database Password:
+#    Secret Name: cabinet/{environment}/db-password
+#    Value: Your PostgreSQL database password
+#
+# 2. Firebase Configuration:
+#    Secret Name: cabinet/{environment}/firebase-private-key
+#    Value: Your Firebase service account private key (JSON format)
+#    
+#    Secret Name: cabinet/{environment}/firebase-project-id
+#    Value: Your Firebase project ID
+#    
+#    Secret Name: cabinet/{environment}/firebase-client-email
+#    Value: Your Firebase service account client email
+#
+# 3. JWT Configuration:
+#    Secret Name: cabinet/{environment}/jwt-secret
+#    Value: A secure random string for JWT token signing (min 32 characters)
+#
+# 4. SendGrid Configuration:
+#    Secret Name: cabinet/{environment}/sendgrid-api-key
+#    Value: Your SendGrid API key
+#    
+#    Secret Name: cabinet/{environment}/sendgrid-sender
+#    Value: Your verified SendGrid sender email address
+#
+# 5. TakeCare API Configuration:
+#    Secret Name: cabinet/{environment}/takecare-api-token
+#    Value: Your TakeCare API authentication token
+#
+# Example AWS CLI commands to create secrets:
+# aws secretsmanager create-secret --name "cabinet/staging/firebase-private-key" \
+#   --description "Firebase private key for staging" \
+#   --secret-string '{"your": "firebase-service-account-key"}'
+#
+# aws secretsmanager create-secret --name "cabinet/staging/jwt-secret" \
+#   --description "JWT signing secret for staging" \
+#   --secret-string "your-super-secure-random-string-here"
+# ===========================================================================
+
+# Data sources for secrets from AWS Secrets Manager
 data "aws_secretsmanager_secret" "db_password" {
   name = "cabinet/${var.environment}/db-password"
 }
@@ -543,16 +634,46 @@ data "aws_secretsmanager_secret_version" "db_password" {
   secret_id = data.aws_secretsmanager_secret.db_password.id
 }
 
-# RDS Subnet Group
-resource "aws_db_subnet_group" "main" {
-  name       = "${var.app_name}-${var.environment}-db-subnet-group"
-  subnet_ids = aws_subnet.database[*].id
+data "aws_secretsmanager_secret" "firebase_private_key" {
+  name = "cabinet/${var.environment}/firebase-private-key"
+}
+
+data "aws_secretsmanager_secret" "firebase_project_id" {
+  name = "cabinet/${var.environment}/firebase-project-id"
+}
+
+data "aws_secretsmanager_secret" "firebase_client_email" {
+  name = "cabinet/${var.environment}/firebase-client-email"
+}
+
+data "aws_secretsmanager_secret" "jwt_secret" {
+  name = "cabinet/${var.environment}/jwt-secret"
+}
+
+data "aws_secretsmanager_secret" "sendgrid_api_key" {
+  name = "cabinet/${var.environment}/sendgrid-api-key"
+}
+
+data "aws_secretsmanager_secret" "sendgrid_sender" {
+  name = "cabinet/${var.environment}/sendgrid-sender"
+}
+
+data "aws_secretsmanager_secret" "takecare_api_token" {
+  name = "cabinet/${var.environment}/takecare-api-token"
+}
+
+# New RDS Subnet Group - Using public subnets for external access
+resource "aws_db_subnet_group" "public" {
+  name       = "${var.app_name}-${var.environment}-db-subnet-group-public"
+  subnet_ids = aws_subnet.public[*].id
 
   tags = {
-    Name        = "${var.app_name}-${var.environment}-db-subnet-group"
+    Name        = "${var.app_name}-${var.environment}-db-subnet-group-public"
     Environment = var.environment
   }
 }
+
+
 
 # RDS Instance
 resource "aws_db_instance" "main" {
@@ -570,7 +691,8 @@ resource "aws_db_instance" "main" {
   password = data.aws_secretsmanager_secret_version.db_password.secret_string
 
   vpc_security_group_ids = [aws_security_group.rds.id]
-  db_subnet_group_name   = aws_db_subnet_group.main.name
+  db_subnet_group_name   = aws_db_subnet_group.public.name
+  publicly_accessible    = true
 
   backup_retention_period = 7
   backup_window          = "03:00-04:00"
@@ -578,6 +700,8 @@ resource "aws_db_instance" "main" {
 
   skip_final_snapshot = true
   deletion_protection = false
+  
+
 
   tags = {
     Name        = "${var.app_name}-${var.environment}-db"

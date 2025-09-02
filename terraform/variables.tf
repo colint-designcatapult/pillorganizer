@@ -96,6 +96,15 @@ variable "health_check_path" {
   default     = "/health"
 }
 
+# External API Configuration
+variable "takecare_api_url" {
+  description = "TakeCare API URL"
+  type        = string
+  default     = "https://ca.takecareapi.com"
+}
+
+
+
 # Slack Configuration for AWS Chatbot
 variable "slack_channel_id" {
   description = "Slack channel ID for CloudWatch alerts (e.g., C1234567890)"
