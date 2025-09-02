@@ -246,8 +246,11 @@ jobs:
               echo "🔄 Creating new task definition with specific image tag..."
               
               # Get current task definition
+              TASK_DEF_NAME="cabinet-${{ env.ENVIRONMENT }}-task"
+              echo "📋 Getting task definition: $TASK_DEF_NAME"
+              
               CURRENT_TASK_DEF=$(aws ecs describe-task-definition \
-                --task-definition $SERVICE_NAME-task \
+                --task-definition $TASK_DEF_NAME \
                 --region ${{ env.AWS_REGION }} \
                 --query 'taskDefinition' \
                 --output json)
@@ -269,10 +272,11 @@ jobs:
               echo "📝 New task definition revision: $NEW_REVISION"
               
               # Update service to use new task definition
+              echo "🔄 Updating service to use new task definition: $TASK_DEF_NAME:$NEW_REVISION"
               aws ecs update-service \
                 --cluster $CLUSTER_NAME \
                 --service $SERVICE_NAME \
-                --task-definition "$SERVICE_NAME-task:$NEW_REVISION" \
+                --task-definition "$TASK_DEF_NAME:$NEW_REVISION" \
                 --region ${{ env.AWS_REGION }}
 
               echo "⏳ Waiting for deployment to complete..."
