@@ -65,6 +65,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }} # Checkout the branch that triggered this workflow
+          fetch-depth: 0 # Get full history for proper build context
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -93,6 +96,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }} # Checkout the branch that triggered this workflow
+          fetch-depth: 0 # Get full history for proper build context
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -237,11 +243,36 @@ jobs:
             if aws ecs describe-services --cluster $CLUSTER_NAME --services $SERVICE_NAME --region ${{ env.AWS_REGION }} | grep -q "ACTIVE"; then
               echo "✅ Found ECS service: $SERVICE_NAME"
               
-              echo "🔄 Forcing new deployment with latest container image..."
+              echo "🔄 Creating new task definition with specific image tag..."
+              
+              # Get current task definition
+              CURRENT_TASK_DEF=$(aws ecs describe-task-definition \
+                --task-definition $SERVICE_NAME-task \
+                --region ${{ env.AWS_REGION }} \
+                --query 'taskDefinition' \
+                --output json)
+              
+              # Update task definition with new image tag
+              NEW_TASK_DEF=$(echo $CURRENT_TASK_DEF | jq --arg IMAGE "${{ steps.ecr.outputs.repository_url }}:${{ env.IMAGE_TAG }}" '
+                .containerDefinitions[0].image = $IMAGE |
+                del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .placementConstraints, .compatibilities, .registeredAt, .registeredBy)
+              ')
+              
+              # Register new task definition
+              echo "🆕 Registering new task definition with image: ${{ steps.ecr.outputs.repository_url }}:${{ env.IMAGE_TAG }}"
+              NEW_REVISION=$(echo $NEW_TASK_DEF | aws ecs register-task-definition \
+                --region ${{ env.AWS_REGION }} \
+                --cli-input-json file:///dev/stdin \
+                --query 'taskDefinition.revision' \
+                --output text)
+              
+              echo "📝 New task definition revision: $NEW_REVISION"
+              
+              # Update service to use new task definition
               aws ecs update-service \
                 --cluster $CLUSTER_NAME \
                 --service $SERVICE_NAME \
-                --force-new-deployment \
+                --task-definition "$SERVICE_NAME-task:$NEW_REVISION" \
                 --region ${{ env.AWS_REGION }}
 
               echo "⏳ Waiting for deployment to complete..."
