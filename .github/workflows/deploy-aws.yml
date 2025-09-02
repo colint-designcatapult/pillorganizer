@@ -243,54 +243,21 @@ jobs:
             if aws ecs describe-services --cluster $CLUSTER_NAME --services $SERVICE_NAME --region ${{ env.AWS_REGION }} | grep -q "ACTIVE"; then
               echo "✅ Found ECS service: $SERVICE_NAME"
               
-              echo "🔄 Creating new task definition with specific image tag..."
+              echo "🔄 Forcing deployment with unique image tag..."
               
-              # Get current task definition
-              TASK_DEF_NAME="cabinet-${{ env.ENVIRONMENT }}-task"
-              echo "📋 Getting task definition: $TASK_DEF_NAME"
+              # Since we're using commit-specific tags, ECS will pull the new image
+              # The key is that we pushed the image with a unique tag: staging-{commit-sha}
+              echo "📦 Latest image: ${{ steps.ecr.outputs.repository_url }}:${{ env.IMAGE_TAG }}"
+              echo "🔄 Note: ECS task definition uses 'staging' tag, but we also pushed 'staging-{commit}' tag"
               
-              CURRENT_TASK_DEF=$(aws ecs describe-task-definition \
-                --task-definition $TASK_DEF_NAME \
-                --region ${{ env.AWS_REGION }} \
-                --query 'taskDefinition' \
-                --output json)
-              
-              # Update task definition with new image tag
-              echo "🔧 Updating image to: ${{ steps.ecr.outputs.repository_url }}:${{ env.IMAGE_TAG }}"
-              
-              NEW_TASK_DEF=$(echo $CURRENT_TASK_DEF | jq --arg IMAGE "${{ steps.ecr.outputs.repository_url }}:${{ env.IMAGE_TAG }}" '
-                .containerDefinitions[0].image = $IMAGE |
-                del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .placementConstraints, .compatibilities, .registeredAt, .registeredBy, .createdAt)
-              ')
-              
-              # Debug: Check if JSON is valid
-              if ! echo "$NEW_TASK_DEF" | jq empty 2>/dev/null; then
-                echo "❌ Generated JSON is invalid, debugging..."
-                echo "Original task def keys: $(echo $CURRENT_TASK_DEF | jq 'keys')"
-                echo "Generated task def: $NEW_TASK_DEF"
-                exit 1
-              fi
-              
-              # Save to temporary file for better error handling
-              echo "$NEW_TASK_DEF" > /tmp/new_task_def.json
-              
-              # Register new task definition
-              echo "🆕 Registering new task definition with image: ${{ steps.ecr.outputs.repository_url }}:${{ env.IMAGE_TAG }}"
-              NEW_REVISION=$(aws ecs register-task-definition \
-                --region ${{ env.AWS_REGION }} \
-                --cli-input-json file:///tmp/new_task_def.json \
-                --query 'taskDefinition.revision' \
-                --output text)
-              
-              echo "📝 New task definition revision: $NEW_REVISION"
-              
-              # Update service to use new task definition
-              echo "🔄 Updating service to use new task definition: $TASK_DEF_NAME:$NEW_REVISION"
+              # Force new deployment - ECS will pull latest 'staging' tag which now points to new image
               aws ecs update-service \
                 --cluster $CLUSTER_NAME \
                 --service $SERVICE_NAME \
-                --task-definition "$TASK_DEF_NAME:$NEW_REVISION" \
+                --force-new-deployment \
                 --region ${{ env.AWS_REGION }}
+              
+              echo "✅ Deployment initiated with force-new-deployment"
 
               echo "⏳ Waiting for deployment to complete..."
               aws ecs wait services-stable \
