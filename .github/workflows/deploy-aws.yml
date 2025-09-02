@@ -256,16 +256,29 @@ jobs:
                 --output json)
               
               # Update task definition with new image tag
+              echo "🔧 Updating image to: ${{ steps.ecr.outputs.repository_url }}:${{ env.IMAGE_TAG }}"
+              
               NEW_TASK_DEF=$(echo $CURRENT_TASK_DEF | jq --arg IMAGE "${{ steps.ecr.outputs.repository_url }}:${{ env.IMAGE_TAG }}" '
                 .containerDefinitions[0].image = $IMAGE |
-                del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .placementConstraints, .compatibilities, .registeredAt, .registeredBy)
+                del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .placementConstraints, .compatibilities, .registeredAt, .registeredBy, .createdAt)
               ')
+              
+              # Debug: Check if JSON is valid
+              if ! echo "$NEW_TASK_DEF" | jq empty 2>/dev/null; then
+                echo "❌ Generated JSON is invalid, debugging..."
+                echo "Original task def keys: $(echo $CURRENT_TASK_DEF | jq 'keys')"
+                echo "Generated task def: $NEW_TASK_DEF"
+                exit 1
+              fi
+              
+              # Save to temporary file for better error handling
+              echo "$NEW_TASK_DEF" > /tmp/new_task_def.json
               
               # Register new task definition
               echo "🆕 Registering new task definition with image: ${{ steps.ecr.outputs.repository_url }}:${{ env.IMAGE_TAG }}"
-              NEW_REVISION=$(echo $NEW_TASK_DEF | aws ecs register-task-definition \
+              NEW_REVISION=$(aws ecs register-task-definition \
                 --region ${{ env.AWS_REGION }} \
-                --cli-input-json file:///dev/stdin \
+                --cli-input-json file:///tmp/new_task_def.json \
                 --query 'taskDefinition.revision' \
                 --output text)
               
