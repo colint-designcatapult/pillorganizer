@@ -164,6 +164,7 @@ jobs:
           # Tag the Micronaut-generated image for ECR
           docker tag backend:latest ${{ steps.ecr.outputs.repository_url }}:${{ env.IMAGE_TAG }}
           docker tag backend:latest ${{ steps.ecr.outputs.repository_url }}:${{ env.ENVIRONMENT }}-latest
+          docker tag backend:latest ${{ steps.ecr.outputs.repository_url }}:${{ env.ENVIRONMENT }}  # ECS task definition expects this tag
 
           # Create ECR repository if it doesn't exist
           aws ecr describe-repositories --repository-names cabinet-${{ env.ENVIRONMENT }} --region ${{ env.AWS_REGION }} || \
@@ -172,6 +173,7 @@ jobs:
           # Push images
           docker push ${{ steps.ecr.outputs.repository_url }}:${{ env.IMAGE_TAG }}
           docker push ${{ steps.ecr.outputs.repository_url }}:${{ env.ENVIRONMENT }}-latest
+          docker push ${{ steps.ecr.outputs.repository_url }}:${{ env.ENVIRONMENT }}
 
       # Plan and apply Terraform
       - name: Terraform Plan
