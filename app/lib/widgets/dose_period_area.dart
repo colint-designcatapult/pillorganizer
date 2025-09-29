@@ -19,6 +19,8 @@ import '../../widgets/addNewPill/medication_card_entry.dart';
 import '../../widgets/device_icon.dart';
 import '../../widgets/medication_icon.dart';
 
+const int DELAY_TIME = 10;
+
 class DosePeriodArea extends StatelessWidget {
   const DosePeriodArea({super.key});
 
@@ -41,7 +43,10 @@ class DosePeriodArea extends StatelessWidget {
                     element.scheduledTime == null) {
                   return false;
                 }
-                return element.scheduledTime!.isAfter(now);
+                return element.scheduledTime
+                        ?.add(Duration(minutes: DELAY_TIME))
+                        .isAfter(now) ==
+                    true;
               } else {
                 return element.scheduledTime != null &&
                     element.medicationIDs.isNotEmpty;
@@ -50,6 +55,7 @@ class DosePeriodArea extends StatelessWidget {
             .toList()
             .reversed
             .toList();
+
         if (Provider.of<DeviceNoticeProvider>(context, listen: false).value !=
                 DeviceNotice.empty &&
             (dosePeriods == null || dosePeriods.isEmpty)) {
