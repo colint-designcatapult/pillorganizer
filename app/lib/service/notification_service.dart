@@ -12,19 +12,24 @@ class BackgroundNotificationTranslator {
     return prefs.getString(_languageKey) ?? 'fr';
   }
 
-  static String _translateKey(String key, String languageCode) {
+  static String _translateKey(
+      String key, String languageCode, String? pillBoxName) {
     final Map<String, Map<String, String>> translations = {
       'en': {
         'REMINDER_TITLE': 'Pill Organizer',
-        'REMINDER_BODY': 'It\'s time to take your pills!',
+        'REMINDER_BODY': 'It\'s time to take your pills for {pillBoxName}!',
       },
       'fr': {
         'REMINDER_TITLE': 'Pilulier',
-        'REMINDER_BODY': 'Il est temps de prendre vos pilules!',
+        'REMINDER_BODY':
+            'Il est temps de prendre vos pilules pour {pillBoxName}!',
       },
     };
 
-    return translations[languageCode]?[key] ?? key;
+    String translation = translations[languageCode]?[key] ?? key;
+    translation = translation.replaceAll('{pillBoxName}', pillBoxName ?? '');
+
+    return translation;
   }
 
   static Future<void> handleBackgroundMessage(RemoteMessage message) async {
@@ -32,6 +37,7 @@ class BackgroundNotificationTranslator {
 
     String? titleKey;
     String? bodyKey;
+    String? pillBoxName;
 
     if (message.data.containsKey('data')) {
       try {
@@ -40,6 +46,7 @@ class BackgroundNotificationTranslator {
 
         titleKey = parsedData['titleKey'];
         bodyKey = parsedData['bodyKey'];
+        pillBoxName = parsedData['pillBoxName'];
       } catch (e) {
         print("---Error parsing nested data: $e");
       }
@@ -49,8 +56,8 @@ class BackgroundNotificationTranslator {
       return;
     }
 
-    final translatedTitle = _translateKey(titleKey, languageCode);
-    final translatedBody = _translateKey(bodyKey, languageCode);
+    final translatedTitle = _translateKey(titleKey, languageCode, pillBoxName);
+    final translatedBody = _translateKey(bodyKey, languageCode, pillBoxName);
 
     // Initialize local notifications plugin
     FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =

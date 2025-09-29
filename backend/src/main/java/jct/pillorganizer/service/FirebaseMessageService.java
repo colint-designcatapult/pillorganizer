@@ -47,7 +47,7 @@ public class FirebaseMessageService {
 
         try {
             Message message = Message.builder()
-                    .putData("data", "{\"titleKey\":\"REMINDER_TITLE\",\"bodyKey\":\"REMINDER_BODY\"}")
+                    .putData("data", String.format("{\"titleKey\":\"REMINDER_TITLE\",\"bodyKey\":\"REMINDER_BODY\",\"pillBoxName\":\"%s\"}", details.deviceName()))
                     .setAndroidConfig(AndroidConfig.builder()
                             .setTtl(3600)
                             .build())
