@@ -66,7 +66,7 @@
 	"email": "Adresse courriel",
 	"emailChangedSuccess": "Le courriel a été changé avec succès",
 	"emailChangedIdentical": "Le nouveau courriel ne peut pas être le même que l'ancien",
-	"emailNotValid": "Pas une adresse courriel valide",
+	"emailNotValid": "Cette adresse courriel n'est pas valide",
 	"emailRequired": "Entrer une adresse courriel",
 	"enterRecoveryCode": "Entrez votre code de récupération à 6 chiffres :",
 	"errorPromptTryAgain": "Réessayer",

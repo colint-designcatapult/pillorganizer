@@ -9,6 +9,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:timezone/standalone.dart' as tz;
 
 import '../../api/device.dart';
 import '../../provider/device_notice_provider.dart';
@@ -344,18 +345,19 @@ class DosePeriodArea extends StatelessWidget {
 
   String _buildSubtitle(
       context, DosePeriod period, DeviceNoticeProvider deviceNoticeProv) {
-    final fm = DateFormat.jm();
     if (period.scheduledTime == null) {
       return "";
     }
-    String format = fm.format(period.scheduledTime!);
+    String format = _formatTimeInDeviceTimezone(context, period.scheduledTime);
 
     if (period.status == BinStatus.DISABLED ||
         deviceNoticeProv.value == DeviceNotice.empty) {
       return AppLocalizations.of(context)!.doseRefill;
     } else if (period.status == BinStatus.TAKEN) {
-      return AppLocalizations.of(context)!
-          .doseTakenAt(period.takenAtTime ?? fm.format(period.scheduledTime!));
+      final takenTime = period.takenAtTime != null
+          ? _formatTakenAtTime(context, period.takenAtTime)
+          : format;
+      return AppLocalizations.of(context)!.doseTakenAt(takenTime);
     } else if (period.status == BinStatus.TAKE_NOW) {
       return AppLocalizations.of(context)!.doseTakeNow;
     } else if (period.status == BinStatus.PENDING) {
@@ -367,11 +369,47 @@ class DosePeriodArea extends StatelessWidget {
     }
   }
 
+  String _formatTimeInDeviceTimezone(BuildContext context, DateTime? dateTime) {
+    if (dateTime == null) return "";
+
+    final selectedDevice =
+        Provider.of<SelectedDeviceProvider>(context, listen: false).device;
+    final deviceTimezone = selectedDevice?.timezone;
+    final appLocale = AppLocalizations.of(context)!.localeName;
+
+    if (deviceTimezone != null) {
+      final deviceTime = tz.TZDateTime.from(dateTime.toUtc(), deviceTimezone);
+      return DateFormat.jm(appLocale).format(deviceTime);
+    } else {
+      return DateFormat.jm(appLocale).format(dateTime);
+    }
+  }
+
+  String _formatTakenAtTime(BuildContext context, String? takenAtTimeString) {
+    if (takenAtTimeString == null || takenAtTimeString.isEmpty) return "";
+
+    try {
+      final appLocale = AppLocalizations.of(context)!.localeName;
+      final parts = takenAtTimeString.split(':');
+      if (parts.length == 2) {
+        final hour = int.parse(parts[0]);
+        final minute = int.parse(parts[1]);
+
+        final timeForFormatting = DateTime(2000, 1, 1, hour, minute);
+        return DateFormat.jm(appLocale).format(timeForFormatting);
+      }
+    } catch (e) {
+      print("Error parsing takenAtTime: $takenAtTimeString, error: $e");
+    }
+
+    return takenAtTimeString;
+  }
+
   String _buildTimeString(context, DosePeriod period) {
-    final fm = DateFormat.jm();
     if (period.scheduledTime != null) {
-      return AppLocalizations.of(context)!
-          .doseTodayAt(fm.format(period.scheduledTime!));
+      final formattedTime =
+          _formatTimeInDeviceTimezone(context, period.scheduledTime);
+      return AppLocalizations.of(context)!.doseTodayAt(formattedTime);
     } else {
       return AppLocalizations.of(context)!.genericToday;
     }
