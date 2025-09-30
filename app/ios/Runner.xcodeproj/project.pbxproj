@@ -401,7 +401,7 @@
 				DEVELOPMENT_TEAM = 4HXZK4QW3Z;
 				ENABLE_BITCODE = NO;
 				FLUTTER_BUILD_NAME = 1.9.0;
-				FLUTTER_BUILD_NUMBER = 84;
+				FLUTTER_BUILD_NUMBER = 86;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "CabiNET Pills";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
@@ -541,7 +541,7 @@
 				DEVELOPMENT_TEAM = 4HXZK4QW3Z;
 				ENABLE_BITCODE = NO;
 				FLUTTER_BUILD_NAME = 1.9.0;
-				FLUTTER_BUILD_NUMBER = 84;
+				FLUTTER_BUILD_NUMBER = 86;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "CabiNET Pills";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
@@ -575,7 +575,7 @@
 				DEVELOPMENT_TEAM = 4HXZK4QW3Z;
 				ENABLE_BITCODE = NO;
 				FLUTTER_BUILD_NAME = 1.9.0;
-				FLUTTER_BUILD_NUMBER = 84;
+				FLUTTER_BUILD_NUMBER = 86;
 				INFOPLIST_FILE = Runner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "CabiNET Pills";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
