@@ -3,8 +3,12 @@ package jct.pillorganizer.pills;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 import androidx.annotation.NonNull;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
@@ -19,6 +23,18 @@ public class MainActivity extends FlutterActivity {
         super.onCreate(savedInstanceState);
         /*AppCenter.start(getApplication(), "661eb334-20a8-46df-9f3a-5d800591650d",
                 Analytics.class, Crashes.class);*/
+
+        View rootView = findViewById(android.R.id.content);
+        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
+        Insets innerPadding = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+        rootView.setPadding(
+            innerPadding.left,
+            innerPadding.top,
+            innerPadding.right,
+            innerPadding.bottom
+        );
+        return insets;
+        });
     }
 
     @Override
