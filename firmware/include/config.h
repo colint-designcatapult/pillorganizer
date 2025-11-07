@@ -1,7 +1,7 @@
 #pragma once
 
 #ifndef FIRMWARE_REVISION
-#define FIRMWARE_REVISION       32
+#define FIRMWARE_REVISION       33
 #endif
 
 #ifndef FIRMWARE_BUILD          

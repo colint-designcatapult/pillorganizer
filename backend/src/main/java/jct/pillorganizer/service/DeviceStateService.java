@@ -98,7 +98,16 @@ public class DeviceStateService {
         long userId = deviceProvision.getUserID();
         DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, device.getId());
         
-        return wrapperOf(device, deviceUser);
+        // Always use the owner's state for sync (device state is owned by the device owner)
+        DeviceUser stateDeviceUser = deviceUser;
+        if (!deviceUser.isOwner()) {
+            Optional<DeviceUser> ownerOptional = deviceUserRepository.findByDeviceIDAndOwnerTrueAndDeletedFalse(device.getId());
+            if (ownerOptional.isPresent()) {
+                stateDeviceUser = ownerOptional.get();
+            }
+        }
+        
+        return wrapperOf(device, stateDeviceUser);
     }
 
     /**

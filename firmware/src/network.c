@@ -136,6 +136,26 @@ esp_err_t network_set_server_url(const uint8_t* pServerUrl, size_t len )
         err = nvs_write_blob(NVS_TAG_OTA_URL, &stCustomUrl, sizeof(stCustomUrl));
         return err; //return the status of the nvs write blob either OK or FAIL to let BT endpoint checking
     }
+    else if( searchPatterns(pServerUrl, (const uint8_t*)"staging.cabinet-app.ca") ) 
+    {
+        stCustomUrl.custom_url = true;
+        stCustomUrl.wLen = sizeof("staging.cabinet-app.ca");
+        memcpy(stCustomUrl.awBuf, "staging.cabinet-app.ca", stCustomUrl.wLen);
+        ESP_LOGI(TAG, "Copy Url:%s, len=%d\n", stCustomUrl.awBuf, stCustomUrl.wLen);
+        ESP_LOGI(TAG, "HERE");
+        err = nvs_write_blob(NVS_TAG_OTA_URL, &stCustomUrl, sizeof(stCustomUrl));
+        return err; //return the status of the nvs write blob either OK or FAIL to let BT endpoint checking
+    }
+    else if( searchPatterns(pServerUrl, (const uint8_t*)"cabinet-app.ca") ) 
+    {
+        stCustomUrl.custom_url = true;
+        stCustomUrl.wLen = sizeof("cabinet-app.ca");
+        memcpy(stCustomUrl.awBuf, "cabinet-app.ca", stCustomUrl.wLen);
+        ESP_LOGI(TAG, "Copy Url:%s, len=%d\n", stCustomUrl.awBuf, stCustomUrl.wLen);
+        ESP_LOGI(TAG, "HERE");
+        err = nvs_write_blob(NVS_TAG_OTA_URL, &stCustomUrl, sizeof(stCustomUrl));
+        return err; //return the status of the nvs write blob either OK or FAIL to let BT endpoint checking
+    }
     else
     {
         //force clear Url to make sure there is no url else beside the 2 known ones 
@@ -243,7 +263,7 @@ void network_build_base_config(esp_http_client_config_t* config, const char* pat
     config->keep_alive_enable = true;
     config->timeout_ms = 10000;
 // switch between server hosted on PC and the digital ocean one
-#if 1
+#if 1  // Changed to 0 to use local server for OTA development
     config->host                        = get_host_url();
     //config->host                      = //"cabinet-staging-a663e71fb1a6.herokuapp.com"; //t-b suggested
     config->port                        = 443;
@@ -252,7 +272,7 @@ void network_build_base_config(esp_http_client_config_t* config, const char* pat
     config->skip_cert_common_name_check = true;
 
 #else
-    config->host                        = "192.168.2.160";
+    config->host                        = "192.168.1.103";  // Updated to current local IP
     config->port                        = 8080;
     config->auth_type                   = HTTP_AUTH_TYPE_NONE;
     config->transport_type              = HTTP_TRANSPORT_OVER_TCP;

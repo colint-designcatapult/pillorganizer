@@ -3,7 +3,13 @@ package jct.pillorganizer.device;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.sql.Timestamp;
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -317,6 +323,10 @@ public class DeviceStateWrapper {
         } else {
             // Send the device the state that we have
             // if(device.getStateHash() != syncRequest.getStateHash()) {
+            
+            // Force reload state from database to ensure we don't send stale cached data
+            _stateList = null;
+            
             builder.setBinState(buildStateProtobuf());
             // }
         }
@@ -491,11 +501,24 @@ public class DeviceStateWrapper {
 
     /**
      * Synchronizes the device's state scheduled times with the device's schedule.
-     * Used, for example, if the schedule
-     * is changed in the middle of the week.
+     * Used, for example, if the schedule is changed in the middle of the week.
      */
     @Transactional
     public void rebuildStateSchedule() {
+        rebuildStateSchedule(false);
+    }
+
+    /**
+     * Synchronizes the device's state scheduled times with the device's schedule.
+     * 
+     * @param resetTakenBins if true, resets TAKEN bins to PENDING (for weekly reset).
+     *                       if false, preserves TAKEN bins (for mid-week schedule changes).
+     */
+    @Transactional
+    public void rebuildStateSchedule(boolean resetTakenBins) {
+        // Clear cache to ensure we're working with fresh data from the database
+        _stateList = null;
+        
         ZoneOffset tz = device.getTimeZone();
         LocalDate ld = LocalDate.now(tz);
         OffsetDateTime ldt = OffsetDateTime.now(tz);
@@ -521,13 +544,31 @@ public class DeviceStateWrapper {
             if (DayOfWeek.DISABLED.equals(schedule.getDayOfWeek())) {
                 // If this bin is scheduled to be disabled,
                 lazyUpdateBin(state, BinStatus.DISABLED, dispenseLDT.toEpochSecond(ZoneOffset.UTC));
-            } else if (BinStatus.TAKEN.equals(status)) {
-                // Never rebuild a taken bin
-            } else if (BinStatus.MISSED.equals(status) || BinStatus.PENDING.equals(status)
+            } else if (BinStatus.TAKEN.equals(status) && !resetTakenBins) {
+                // Don't rebuild a taken bin unless it's a weekly reset
+            } else if (resetTakenBins) {
+                // Weekly reset: reset all bins to PENDING with their new scheduled time
+                // regardless of current status or whether the time has passed
+                OffsetDateTime lateThresholdTime = dispenseTime.plusMinutes(10);
+                
+                // Determine the appropriate status based on the scheduled time
+                if (lateThresholdTime.isAfter(ldt)) {
+                    // Future dose - set to PENDING
+                    lazyUpdateBin(state, BinStatus.PENDING, dispenseLDT.toEpochSecond(ZoneOffset.UTC));
+                } else if (lateThresholdTime.isBefore(ldt) && dispenseTime.isAfter(ldt)) {
+                    // Within the take window - set to TAKE_NOW
+                    lazyUpdateBin(state, BinStatus.TAKE_NOW, dispenseLDT.toEpochSecond(ZoneOffset.UTC));
+                } else {
+                    // Past the window - set to DISABLED
+                    lazyUpdateBin(state, BinStatus.DISABLED, dispenseLDT.toEpochSecond(ZoneOffset.UTC));
+                }
+                
+                lazyUpdateBinDispenseTime(state, schedule.getDispenseTime());
+            } else if (BinStatus.MISSED.equals(status) || BinStatus.PENDING.equals(status) 
                     || BinStatus.TAKE_NOW.equals(status) || BinStatus.DISABLED.equals(status)) {
+                // Mid-week schedule change: only update non-TAKEN bins
                 OffsetDateTime lateThresholdTime = dispenseTime.plusMinutes(10);
 
-                // Only rebuild a missed dose if the scheduled time is today or after now
                 if (lateThresholdTime.isAfter(ldt)) {
                     lazyUpdateBin(state, BinStatus.PENDING, dispenseLDT.toEpochSecond(ZoneOffset.UTC));
                 } else if (lateThresholdTime.isBefore(ldt) && dispenseTime.isAfter(ldt)) {
@@ -538,7 +579,7 @@ public class DeviceStateWrapper {
                 lazyUpdateBinDispenseTime(state, schedule.getDispenseTime());
             }
         }
-
+        
     }
 
     /**

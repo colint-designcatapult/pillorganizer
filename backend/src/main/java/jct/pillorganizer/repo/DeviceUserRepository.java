@@ -25,6 +25,8 @@ public interface DeviceUserRepository extends CrudRepository<DeviceUser, Long> {
     int countByUserIDAndDeviceIDAndOwnerTrueAndDeletedFalse(long user, long device);
     
     Optional<DeviceUser> findByDeviceIDAndOwnerTrueAndDeletedFalse(long deviceID);
+    
+    java.util.List<DeviceUser> findByDeviceIDAndDeletedFalse(long deviceID);
 
     /*@Query(nativeQuery = true, readOnly = false, value = "INSERT INTO device_user (id, device_id, user_id, primary_user, owner)" +
             " VALUES (nextval('device_user_seq'), :user, :device, :primaryUser, :owner) ON CONFLICT (device_id, user_id) DO NOTHING")
