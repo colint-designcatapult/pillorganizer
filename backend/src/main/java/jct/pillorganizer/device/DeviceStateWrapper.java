@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -87,6 +86,15 @@ public class DeviceStateWrapper {
             state.setBinStatus(status);
             state.setScheduledTime(timestamp);
             stateRepository.update(state.getId(), state.getVersion(), timestamp, status);
+        }
+    }
+
+    private void lazyUpdateBinAndClearEvent(DeviceState state, BinStatus status, long timestamp) {
+        if (state.getScheduledTime() != timestamp || !status.equals(state.getBinStatus()) || state.getEvent() != null) {
+            state.setBinStatus(status);
+            state.setScheduledTime(timestamp);
+            state.setEvent(null);
+            stateRepository.updateAndClearEvent(state.getId(), state.getVersion(), timestamp, status);
         }
     }
 
@@ -331,19 +339,6 @@ public class DeviceStateWrapper {
             // }
         }
 
-        // Rebuild device schedule if all states are expired
-        ZoneOffset tz = device.getTimeZone();
-        ZonedDateTime startOfDay = LocalDate.now(tz).atStartOfDay(tz);
-        ZonedDateTime endOfDay = startOfDay.plusDays(1);
-        long epochEndOfDay = endOfDay.toEpochSecond();
-
-        List<DeviceState> deviceUserState = stateRepository.findByDeviceUser(deviceUser);
-        List<DeviceState> expiredDeviceUserState = deviceUserState.stream().filter(s -> s.getScheduledTime() < epochEndOfDay).toList();
-
-        if (!deviceUserState.isEmpty() && deviceUserState.size() == expiredDeviceUserState.size()) {
-            rebuildStateSchedule();
-        }
-
         builder.addAllSchedule(buildBinSchedule());
 
         deviceRepository.updateLastSyncAndIpv4AndIpv6AndBatteryAndChargingAndEngrData(
@@ -549,24 +544,30 @@ public class DeviceStateWrapper {
             } else if (resetTakenBins) {
                 // Weekly reset: reset all bins to PENDING with their new scheduled time
                 // regardless of current status or whether the time has passed
+                // Clear any associated events from the previous week
                 OffsetDateTime lateThresholdTime = dispenseTime.plusMinutes(10);
                 
                 // Determine the appropriate status based on the scheduled time
                 if (lateThresholdTime.isAfter(ldt)) {
                     // Future dose - set to PENDING
-                    lazyUpdateBin(state, BinStatus.PENDING, dispenseLDT.toEpochSecond(ZoneOffset.UTC));
+                    lazyUpdateBinAndClearEvent(state, BinStatus.PENDING, dispenseLDT.toEpochSecond(ZoneOffset.UTC));
                 } else if (lateThresholdTime.isBefore(ldt) && dispenseTime.isAfter(ldt)) {
                     // Within the take window - set to TAKE_NOW
-                    lazyUpdateBin(state, BinStatus.TAKE_NOW, dispenseLDT.toEpochSecond(ZoneOffset.UTC));
+                    lazyUpdateBinAndClearEvent(state, BinStatus.TAKE_NOW, dispenseLDT.toEpochSecond(ZoneOffset.UTC));
                 } else {
                     // Past the window - set to DISABLED
-                    lazyUpdateBin(state, BinStatus.DISABLED, dispenseLDT.toEpochSecond(ZoneOffset.UTC));
+                    lazyUpdateBinAndClearEvent(state, BinStatus.DISABLED, dispenseLDT.toEpochSecond(ZoneOffset.UTC));
                 }
                 
                 lazyUpdateBinDispenseTime(state, schedule.getDispenseTime());
-            } else if (BinStatus.MISSED.equals(status) || BinStatus.PENDING.equals(status) 
+            } else if (BinStatus.MISSED.equals(status)) {
+                // Don't rebuild a missed bin during mid-week schedule changes
+                // MISSED bins should only be reset during:
+                // 1. Weekly reset (handled above when resetTakenBins=true)
+                // 2. When the user opens the bin (handled in handleBinEvent)
+            } else if (BinStatus.PENDING.equals(status) 
                     || BinStatus.TAKE_NOW.equals(status) || BinStatus.DISABLED.equals(status)) {
-                // Mid-week schedule change: only update non-TAKEN bins
+                // Mid-week schedule change: only update non-TAKEN and non-MISSED bins
                 OffsetDateTime lateThresholdTime = dispenseTime.plusMinutes(10);
 
                 if (lateThresholdTime.isAfter(ldt)) {

@@ -20,7 +20,6 @@ import jakarta.inject.Singleton;
 import jct.pillorganizer.auth.DeviceAuthService;
 import jct.pillorganizer.device.DeviceStateWrapper;
 import jct.pillorganizer.dto.DosePeriodDTO;
-import jct.pillorganizer.model.EventType;
 import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.device.DeviceEvent;
 import jct.pillorganizer.model.device.DeviceProvision;
@@ -181,14 +180,12 @@ public class DeviceStateService {
                     .map(MedicationDispenseTime::getMedicationID)
                     .toList();
 
-            Optional<DeviceEvent> event = deviceEventRepository
-                    .findFirstByDeviceUserIdAndBinIdAndEventTypeClosedAndTsIsAfterOrderByTsAsc(
-                            deviceUser.getId(), state.getId().getBinID(), EventType.CLOSED,
-                            Instant.ofEpochSecond(startOfDay.toEpochSecond()));
             String takenAtTime = null;
-
-            if (event.isPresent()) {
-                DeviceEvent deviceEvent = event.get();
+            
+            // Use the associated event from the state if available
+            // This is the correct event that marked this bin as TAKEN
+            if (state.getEvent() != null) {
+                DeviceEvent deviceEvent = state.getEvent();
                 String formattedTime = convertInstantToString(deviceEvent.getTs(), device.getBaseTZ());
                 takenAtTime = formattedTime;
             }

@@ -1,13 +1,21 @@
 package jct.pillorganizer.repo;
 
-import io.micronaut.data.annotation.*;
-import io.micronaut.data.jpa.repository.JpaRepository;
-import jct.pillorganizer.dto.DeviceNotificationDetails;
-import jct.pillorganizer.model.device.*;
-import jct.pillorganizer.model.device.schedule.DeviceBaseDispenseTime;
+import java.util.List;
 
 import javax.persistence.OrderBy;
-import java.util.List;
+
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.Version;
+import io.micronaut.data.jpa.repository.JpaRepository;
+import jct.pillorganizer.dto.DeviceNotificationDetails;
+import jct.pillorganizer.model.device.BinStatus;
+import jct.pillorganizer.model.device.DeviceBinId;
+import jct.pillorganizer.model.device.DeviceEvent;
+import jct.pillorganizer.model.device.DeviceState;
+import jct.pillorganizer.model.device.DeviceUser;
+import jct.pillorganizer.model.device.schedule.DeviceBaseDispenseTime;
 
 @Repository
 public interface DeviceStateRepository extends JpaRepository<DeviceState, DeviceBinId> {
@@ -24,6 +32,9 @@ public interface DeviceStateRepository extends JpaRepository<DeviceState, Device
     void update(@Id DeviceBinId id, @Version Long version, BinStatus binStatus);
     void update(@Id DeviceBinId id, @Version Long version, BinStatus binStatus, DeviceEvent event);
     void update(@Id DeviceBinId id, @Version Long version, DeviceBaseDispenseTime dispenseTime);
+    
+    @Query("UPDATE device_state SET scheduledTime = :scheduledTime, binStatus = :binStatus, event = null WHERE id = :id AND version = :version")
+    void updateAndClearEvent(@Id DeviceBinId id, @Version Long version, long scheduledTime, BinStatus binStatus);
 
     @Query( value = "update device_state set scheduled_time = 0, assoc_event_id = null, bin_status = 0 where device_user_id = :deviceUser", nativeQuery = true)
     void updateResetState(long deviceUser);
