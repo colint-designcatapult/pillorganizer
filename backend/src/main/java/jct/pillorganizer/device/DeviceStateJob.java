@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.WeekFields;
 import java.util.List;
-import java.util.Locale;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.scheduling.annotation.Scheduled;
@@ -87,8 +86,9 @@ public class DeviceStateJob {
                 rebuildAllDeviceSchedules();
             }
         } else {
-            // Production mode: Use calendar weeks
-            WeekFields weekFields = WeekFields.of(Locale.getDefault());
+            // Production mode: Use ISO calendar weeks (Monday = start of week)
+            // This ensures the reset triggers at midnight between Sunday and Monday
+            WeekFields weekFields = WeekFields.ISO;
             int weekOfYear = now.get(weekFields.weekOfYear());
             int year = now.getYear();
 
