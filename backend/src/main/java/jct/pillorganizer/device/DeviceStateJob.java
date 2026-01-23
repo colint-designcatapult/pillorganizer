@@ -19,7 +19,7 @@ import jct.pillorganizer.repo.DeviceRepository;
 import jct.pillorganizer.repo.DeviceStateRepository;
 import jct.pillorganizer.repo.DeviceUserRepository;
 import jct.pillorganizer.service.DeviceStateService;
-import jct.pillorganizer.service.FirebaseMessageService;
+import jct.pillorganizer.service.MobileNotificationService;
 import lombok.extern.flogger.Flogger;
 
 /**
@@ -35,7 +35,7 @@ public class DeviceStateJob {
     DeviceStateRepository stateRepository;
 
     @Inject
-    FirebaseMessageService messageService;
+    MobileNotificationService mobileNotificationService;
 
     @Inject
     DeviceRepository deviceRepository;
@@ -97,9 +97,9 @@ public class DeviceStateJob {
 
         // Normal state transitions
         stateRepository.updateBinStateFromTime(4, 3, nowUtc.toEpochSecond(ZoneOffset.UTC))
-                .forEach(messageService::sendPillReminderNotification);
+                .forEach(mobileNotificationService::sendPillReminderNotification);
         stateRepository.updateBinStateFromTime(2, 4, nowUtc.minusMinutes(10).toEpochSecond(ZoneOffset.UTC))
-                .forEach(messageService::sendPillReminderNotification);
+                .forEach(mobileNotificationService::sendPillReminderNotification);
     }
 
     /**

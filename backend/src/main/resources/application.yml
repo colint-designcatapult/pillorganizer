@@ -1,6 +1,6 @@
 micronaut:
   server:
-    port: ${PORT}
+    port: ${PORT:8080}
   application:
     name: backend
   security:

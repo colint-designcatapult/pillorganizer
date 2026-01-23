@@ -22,14 +22,16 @@ import reactor.core.publisher.Mono;
 @Flogger
 public class TakecareService {
 
-    @Inject
-    TakecareClient takecareClient;
+    private TakecareClient takecareClient;
+    protected UserRepository userRepository;
+    protected AuthService authService;
 
     @Inject
-    UserRepository userRepository;
-
-    @Inject
-    AuthService authService;
+    public TakecareService(TakecareClient takecareClient, UserRepository userRepository, AuthService authService) {
+        this.takecareClient = takecareClient;
+        this.userRepository = userRepository;
+        this.authService = authService;
+    }
 
     /**
      * Validates and links a Takecare patient to the current user with form validation
@@ -129,7 +131,7 @@ public class TakecareService {
                 });
     }
 
-    private Mono<Void> storePatientIdInUser(long userID, String patientID) {
+    protected Mono<Void> storePatientIdInUser(long userID, String patientID) {
         return userRepository.updateTakecarePatientIdById(patientID, userID)
                 .flatMap(updatedCount -> {
                     if (updatedCount == 0) {
