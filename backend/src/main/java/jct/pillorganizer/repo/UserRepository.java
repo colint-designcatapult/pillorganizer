@@ -1,6 +1,6 @@
 package jct.pillorganizer.repo;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;

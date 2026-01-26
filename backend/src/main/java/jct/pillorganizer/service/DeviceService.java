@@ -1,6 +1,6 @@
 package jct.pillorganizer.service;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

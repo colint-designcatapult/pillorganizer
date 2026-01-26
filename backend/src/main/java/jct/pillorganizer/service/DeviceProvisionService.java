@@ -6,13 +6,12 @@ import java.util.HexFormat;
 import java.util.Objects;
 import java.util.Optional;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.auth.AuthService;
 import jct.pillorganizer.auth.DeviceAuthService;
-import jct.pillorganizer.device.DeviceStateWrapper;
 import jct.pillorganizer.exceptions.AccessForbiddenException;
 import jct.pillorganizer.exceptions.DeviceProvisionExpiredException;
 import jct.pillorganizer.exceptions.DeviceProvisionNotFoundException;
@@ -21,7 +20,6 @@ import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.device.DeviceClass;
 import jct.pillorganizer.model.device.DeviceProvision;
 import jct.pillorganizer.model.device.DeviceUser;
-import jct.pillorganizer.proto.Pill;
 import jct.pillorganizer.repo.DeviceProvisionRepository;
 import jct.pillorganizer.repo.DeviceRepository;
 import jct.pillorganizer.repo.DeviceUserRepository;
@@ -46,8 +44,6 @@ public class DeviceProvisionService {
     @Inject
     DeviceAuthService deviceAuthService;
 
-    @Inject
-    DeviceStateService deviceStateService;
 
     @Inject
     AuthService authService;
@@ -156,45 +152,4 @@ public class DeviceProvisionService {
         throw new SsidMismatchException("SSID does not match");
     }
 
-    /**
-     * Finish provisioning, indicating that the device has successfully connected to
-     * WiFi (thus, this is called from
-     * the device itself).
-     * 
-     * @param req protobuf structure with information about provisioning
-     * @return device sync response
-     */
-    @Transactional
-    public Pill.SyncResponse completeProvisioning(Pill.DeviceProvisionRequest req) {
-        Device device = deviceAuthService.getDevice();
-        DeviceProvision provision = device.getCurrentProvision();
-        long userId = provision.getUserID();
-
-        // Update timezone
-        deviceRepository.updateBaseTZById(device.getId(), provision.getTimezone());
-
-        // Update provision record with SSID/BSSID
-        byte[] bssid = req.getBssid().toByteArray();
-        String bssidHex = HexFormat.of().formatHex(bssid);
-        deviceProvisionRepository.update(provision.getId(), provision.getVersion(), bssidHex, req.getSsid());
-
-        // Add user to device
-        deviceUserService.addUserToDevice(userId, device.getId(), true, false);
-
-        log.atInfo().log("Provisioned device %d with SSID %s on timezone %s", device.getId(), req.getSsid(),
-                device.getBaseTZ());
-
-        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, device.getId());
-
-        // Initialize the device state
-        DeviceStateWrapper wrapper = deviceStateService.wrapperOf(device, deviceUser);
-        wrapper.initialize(null);
-
-        // Respond with sync so the pill organizer has the latest data
-        return Pill.SyncResponse.newBuilder()
-                .setBinState(wrapper.buildStateProtobuf())
-                .addAllSchedule(wrapper.buildBinSchedule())
-                .setLatestFirmware(firmwareService.getLatestVersion())
-                .build();
-    }
 }

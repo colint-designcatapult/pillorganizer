@@ -6,7 +6,7 @@ import jct.pillorganizer.model.EventType;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.Instant;
 
 /**

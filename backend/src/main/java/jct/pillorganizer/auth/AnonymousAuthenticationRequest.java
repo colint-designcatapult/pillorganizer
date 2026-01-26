@@ -11,7 +11,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 @Serdeable.Deserializable
 @Serdeable.Serializable
-public class AnonymousAuthenticationRequest implements AuthenticationRequest<Long, String> {
+public class AnonymousAuthenticationRequest implements AuthenticationRequest<String, String> {
 
     @JsonProperty("id")
     private final long id;
@@ -20,8 +20,8 @@ public class AnonymousAuthenticationRequest implements AuthenticationRequest<Lon
 
     @Override
     @JsonProperty("id")
-    public Long getIdentity() {
-        return id;
+    public String getIdentity() {
+        return Long.toString(id);
     }
 
     @Override

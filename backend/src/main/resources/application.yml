@@ -5,6 +5,8 @@ micronaut:
     name: backend
   security:
     authentication: bearer
+    basic-auth:
+      enabled: false
     redirect:
       enabled: false
       forbidden:

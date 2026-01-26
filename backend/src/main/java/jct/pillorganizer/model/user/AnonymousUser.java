@@ -6,9 +6,9 @@ import jct.pillorganizer.serde.HexEncodeSerde;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 
 /**
  * An `AnonymousUser` is a user who has not formally registered for an account but still needs to be associated with

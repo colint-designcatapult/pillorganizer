@@ -8,7 +8,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

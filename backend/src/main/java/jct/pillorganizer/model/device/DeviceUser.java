@@ -6,7 +6,7 @@ import jct.pillorganizer.model.device.schedule.DeviceBaseScheduleStrategy;
 import jct.pillorganizer.model.user.BaseUser;
 import lombok.Getter;
 import lombok.Setter;
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.List;
 import java.util.Set;
 import io.micronaut.data.annotation.DateCreated;

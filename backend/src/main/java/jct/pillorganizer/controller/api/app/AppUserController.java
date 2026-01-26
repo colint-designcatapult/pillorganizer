@@ -19,7 +19,7 @@ import jct.pillorganizer.repo.UserRepository;
 import org.zalando.problem.Problem;
 import reactor.core.publisher.Mono;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 

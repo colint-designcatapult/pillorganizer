@@ -5,9 +5,9 @@ import io.micronaut.serde.annotation.Serdeable;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 
 /**
  * A standard user account with an email/password combo. Users of this type are intended to be humans who explicitly

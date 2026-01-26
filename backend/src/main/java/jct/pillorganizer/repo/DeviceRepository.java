@@ -4,7 +4,7 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;

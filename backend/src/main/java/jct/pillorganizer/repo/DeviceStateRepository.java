@@ -2,7 +2,7 @@ package jct.pillorganizer.repo;
 
 import java.util.List;
 
-import javax.persistence.OrderBy;
+import jakarta.persistence.OrderBy;
 
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
