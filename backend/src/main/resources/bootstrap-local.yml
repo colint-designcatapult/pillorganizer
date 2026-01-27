@@ -1,0 +1,6 @@
+aws:
+  access-key-id: test
+  secret-key: test
+  services:
+    secretsmanager:
+      endpoint-override: http://localhost:4566

@@ -152,6 +152,15 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>io.micronaut.aws</groupId>
+      <artifactId>micronaut-aws-sdk-v2</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micronaut.aws</groupId>
+      <artifactId>micronaut-aws-secretsmanager</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
       <scope>test</scope>
