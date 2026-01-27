@@ -11,7 +11,6 @@ DB_SECRET_JSON=$(cat <<EOF
   "engine": "postgres",
   "host": "localhost",
   "port": 5432,
-  "dbname": "cabinet",
   "dbInstanceIdentifier": "local-db"
 }
 EOF
