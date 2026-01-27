@@ -1,0 +1,28 @@
+{
+  "staging": {
+    "account": "114829892869",
+    "region": "ca-central-1",
+    "removalPolicy": "DESTROY",
+    "autoDeleteObjects": true,
+    "tags": {
+      "Environment": "Staging"
+    }
+  },
+  "prod": {
+    "account": "114829892869",
+    "region": "ca-central-1",
+    "removalPolicy": "RETAIN",
+    "autoDeleteObjects": false,
+    "tags": {
+      "Environment": "Production"
+    }
+  },
+  "acknowledged-issue-numbers": [
+    34892
+  ],
+  "availability-zones:account=114829892869:region=ca-central-1": [
+    "ca-central-1a",
+    "ca-central-1b",
+    "ca-central-1d"
+  ]
+}
