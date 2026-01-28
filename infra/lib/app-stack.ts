@@ -6,6 +6,7 @@ import * as ecsPatterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 
 interface AppStackProps extends cdk.StackProps {
@@ -14,63 +15,84 @@ interface AppStackProps extends cdk.StackProps {
   ecsCluster: ecs.Cluster;
   dbCluster: rds.DatabaseCluster;
   removalPolicy: cdk.RemovalPolicy;
+  environmentName: string;
 }
 
-/* This stack is configures persistent data stores. */
+/* This stack configures the actual application. */
 export class AppStack extends cdk.Stack {
   public readonly apiService: ecs.Cluster;
 
   constructor(scope: Construct, id: string, props: AppStackProps) {
     super(scope, id, props);
 
-    const apiService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, "ApiService", {
-      cluster: props.ecsCluster,
-      cpu: 256, // .25 vCPU
-      memoryLimitMiB: 512, // 512MB RAM
-      desiredCount: 1, // How many containers to run
-      circuitBreaker: {
-        rollback: true,
-        enable: true
-      },
-      taskImageOptions: {
-        // Use the image from the existing ECR repository
-        // 'latest' is the default tag, change it if you need a specific version
-        image: ecs.ContainerImage.fromEcrRepository(props.ecr, 'latest'), 
-        containerPort: 8080, // The port your container listens on
+    // -- Logging --
+
+    const logGroup = new logs.LogGroup(this, 'AppLogGroup', {
+      logGroupName: `/ecs/pillorganizer-${props.environmentName}`, 
+      retention: logs.RetentionDays.ONE_WEEK, // todo: change in prod
+      removalPolicy: props.removalPolicy 
+    });
+
+    // -- API Container & Service --
+
+    const apiTaskDef = new ecs.FargateTaskDefinition(this, 'ApiTaskDef', {
+      memoryLimitMiB: 512,
+      cpu: 256,
+    });
+
+    const apiContainer = apiTaskDef.addContainer('ApiContainer', {
+        image: ecs.ContainerImage.fromEcrRepository(props.ecr, 'latest'),
+        logging: ecs.LogDrivers.awsLogs({
+          streamPrefix: 'api',
+          logGroup
+        }),
+        portMappings: [{ containerPort: 8080 }],
         environment: {
           DB_HOST: props.dbCluster.clusterEndpoint.hostname,
           DB_PORT: props.dbCluster.clusterEndpoint.port.toString(),
           DB_NAME: 'pillorganizer'
-        }
-      },
-      healthCheck: {
-        command: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"],
-      },
-      publicLoadBalancer: true, 
-      minHealthyPercent: 0 // todo: change in prod
+        },
+        healthCheck: {
+          command: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"],
+        },
     });
 
+    const apiService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, "ApiService", {
+      cluster: props.ecsCluster,
+      taskDefinition: apiTaskDef,
+      desiredCount: 1,
+      circuitBreaker: { rollback: true },
+      publicLoadBalancer: true,
+      minHealthyPercent: 0 // todo: change in production
+    });
+
+    // -- IAM --
+
     // Grant service ability to fetch DB secrets
-    props.dbCluster.secret?.grantRead(apiService.taskDefinition.taskRole);
+    props.dbCluster.secret?.grantRead(apiTaskDef.taskRole);
 
     // Micronaut must be able to list secrets
     // This isn't a security risk because listing doesn't imply access
-    apiService.taskDefinition.taskRole.addToPrincipalPolicy(new iam.PolicyStatement({
+    apiTaskDef.addToTaskRolePolicy(new iam.PolicyStatement({
       actions: ['secretsmanager:ListSecrets'],
       resources: ['*'], 
     }));
 
-    // Ensure ECS service has access to Aurora
-    const appSg = apiService.service.connections.securityGroups[0];
-    const dbSg = props.dbCluster.connections.securityGroups[0];    
+    // -- Networking --
 
+    // Allow access to Aurora from our container. Workaround for circular dependencies.
+    // Done this way so the security can be defined in AppStack
+    const appSg = apiService.service.connections.securityGroups[0];
+    const dbSg = props.dbCluster.connections.securityGroups[0];
     new ec2.CfnSecurityGroupIngress(this, 'DbIngressRule', {
-      groupId: dbSg.securityGroupId,            // The Target (DB Security Group ID)
+      groupId: dbSg.securityGroupId,
       ipProtocol: 'tcp',
       fromPort: 5432,
       toPort: 5432,
-      sourceSecurityGroupId: appSg.securityGroupId // The Source (App Security Group ID)
+      sourceSecurityGroupId: appSg.securityGroupId 
     });
+
+    // -- ALB --
 
     // Configure the ALB Target Group Health Check to use Micronaut Management /health endpoint
     apiService.targetGroup.configureHealthCheck({

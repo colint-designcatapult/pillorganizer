@@ -44,7 +44,8 @@ const appStack = new AppStack(app, `HealtheAppStack-${envKey}`, {
   ecsCluster: platformStack.backendEcsCluster,
   dbCluster: dataStack.dbCluster,
   vpc: platformStack.vpc,
-  removalPolicy: removalPolicy
+  removalPolicy: removalPolicy,
+  environmentName: envKey
 });
 
 // Apply global tags
