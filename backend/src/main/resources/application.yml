@@ -60,7 +60,7 @@ micronaut:
         paths: classpath:help
 datasources:
   default:
-    url: jdbc:postgresql://${datasources.default.host}:${datasources.default.port}/pillorganizer
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:pillorganizer}
     driverClassName: org.postgresql.Driver
     schema-generate: NONE
 jpa.default.properties.hibernate:

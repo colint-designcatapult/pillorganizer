@@ -8,10 +8,6 @@ DB_SECRET_JSON=$(cat <<EOF
 {
   "username": "postgres",
   "password": "root",
-  "engine": "postgres",
-  "host": "localhost",
-  "port": 5432,
-  "dbInstanceIdentifier": "local-db"
 }
 EOF
 )
