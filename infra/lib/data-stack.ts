@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib/core';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as rds from 'aws-cdk-lib/aws-rds';
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { Construct } from 'constructs';
 
 interface DataStackProps extends cdk.StackProps {
@@ -15,9 +16,13 @@ export class DataStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: DataStackProps) {
     super(scope, id, props);
 
-    const creds = rds.Credentials.fromUsername('postgres', {
-      secretName: '/config/pillorganizer-backend/database', 
-      excludeCharacters: ' %+~`#$&*()|[]{}:;<>?!@',
+    const dbSecret = new secretsmanager.Secret(this, 'DbSecret', {
+      secretName: '/config/pillorganizer-backend/database',
+      generateSecretString: {
+        secretStringTemplate: JSON.stringify({ username: 'postgres' }),
+        generateStringKey: 'password',
+        excludeCharacters: ' %+~`#$&*()|[]{}:;<>?!@/"\'\\',
+      },
     });
 
     // todo: change parameters for production
@@ -31,12 +36,8 @@ export class DataStack extends cdk.Stack {
       vpc: props.vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       removalPolicy: props.removalPolicy,
-      credentials: creds,
-    });
-
-    // Forces AWS to populate 'host' and 'port' fields into the secret
-    this.dbCluster.addRotationSingleUser({
-        automaticallyAfter: cdk.Duration.days(30),
+      defaultDatabaseName: "pillorganizer",
+      credentials: rds.Credentials.fromSecret(dbSecret),
     });
   }
 }

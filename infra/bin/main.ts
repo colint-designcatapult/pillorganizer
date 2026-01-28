@@ -2,6 +2,7 @@
 import * as cdk from 'aws-cdk-lib/core';
 import { PlatformStack } from '../lib/platform-stack';
 import { DataStack } from '../lib/data-stack';
+import { AppStack } from '../lib/app-stack';
 
 const app = new cdk.App();
 
@@ -35,6 +36,15 @@ const dataStack = new DataStack(app, `HealtheDataStack-${envKey}`, {
   env,
   vpc: platformStack.vpc,
   removalPolicy: removalPolicy,
+});
+
+const appStack = new AppStack(app, `HealtheAppStack-${envKey}`, {
+  env,
+  ecr: platformStack.backendContainer,
+  ecsCluster: platformStack.backendEcsCluster,
+  dbCluster: dataStack.dbCluster,
+  vpc: platformStack.vpc,
+  removalPolicy: removalPolicy
 });
 
 // Apply global tags
