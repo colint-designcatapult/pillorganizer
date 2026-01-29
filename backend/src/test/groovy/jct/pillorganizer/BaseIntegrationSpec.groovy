@@ -14,6 +14,13 @@ import spock.lang.Specification;
 @MicronautTest
 class BaseIntegrationSpec extends Specification implements TestPropertyProvider {
 
+    static String getInitScriptPath() {
+        def file = new File("init-aws.sh")
+        if (!file.exists())
+            throw new FileNotFoundException("Could not find init-aws.sh script")
+        return file.absolutePath
+    }
+
     @Shared
     static PostgreSQLContainer postgres = new PostgreSQLContainer<>("postgres:17.7")
             .withDatabaseName("pillorganizer")
@@ -23,9 +30,13 @@ class BaseIntegrationSpec extends Specification implements TestPropertyProvider 
 
     @Shared
     static LocalStackContainer localstack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:latest"))
-            .withEnv("SERVICES", "sqs,iot,secretsmanager")
+            .withEnv([
+                    "DEFAULT_REGION": "ca-central-1",
+                    "SERVICES": "sqs,iot,secretsmanager",
+                    "ENVIRONMENT_KEY": "test"
+            ])
             .withCopyFileToContainer(
-                    MountableFile.forHostPath("init-aws.sh"),
+                    MountableFile.forHostPath(getInitScriptPath(), 0777),
                     "/etc/localstack/init/ready.d/init-aws.sh"
             )
             .withReuse(true)
@@ -38,8 +49,6 @@ class BaseIntegrationSpec extends Specification implements TestPropertyProvider 
         return [
                 // Postgres Config
                 "datasources.default.url": postgres.getJdbcUrl(),
-                "datasources.default.username": postgres.getUsername(),
-                "datasources.default.password": postgres.getPassword(),
 
                 // AWS Config
                 "aws.region": localstack.getRegion(),
