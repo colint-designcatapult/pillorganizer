@@ -14,7 +14,6 @@ on:
       - '.github/workflows/backend.yml'
       - 'backend/**'
 
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 permissions:
@@ -41,6 +40,12 @@ jobs:
           MAVEN_OPTS: "-Xmx1024m"
         run: mvn --batch-mode --update-snapshots clean compile test
 
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    needs: compile-and-test
+    outputs:
+      image: ${{ steps.build-image.outputs.image }}
+    steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -67,6 +72,20 @@ jobs:
             -Djib.to.auth.username=AWS \
             -Djib.to.auth.password=${{ steps.login-ecr.outputs.docker_password }}
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+  
+  deploy-ecs:
+    runs-on: ubuntu-latest
+    needs: build-and-push-image
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::114829892869:role/GitHubActionDeployRole
+          aws-region: ca-central-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Fetch Infrastructure Config
         id: fetch-config
@@ -103,7 +122,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: ${{ steps.fetch-config.outputs.container_name }}
-          image: ${{ steps.build-image.outputs.image }}
+          image: ${{ needs.build-and-push-image.outputs.image }}
 
       - name: Deploy to Amazon ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
