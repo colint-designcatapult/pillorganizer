@@ -63,7 +63,7 @@ export class PlatformStack extends cdk.Stack {
 
     githubRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonEC2ContainerRegistryPowerUser'));
     githubRole.addToPolicy(new iam.PolicyStatement({
-        actions: ['ecs:UpdateService', 'ecs:DescribeServices', 'ecs:RegisterTaskDefinition', 'ssm:GetParameter', 'iam:PassRole'],
+        actions: ['ecs:UpdateService', 'ecs:DescribeServices', 'ecs:RegisterTaskDefinition', 'ssm:GetParameter', 'iam:PassRole', 'ecs:DescribeTaskDefinition', 'ecs:DescribeTasks'],
         resources: ['*']
     }));
   }
