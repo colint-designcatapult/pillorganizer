@@ -95,11 +95,18 @@ jobs:
             
           aws ecs describe-task-definition --task-definition $TASK_DEF_ARN --query taskDefinition > task-definition.json
 
-      - name: Deploy to Amazon ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      - name: Render New Task Definition
+        id: render-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
+          container-name: ${{ steps.fetch-config.outputs.container_name }}
+          image: ${{ steps.fetch-config.outputs.container_name }}:${{ steps.build-image.outputs.image }}
+
+      - name: Deploy to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-task-def.outputs.task-definition }}
           service: ${{ steps.fetch-config.outputs.service_name }}
           cluster: ${{ steps.fetch-config.outputs.cluster_name }}
-          image: ${{ steps.fetch-config.outputs.container_name }}:${{ steps.build-image.outputs.image }}
           wait-for-service-stability: true
