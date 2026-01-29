@@ -7,6 +7,7 @@ import * as rds from 'aws-cdk-lib/aws-rds';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { Construct } from 'constructs';
 
 interface AppStackProps extends cdk.StackProps {
@@ -38,6 +39,7 @@ export class AppStack extends cdk.Stack {
     const apiTaskDef = new ecs.FargateTaskDefinition(this, 'ApiTaskDef', {
       memoryLimitMiB: 512,
       cpu: 256,
+
     });
 
     const apiContainer = apiTaskDef.addContainer('ApiContainer', {
@@ -112,5 +114,23 @@ export class AppStack extends cdk.Stack {
         messageBody: 'Access Denied',
       }),
     });
+
+    // -- Output names to SSM for CI/CD --
+
+    new ssm.StringParameter(this, 'ParamClusterName', {
+      parameterName: `/pillorganizer/${props.environmentName}/backend/cluster-name`,
+      stringValue: props.ecsCluster.clusterName,
+    });
+
+    new ssm.StringParameter(this, 'ParamServiceName', {
+      parameterName: `/pillorganizer/${props.environmentName}/backend/service-name`,
+      stringValue: apiService.service.serviceName,
+    });
+
+    new ssm.StringParameter(this, 'ParamContainerName', {
+      parameterName: `/pillorganizer/${props.environmentName}/backend/container-name`,
+      stringValue: apiContainer.containerName,
+    });
+
   }
 }
