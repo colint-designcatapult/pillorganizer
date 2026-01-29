@@ -7,7 +7,7 @@ export AWS_DEFAULT_REGION=ca-central-1
 DB_SECRET_JSON=$(cat <<EOF
 {
   "username": "postgres",
-  "password": "root",
+  "password": "root"
 }
 EOF
 )
