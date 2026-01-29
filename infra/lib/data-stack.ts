@@ -7,6 +7,7 @@ import { Construct } from 'constructs';
 interface DataStackProps extends cdk.StackProps {
   vpc: ec2.Vpc;
   removalPolicy: cdk.RemovalPolicy;
+  environmentName: string;
 }
 
 /* This stack is configures persistent data stores. */
@@ -17,7 +18,9 @@ export class DataStack extends cdk.Stack {
     super(scope, id, props);
 
     const dbSecret = new secretsmanager.Secret(this, 'DbSecret', {
-      secretName: '/config/pillorganizer-backend/database',
+      // Name must match what Micronaut expects, see:
+      // https://micronaut-projects.github.io/micronaut-aws/latest/guide/#distributedconfigurationsecretsmanager
+      secretName: `/config/pillorganizer-backend_${props.environmentName}/database`,
       generateSecretString: {
         secretStringTemplate: JSON.stringify({ username: 'postgres' }),
         generateStringKey: 'password',

@@ -26,16 +26,15 @@ const removalPolicy = envConfig.removalPolicy === 'DESTROY'
 // Build standard env object based on config
 const env = { account: envConfig.account, region: envConfig.region };
 
-const platformStack = new PlatformStack(app, `HealthePlatformStack-${envKey}`, {
-  env,
-  removalPolicy: removalPolicy,
-  autoDeleteObjects: envConfig.autoDeleteObjects,
+const platformStack = new PlatformStack(app, `HealthePlatformStack`, {
+  env
 });
 
 const dataStack = new DataStack(app, `HealtheDataStack-${envKey}`, {
   env,
   vpc: platformStack.vpc,
   removalPolicy: removalPolicy,
+  environmentName: envKey,
 });
 
 const appStack = new AppStack(app, `HealtheAppStack-${envKey}`, {

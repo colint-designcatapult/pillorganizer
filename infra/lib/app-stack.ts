@@ -37,19 +37,20 @@ export class AppStack extends cdk.Stack {
     // -- API Container & Service --
 
     const apiTaskDef = new ecs.FargateTaskDefinition(this, 'ApiTaskDef', {
-      memoryLimitMiB: 512,
-      cpu: 256,
+      memoryLimitMiB: 1024,
+      cpu: 512,
 
     });
 
     const apiContainer = apiTaskDef.addContainer('ApiContainer', {
-        image: ecs.ContainerImage.fromEcrRepository(props.ecr, 'latest'),
+        image: ecs.ContainerImage.fromEcrRepository(props.ecr, props.environmentName),
         logging: ecs.LogDrivers.awsLogs({
           streamPrefix: 'api',
           logGroup
         }),
         portMappings: [{ containerPort: 8080 }],
         environment: {
+          MICRONAUT_ENVIRONMENTS: `${props.environmentName}`,
           DB_HOST: props.dbCluster.clusterEndpoint.hostname,
           DB_PORT: props.dbCluster.clusterEndpoint.port.toString(),
           DB_NAME: 'pillorganizer'

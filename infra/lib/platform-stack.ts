@@ -6,8 +6,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 
 interface PlatformStackProps extends cdk.StackProps {
-  removalPolicy: cdk.RemovalPolicy;
-  autoDeleteObjects: boolean;
+
 }
 
 /* This stack is configures base AWS resources, and should only be for things 
@@ -32,8 +31,8 @@ export class PlatformStack extends cdk.Stack {
     // Create container repository
     this.backendContainer = new ecr.Repository(this, 'BackendRepository', {
       repositoryName: 'pillorganizer-backend',
-      removalPolicy: props.removalPolicy,
-      emptyOnDelete: props.autoDeleteObjects
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      emptyOnDelete: false
     });
 
     // Create backend ECS cluster

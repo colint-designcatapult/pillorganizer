@@ -59,9 +59,11 @@ jobs:
           ECR_REPOSITORY: pillorganizer-backend
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          # todo: change this for prod/staging
+          ENV="staging"
           mvn --batch-mode jib:build \
             -Djib.to.image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
-            -Djib.to.tags=latest \
+            -Djib.to.tags=latest,$ENV \
             -Djib.to.auth.username=AWS \
             -Djib.to.auth.password=${{ steps.login-ecr.outputs.docker_password }}
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
