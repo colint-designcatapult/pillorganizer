@@ -118,6 +118,10 @@ export class AppStack extends cdk.Stack {
 
     // -- Output names to SSM for CI/CD --
 
+    // These values are stored in AWS SSM Parameter Store so that our CI/CD
+    // pipeline knows where to deploy the backend to. Changes to these must
+    // be reflected in the backend.yml GitHub Actions workflow.
+
     new ssm.StringParameter(this, 'ParamClusterName', {
       parameterName: `/pillorganizer/${props.environmentName}/backend/cluster-name`,
       stringValue: props.ecsCluster.clusterName,
