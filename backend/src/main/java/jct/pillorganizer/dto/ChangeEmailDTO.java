@@ -1,7 +1,7 @@
 package jct.pillorganizer.dto;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Email;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;

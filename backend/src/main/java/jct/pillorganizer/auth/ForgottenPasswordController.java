@@ -8,7 +8,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;

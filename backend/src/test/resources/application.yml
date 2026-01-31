@@ -23,10 +23,13 @@ micronaut:
               secret: ${JWT_GENERATOR_SIGNATURE_SECRET:pleaseChangeThisSecretForANewOne}
 datasources:
   default:
+    driverClassName: org.postgresql.Driver
     schema-generate: NONE
-    db-type: postgres
 flyway:
   datasources:
     default:
       enabled: true
       baselineOnMigrate: true
+jpa.default.properties.hibernate:
+  hbm2ddl.auto: none
+  format_sql: true

@@ -6,7 +6,6 @@ import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
 import io.micronaut.problem.HttpStatusType;
-import io.micronaut.protobuf.codec.ProtobufferCodec;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.authentication.AuthenticationException;
@@ -16,18 +15,15 @@ import io.micronaut.security.event.LoginFailedEvent;
 import io.micronaut.security.event.LoginSuccessfulEvent;
 import io.micronaut.security.handlers.LoginHandler;
 import io.micronaut.security.rules.SecurityRule;
-import io.micronaut.security.token.jwt.generator.AccessRefreshTokenGenerator;
-import io.micronaut.security.token.jwt.render.AccessRefreshToken;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
-import jct.pillorganizer.proto.Pill;
 import lombok.extern.flogger.Flogger;
 import org.reactivestreams.Publisher;
 import org.zalando.problem.Problem;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.util.Optional;
 
 /**
@@ -36,7 +32,7 @@ import java.util.Optional;
 @Controller
 @Flogger
 public class LoginController {
-
+/*
     @Inject
     Authenticator authenticator;
     @Inject
@@ -53,40 +49,6 @@ public class LoginController {
     public Publisher<MutableHttpResponse<?>> login(@Valid @Body UserPassAuthenticationRequest creds,
                                                    HttpRequest<?> request) {
         return loginInternal(creds, request);
-    }
-
-
-    @Operation(summary = "Authenticates a device using their credentials in a Protobuf AuthorizeRequest")
-    @Post("/api/v1_2/device/auth")
-    @Consumes(ProtobufferCodec.PROTOBUFFER_ENCODED)
-    @Produces(ProtobufferCodec.PROTOBUFFER_ENCODED)
-    @Secured(SecurityRule.IS_ANONYMOUS)
-    public Publisher<MutableHttpResponse<?>> login(@Body byte[] body,
-                                                   HttpRequest<?> request) {
-
-        try {
-            Pill.AuthorizeRequest reqBody = Pill.AuthorizeRequest.parseFrom(body);
-            DeviceAuthenticationRequest req = new DeviceAuthenticationRequest(reqBody.getSerialNo(), reqBody);
-
-
-            return Flux.from(this.authenticator.authenticate(request, req))
-                    .map((authenticationResponse) -> {
-                        if (authenticationResponse.isAuthenticated() && authenticationResponse.getAuthentication().isPresent()) {
-                            Authentication authentication = authenticationResponse.getAuthentication().get();
-                            this.eventPublisher.publishEvent(new LoginSuccessfulEvent(authentication));
-                            Optional<AccessRefreshToken> art = this.accessRefreshTokenGenerator.generate(authentication);
-                            return art.isPresent()
-                                    ? buildAccessTokenResponse(art.get())
-                                    : HttpResponse.status(HttpStatus.INTERNAL_SERVER_ERROR);
-                        } else {
-                            this.eventPublisher.publishEvent(new LoginFailedEvent(authenticationResponse));
-                            return this.loginHandler.loginFailed(authenticationResponse, request);
-                        }
-                    });
-
-        } catch (InvalidProtocolBufferException ex) {
-            return Flux.just(HttpResponse.status(HttpStatus.UNAUTHORIZED));
-        }
     }
 
     private MutableHttpResponse<?> buildAccessTokenResponse(AccessRefreshToken art) {
@@ -125,5 +87,5 @@ public class LoginController {
                                 .build()
                 ));
     }
-
+*/
 }

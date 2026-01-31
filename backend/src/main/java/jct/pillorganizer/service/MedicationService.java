@@ -10,7 +10,7 @@ import jct.pillorganizer.model.medication.ScheduledMedication;
 import jct.pillorganizer.repo.MedicationDispenseTimeRepository;
 import jct.pillorganizer.repo.ScheduledMedicationRepository;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;

@@ -1,7 +1,5 @@
 package jct.pillorganizer.model.device;
 
-import jct.pillorganizer.proto.Pill;
-
 /**
  *
  */
@@ -13,22 +11,6 @@ public enum BinStatus {
     TAKE_NOW(4);
 
     private final int val;
-
-    /**
-     * Converts a protobuf `BinStatus` into this Java enum.
-     * @param st a protobuf `BinStatus`
-     * @return java enum
-     */
-    public static BinStatus fromProtobuf(Pill.BinStatus st) {
-        return switch (st.getNumber()) {
-            case 0 -> DISABLED;
-            case 1 -> TAKEN;
-            case 2 -> MISSED;
-            case 3 -> PENDING;
-            case 4 -> TAKE_NOW;
-            default -> throw new IllegalArgumentException("invalid status");
-        };
-    }
 
     BinStatus(int val) {
         this.val = val;

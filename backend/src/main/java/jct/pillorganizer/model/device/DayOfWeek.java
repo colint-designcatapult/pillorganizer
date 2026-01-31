@@ -1,6 +1,5 @@
 package jct.pillorganizer.model.device;
 
-import jct.pillorganizer.proto.Pill;
 
 /**
  * Each day of the week, and an application-specific "DISABLED" day, indicating that the day is to be disregarded.
@@ -18,15 +17,6 @@ public enum DayOfWeek {
     SUNDAY(6);
 
     private final int val;
-
-    /**
-     * Converts a `DayOfWeek` protobuf enum to a Java enum.
-     * @param eventType protobuf `DayOfWeek`
-     * @return Java `DayOfWeek`
-     */
-    public static DayOfWeek fromProtobuf(Pill.BinSchedule.DayOfWeek eventType) {
-        return fromOrdinal(eventType.getNumber());
-    }
 
     /**
      * Converts a Monday-base DayOfWeek ordinal into an enum.

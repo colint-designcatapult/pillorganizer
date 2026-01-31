@@ -3,9 +3,9 @@ package jct.pillorganizer.model.device.schedule;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jct.pillorganizer.dto.SimpleScheduleDTO;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.Transient;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Transient;
 
 /**
  * A simple medication schedule that is the same every day, with one time for AM and one time for PM.

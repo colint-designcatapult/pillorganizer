@@ -4,6 +4,7 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.messaging.*;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.dto.DeviceNotificationDetails;
@@ -14,9 +15,10 @@ import java.io.IOException;
 /**
  * Service to send push notifications to registered mobile phones.
  */
+@Requires(env = "prod")
 @Singleton
 @Flogger
-public class FirebaseMessageService {
+public class FirebaseMessageService implements MobileNotificationService {
 
     public FirebaseMessageService(@Value("${firebase.privkey}") String privKey,
             @Value("${firebase.project}") String projID,
@@ -38,6 +40,7 @@ public class FirebaseMessageService {
      * @param details a structure containing the info necessary to deliver a push
      *                notification
      */
+    @Override
     public void sendPillReminderNotification(DeviceNotificationDetails details) {
 
         if (details.notificationToken() == null || details.notificationToken().isEmpty())

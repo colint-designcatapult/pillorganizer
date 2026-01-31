@@ -9,7 +9,7 @@ import java.util.Base64;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 import org.zalando.problem.Problem;
 
@@ -46,11 +46,9 @@ import jct.pillorganizer.model.device.Device;
 import jct.pillorganizer.model.device.DeviceClass;
 import jct.pillorganizer.model.device.DeviceProvision;
 import jct.pillorganizer.model.device.DeviceUser;
-import jct.pillorganizer.proto.Pill;
 import jct.pillorganizer.repo.DeviceRepository;
 import jct.pillorganizer.repo.DeviceUserRepository;
 import jct.pillorganizer.service.DeviceProvisionService;
-import jct.pillorganizer.service.DeviceStateService;
 import jct.pillorganizer.service.DeviceUserService;
 import lombok.extern.flogger.Flogger;
 
@@ -67,17 +65,12 @@ public class AppDeviceAPIController {
     @Inject
     DeviceProvisionService deviceProvisionService;
 
-    @Inject
-    DeviceStateService stateService;
 
     @Inject
     AuthService authService;
 
     @Inject
     DeviceUserRepository deviceUserRepository;
-
-    @Inject
-    DeviceStateService deviceStateService;
 
     @Inject
     DeviceUserService deviceUserService;
@@ -169,8 +162,8 @@ public class AppDeviceAPIController {
     public void reload(@QueryValue long id) {
         long userId = authService.getUserID();
         DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, id);
-        stateService.wrapperOf(deviceRepository.findById(id).get(), deviceUser)
-                .reload();
+
+        throw new RuntimeException("Not implemented yet");
     }
 
     @Operation(summary = "Updates device basic settings", description = "Updates non-schedule settings for a device, including timezone, name, and notification token.")
@@ -222,12 +215,7 @@ public class AppDeviceAPIController {
 
         byte[] parsedBody = Base64.getDecoder().decode(body);
 
-        Pill.SyncRequest req = Pill.SyncRequest.parseFrom(parsedBody);
-        return HttpResponse.ok(
-                Base64.getEncoder().encode(deviceStateService
-                        .wrapperOf(device, deviceUser)
-                        .sync(req)
-                        .toByteArray()));
+        throw new RuntimeException("Not implemented yet");
     }
 
     @Operation(summary = "Get device state on a particular date")
@@ -245,13 +233,7 @@ public class AppDeviceAPIController {
                 .orElseThrow(() -> Problem.builder().withStatus(new HttpStatusType(HttpStatus.NOT_FOUND)).build());
         DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, id);
 
-        return new DeviceStateDTO(
-                device.getId(),
-                device.getLastSync(),
-                deviceStateService.calculateStateFlags(deviceUser),
-                deviceStateService.buildDosePeriod(device, deviceUser, date),
-                device.getBattery(),
-                device.isCharging());
+        throw new RuntimeException("Not implemented yet");
     }
 
 }

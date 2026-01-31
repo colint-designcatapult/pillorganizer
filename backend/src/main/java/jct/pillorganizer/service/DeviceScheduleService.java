@@ -16,7 +16,7 @@ import jct.pillorganizer.repo.DeviceScheduleRepository;
 import jct.pillorganizer.repo.DeviceScheduleStrategyRepository;
 import jct.pillorganizer.repo.DeviceSimpleDispenseTimeRepository;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,9 +42,6 @@ public class DeviceScheduleService {
 
     @Inject
     DeviceRepository deviceRepository;
-
-    @Inject
-    DeviceStateService deviceStateService;
 
 
     /**
@@ -176,8 +173,7 @@ public class DeviceScheduleService {
             updateDeviceSchedule(d, deviceUser, strategy, dayOfWeek);
         }
 
-        deviceStateService.wrapperOf(d, deviceUser).rebuildStateSchedule();
-
+        throw new RuntimeException("Not implemented yet");
     }
 
     @Transactional

@@ -1,11 +1,13 @@
 package jct.pillorganizer.auth;
 
 import io.micronaut.context.annotation.Bean;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.security.authentication.AuthenticationFailureReason;
-import io.micronaut.security.authentication.AuthenticationProvider;
 import io.micronaut.security.authentication.AuthenticationRequest;
 import io.micronaut.security.authentication.AuthenticationResponse;
+import io.micronaut.security.authentication.provider.HttpRequestAuthenticationProvider;
+import io.micronaut.security.authentication.provider.HttpRequestReactiveAuthenticationProvider;
 import jakarta.inject.Inject;
 import jct.pillorganizer.repo.UserRepository;
 import org.reactivestreams.Publisher;
@@ -20,7 +22,7 @@ import java.util.Map;
  * ID.
  */
 @Bean
-public class UserPassAuthenticationProvider implements AuthenticationProvider {
+public class UserPassAuthenticationProvider<B> implements HttpRequestReactiveAuthenticationProvider<B> {
 
     @Inject
     private UserRepository userRepository;
@@ -29,7 +31,8 @@ public class UserPassAuthenticationProvider implements AuthenticationProvider {
     private AuthService authService;
 
     @Override
-    public Publisher<AuthenticationResponse> authenticate(HttpRequest<?> httpReq, AuthenticationRequest<?, ?> req) {
+    public @NonNull Publisher<AuthenticationResponse> authenticate(HttpRequest<B> requestContext,
+                                                                   @NonNull AuthenticationRequest<String, String> req) {
         if(!(req instanceof UserPassAuthenticationRequest authReq))
             return Mono.empty();
 
@@ -59,4 +62,5 @@ public class UserPassAuthenticationProvider implements AuthenticationProvider {
             return Mono.just(AuthenticationResponse.failure(AuthenticationFailureReason.UNKNOWN));
         }
     }
+
 }

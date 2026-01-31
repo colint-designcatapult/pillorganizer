@@ -1,6 +1,6 @@
 package jct.pillorganizer.model.user;
 
-import javax.persistence.Transient;
+import jakarta.persistence.Transient;
 
 /**
  * Represents something that can act like an authenticated user in the system. This application has a few different

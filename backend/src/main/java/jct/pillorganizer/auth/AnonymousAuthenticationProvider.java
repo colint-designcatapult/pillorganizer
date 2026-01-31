@@ -1,11 +1,12 @@
 package jct.pillorganizer.auth;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.security.authentication.AuthenticationFailureReason;
-import io.micronaut.security.authentication.AuthenticationProvider;
 import io.micronaut.security.authentication.AuthenticationRequest;
 import io.micronaut.security.authentication.AuthenticationResponse;
+import io.micronaut.security.authentication.provider.HttpRequestReactiveAuthenticationProvider;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.repo.AnonymousUserRepository;
@@ -24,19 +25,21 @@ import java.util.Map;
  * @see jct.pillorganizer.model.user.AnonymousUser
  */
 @Singleton
-public class AnonymousAuthenticationProvider implements AuthenticationProvider {
+public class AnonymousAuthenticationProvider<B> implements HttpRequestReactiveAuthenticationProvider<B> {
 
     @Inject
     AnonymousUserRepository anonRepo;
 
+
     @Override
-    public Publisher<AuthenticationResponse> authenticate(HttpRequest<?> http, AuthenticationRequest<?, ?> req) {
+    public @NonNull Publisher<AuthenticationResponse> authenticate(HttpRequest<B> requestContext,
+                                                                   @NonNull AuthenticationRequest<String, String> req) {
         if(!(req instanceof AnonymousAuthenticationRequest anonReq))
             return Mono.empty();
 
         try {
 
-            long id = anonReq.getIdentity();
+            long id = Long.parseLong(anonReq.getIdentity());
             byte[] secret = HexFormat.of().parseHex(anonReq.getSecret());
 
             return anonRepo.findById(id)
@@ -56,5 +59,7 @@ public class AnonymousAuthenticationProvider implements AuthenticationProvider {
         } catch (ClassCastException | IllegalArgumentException ex) {
             return Mono.just(AuthenticationResponse.failure(AuthenticationFailureReason.UNKNOWN));
         }
+
     }
+
 }
