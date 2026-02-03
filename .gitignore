@@ -98,3 +98,6 @@ fabric.properties
 /hivemq_ext/hivemq_ext-1.0-SNAPSHOT-distribution.zip
 
 *.env
+
+__pycache__/
+output/
