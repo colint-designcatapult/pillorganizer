@@ -1,4 +1,4 @@
-# ADR-002 Decision to use StrictDoc for Requirements Management
+# ADR-007 Decision to use StrictDoc for Requirements Management
 
 **Status:** Accepted
 
