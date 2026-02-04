@@ -1,0 +1,119 @@
+[DOCUMENT]
+TITLE: User Needs
+
+[GRAMMAR]
+ELEMENTS:
+- TAG: SECTION
+  PROPERTIES:
+    IS_COMPOSITE: True
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: False
+  - TITLE: LEVEL
+    TYPE: String
+    REQUIRED: False
+  - TITLE: PREFIX
+    TYPE: String
+    REQUIRED: False
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: True
+- TAG: TEXT
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: False
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: True
+- TAG: USER_NEED
+  PROPERTIES:
+    PREFIX: UN-
+    VIEW_STYLE: Narrative
+  FIELDS:
+  - TITLE: MID
+    TYPE: String
+    REQUIRED: False
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: True
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: True
+
+[[SECTION]]
+TITLE: Setup & Configuration Needs
+
+[USER_NEED]
+UID: UN-1
+TITLE: Schedule Management
+STATEMENT: >>>
+The user needs to easily program their medication schedule (days and times) using their smartphone.
+<<<
+
+[USER_NEED]
+UID: UN-2
+TITLE: Device Pairing
+STATEMENT: >>>
+The user needs to securely pair the physical pill organizer to their phone and account without technical expertise.
+<<<
+
+[USER_NEED]
+UID: UN-3
+TITLE: Physical Loading
+STATEMENT: >>>
+The user needs to be able to easily load pills into the 14 distinct bins without spilling or mixing medications.
+<<<
+
+[USER_NEED]
+UID: UN-4
+TITLE: Medication Replenishment
+STATEMENT: >>>
+The user needs to transition the device from a completed (weekly, configurable) cycle to a new cycle to begin tracking the next cycle's doses.
+<<<
+
+[USER_NEED]
+UID: UN-5
+TITLE: Fill Confirmation
+STATEMENT: >>>
+The user needs to confirm to the system that medication has been physically loaded into the bins to reset the adherence tracking logic.
+<<<
+
+[USER_NEED]
+UID: UN-6
+TITLE: Mid-Cycle Adjustment
+STATEMENT: >>>
+The user needs to modify modify the medication schedule during an active cycle to accommodate immediate prescription changes without disrupting adherence tracking for medication already taken in the cycle.
+<<<
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Daily Use
+
+[USER_NEED]
+UID: UN-7
+TITLE: Visual Indicators
+STATEMENT: >>>
+The user needs clear visual cues on the physical device to signify medication needs to be taken and identify exactly which bin contains the current medication.
+<<<
+
+[USER_NEED]
+UID: UN-8
+TITLE: Remote Notification
+STATEMENT: >>>
+The user needs to receive a notification on their phone as a cue when medication is due to be taken.
+<<<
+
+[USER_NEED]
+UID: UN-9
+TITLE: Missed Dose Alerts
+STATEMENT: >>>
+The user (or their caregiver) needs to be alerted if a scheduled dose was NOT taken within a meaningful time window.
+<<<
+
+[[/SECTION]]

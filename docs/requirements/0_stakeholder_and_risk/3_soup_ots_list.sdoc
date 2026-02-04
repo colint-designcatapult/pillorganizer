@@ -1,5 +1,5 @@
 [DOCUMENT]
-TITLE: SOUP List (Off-the-Shelf Software)
+TITLE: SOUP & OTS List
 
 [GRAMMAR]
 ELEMENTS:
@@ -29,7 +29,7 @@ ELEMENTS:
     REQUIRED: False
   - TITLE: UID
     TYPE: String
-    REQUIRED: False
+    REQUIRED: True
   - TITLE: TITLE
     TYPE: String
     REQUIRED: True
@@ -39,10 +39,10 @@ ELEMENTS:
   - TITLE: MANUFACTURER
     TYPE: String
     REQUIRED: True
-  - TITLE: PURPOSE
+  - TITLE: REQUIREMENTS
     TYPE: String
     REQUIRED: True
-  - TITLE: KNOWN_BUGS
+  - TITLE: VERIFICATION_METHOD
     TYPE: String
     REQUIRED: True
   - TITLE: RISK_ANALYSIS
@@ -58,8 +58,8 @@ UID: SOUP-FW-1
 TITLE: platform-espressif32
 VERSION: 6.3.2
 MANUFACTURER: Espressif Systems & PlatformIO Labs (Open Source)
-PURPOSE: Provides the REST API framework for the backend.
-KNOWN_BUGS: Reviewed GitHub issues; no critical open bugs affect our use case.
+REQUIREMENTS: To provide hardware abstraction layers (HAL), peripheral drivers (GPIO, I2C, SPI), and Wi-Fi/Bluetooth stacks.
+VERIFICATION_METHOD: TBD.
 RISK_ANALYSIS: >>>
 TBD.
 <<<
