@@ -1,0 +1,251 @@
+[DOCUMENT]
+TITLE: Health-E Pill Dispenser - Functional & Hardware Requirements
+
+[GRAMMAR]
+ELEMENTS:
+- TAG: REQUIREMENT
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: True
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: True
+  - TITLE: COMMENT
+    TYPE: String
+    REQUIRED: False
+  RELATIONS:
+  - TYPE: Parent
+
+[[SECTION]]
+TITLE: Functional Requirements
+
+[[SECTION]]
+TITLE: User Account & Authentication
+
+[REQUIREMENT]
+UID: F-101
+TITLE: Create Account
+STATEMENT: Users (Patients, Caregivers, and Researchers) shall be able to register for the service using a standard email/password authentication.
+
+[REQUIREMENT]
+UID: F-102
+TITLE: Account Deletion
+STATEMENT: Users shall be able to delete their account. This action must revoke all active sessions, unpair all associated devices, and scrub PII in accordance with data retention policies. Anonymized dosage data is retained even if the account is deleted.
+
+[REQUIREMENT]
+UID: F-103
+TITLE: Device Pairing
+STATEMENT: Patients shall pair the Health-E hardware to their account via wireless handshake.
+
+[REQUIREMENT]
+UID: F-104
+TITLE: Device Unpairing/Deletion
+STATEMENT: Patients shall be able to unpair a device. This must trigger a remote FACTORY_RESET command to the device via MQTT.
+
+[REQUIREMENT]
+UID: F-105
+TITLE: User Login
+STATEMENT: Existing users shall be able to authenticate to access their specific data views.
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Monitoring & Adherence (The Audit Trail)
+
+[REQUIREMENT]
+UID: F-201
+TITLE: State-Based Audit Trail
+STATEMENT: >>>
+The system shall record an immutable log of every significant state transition, including:
+
+- Dosage Events: Bin Opened, Dose Taken.
+- Hardware Events: LED State Changes, Reboot, Factory Reset.
+- Connectivity Events: Heartbeat Lost, Connection Restored.
+- Study Events: Trial Discovery, Subject Association, Disenrollment.
+- Administrative Events: Personnel who deployed a schedule or performed a manual override.
+<<<
+
+[REQUIREMENT]
+UID: F-202
+TITLE: Manual Override
+STATEMENT: The Mobile App/Dashboard allows marking a dose as TAKEN or MISSED in the event of hardware failure or manual intervention.
+
+[REQUIREMENT]
+UID: F-203
+TITLE: Targeted LED Force-Off
+STATEMENT: Manual override triggers an MQTT command to turn off the LED for that specific instance.
+
+[REQUIREMENT]
+UID: F-204
+TITLE: Connectivity Watchdog
+STATEMENT: The backend shall monitor a periodic heartbeat from the device.
+
+[REQUIREMENT]
+UID: F-205
+TITLE: Offline Notification
+STATEMENT: If a device fails to check in with a heartbeat, the system shall notify the user and advise them to refer to physical device LEDs.
+
+[REQUIREMENT]
+UID: F-206
+TITLE: Post-Connectivity Reconciliation
+STATEMENT: Upon re-establishing a network connection, the device shall automatically upload all locally cached historical data to the backend to update DUE database entries.
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Patient: Medication & Study Management
+
+[REQUIREMENT]
+UID: F-301
+TITLE: Create Schedule
+STATEMENT: For non-trial use, Patients shall be able to define medication series (e.g., Bin 1, Daily, 8:00 AM).
+
+[REQUIREMENT]
+UID: F-302
+TITLE: Dose Calendar
+STATEMENT: Patients can view a history of past and upcoming doses on the Mobile App.
+
+[REQUIREMENT]
+UID: F-303
+TITLE: Schedule Deletion
+STATEMENT: >>>
+Patients shall be able to delete a personal medication schedule.
+
+Logic:
+
+- Future PENDING instances must be removed.
+- Historical TAKEN or MISSED records must be preserved for clinical audit.
+<<<
+
+[REQUIREMENT]
+UID: F-304
+TITLE: Joining a Study
+STATEMENT: >>>
+Patients shall join a study via a two-step handshake:
+
+- Step 1 (Discovery): The patient enters the "Trial Discovery Key" to identify the specific clinical study.
+- Step 2 (Association): The patient enters their unique "Subject Access Code" to link their user account to their specific anonymized subject record and locked schedule.
+<<<
+
+[REQUIREMENT]
+UID: F-305
+TITLE: Study Mode Restriction
+STATEMENT: >>>
+Upon successfully joining a study, the Patient App shall enter "Study Mode." In this mode:
+
+- The locked clinical schedule is automatically ingested and deployed to the hardware.
+- The ability for the patient to create, edit, or delete additional personal schedules is disabled.
+- Patients are restricted from deleting "Locked" trial schedules.
+- Patients are restricted to one active clinical study per device.
+<<<
+
+[REQUIREMENT]
+UID: F-306
+TITLE: Lifestyle Adjustments
+STATEMENT: While in Study Mode, patients shall only be permitted to adjust "Unlocked" parameters (e.g., specific alarm times) within the boundaries defined by the researcher.
+
+[REQUIREMENT]
+UID: F-307
+TITLE: Leaving a Study
+STATEMENT: Patients may only leave a study via a "Disenrollment" process. This process can be triggered by the Patient or the Researcher and must be logged in the Audit Trail and trigger a clear-down of the locked schedule from the hardware.
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Notifications & Caregiver Support
+
+[REQUIREMENT]
+UID: F-401
+TITLE: Mobile Notifications
+STATEMENT: The system shall push notifications to the Patient’s mobile device when a dose is DUE and when a dose is MISSED.
+
+[REQUIREMENT]
+UID: F-402
+TITLE: Caregiver Association
+STATEMENT: Patients shall be able to permit a Caregiver user to access their medication schedules and adherence data via a secure invitation or linking process.
+
+[REQUIREMENT]
+UID: F-403
+TITLE: Caregiver Notification Permission
+STATEMENT: Patients shall maintain granular control over which notification types (e.g., "Dose Due," "Dose Missed") are shared with their permitted Caregivers.
+
+[REQUIREMENT]
+UID: F-404
+TITLE: Caregiver Notification Preferences
+STATEMENT: Caregivers shall be able to opt-in or opt-out of receiving specific notification types (Dose Due/Missed) for each patient they are associated with, provided the patient has granted permission.
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Researcher: Clinical Study & Organization Management
+
+[REQUIREMENT]
+UID: F-501
+TITLE: Organization Structure
+STATEMENT: The system shall support an Organizational model where multiple Researcher accounts can be associated with a single clinical site or institution.
+
+[REQUIREMENT]
+UID: F-502
+TITLE: Study Creation
+STATEMENT: Authorized Researchers shall be able to create a "Clinical Study" with a unique ID and assign medication parameters (ID, Name, Dosage).
+
+[REQUIREMENT]
+UID: F-503
+TITLE: Team Collaboration
+STATEMENT: Study owners shall be able to invite other Researcher accounts to a specific study. All invited Researchers shall have shared access to that study's dashboard and subject data.
+
+[REQUIREMENT]
+UID: F-504
+TITLE: Subject Identification & Assignment
+STATEMENT: >>>
+The system shall automatically generate a unique, immutable "System UUID" for every patient. 
+Researchers shall assign a "Display Subject ID" (e.g., P-001) for dashboard reporting.
+<<<
+
+[REQUIREMENT]
+UID: F-505
+TITLE: Two-Factor Onboarding Generation
+STATEMENT: >>>
+The system shall support a two-step identification process for onboarding:
+
+- Trial Discovery Key: A globally unique, human-readable string created by the Researcher to identify the specific study.
+- Subject Access Code: A short, unique alphanumeric code assigned to an individual subject record within that specific study.
+<<<
+
+[REQUIREMENT]
+UID: F-506
+TITLE: Protocol Definition / Study Locking
+STATEMENT: Researchers shall define the "Locked" parameters of a medication schedule. These locked schedules cannot be modified or deleted by the Patient.
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Clinical Trial Portal (Researcher View)
+
+[REQUIREMENT]
+UID: F-601
+TITLE: Researcher Authorization
+STATEMENT: Researchers shall only view data for Study Subjects explicitly assigned to studies they have been granted access to.
+
+[REQUIREMENT]
+UID: F-602
+TITLE: PII Masking
+STATEMENT: By default, the Clinical Portal shall display data using the researcher-assigned Display Subject ID.
+
+[REQUIREMENT]
+UID: F-603
+TITLE: Aggregate Adherence View
+STATEMENT: Researchers shall see an aggregate "Compliance Score" (%) across all subjects in a study.
+
+[REQUIREMENT]
+UID: F-604
+TITLE: Query-Time Stale Detection
+STATEMENT: The Clinical Dashboard shall dynamically display doses as UNKNOWN if the current time is >1 hour past the expected_time and the database state remains DUE.
+
+[[/SECTION]]
+
+[[/SECTION]]
