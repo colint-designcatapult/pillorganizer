@@ -44,50 +44,46 @@ ELEMENTS:
   - TITLE: STATEMENT
     TYPE: String
     REQUIRED: True
+  - TITLE: RATIONALE
+    TYPE: String
+    REQUIRED: False
 
 [[SECTION]]
-TITLE: Setup & Configuration Needs
+TITLE: Medication Scheduling
 
 [USER_NEED]
 UID: UN-1
 TITLE: Schedule Management
 STATEMENT: >>>
-The user needs to easily program their medication schedule (days and times) using their smartphone.
-<<<
-
-[USER_NEED]
-UID: UN-2
-TITLE: Device Pairing
-STATEMENT: >>>
-The user needs to securely pair the physical pill organizer to their phone and account without technical expertise.
+The Patient needs to program their medication schedule (days and times to take medication).
 <<<
 
 [USER_NEED]
 UID: UN-3
 TITLE: Physical Loading
 STATEMENT: >>>
-The user needs to be able to easily load pills into the 14 distinct bins without spilling or mixing medications.
+The Patient needs to be able to easily load pills into the 14 distinct bins without spilling or mixing medications.
 <<<
 
 [USER_NEED]
 UID: UN-4
 TITLE: Medication Replenishment
 STATEMENT: >>>
-The user needs to transition the device from a completed (weekly, configurable) cycle to a new cycle to begin tracking the next cycle's doses.
+The Patient needs to transition the device from a completed (weekly, configurable) cycle to a new cycle to begin tracking the next cycle's doses.
 <<<
 
 [USER_NEED]
 UID: UN-5
 TITLE: Fill Confirmation
 STATEMENT: >>>
-The user needs to confirm to the system that medication has been physically loaded into the bins to reset the adherence tracking logic.
+The Patient needs to confirm to the system that medication has been physically loaded into the bins to reset the adherence tracking logic.
 <<<
 
 [USER_NEED]
 UID: UN-6
 TITLE: Mid-Cycle Adjustment
 STATEMENT: >>>
-The user needs to modify modify the medication schedule during an active cycle to accommodate immediate prescription changes without disrupting adherence tracking for medication already taken in the cycle.
+The Patient needs to modify modify the medication schedule during an active cycle to accommodate immediate prescription changes without disrupting adherence tracking for medication already taken in the cycle.
 <<<
 
 [[/SECTION]]
@@ -99,21 +95,131 @@ TITLE: Daily Use
 UID: UN-7
 TITLE: Visual Indicators
 STATEMENT: >>>
-The user needs clear visual cues on the physical device to signify medication needs to be taken and identify exactly which bin contains the current medication.
+The Patient needs clear visual cues on the physical device to signify medication needs to be taken and identify exactly which bin contains the current medication.
 <<<
 
 [USER_NEED]
 UID: UN-8
 TITLE: Remote Notification
 STATEMENT: >>>
-The user needs to receive a notification on their phone as a cue when medication is due to be taken.
+The Patient needs to receive a notification on their phone as a cue when medication is due to be taken.
 <<<
 
 [USER_NEED]
 UID: UN-9
 TITLE: Missed Dose Alerts
 STATEMENT: >>>
-The user (or their caregiver) needs to be alerted if a scheduled dose was NOT taken within a meaningful time window.
+The Patient needs to be alerted if a scheduled dose was not taken within a specified time window.
 <<<
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Identity and Access Management
+
+[USER_NEED]
+UID: UN-USER-10
+TITLE: Patient Identity Creation
+STATEMENT: >>>
+The Patient needs to establish a unique, secure patient account capable of managing or monitoring one or more devices as the primary user.
+<<<
+
+[USER_NEED]
+UID: UN-10
+TITLE: Caregiver Identity Creation
+STATEMENT: >>>
+The Caregiver needs to establish a unique, secure account capable of managing or monitoring one or more devices used by the Patient.
+<<<
+
+[USER_NEED]
+UID: UN-16
+TITLE: Remote Monitoring Access
+STATEMENT: >>>
+The Caregiver needs to view the Patient's adherence and device status in real-time without the ability to modify the medication schedule.
+<<<
+RATIONALE: >>>
+Allowing the Caregiver to modify schedules is a serious risk, needs further analysis/discussion.
+<<<
+
+[USER_NEED]
+UID: UN-20
+TITLE: Remote Monitoring Revocation
+STATEMENT: >>>
+The Patient needs to revoke a Caregiver's ability to view adherence and device status.
+<<<
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Adherence Monitoring and History
+
+[USER_NEED]
+UID: UN-22
+TITLE: Automated Detection
+STATEMENT: >>>
+The Patient needs the system to automatically record a "taken" event when a scheduled bin is accessed during the correct time window.
+<<<
+
+[USER_NEED]
+UID: UN-23
+TITLE: Manual Correction
+STATEMENT: >>>
+The Patient needs to be able to manually modify the adherence record to correct false positives (opened bin but didn't take) or false negatives (took pill without device detecting).
+<<<
+
+[USER_NEED]
+UID: UN-24
+TITLE: Historical Visualization
+STATEMENT: >>>
+The user needs to view their medication adherence history over time (weekly or monthly).
+<<<
+
+[USER_NEED]
+UID: UN-25
+TITLE: Anomaly Context
+STATEMENT: >>>
+The user needs the system to differentiate between "Late" doses, "Missed" doses, and "On-Time" doses in the tracking record.
+<<<
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Provisioning and Onboarding
+
+[USER_NEED]
+UID: UN-17
+TITLE: Device-Patient Association
+STATEMENT: >>>
+The Patient needs to securely pair the physical pill organizer to their account without technical expertise.
+<<<
+
+[USER_NEED]
+UID: UN-21
+TITLE: Device-Patient Dissociation
+STATEMENT: >>>
+The Patient needs to be able to dissociate their account from the physical device, revoking their access to make further schedule or configuration changes but preserving their adherence records and data.
+<<<
+RATIONALE: >>>
+Need to make sure patient records are always preserved, but they are unable to make changes to the device (in case the device is given to someone else).
+<<<
+
+[USER_NEED]
+UID: UN-18
+TITLE: Proxy Configuration
+STATEMENT: >>>
+The Caregiver needs to be able to fully configure the device schedule and settings on behalf of a Patient before the Patient has access to the device.
+<<<
+
+[USER_NEED]
+UID: UN-19
+TITLE: Device Handoff from Caregiver
+STATEMENT: >>>
+The Patient needs to be able to claim "primary ownership" of a device that was previously configured by a Caregiver, transferring the configured device to the Patient account.
+<<<
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Clinical Trials
 
 [[/SECTION]]
