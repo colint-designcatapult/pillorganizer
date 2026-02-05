@@ -49,10 +49,10 @@ ELEMENTS:
   - TITLE: RESIDUAL_SEVERITY
     TYPE: SingleChoice(Catastrophic, Critical, Serious, Minor, Negligible)
     REQUIRED: False
-  - TITLE: RESIDUAL_SPROBABILITY
+  - TITLE: RESIDUAL_PROBABILITY
     TYPE: SingleChoice(Frequent, Probable, Occasional, Remote, Improbable)
     REQUIRED: False
-  - TITLE: RESIDUAL_SRISK_LEVEL
+  - TITLE: RESIDUAL_RISK_LEVEL
     TYPE: SingleChoice(Unacceptable, Conditional, Acceptable)
     REQUIRED: False
   - TITLE: TITLE
