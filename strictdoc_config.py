@@ -2,6 +2,12 @@ from strictdoc.core.project_config import ProjectConfig
 
 
 def create_config() -> ProjectConfig:
+    global_exclude = [
+        "/.venv",
+        "/backend/.mvn",
+        "/infra/node_modules"
+    ]
+
     config = ProjectConfig(
         project_title="Health-E Pill Organizer",
         project_features=[
@@ -15,6 +21,7 @@ def create_config() -> ProjectConfig:
         include_doc_paths=[
             "/docs/**.sdoc",
         ],
+        exclude_doc_paths=global_exclude,
         include_source_paths=[
             "/backend/**.java",
             "/backend/**.groovy",
@@ -27,9 +34,6 @@ def create_config() -> ProjectConfig:
             "/firmware/**.cpp",
             "/firmware/platformio.ini"
         ],
-        exclude_source_paths=[
-            "/backend/.mvn/**",
-            "/infra/node_modules/**"
-        ]
+        exclude_source_paths=global_exclude
     )
     return config
