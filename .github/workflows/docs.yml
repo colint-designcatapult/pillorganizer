@@ -1,17 +1,17 @@
-name: strictdoc
+name: docs
 
 on:
   push:
     branches:
       - 'master'
     paths:
-      - '.github/workflows/strictdoc.yml'
+      - '.github/workflows/docs.yml'
       - 'docs/**'
   pull_request:
     branches:
       - 'master'
     paths:
-      - '.github/workflows/strictdoc.yml'
+      - '.github/workflows/docs.yml'
       - 'docs/**'
 
   workflow_dispatch:
@@ -21,7 +21,7 @@ permissions:
   contents: read
 
 jobs:
-  strictdoc-export:
+  docs-export:
     name: Export 
     runs-on: ubuntu-latest
     steps:
@@ -40,6 +40,6 @@ jobs:
     - name: Upload requirements pdf as an artifact
       uses: actions/upload-artifact@v4
       with:
-        name: requirements-pdf
-        path: docs/_build/requirements.pdf
+        name: docs-export
+        path: docs/_build
         retention-days: 90
