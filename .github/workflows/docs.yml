@@ -1,0 +1,45 @@
+name: docs
+
+on:
+  push:
+    branches:
+      - 'master'
+    paths:
+      - '.github/workflows/docs.yml'
+      - 'docs/**'
+  pull_request:
+    branches:
+      - 'master'
+    paths:
+      - '.github/workflows/docs.yml'
+      - 'docs/**'
+
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  docs-export:
+    name: Export 
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - uses: actions/setup-python@v6
+      with:
+        python-version: '3.14' 
+        cache: 'pip' 
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+    - name: Export .rst from StrictDoc
+      run: strictdoc export . --formats=rst --output-dir=docs/strictdoc_output
+    - name: Build pdf with sphinx
+      working-directory: ./docs
+      run: sphinx-build -b pdf -D version=git+$GITHUB_SHA . _build/
+    - name: Upload requirements pdf as an artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: docs-export
+        path: docs/_build
+        retention-days: 90
