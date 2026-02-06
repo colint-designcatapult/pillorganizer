@@ -148,7 +148,7 @@ STATEMENT: >>>
 The Caregiver needs to view the Patient's adherence and device status in real-time without the ability to modify the medication schedule.
 <<<
 RATIONALE: >>>
-Allowing the Caregiver to modify schedules is a serious risk, needs further analysis/discussion.
+Ensures the Account Owner (Patient) is the sole authority for schedule modifications. This prevents remote clinicians or caregivers from altering dosing instructions, which is a key requirement for maintaining Class I regulatory status.
 <<<
 
 [USER_NEED]
@@ -170,6 +170,16 @@ UID: UN-306
 TITLE: User Login
 STATEMENT: >>>
 Existing users shall be able to authenticate securely to access their specific data views and device settings.
+<<<
+
+[USER_NEED]
+UID: UN-307
+TITLE: Schedule Modification Privilege
+STATEMENT: >>>
+The Account Owner needs the system to restrict medication and schedule modification permissions exclusively to their authenticated account.
+<<<
+RATIONALE: >>>
+Prevents unauthorized or accidental schedule changes by secondary users (Caregivers/Researchers), mitigating the risk of dosing errors and race conditions.
 <<<
 
 [[/SECTION]]
@@ -250,9 +260,12 @@ Need to make sure patient records are always preserved, but they are unable to m
 
 [USER_NEED]
 UID: UN-503
-TITLE: Proxy Configuration
+TITLE: Proxy Technical Configuration
 STATEMENT: >>>
-The Caregiver needs to be able to fully configure the device schedule and settings on behalf of a Patient before the Patient has access to the device.
+The Caregiver needs to perform technical setup on behalf of a Patient without inheriting the permission to modify the medication schedule once the Patient account is linked.
+<<<
+RATIONALE: >>>
+Maintains strict isolation between support (Caregiver) and ownership (Patient).
 <<<
 
 [USER_NEED]
