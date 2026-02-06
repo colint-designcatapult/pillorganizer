@@ -55,7 +55,10 @@ TITLE: Medication Scheduling
 UID: UN-101
 TITLE: Schedule Management
 STATEMENT: >>>
-The Patient needs to program their medication schedule (days and times to take medication).
+The Patient needs to program a simple daily medication schedule where medication is taken either once or twice a day, every day.
+<<<
+RATIONALE: >>>
+"Simple" programming mode to ensure parity with device labeling. Labeling serves as risk mitigation factor.
 <<<
 
 [USER_NEED]
