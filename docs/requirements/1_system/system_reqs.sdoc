@@ -1,0 +1,171 @@
+[DOCUMENT]
+TITLE: System Requirements Specification
+PREFIX: SYS-REQ-
+
+[GRAMMAR]
+ELEMENTS:
+- TAG: SECTION
+  PROPERTIES:
+    IS_COMPOSITE: True
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: False
+  - TITLE: LEVEL
+    TYPE: String
+    REQUIRED: False
+  - TITLE: PREFIX
+    TYPE: String
+    REQUIRED: False
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: True
+- TAG: TEXT
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: False
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: True
+- TAG: REQUIREMENT
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: True
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: True
+  - TITLE: RATIONALE
+    TYPE: String
+    REQUIRED: False
+  RELATIONS:
+  - TYPE: Parent
+    ROLE: Refines
+  - TYPE: Parent
+    ROLE: Mitigates
+
+[[SECTION]]
+TITLE: Device State & Operation
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Remote Data Synchronization
+
+[REQUIREMENT]
+UID: SYS-REQ-7
+TITLE: Synchronization Interface
+STATEMENT: >>>
+The device shall provide a bi-directional data interface to synchronize schedule, state, and compliance data with an Authorized Host System. An Authorized Host System is any external computing entity (Cloud Server, Mobile Application) that has successfully authenticated with the device and is authorized to exchange data
+<<<
+RATIONALE: >>>
+Allows the patient, clinicians, and caretakers to remotely monitor compliance, update medication scheduling/configuration, and view device status.
+<<<
+
+[REQUIREMENT]
+UID: SYS-REQ-6
+TITLE: Periodic Device Synchronization
+STATEMENT: >>>
+The device shall synchronize with an Authorized Host System on a 15-minute interval to check for changes to the device configuration and schedule.
+<<<
+RATIONALE: >>>
+Ensures changes to configuration or schedule by the user are applied to the device in a timely manner. Interval avoids battery drain of constant device connection.
+<<<
+
+[REQUIREMENT]
+UID: SYS-REQ-8
+TITLE: Synchronization on State Change
+STATEMENT: >>>
+The device shall synchronize with an Authorized Host System within 5 seconds of a bin state change on the device.
+<<<
+RATIONALE: >>>
+Ensures remote users have a "live" view of the device state.
+<<<
+
+[REQUIREMENT]
+UID: SYS-REQ-9
+TITLE: Synchronization Failure Handling
+STATEMENT: >>>
+The device shall re-attempt synchronization with an Authorized Host System in the event a previous synchronization attempt fails for any reason (including connectivity or errors). The re-attempt shall use exponential backoff. When the exponential backoff timer exceeds 15 minutes, the re-attempt is cancelled.
+<<<
+RATIONALE: >>>
+Attempt re-synchronization very soon after to work around intermittent connectivity issues, and delay further re-attempts as a rate limiting and power saving measure. When the exponential backoff reaches 15 minutes, fall back to [SYS-REQ-6] periodic device sync.
+<<<
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Offline and Fail-Safe Operation
+
+[REQUIREMENT]
+UID: SYS-REQ-1
+TITLE: Device Offline Autonomous Operation
+STATEMENT: >>>
+When synchronization with an Authorized Host System is not possible (e.g., disconnected from Wi-Fi/Bluetooth, outages, or errors), the device shall continue to execute the currently loaded medication schedule, trigger visual alerts, and log user interactions (bin openings) to local memory.
+<<<
+RATIONALE: >>>
+Ensures patient safety and adherence tracking are not interrupted by connectivity failures.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: RISK-MED-2
+  ROLE: Mitigates
+
+[REQUIREMENT]
+UID: SYS-REQ-2
+TITLE: Definition of Safe State
+STATEMENT: >>>
+When the system determines it can no longer operate reliably, it shall enter the "Safe State." In this state:
+1.) All scheduled medication alerts are disabled (no "Take Pill" lights).
+2.) The device shall display a distinct "Service Required" visual pattern (e.g., All LEDs blinking Yellow at 0.5Hz).
+3.) Medication adherence recording is disabled.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: RISK-MED-3
+  ROLE: Mitigates
+
+[REQUIREMENT]
+UID: SYS-REQ-3
+TITLE: Extended Offline Lockout
+STATEMENT: >>>
+If the device has not successfully synchronized to an Authorized Host System for more than 24 hours, it shall transition to the Safe State.
+<<<
+RATIONALE: >>>
+Ensures the Real-Time Clock (RTC) has been re-synchronized and the schedule is fresh.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: RISK-MED-3
+  ROLE: Mitigates
+
+[REQUIREMENT]
+UID: SYS-REQ-4
+TITLE: Audit Log Saturation Lockout
+STATEMENT: >>>
+If the non-volatile memory reserved for the Event Log reaches 95% capacity (or less than 10 events remaining), the device shall transition to the Safe State.
+<<<
+RATIONALE: >>>
+Prevents the overwrite of critical medical history data. It is unlikely this condition would be met before the "extended offline" lockout.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: RISK-MED-3
+  ROLE: Mitigates
+
+[REQUIREMENT]
+UID: SYS-REQ-5
+TITLE: Safe State Recovery
+STATEMENT: >>>
+The device shall only exit the Safe State and resume normal operation upon a successful data sync to an Authorized Host System.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: RISK-MED-3
+  ROLE: Mitigates
+
+[[/SECTION]]

@@ -1,0 +1,26 @@
+[DOCUMENT]
+TITLE: Firmware Requirements Specification (SRS)
+PREFIX: FW-REQ-
+
+[REQUIREMENT]
+UID: FW-REQ-1
+TITLE: Firmware Bin State Storage
+STATEMENT: >>>
+The firmware shall maintain the authoritative state of each bin (including scheduled time and status) in non-volatile storage.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-1
+
+[REQUIREMENT]
+UID: FW-REQ-2
+TITLE: Firmware Bin Log Storage
+STATEMENT: >>>
+The firmware shall maintain a record of the most recent bin events (open and close) with timestamp non-volatile storage. The firmware shall maintain not more than 100 events in the log at any given time.
+<<<
+RATIONALE: >>>
+Limit of 100 to not exhaust non-volatile memory limits.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-1

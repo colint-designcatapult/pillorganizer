@@ -1,0 +1,67 @@
+[DOCUMENT]
+TITLE: SOUP & OTS List
+
+[GRAMMAR]
+ELEMENTS:
+- TAG: SECTION
+  PROPERTIES:
+    IS_COMPOSITE: True
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: False
+  - TITLE: LEVEL
+    TYPE: String
+    REQUIRED: False
+  - TITLE: PREFIX
+    TYPE: String
+    REQUIRED: False
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: True
+- TAG: SOUP
+  PROPERTIES:
+    PREFIX: SOUP-
+    VIEW_STYLE: Narrative
+  FIELDS:
+  - TITLE: MID
+    TYPE: String
+    REQUIRED: False
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: True
+  - TITLE: VERSION
+    TYPE: String
+    REQUIRED: False
+  - TITLE: MANUFACTURER
+    TYPE: String
+    REQUIRED: True
+  - TITLE: REQUIREMENTS
+    TYPE: String
+    REQUIRED: True
+  - TITLE: VERIFICATION_METHOD
+    TYPE: String
+    REQUIRED: True
+  - TITLE: RISK_ANALYSIS
+    TYPE: String
+    REQUIRED: True
+
+[[SECTION]]
+PREFIX: SOUP-FW-
+TITLE: Firmware Dependencies
+
+[SOUP]
+UID: SOUP-FW-1
+TITLE: platform-espressif32
+VERSION: 6.3.2
+MANUFACTURER: Espressif Systems & PlatformIO Labs (Open Source)
+REQUIREMENTS: To provide hardware abstraction layers (HAL), peripheral drivers (GPIO, I2C, SPI), and Wi-Fi/Bluetooth stacks.
+VERIFICATION_METHOD: TBD.
+RISK_ANALYSIS: >>>
+TBD.
+<<<
+
+[[/SECTION]]
