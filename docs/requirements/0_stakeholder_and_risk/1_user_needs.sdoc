@@ -284,35 +284,37 @@ TITLE: Clinical Trials (Patient Experience)
 UID: UN-601
 TITLE: Guided Trial Enrollment
 STATEMENT: >>>
-The Patient needs a secure, straightforward way to link their account to a clinical study using credentials provided by their research team.
+The Patient needs a secure, straightforward way to associate their account to one or more clinical trials that they are authorized to participate in. A Patient who is enrolled in a clinical trial is a Trial Participant.
 <<<
 
 [USER_NEED]
 UID: UN-602
-TITLE: Remote Trial Setup
+TITLE: Trial Schedule Default
 STATEMENT: >>>
-The Patient needs the system to automatically apply the study's medication protocol to their device to ensure they are following the correct trial parameters without manual entry.
+The Trial Participant needs the system to automatically apply the trial's medication protocol and configuration to their device schedule as a default.
+<<<
+RATIONALE: >>>
+Simplify user onboarding but ultimately allow Patient to make further changes.
 <<<
 
 [USER_NEED]
 UID: UN-603
-TITLE: Protocol Safeguards
+TITLE: Trial Device Association
 STATEMENT: >>>
-The Patient needs the system to protect the trial schedule from accidental edits or deletions to maintain the validity of their participation.
+The Trial Participant needs the system to associate a device with the clinical trial they are enrolled in.
+<<<
+RATIONALE: >>>
+Ensures device data is shared with the correct clinical trial. Trial sponsor gives Trial Participant a device that is already associated with the clinical trial.
 <<<
 
 [USER_NEED]
-UID: UN-604
-TITLE: Permitted Schedule Adjustments
+UID: UN-7309
+TITLE: Trial Participant Data Routing
 STATEMENT: >>>
-The Patient needs the flexibility to make minor timing adjustments to their dose windows, provided those changes stay within the safety boundaries of the study.
+The Trial Participant needs the device to share data with only the clinical trial the device is associated with.
 <<<
-
-[USER_NEED]
-UID: UN-605
-TITLE: Clear Study Exit
-STATEMENT: >>>
-The Patient needs a formal way to end their participation in a study that restores their device to personal use while confirming their final status with the researchers.
+RATIONALE: >>>
+A device in one trial shouldn't be submitting data to a trial it doesn't belong to.
 <<<
 
 [[/SECTION]]
@@ -347,34 +349,51 @@ Study owners need to grant other authorized researchers access to specific study
 [[/SECTION]]
 
 [[SECTION]]
-TITLE: Protocol Definition & Subject Management
+TITLE: Protocol Definition & Participant Management
 
 [USER_NEED]
 UID: UN-7201
-TITLE: Protocol Definition
+TITLE: Protocol Default Configuration
 STATEMENT: >>>
-The Researcher needs to define the specific medication windows, dose frequencies, and "locked" versus "unlocked" parameters for a study.
+The Researcher needs to be able to define a default medication schedule and device configuration that devices associated with the trial use when they are first set up.
 <<<
 
 [USER_NEED]
 UID: UN-7202
-TITLE: Simplified Subject Onboarding
+TITLE: Participant Enrollment Authorization
 STATEMENT: >>>
-The Researcher needs to generate secure, human-readable access credentials that they can provide to patients to facilitate a smooth and secure enrollment process.
+The Researcher needs the system to ensure only authorized trial participant Patient accounts are associated with the clinical trial.
 <<<
 
 [USER_NEED]
 UID: UN-7203
-TITLE: Anonymized Subject Management
+TITLE: Participant Enrollment
 STATEMENT: >>>
-The Researcher needs to manage study participants using internal identifiers (like Subject IDs) to ensure clinical reporting remains organized without compromising the patient's identity.
+The Researcher needs to securely authorize a Trial Participant to associate their Patient account to the clinical trial.
 <<<
 
 [USER_NEED]
-UID: UN-7204
-TITLE: Remote Disenrollment
+UID: UN-7305
+TITLE: Participant Unique ID
 STATEMENT: >>>
-The Researcher needs the ability to formally remove a participant from a study, which should automatically update the participant's device status.
+The Researcher needs to assign a unique identifier to each Trial Participant.
+<<<
+RATIONALE: >>>
+Participants need to be identified with their investigator-defined Subject ID which serves as their pseudonymous identifier for the trial.
+<<<
+
+[USER_NEED]
+UID: UN-7306
+TITLE: Participant and Device Oversight
+STATEMENT: >>>
+The Researcher needs to access a list of all Trial Participants and devices associated with the trial, even if the device is not associated with a Patient or Trial Participant yet.
+<<<
+
+[USER_NEED]
+UID: UN-7307
+TITLE: Device Association
+STATEMENT: >>>
+The Researcher needs to be able to designate specific devices as only able to be associated with the trial.
 <<<
 
 [[/SECTION]]
@@ -384,23 +403,23 @@ TITLE: Monitoring & Analytics
 
 [USER_NEED]
 UID: UN-7301
-TITLE: Participant Oversight
+TITLE: Participant Adherence Monitoring
 STATEMENT: >>>
-The Researcher needs to monitor the enrollment status and real-time adherence of all subjects associated with their study to ensure trial compliance.
+The Researcher needs to monitor medication adherence records of all Trial Participants associated with the study.
 <<<
 
 [USER_NEED]
 UID: UN-7302
-TITLE: Privacy-First Data Access
+TITLE: Data Access Control
 STATEMENT: >>>
-The Researcher needs the system to automatically mask personal identifying information, ensuring they only see the data necessary for the study they are authorized to monitor.
+The Researcher needs the system to restrict access to only records and information they are duly authorized to access.
 <<<
 
 [USER_NEED]
 UID: UN-7303
 TITLE: Aggregate Compliance Insights
 STATEMENT: >>>
-The Researcher needs to view high-level adherence trends and "compliance scores" across the entire study population to evaluate the trial's overall progress.
+The Researcher needs to view high-level adherence trends across all Trial Participants.
 <<<
 
 [USER_NEED]
@@ -408,6 +427,16 @@ UID: UN-7304
 TITLE: Real-Time Data Accuracy
 STATEMENT: >>>
 The Researcher needs the system to differentiate between "known" dose events and "unknown" statuses (where a device has not checked in) to maintain the integrity of the clinical data set.
+<<<
+
+[USER_NEED]
+UID: UN-7308
+TITLE: Trial Data Intermixing Prevention
+STATEMENT: >>>
+The Researcher needs to access only data associated with the clinical trial.
+<<<
+RATIONALE: >>>
+Prevent adherence data intermixing with other trials the Patient may be involved in, or a personally-owned device they have.
 <<<
 
 [[/SECTION]]
