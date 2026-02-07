@@ -89,6 +89,26 @@ STATEMENT: >>>
 The Patient needs to modify modify the medication schedule during an active cycle to accommodate immediate prescription changes without disrupting adherence tracking for medication already taken in the cycle.
 <<<
 
+[USER_NEED]
+UID: UN-106
+TITLE: Physical Label Alignment
+STATEMENT: >>>
+The Patient needs the digital medication schedule to strictly align with the physical labeling on the device (Day of Week and Sun/Moon symbols) to prevent confusion during dosing.
+<<<
+RATIONALE: >>>
+Using the hardware labels as a primary safety safeguard reduces the risk of medication errors. If software prompts a dose, the physical label serves as a secondary verification for the Patient.
+<<<
+
+[USER_NEED]
+UID: UN-107
+TITLE: Chronological Bin Sequence
+STATEMENT: >>>
+The Patient needs the system to enforce that "Sun" (AM) bins are scheduled chronologically before "Moon" (PM) bins within the same calendar day.
+<<<
+RATIONALE: >>>
+Prevents logical mapping errors where the digital schedule contradicts the intuitive physical layout of the device.
+<<<
+
 [[/SECTION]]
 
 [[SECTION]]
