@@ -122,6 +122,20 @@ STATEMENT: >>>
 The user needs to choose which specific events (e.g., missed doses vs. upcoming doses) trigger notifications for themselves and their caregivers.
 <<<
 
+[USER_NEED]
+UID: UN-205
+TITLE: Battery Monitoring
+STATEMENT: >>>
+The Patient needs to be able to monitor the battery level of the device.
+<<<
+
+[USER_NEED]
+UID: UN-206
+TITLE: Critical Power Indication
+STATEMENT: >>>
+The Patient needs the system to provide distinct visual or digital alerts when the battery reaches a low or critical state.
+<<<
+
 [[/SECTION]]
 
 [[SECTION]]
