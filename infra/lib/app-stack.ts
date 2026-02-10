@@ -35,6 +35,7 @@ export class AppStack extends cdk.Stack {
     });
 
     // -- API Container & Service --
+    // @relation(INFRA-DSGN-11, scope=range_start)
 
     const apiTaskDef = new ecs.FargateTaskDefinition(this, 'ApiTaskDef', {
       memoryLimitMiB: 1024,
@@ -69,6 +70,9 @@ export class AppStack extends cdk.Stack {
       minHealthyPercent: 0 // todo: change in production
     });
 
+
+    // @relation(INFRA-DSGN-11, scope=range_end)
+
     // -- IAM --
 
     // Grant service ability to fetch DB secrets
@@ -85,6 +89,7 @@ export class AppStack extends cdk.Stack {
 
     // Allow access to Aurora from our container. Workaround for circular dependencies.
     // Done this way so the security can be defined in AppStack
+    // @relation(INFRA-DSGN-8, scope=range_start)
     const appSg = apiService.service.connections.securityGroups[0];
     const dbSg = props.dbCluster.connections.securityGroups[0];
     new ec2.CfnSecurityGroupIngress(this, 'DbIngressRule', {
@@ -94,6 +99,7 @@ export class AppStack extends cdk.Stack {
       toPort: 5432,
       sourceSecurityGroupId: appSg.securityGroupId 
     });
+    // @relation(INFRA-DSGN-8, scope=range_end)
 
     // -- ALB --
 
