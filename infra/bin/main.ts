@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @relation(INFRA-DSGN-1, scope=file)
 import * as cdk from 'aws-cdk-lib/core';
 import { PlatformStack } from '../lib/platform-stack';
 import { DataStack } from '../lib/data-stack';
@@ -6,17 +7,25 @@ import { AppStack } from '../lib/app-stack';
 
 const app = new cdk.App();
 
+// @relation(INFRA-DSGN-4, scope=line)
 const envKey = app.node.tryGetContext('env');
 if (!envKey) {
   throw new Error('Please specify an environment context using -c env=staging or -c env=prod');
 }
 
 // Load the specific config from cdk.context.json
+// @relation(INFRA-DSGN-3, scope=line)
 const envConfig = app.node.tryGetContext(envKey);
 
 if (!envConfig) {
   throw new Error(`Context for environment "${envKey}" not found in cdk.context.json`);
 }
+
+// @relation(INFRA-DSGN-2, scope=range_start)
+if (envConfig.region !== 'ca-central-1') {
+  throw new Error(`Region must be 'ca-central-1'. You attempted to use '${envConfig.region}'.`);
+}
+// @relation(INFRA-DSGN-2, scope=range_end)
 
 // Convert string "DESTROY"/"RETAIN" to actual CDK Enum
 const removalPolicy = envConfig.removalPolicy === 'DESTROY' 
@@ -30,12 +39,14 @@ const platformStack = new PlatformStack(app, `HealthePlatformStack`, {
   env
 });
 
+// @relation(INFRA-DSGN-7, scope=range_start)
 const dataStack = new DataStack(app, `HealtheDataStack-${envKey}`, {
   env,
   vpc: platformStack.vpc,
   removalPolicy: removalPolicy,
   environmentName: envKey,
 });
+// @relation(INFRA-DSGN-7, scope=range_end)
 
 const appStack = new AppStack(app, `HealtheAppStack-${envKey}`, {
   env,

@@ -112,3 +112,25 @@ Patient takes medication based on an old prescription that changed yesterday. Pa
 <<<
 
 [[/SECTION]]
+
+[[SECTION]]
+PREFIX: RISK-DATA-
+TITLE: Data Integrity
+
+[HAZARD]
+UID: RISK-DATA-1
+SEVERITY: Serious
+PROBABILITY: Frequent
+RISK_LEVEL: Unacceptable
+TITLE: Data Corruption
+STATEMENT: >>>
+A software failure results in incorrect patient adherence data to be reported. (TBD)
+<<<
+HARM: >>>
+TBD
+<<<
+ACCEPTANCE_JUSTIFICATION: >>>
+Document in IFU that data is not to be used for medication management.
+<<<
+
+[[/SECTION]]

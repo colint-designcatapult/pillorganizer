@@ -54,13 +54,129 @@ TITLE: Device State & Operation
 [[/SECTION]]
 
 [[SECTION]]
+TITLE: Central Backend Platform
+
+[REQUIREMENT]
+UID: SYS-REQ-11
+TITLE: Central Backend Platform
+STATEMENT: >>>
+The system shall provide a Central Backend Platform to serve as the data aggregator and control plane to link the device to user applications (mobile app or web dashboard).
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-402
+  ROLE: Refines
+- TYPE: Parent
+  VALUE: UN-403
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-17
+TITLE: Backend Scaling Capacity
+STATEMENT: >>>
+The Central Backend Platform shall support a minimum of 2,000 active concurrent users without errors or reliability issues.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7310
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-16
+TITLE: Backend Data Integrity
+STATEMENT: >>>
+The Central Backend Platform shall preserve and maintain all data stored in accordance with data retention requirements.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: RISK-DATA-1
+  ROLE: Mitigates
+- TYPE: Parent
+  VALUE: UN-405
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-10
+TITLE: Backend Data Residency
+STATEMENT: >>>
+The Central Backend Platform, and user data processed and stored by it, shall be physically located in Canada.
+<<<
+RATIONALE: >>>
+Client requirement.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-408
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-12
+TITLE: Backend API Interface
+STATEMENT: >>>
+The Central Backend Platform shall provide a secure Application Programming Interface (API) to support requests from the device and user applications.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-202
+  ROLE: Refines
+- TYPE: Parent
+  VALUE: UN-303
+  ROLE: Refines
+- TYPE: Parent
+  VALUE: UN-405
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-13
+TITLE: Backend Encryption
+STATEMENT: >>>
+The Central Backend Platform shall ensure all user data is encrypted in transit and in rest.
+<<<
+
+[REQUIREMENT]
+UID: SYS-REQ-14
+TITLE: Isolated Backend Environments
+STATEMENT: >>>
+The system shall allow for multiple, independent, and logically isolated Central Backend Platform environments to operate simultaneously.
+<<<
+RATIONALE: >>>
+Allows separate/isolated production, staging, and testing environments along with an isolated instance for each clinical trial.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: RISK-DATA-1
+  ROLE: Mitigates
+- TYPE: Parent
+  VALUE: UN-7308
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-15
+TITLE: Backend Environment Routing
+STATEMENT: >>>
+The system shall provide a mechanism such that the device and the user applications are routed to the proper, isolated Central Backend Platform environment.
+<<<
+RATIONALE: >>>
+If we have multiple environments, we need a way to point the device/apps to the current one.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7309
+  ROLE: Refines
+- TYPE: Parent
+  VALUE: RISK-DATA-1
+  ROLE: Mitigates
+
+[[/SECTION]]
+
+[[SECTION]]
 TITLE: Remote Data Synchronization
 
 [REQUIREMENT]
 UID: SYS-REQ-7
 TITLE: Synchronization Interface
 STATEMENT: >>>
-The device shall provide a bi-directional data interface to synchronize schedule, state, and compliance data with an Authorized Host System. An Authorized Host System is any external computing entity (Cloud Server, Mobile Application) that has successfully authenticated with the device and is authorized to exchange data
+The device shall provide a bi-directional interface to synchronize schedule, state, and adherence data with the Central Backend Platform.
 <<<
 RATIONALE: >>>
 Allows the patient, clinicians, and caretakers to remotely monitor compliance, update medication scheduling/configuration, and view device status.
@@ -70,7 +186,7 @@ Allows the patient, clinicians, and caretakers to remotely monitor compliance, u
 UID: SYS-REQ-6
 TITLE: Periodic Device Synchronization
 STATEMENT: >>>
-The device shall synchronize with an Authorized Host System on a 15-minute interval to check for changes to the device configuration and schedule.
+The device shall synchronize with the Central Backend Platform on a 15-minute interval to check for changes to the device configuration and schedule.
 <<<
 RATIONALE: >>>
 Ensures changes to configuration or schedule by the user are applied to the device in a timely manner. Interval avoids battery drain of constant device connection.
@@ -80,7 +196,7 @@ Ensures changes to configuration or schedule by the user are applied to the devi
 UID: SYS-REQ-8
 TITLE: Synchronization on State Change
 STATEMENT: >>>
-The device shall synchronize with an Authorized Host System within 5 seconds of a bin state change on the device.
+The device shall synchronize with the Central Backend Platform within 5 seconds of a bin state change on the device.
 <<<
 RATIONALE: >>>
 Ensures remote users have a "live" view of the device state.
@@ -90,7 +206,7 @@ Ensures remote users have a "live" view of the device state.
 UID: SYS-REQ-9
 TITLE: Synchronization Failure Handling
 STATEMENT: >>>
-The device shall re-attempt synchronization with an Authorized Host System in the event a previous synchronization attempt fails for any reason (including connectivity or errors). The re-attempt shall use exponential backoff. When the exponential backoff timer exceeds 15 minutes, the re-attempt is cancelled.
+The device shall re-attempt synchronization with the Central Backend Platform in the event a previous synchronization attempt fails for any reason (including connectivity or errors). The re-attempt shall use exponential backoff. When the exponential backoff timer exceeds 15 minutes, the re-attempt is cancelled.
 <<<
 RATIONALE: >>>
 Attempt re-synchronization very soon after to work around intermittent connectivity issues, and delay further re-attempts as a rate limiting and power saving measure. When the exponential backoff reaches 15 minutes, fall back to [SYS-REQ-6] periodic device sync.

@@ -1,0 +1,123 @@
+[DOCUMENT]
+TITLE: Infrastructure Critical Design Specification (SDS)
+PREFIX: INFRA-DSGN-
+
+[[SECTION]]
+TITLE: CDK App
+
+[REQUIREMENT]
+UID: INFRA-DSGN-1
+TITLE: Use AWS CDK for IaC
+STATEMENT: >>>
+The infrastructure shall use AWS Cloud Development Kit (CDK) with TypeScript to define the infrastructure as code on AWS.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: INFRA-REQ-1
+- TYPE: Parent
+  VALUE: INFRA-REQ-3
+
+[REQUIREMENT]
+UID: INFRA-DSGN-2
+TITLE: CDK Region Configuration
+STATEMENT: >>>
+The CDK app shall be configured to create cloud resources only in the ca-central-1 AWS region.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: INFRA-REQ-2
+
+[REQUIREMENT]
+UID: INFRA-DSGN-3
+TITLE: CDK Environment Configuration
+STATEMENT: >>>
+The CDK app shall use the CDK context configuration to define environments.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: INFRA-REQ-6
+
+[REQUIREMENT]
+UID: INFRA-DSGN-4
+TITLE: CDK Environment Switching
+STATEMENT: >>>
+The CDK app shall use a context variable ('env') to switch between environments.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: INFRA-REQ-6
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Container Hosting
+
+[REQUIREMENT]
+UID: INFRA-DSGN-10
+TITLE: ECS Cluster
+STATEMENT: >>>
+The CDK app shall define a single ECS cluster for all containerized services regardless of environment.
+<<<
+RATIONALE: >>>
+ECS cluster not isolated because it causes a chicken-and-the-egg problem to define services within it.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: INFRA-REQ-10
+
+[REQUIREMENT]
+UID: INFRA-DSGN-11
+TITLE: Backend API Fargate Service
+STATEMENT: >>>
+The CDK app shall define an isolated ECS service using Fargate for the backend API for each defined environment.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: INFRA-REQ-9
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Database
+
+[REQUIREMENT]
+UID: INFRA-DSGN-5
+TITLE: PostgreSQL Database
+STATEMENT: >>>
+The CDK app shall define an Aurora Serverless v2 PostgreSQL database as the primary datastore.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: INFRA-REQ-4
+
+[REQUIREMENT]
+UID: INFRA-DSGN-7
+TITLE: Separate Database for Environments
+STATEMENT: >>>
+The CDK app shall define a separate database for each environment.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: INFRA-REQ-7
+
+[REQUIREMENT]
+UID: INFRA-DSGN-6
+TITLE: Database Deletion Protection
+STATEMENT: >>>
+The CDK app shall enable deletion protection and a "RETAIN" retention removal policy on the production database.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: INFRA-REQ-5
+
+[REQUIREMENT]
+UID: INFRA-DSGN-8
+TITLE: Database Access Control
+STATEMENT: >>>
+The database shall use ingress rules to ensure only authorized environment-specific resources can connect to it.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: INFRA-REQ-7
+
+[[/SECTION]]

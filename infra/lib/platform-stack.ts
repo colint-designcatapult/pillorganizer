@@ -36,9 +36,11 @@ export class PlatformStack extends cdk.Stack {
     });
 
     // Create backend ECS cluster
+    // @relation(INFRA-DSGN-10, scope=range_start)
     this.backendEcsCluster = new ecs.Cluster(this, 'BackendCluster', {
       vpc: this.vpc,
     });
+    // @relation(INFRA-DSGN-10, scope=range_end)
 
     // -- GitHub OIDC --
     

@@ -29,6 +29,7 @@ export class DataStack extends cdk.Stack {
     });
 
     // todo: change parameters for production
+    // @relation(INFRA-DSGN-5, scope=range_start)
     this.dbCluster = new rds.DatabaseCluster(this, 'AuroraDb', {
       engine: rds.DatabaseClusterEngine.auroraPostgres({ version: rds.AuroraPostgresEngineVersion.VER_17_6 }),
       writer: rds.ClusterInstance.provisioned('writer', {
@@ -38,9 +39,13 @@ export class DataStack extends cdk.Stack {
       serverlessV2MaxCapacity: 1.0,
       vpc: props.vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+      // @relation(INFRA-DSGN-6, scope=range_start)
       removalPolicy: props.removalPolicy,
+      deletionProtection: props.removalPolicy === cdk.RemovalPolicy.RETAIN,
+      // @relation(INFRA-DSGN-6, scope=range_end)
       defaultDatabaseName: "pillorganizer",
       credentials: rds.Credentials.fromSecret(dbSecret),
     });
+    // @relation(INFRA-DSGN-5, scope=range_end)
   }
 }
