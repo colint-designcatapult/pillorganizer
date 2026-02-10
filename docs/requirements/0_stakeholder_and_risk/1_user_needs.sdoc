@@ -239,7 +239,7 @@ The user needs the system to differentiate between "Late" doses, "Missed" doses,
 UID: UN-405
 TITLE: Data Integrity and Audit
 STATEMENT: >>>
-The user needs the system to maintain a complete and unalterable record of all device actions and medication events to ensure clinical and personal data accuracy.
+The user needs the system to maintain a complete and unalterable record of all device actions and medication events up to a specified retention period.
 <<<
 
 [USER_NEED]
@@ -460,5 +460,24 @@ Prevent adherence data intermixing with other trials the Patient may be involved
 <<<
 
 [[/SECTION]]
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Stakeholder Requirements (Business & Regulatory)
+
+[USER_NEED]
+UID: UN-408
+TITLE: Data Residency
+STATEMENT: >>>
+The System needs to comply with data residency laws that restrict geographically where the Patient data is stored.
+<<<
+
+[USER_NEED]
+UID: UN-7310
+TITLE: Scalability
+STATEMENT: >>>
+The System needs to support a minimum of 2,000 active concurrent users without errors or reliability issues.
+<<<
 
 [[/SECTION]]
