@@ -1,0 +1,118 @@
+[DOCUMENT]
+TITLE: Infrastructure Requirements Specification (SRS)
+PREFIX: INFRA-REQ-
+
+[[SECTION]]
+TITLE: Cloud Resources
+
+[REQUIREMENT]
+UID: INFRA-REQ-1
+TITLE: Cloud Provider
+STATEMENT: >>>
+The infrastructure shall host the Central Backend Platform on Amazon Web Services.
+<<<
+RATIONALE: >>>
+[ADR-001]
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-11
+
+[REQUIREMENT]
+UID: INFRA-REQ-2
+TITLE: AWS Region
+STATEMENT: >>>
+The infrastructure shall create all cloud resources in the ca-central-1 AWS region.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-10
+
+[REQUIREMENT]
+UID: INFRA-REQ-3
+TITLE: Infrastructure-as-Code
+STATEMENT: >>>
+The infrastructure shall be defined in such a way that all cloud resources required to run a Central Backend Platform instance are described using Amazon Cloud Development Kit (CDK) as Infrastructure-as-Code.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-14
+
+[REQUIREMENT]
+UID: INFRA-REQ-6
+TITLE: Multiple Environments
+STATEMENT: >>>
+The infrastructure shall support defining multiple logically isolated Central Backend Platform environments.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-14
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Container Hosting
+
+[REQUIREMENT]
+UID: INFRA-REQ-10
+TITLE: Use of Amazon ECS
+STATEMENT: >>>
+The infrastructure shall use Amazon Elastic Container Service (ECS) with Fargate to execute containers as part of the Central Backend Platform for automatic scalability.
+<<<
+RATIONALE: >>>
+[ADR-001]
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-12
+- TYPE: Parent
+  VALUE: SYS-REQ-17
+
+[REQUIREMENT]
+UID: INFRA-REQ-9
+TITLE: Backend API Container
+STATEMENT: >>>
+The infrastructure shall define a backend API container service for each defined environment.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-14
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Data Persistence
+
+[REQUIREMENT]
+UID: INFRA-REQ-4
+TITLE: Persistent Database
+STATEMENT: >>>
+The infrastructure shall define a scalable PostgreSQL database as the primary, long-term persistent data store.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-11
+- TYPE: Parent
+  VALUE: SYS-REQ-17
+
+[REQUIREMENT]
+UID: INFRA-REQ-5
+TITLE: Deletion Prevention
+STATEMENT: >>>
+The infrastructure shall ensure that persistent data stores used in production are configured to prevent data loss due to accidental destruction via IaC.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-16
+
+[REQUIREMENT]
+UID: INFRA-REQ-7
+TITLE: Database Environment Isolation
+STATEMENT: >>>
+The infrastructure shall define separate, isolated persistent data stores are configured for each defined environment.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-14
+
+[[/SECTION]]
