@@ -30,7 +30,7 @@ It's written in Java using the [Micronaut](https://micronaut.io/) framework.
   * Open `/backend` in IntelliJ as a Maven project.
   * Add new **Run/Debug Configuration**.
     * Select type "Micronaut".
-    * Main class: `jct.pillorganizer.Application`
+    * Main class: `jct.pillorganizer.tenant.TenantApplication`
     * Environment variables: `MICRONAUT_ENVIRONMENTS=local`
 
 ### Build & Test Locally
