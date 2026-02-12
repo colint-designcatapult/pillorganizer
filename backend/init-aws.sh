@@ -18,5 +18,10 @@ EOF
 
 awslocal secretsmanager create-secret \
     --name /config/pillorganizer-backend_${ENVIRONMENT_KEY}/database \
-    --description "Local development database credentials" \
+    --description "Tenant development database credentials" \
+    --secret-string "${DB_SECRET_JSON}"
+
+awslocal secretsmanager create-secret \
+    --name /config/healthe-global_${ENVIRONMENT_KEY}/database \
+    --description "Global development database credentials" \
     --secret-string "${DB_SECRET_JSON}"
