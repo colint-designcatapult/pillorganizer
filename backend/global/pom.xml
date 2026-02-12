@@ -36,6 +36,24 @@
             <artifactId>micronaut-aws-lambda-events-serde</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>io.micronaut.aws</groupId>
+            <artifactId>micronaut-function-aws-api-proxy</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.aws</groupId>
+            <artifactId>micronaut-function-aws-api-proxy-test</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.aws</groupId>
+            <artifactId>micronaut-function-aws-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.crac</groupId>
+            <artifactId>micronaut-crac</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -47,18 +65,7 @@
                 <groupId>com.google.cloud.tools</groupId>
                 <artifactId>jib-maven-plugin</artifactId>
                 <configuration>
-                    <from>
-                        <image>amazoncorretto:21</image>
-                    </from>
-                    <to>
-                        <image>pillorganizer-backend:global</image>
-                    </to>
-                    <container>
-                        <mainClass>jct.pillorganizer.tenant.GlobalApplication</mainClass>
-                        <ports>
-                            <port>8080</port>
-                        </ports>
-                    </container>
+                    <skip>true</skip>
                 </configuration>
             </plugin>
         </plugins>
