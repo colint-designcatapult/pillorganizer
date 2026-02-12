@@ -21,7 +21,70 @@ awslocal secretsmanager create-secret \
     --description "Tenant development database credentials" \
     --secret-string "${DB_SECRET_JSON}"
 
-awslocal secretsmanager create-secret \
-    --name /config/healthe-global_${ENVIRONMENT_KEY}/database \
-    --description "Global development database credentials" \
-    --secret-string "${DB_SECRET_JSON}"
+# Control Plane DynamoDB Tables
+
+DYNAMO_DEVICE_ASSOCIATION=$(cat <<EOF
+{
+    "TableName": "DeviceAssociation",
+    "KeySchema": [
+        { "AttributeName": "DeviceUniqueId", "KeyType": "HASH" }
+    ],
+    "AttributeDefinitions": [
+        { "AttributeName": "DeviceUniqueId", "AttributeType": "S" },
+        { "AttributeName": "TenantId", "AttributeType": "S" },
+        { "AttributeName": "ProvisioningStatus", "AttributeType": "S" }
+    ],
+    "GlobalSecondaryIndexes": [
+        {
+            "IndexName": "DeviceTenantIndex",
+            "KeySchema": [
+                { "AttributeName": "TenantId", "KeyType": "HASH" },
+                { "AttributeName": "ProvisioningStatus", "KeyType": "RANGE" }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            },
+            "ProvisionedThroughput": {
+                "ReadCapacityUnits": 5,
+                "WriteCapacityUnits": 5
+            }
+        }
+    ],
+    "BillingMode": "PAY_PER_REQUEST"
+}
+EOF
+)
+
+awslocal dynamodb create-table --cli-input-json "${DYNAMO_DEVICE_ASSOCIATION}"
+
+DYNAMO_DEVICE_REGISTRY=$(cat <<EOF
+{
+    "TableName": "DeviceRegistry",
+    "KeySchema": [
+        { "AttributeName": "SerialNumber", "KeyType": "HASH" },
+        { "AttributeName": "DeviceUniqueId", "KeyType": "RANGE" }
+    ],
+    "AttributeDefinitions": [
+        { "AttributeName": "SerialNumber", "AttributeType": "S" },
+        { "AttributeName": "DeviceUniqueId", "AttributeType": "S" }
+    ],
+    "GlobalSecondaryIndexes": [
+        {
+            "IndexName": "DeviceUniqueIdIndex",
+            "KeySchema": [
+                { "AttributeName": "DeviceUniqueId", "KeyType": "HASH" }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            },
+            "ProvisionedThroughput": {
+                "ReadCapacityUnits": 5,
+                "WriteCapacityUnits": 5
+            }
+        }
+    ],
+    "BillingMode": "PAY_PER_REQUEST"
+}
+EOF
+)
+awslocal dynamodb create-table --cli-input-json "${DYNAMO_DEVICE_REGISTRY}"
