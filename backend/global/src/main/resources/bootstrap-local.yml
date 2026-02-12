@@ -4,3 +4,6 @@ aws:
   services:
     secretsmanager:
       endpoint-override: http://localhost:4566
+    dynamodb:
+      endpoint-override: http://localhost:4566
+      schema: http
