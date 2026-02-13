@@ -141,7 +141,7 @@
                         <image>amazoncorretto:21</image>
                     </from>
                     <to>
-                        <image>pillorganizer-backend:tenant</image>
+                        <image>pillorganizer-backend:latest</image>
                     </to>
                     <container>
                         <mainClass>jct.pillorganizer.tenant.TenantApplication</mainClass>
