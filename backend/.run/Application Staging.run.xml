@@ -1,11 +1,11 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Application Staging" type="Application" factoryName="Application" activateToolWindowBeforeRun="false">
-    <option name="MAIN_CLASS_NAME" value="jct.pillorganizer.Application" />
+    <option name="MAIN_CLASS_NAME" value="jct.pillorganizer.tenant.TenantApplication" />
     <module name="backend" />
     <option name="VM_PARAMETERS" value="-Dmicronaut.environments=staging " />
     <extension name="coverage">
       <pattern>
-        <option name="PATTERN" value="jct.pillorganizer.*" />
+        <option name="PATTERN" value="jct.pillorganizer.tenant.*" />
         <option name="ENABLED" value="true" />
       </pattern>
     </extension>

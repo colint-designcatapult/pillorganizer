@@ -63,7 +63,8 @@ jobs:
         run: |
           # todo: change this for prod/staging
           ENV="staging"
-          mvn --batch-mode jib:build \
+
+          mvn --batch-mode package jib:build -pl tenant -am \
             -Djib.to.image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
             -Djib.to.tags=latest,$ENV \
             -Djib.to.auth.username=AWS \
