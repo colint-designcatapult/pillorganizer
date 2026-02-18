@@ -1,4 +1,4 @@
-package jct.pillorganizer.global.domain.model;
+package jct.pillorganizer.global.model;
 
 public enum ProvisioningStatus {
     ASSIGNED,

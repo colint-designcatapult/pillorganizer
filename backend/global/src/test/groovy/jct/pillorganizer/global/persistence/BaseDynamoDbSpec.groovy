@@ -13,7 +13,7 @@ import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest
 import spock.lang.Shared
 
 @MicronautTest
-abstract class BaseDynamoDbSpec<T> extends BaseIntegrationSpec {
+abstract class BaseDynamoDbSpec extends BaseIntegrationSpec {
 
     @Inject
     @Shared
@@ -48,6 +48,8 @@ abstract class BaseDynamoDbSpec<T> extends BaseIntegrationSpec {
             def attrVal
             if (value instanceof Number) {
                 attrVal = AttributeValue.builder().n(value.toString()).build()
+            } else if (value instanceof Boolean) {
+                attrVal = AttributeValue.builder().bool(value).build()
             } else {
                 attrVal = AttributeValue.builder().s(value.toString()).build()
             }
@@ -78,6 +80,8 @@ abstract class BaseDynamoDbSpec<T> extends BaseIntegrationSpec {
             names["#$k"] = k
             if (v instanceof Number) {
                 values[":$k"] = AttributeValue.builder().n(v.toString()).build()
+            } else if (v instanceof Boolean) {
+                values[":$k"] = AttributeValue.builder().bool(v).build()
             } else {
                 values[":$k"] = AttributeValue.builder().s(v.toString()).build()
             }
