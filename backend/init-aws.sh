@@ -23,30 +23,40 @@ awslocal secretsmanager create-secret \
 
 # Control Plane DynamoDB Tables
 
-DYNAMO_DEVICE_ASSOCIATION=$(cat <<EOF
+DYNAMO_CONTROL_PLANE=$(cat <<EOF
 {
-    "TableName": "DeviceAssociation",
+    "TableName": "DeviceControlPlane",
     "KeySchema": [
-        { "AttributeName": "DeviceUniqueId", "KeyType": "HASH" }
+        { "AttributeName": "PK", "KeyType": "HASH" },
+        { "AttributeName": "SK", "KeyType": "RANGE" }
     ],
     "AttributeDefinitions": [
-        { "AttributeName": "DeviceUniqueId", "AttributeType": "S" },
-        { "AttributeName": "TenantId", "AttributeType": "S" },
-        { "AttributeName": "ProvisioningStatus", "AttributeType": "S" }
+        { "AttributeName": "PK", "AttributeType": "S" },
+        { "AttributeName": "SK", "AttributeType": "S" },
+        { "AttributeName": "GSI1_PK", "AttributeType": "S" },
+        { "AttributeName": "GSI1_SK", "AttributeType": "S" },
+        { "AttributeName": "GSI2_PK", "AttributeType": "S" },
+        { "AttributeName": "GSI2_SK", "AttributeType": "S" }
     ],
     "GlobalSecondaryIndexes": [
         {
-            "IndexName": "DeviceTenantIndex",
+            "IndexName": "GSI1",
             "KeySchema": [
-                { "AttributeName": "TenantId", "KeyType": "HASH" },
-                { "AttributeName": "ProvisioningStatus", "KeyType": "RANGE" }
+                { "AttributeName": "GSI1_PK", "KeyType": "HASH" },
+                { "AttributeName": "GSI1_SK", "KeyType": "RANGE" }
             ],
             "Projection": {
               "ProjectionType": "ALL"
-            },
-            "ProvisionedThroughput": {
-                "ReadCapacityUnits": 5,
-                "WriteCapacityUnits": 5
+            }
+        },
+        {
+            "IndexName": "GSI2",
+            "KeySchema": [
+                { "AttributeName": "GSI2_PK", "KeyType": "HASH" },
+                { "AttributeName": "GSI2_SK", "KeyType": "RANGE" }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
             }
         }
     ],
@@ -54,37 +64,4 @@ DYNAMO_DEVICE_ASSOCIATION=$(cat <<EOF
 }
 EOF
 )
-
-awslocal dynamodb create-table --cli-input-json "${DYNAMO_DEVICE_ASSOCIATION}"
-
-DYNAMO_DEVICE_REGISTRY=$(cat <<EOF
-{
-    "TableName": "DeviceRegistry",
-    "KeySchema": [
-        { "AttributeName": "SerialNumber", "KeyType": "HASH" },
-        { "AttributeName": "DeviceUniqueId", "KeyType": "RANGE" }
-    ],
-    "AttributeDefinitions": [
-        { "AttributeName": "SerialNumber", "AttributeType": "S" },
-        { "AttributeName": "DeviceUniqueId", "AttributeType": "S" }
-    ],
-    "GlobalSecondaryIndexes": [
-        {
-            "IndexName": "DeviceUniqueIdIndex",
-            "KeySchema": [
-                { "AttributeName": "DeviceUniqueId", "KeyType": "HASH" }
-            ],
-            "Projection": {
-              "ProjectionType": "ALL"
-            },
-            "ProvisionedThroughput": {
-                "ReadCapacityUnits": 5,
-                "WriteCapacityUnits": 5
-            }
-        }
-    ],
-    "BillingMode": "PAY_PER_REQUEST"
-}
-EOF
-)
-awslocal dynamodb create-table --cli-input-json "${DYNAMO_DEVICE_REGISTRY}"
+awslocal dynamodb create-table --cli-input-json "${DYNAMO_CONTROL_PLANE}"
