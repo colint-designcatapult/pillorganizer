@@ -6,38 +6,37 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
 import java.time.Instant;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@EqualsAndHashCode
-@Setter
-public abstract class BaseControlPlaneEntity {
+@Value
+@Builder
+@DynamoDbImmutable(builder = BaseControlPlaneEntity.BaseControlPlaneEntityBuilder.class)
+public class BaseControlPlaneEntity {
     @Getter(onMethod_ = {@DynamoDbPartitionKey, @DynamoDbAttribute("PK")})
-    private String pk;
+    String pk;
 
     @Getter(onMethod_ = {@DynamoDbSortKey, @DynamoDbAttribute("SK")})
-    private String sk;
+    String sk;
 
     @Getter(onMethod_ = {@DynamoDbSecondaryPartitionKey(indexNames = "GSI1"), @DynamoDbAttribute("GSI1_PK")})
-    private String gsi1Pk;
+    String gsi1Pk;
 
     @Getter(onMethod_ = {@DynamoDbSecondarySortKey(indexNames = "GSI1"), @DynamoDbAttribute("GSI1_SK")})
-    private String gsi1Sk;
+    String gsi1Sk;
 
     @Getter(onMethod_ = {@DynamoDbSecondaryPartitionKey(indexNames = "GSI2"), @DynamoDbAttribute("GSI2_PK")})
-    private String gsi2Pk;
+    String gsi2Pk;
 
     @Getter(onMethod_ = {@DynamoDbSecondarySortKey(indexNames = "GSI2"), @DynamoDbAttribute("GSI2_SK")})
-    private String gsi2Sk;
+    String gsi2Sk;
 
     @Getter(onMethod_ = @DynamoDbAttribute("EntityType"))
-    private DeviceControlPlaneEntityType entityType;
+    DeviceControlPlaneEntityType entityType;
 
     @Getter(onMethod_ = @DynamoDbAttribute("CreatedAt"))
-    private Instant createdAt;
+    Instant createdAt;
 
     @Getter(onMethod_ = @DynamoDbAttribute("LastModified"))
-    private Instant lastModified;
+    Instant lastModified;
 
     @Getter(onMethod_ = {@DynamoDbAttribute("Version"), @DynamoDbVersionAttribute})
-    private Long version;
+    Long version;
 }

@@ -85,18 +85,14 @@ class DeviceUserLinkRepoSpec extends BaseDeviceControlPlaneSpec {
         def modelId = "MODEL-Y"
         def isPrimary = true
 
-        def link = new DeviceUserLinkEntity(
-                pk: DeviceUserLinkEntity.pk(deviceId),
-                sk: DeviceUserLinkEntity.sk(userId),
-                gsi1Pk: DeviceUserLinkEntity.gsi1Pk(userId),
-                gsi1Sk: DeviceUserLinkEntity.gsi1Sk(deviceId),
-                entityType: DeviceControlPlaneEntityType.DEVICE_USER_LINK,
-                deviceId: deviceId,
-                userId: userId,
-                tenantId: tenantId,
-                modelId: modelId,
-                primaryUser: isPrimary
-        )
+        def link = DeviceUserLinkEntity.builder()
+                .base(DeviceUserLinkEntity.buildBase(deviceId, userId))
+                .deviceId(deviceId)
+                .userId(userId)
+                .tenantId(tenantId)
+                .modelId(modelId)
+                .primaryUser(isPrimary)
+                .build()
 
         when:
         repo.save(link)
@@ -108,7 +104,7 @@ class DeviceUserLinkRepoSpec extends BaseDeviceControlPlaneSpec {
         savedLink.get().tenantId == tenantId
         savedLink.get().modelId == modelId
         savedLink.get().primaryUser == isPrimary
-        savedLink.get().entityType == DeviceControlPlaneEntityType.DEVICE_USER_LINK
+        savedLink.get().base.entityType == DeviceControlPlaneEntityType.DEVICE_USER_LINK
     }
 
     def "should fail to find non-existent DeviceUserLink"() {

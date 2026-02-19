@@ -1,13 +1,12 @@
 package jct.pillorganizer.global.repo;
 
-import jct.pillorganizer.global.model.BaseControlPlaneEntity;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbIndex;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
-public class BaseControlPlaneRepo<T extends BaseControlPlaneEntity> {
+public class BaseControlPlaneRepo<T> {
     protected final DynamoDbTable<T> table;
     protected final DynamoDbIndex<T> gsi1;
     protected final DynamoDbIndex<T> gsi2;
@@ -19,7 +18,7 @@ public class BaseControlPlaneRepo<T extends BaseControlPlaneEntity> {
                 .dynamoDbClient(standardClient)
                 .build();
 
-        this.table = enhancedClient.table(TABLE_NAME, TableSchema.fromBean(entityType));
+        this.table = enhancedClient.table(TABLE_NAME, TableSchema.fromImmutableClass(entityType));
 
         // Initialize GSI lookups
         this.gsi1 = this.table.index("GSI1");

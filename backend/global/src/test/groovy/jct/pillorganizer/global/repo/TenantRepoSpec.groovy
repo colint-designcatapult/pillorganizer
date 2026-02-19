@@ -61,16 +61,12 @@ class TenantRepoSpec extends BaseDeviceControlPlaneSpec {
         def tenantName = "New Tenant"
         def tenantApiBase = "http://new-tenant-api.example"
 
-        def tenant = new TenantEntity(
-                pk: TenantEntity.pk(tenantId),
-                sk: TenantEntity.sk(),
-                gsi1Pk: TenantEntity.gsi1Pk(),
-                gsi1Sk: TenantEntity.gsi1Sk(tenantId),
-                entityType: DeviceControlPlaneEntityType.TENANT,
-                tenantId: tenantId,
-                tenantName: tenantName,
-                tenantApiBase: tenantApiBase
-        )
+        def tenant = TenantEntity.builder()
+                .base(TenantEntity.buildBase(tenantId))
+                .tenantId(tenantId)
+                .tenantName(tenantName)
+                .tenantApiBase(tenantApiBase)
+                .build()
 
         when:
         repo.save(tenant)
@@ -80,7 +76,7 @@ class TenantRepoSpec extends BaseDeviceControlPlaneSpec {
         savedTenant.get().tenantId == tenantId
         savedTenant.get().tenantName == tenantName
         savedTenant.get().tenantApiBase == tenantApiBase
-        savedTenant.get().entityType == DeviceControlPlaneEntityType.TENANT
+        savedTenant.get().base.entityType == DeviceControlPlaneEntityType.TENANT
     }
 
     def "should fail to find non-existent Tenant"() {

@@ -36,15 +36,11 @@ class UserRepoSpec extends BaseDeviceControlPlaneSpec {
         def userId = "user-new"
         def userName = "New User"
 
-        def user = new UserEntity(
-                pk: UserEntity.pk(userId),
-                sk: UserEntity.sk(),
-                gsi1Pk: UserEntity.gsi1Pk(),
-                gsi1Sk: UserEntity.gsi1Sk(userId),
-                entityType: DeviceControlPlaneEntityType.USER,
-                userId: userId,
-                userName: userName
-        )
+        def user = UserEntity.builder()
+                .base(UserEntity.buildBase(userId))
+                .userId(userId)
+                .userName(userName)
+                .build()
 
         when:
         repo.save(user)
@@ -53,7 +49,7 @@ class UserRepoSpec extends BaseDeviceControlPlaneSpec {
         def savedUser = repo.findByUserId(userId)
         savedUser.get().userId == userId
         savedUser.get().userName == userName
-        savedUser.get().entityType == DeviceControlPlaneEntityType.USER
+        savedUser.get().base.entityType == DeviceControlPlaneEntityType.USER
     }
 
     def "should fail to find non-existent User"() {

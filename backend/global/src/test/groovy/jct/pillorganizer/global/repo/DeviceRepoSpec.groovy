@@ -67,20 +67,14 @@ class DeviceRepoSpec extends BaseDeviceControlPlaneSpec {
         def modelId = "MODEL-Y"
         def status = ProvisioningStatus.ASSIGNED
 
-        def device = new DeviceEntity(
-                pk: DeviceEntity.pk(deviceId),
-                sk: DeviceEntity.sk(),
-                gsi1Pk: DeviceEntity.gsi1Pk(tenantId),
-                gsi1Sk: DeviceEntity.gsi1Sk(deviceId),
-                gsi2Pk: DeviceEntity.gsi2Pk(serialNumber),
-                gsi2Sk: DeviceEntity.gsi2Sk(deviceId),
-                entityType: DeviceControlPlaneEntityType.DEVICE,
-                deviceId: deviceId,
-                tenantId: tenantId,
-                serialNumber: serialNumber,
-                modelId: modelId,
-                provisioningStatus: status
-        )
+        def device = DeviceEntity.builder()
+                .base(DeviceEntity.buildBase(deviceId, serialNumber, tenantId))
+                .deviceId(deviceId)
+                .tenantId(tenantId)
+                .serialNumber(serialNumber)
+                .modelId(modelId)
+                .provisioningStatus(status)
+                .build()
 
         when:
         repo.save(device)
@@ -92,7 +86,7 @@ class DeviceRepoSpec extends BaseDeviceControlPlaneSpec {
         savedDevice.get().serialNumber == serialNumber
         savedDevice.get().modelId == modelId
         savedDevice.get().provisioningStatus == status
-        savedDevice.get().entityType == DeviceControlPlaneEntityType.DEVICE
+        savedDevice.get().base.entityType == DeviceControlPlaneEntityType.DEVICE
     }
 
     def "should fail to find non-existent Device"() {

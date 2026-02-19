@@ -3,27 +3,32 @@ package jct.pillorganizer.global.model;
 import lombok.*;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbFlatten;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbImmutable;
 
-@DynamoDbBean
-@EqualsAndHashCode(callSuper = true)
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class DeviceUserLinkEntity extends BaseControlPlaneEntity {
+import java.time.Instant;
+
+@Value
+@Builder
+@DynamoDbImmutable(builder = DeviceUserLinkEntity.DeviceUserLinkEntityBuilder.class)
+public class DeviceUserLinkEntity {
+    @Getter(onMethod_ = {@DynamoDbFlatten})
+    BaseControlPlaneEntity base;
+
     @Getter(onMethod_ = @DynamoDbAttribute("UserId"))
-    private String userId;
+    String userId;
 
     @Getter(onMethod_ = @DynamoDbAttribute("DeviceId"))
-    private String deviceId;
+    String deviceId;
 
     @Getter(onMethod_ = @DynamoDbAttribute("PrimaryUser"))
-    private Boolean primaryUser;
+    Boolean primaryUser;
 
     @Getter(onMethod_ = @DynamoDbAttribute("TenantId"))
-    private String tenantId;
+    String tenantId;
 
     @Getter(onMethod_ = @DynamoDbAttribute("ModelId"))
-    private String modelId;
+    String modelId;
 
     public static String pk(String deviceId) {
         return "DEVICE#" + deviceId;
@@ -39,5 +44,17 @@ public class DeviceUserLinkEntity extends BaseControlPlaneEntity {
 
     public static String gsi1Sk(String deviceId) {
         return "DEVICE#" + deviceId;
+    }
+
+    public static BaseControlPlaneEntity buildBase(String deviceId, String userId) {
+        return BaseControlPlaneEntity.builder()
+                .pk(pk(deviceId))
+                .sk(sk(userId))
+                .entityType(DeviceControlPlaneEntityType.DEVICE_USER_LINK)
+                .gsi1Pk(gsi1Pk(userId))
+                .gsi1Sk(gsi1Sk(deviceId))
+                .createdAt(Instant.now())
+                .lastModified(Instant.now())
+                .build();
     }
 }
