@@ -39,4 +39,18 @@ public class DeviceRepo extends BaseControlPlaneRepo<DeviceEntity> {
                 .flatMap(page -> page.items().stream())
                 .collect(Collectors.toList());
     }
+
+    public List<DeviceEntity> findByTenantId(String tenantId) {
+        QueryConditional queryConditional = QueryConditional.sortBeginsWith(
+                Key.builder()
+                        .partitionValue(DeviceEntity.gsi1Pk(tenantId))
+                        .sortValue(DeviceEntity.gsi1Sk(""))
+                        .build()
+        );
+
+        return this.gsi1.query(queryConditional)
+                .stream()
+                .flatMap(page -> page.items().stream())
+                .collect(Collectors.toList());
+    }
 }
