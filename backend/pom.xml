@@ -20,6 +20,7 @@
     <release.version>21</release.version>
     <flogger.version>0.9</flogger.version>
     <lombok.version>1.18.42</lombok.version>
+    <testcontainers.version>1.21.4</testcontainers.version>
     <micronaut.aot.enabled>false</micronaut.aot.enabled>
   </properties>
 
@@ -64,16 +65,19 @@
       <groupId>org.testcontainers</groupId>
       <artifactId>spock</artifactId>
       <scope>test</scope>
+      <version>${testcontainers.version}</version>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
       <scope>test</scope>
+      <version>${testcontainers.version}</version>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>localstack</artifactId>
       <scope>test</scope>
+      <version>${testcontainers.version}</version>
     </dependency>
     <dependency>
       <groupId>io.micronaut</groupId>
