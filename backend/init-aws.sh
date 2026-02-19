@@ -21,7 +21,47 @@ awslocal secretsmanager create-secret \
     --description "Tenant development database credentials" \
     --secret-string "${DB_SECRET_JSON}"
 
-awslocal secretsmanager create-secret \
-    --name /config/healthe-global_${ENVIRONMENT_KEY}/database \
-    --description "Global development database credentials" \
-    --secret-string "${DB_SECRET_JSON}"
+# Control Plane DynamoDB Tables
+
+DYNAMO_CONTROL_PLANE=$(cat <<EOF
+{
+    "TableName": "DeviceControlPlane",
+    "KeySchema": [
+        { "AttributeName": "PK", "KeyType": "HASH" },
+        { "AttributeName": "SK", "KeyType": "RANGE" }
+    ],
+    "AttributeDefinitions": [
+        { "AttributeName": "PK", "AttributeType": "S" },
+        { "AttributeName": "SK", "AttributeType": "S" },
+        { "AttributeName": "GSI1_PK", "AttributeType": "S" },
+        { "AttributeName": "GSI1_SK", "AttributeType": "S" },
+        { "AttributeName": "GSI2_PK", "AttributeType": "S" },
+        { "AttributeName": "GSI2_SK", "AttributeType": "S" }
+    ],
+    "GlobalSecondaryIndexes": [
+        {
+            "IndexName": "GSI1",
+            "KeySchema": [
+                { "AttributeName": "GSI1_PK", "KeyType": "HASH" },
+                { "AttributeName": "GSI1_SK", "KeyType": "RANGE" }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+        },
+        {
+            "IndexName": "GSI2",
+            "KeySchema": [
+                { "AttributeName": "GSI2_PK", "KeyType": "HASH" },
+                { "AttributeName": "GSI2_SK", "KeyType": "RANGE" }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+        }
+    ],
+    "BillingMode": "PAY_PER_REQUEST"
+}
+EOF
+)
+awslocal dynamodb create-table --cli-input-json "${DYNAMO_CONTROL_PLANE}"
