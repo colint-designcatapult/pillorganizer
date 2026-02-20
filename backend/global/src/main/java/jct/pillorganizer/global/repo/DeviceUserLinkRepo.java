@@ -20,35 +20,37 @@ public class DeviceUserLinkRepo extends BaseControlPlaneRepo<DeviceUserLinkEntit
 
     public Optional<DeviceUserLinkEntity> findByDeviceIdAndUserId(String deviceId, String userId) {
         Key key = Key.builder()
-                .partitionValue(DeviceUserLinkEntity.pk(deviceId))
-                .sortValue(DeviceUserLinkEntity.sk(userId))
+                .partitionValue(DeviceUserLinkEntity.pk(userId))
+                .sortValue(DeviceUserLinkEntity.sk(deviceId))
                 .build();
         return Optional.ofNullable(this.table.getItem(key));
     }
 
     public List<DeviceUserLinkEntity> findByDeviceId(String deviceId) {
-        QueryConditional queryConditional = QueryConditional.keyEqualTo(
+        QueryConditional queryConditional = QueryConditional.sortBeginsWith(
                 Key.builder()
-                        .partitionValue(DeviceUserLinkEntity.pk(deviceId))
-                        .build()
-        );
-
-        return this.table.query(queryConditional)
-                .stream()
-                .flatMap(page -> page.items().stream())
-                .collect(Collectors.toList());
-    }
-
-    public List<DeviceUserLinkEntity> findByUserId(String userId) {
-        QueryConditional queryConditional = QueryConditional.keyEqualTo(
-                Key.builder()
-                        .partitionValue(DeviceUserLinkEntity.gsi1Pk(userId))
+                        .partitionValue(DeviceUserLinkEntity.gsi1Pk(deviceId))
+                        .sortValue(DeviceUserLinkEntity.gsi1Sk(""))
                         .build()
         );
 
         return this.gsi1.query(queryConditional)
                 .stream()
                 .flatMap(page -> page.items().stream())
+                .collect(Collectors.toList());
+    }
+
+    public List<DeviceUserLinkEntity> findByUserId(String userId) {
+        QueryConditional queryConditional = QueryConditional.sortBeginsWith(
+                Key.builder()
+                        .partitionValue(DeviceUserLinkEntity.pk(userId))
+                        .sortValue(DeviceUserLinkEntity.sk(""))
+                        .build()
+        );
+
+        return this.table.query(queryConditional)
+                .items()
+                .stream()
                 .collect(Collectors.toList());
     }
 }

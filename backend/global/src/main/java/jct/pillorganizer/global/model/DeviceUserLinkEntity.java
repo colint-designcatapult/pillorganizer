@@ -30,29 +30,29 @@ public class DeviceUserLinkEntity {
     @Getter(onMethod_ = @DynamoDbAttribute("ModelId"))
     String modelId;
 
-    public static String pk(String deviceId) {
-        return "DEVICE#" + deviceId;
-    }
-
-    public static String sk(String userId) {
+    public static String pk(String userId) {
         return "USER#" + userId;
     }
 
-    public static String gsi1Pk(String userId) {
-        return "USER#" + userId;
+    public static String sk(String deviceId) {
+        return "DEVICE#" + deviceId;
     }
 
-    public static String gsi1Sk(String deviceId) {
+    public static String gsi1Pk(String deviceId) {
         return "DEVICE#" + deviceId;
+    }
+
+    public static String gsi1Sk(String userId) {
+        return "USER#" + userId;
     }
 
     public static BaseControlPlaneEntity buildBase(String deviceId, String userId) {
         return BaseControlPlaneEntity.builder()
-                .pk(pk(deviceId))
-                .sk(sk(userId))
+                .pk(pk(userId))
+                .sk(sk(deviceId))
                 .entityType(DeviceControlPlaneEntityType.DEVICE_USER_LINK)
-                .gsi1Pk(gsi1Pk(userId))
-                .gsi1Sk(gsi1Sk(deviceId))
+                .gsi1Pk(gsi1Pk(deviceId))
+                .gsi1Sk(gsi1Sk(userId))
                 .createdAt(Instant.now())
                 .lastModified(Instant.now())
                 .build();

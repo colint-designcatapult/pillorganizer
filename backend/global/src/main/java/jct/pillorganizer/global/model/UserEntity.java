@@ -21,12 +21,15 @@ public class UserEntity {
     @Getter(onMethod_ = @DynamoDbAttribute("UserName"))
     String userName;
 
+    @Getter(onMethod_ = @DynamoDbAttribute("UserSub"))
+    String userSub;
+
     public static String pk(String userId) {
         return "USER#" + userId;
     }
 
-    public static String sk() {
-        return "METADATA";
+    public static String sk(String userSub) {
+        return "SUB#" + userSub;
     }
 
     public static String gsi1Pk() {
@@ -37,13 +40,23 @@ public class UserEntity {
         return "USER#" + userId;
     }
 
-    public static BaseControlPlaneEntity buildBase(String userId) {
+    public static String gsi2Pk(String userSub) {
+        return "SUB#" + userSub;
+    }
+
+    public static String gsi2Sk() {
+        return "METADATA";
+    }
+
+    public static BaseControlPlaneEntity buildBase(String userId, String userSub) {
         return BaseControlPlaneEntity.builder()
                 .pk(pk(userId))
-                .sk(sk())
+                .sk(sk(userSub))
                 .entityType(DeviceControlPlaneEntityType.USER)
                 .gsi1Pk(gsi1Pk())
                 .gsi1Sk(gsi1Sk(userId))
+                .gsi2Pk(gsi2Pk(userSub))
+                .gsi2Sk(gsi2Sk())
                 .createdAt(Instant.now())
                 .lastModified(Instant.now())
                 .build();
