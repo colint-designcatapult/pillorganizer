@@ -111,6 +111,22 @@ HARM: >>>
 Patient takes medication based on an old prescription that changed yesterday. Patient takes medication, but the device cannot record it. Doctor assumes non-compliance.
 <<<
 
+[HAZARD]
+UID: RISK-MED-4
+SEVERITY: Catastrophic
+PROBABILITY: Probable
+RISK_LEVEL: Unacceptable
+TITLE: Device Confusion
+STATEMENT: >>>
+The patient possesses multiple devices and cannot differentiate between the device shown in the app and the physical device.
+<<<
+HARM: >>>
+Patient takes medication from the wrong device.
+<<<
+ACCEPTANCE_JUSTIFICATION: >>>
+TBD
+<<<
+
 [[/SECTION]]
 
 [[SECTION]]
@@ -131,6 +147,38 @@ TBD
 <<<
 ACCEPTANCE_JUSTIFICATION: >>>
 Document in IFU that data is not to be used for medication management.
+<<<
+
+[HAZARD]
+UID: RISK-DATA-2
+SEVERITY: Critical
+PROBABILITY: Frequent
+RISK_LEVEL: Unacceptable
+TITLE: Device Misattribution
+STATEMENT: >>>
+A software failure results in adherence data from one device to be presented to the user as if it were from another device.
+<<<
+HARM: >>>
+TBD
+<<<
+ACCEPTANCE_JUSTIFICATION: >>>
+TBD
+<<<
+
+[HAZARD]
+UID: RISK-DATA-3
+SEVERITY: Critical
+PROBABILITY: Frequent
+RISK_LEVEL: Unacceptable
+TITLE: User Misattribution
+STATEMENT: >>>
+A software failure results in adherence data from one Patient to be presented to the user as if it were from another Patient.
+<<<
+HARM: >>>
+TBD
+<<<
+ACCEPTANCE_JUSTIFICATION: >>>
+TBD
 <<<
 
 [[/SECTION]]

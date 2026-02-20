@@ -1,0 +1,175 @@
+[DOCUMENT]
+TITLE: Global Control Plane Requirements Specification (SRS)
+PREFIX: CTRL-REQ-
+
+[[SECTION]]
+TITLE: Global Users & Device Provisioning Service
+
+[REQUIREMENT]
+UID: CTRL-REQ-1
+TITLE: Application Programming Interface
+STATEMENT: >>>
+The control plane shall expose an API to serve requests from the device and user applications. This interface is called the Global Users & Device Provisioning Service.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-11
+
+[REQUIREMENT]
+UID: CTRL-REQ-2
+TITLE: API Device Authentication
+STATEMENT: >>>
+The control plane shall ensure all API requests from the device, except those explicitly designated as public, are authenticated as originating from the device using a combination of device ID, serial number, and shared secret.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-18
+
+[REQUIREMENT]
+UID: CTRL-REQ-3
+TITLE: API User Authentication
+STATEMENT: >>>
+The control plane shall ensure all API requests from user applications, except those explicitly designated as public, are authenticated and attributable to a specific user account.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-18
+
+[REQUIREMENT]
+UID: CTRL-REQ-8
+TITLE: Internal API
+STATEMENT: >>>
+The control plane shall define and expose an API for Tenants to communicate with the control plane, and for the control plane to communicate with Tenants. This API is called the Internal API.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-38
+
+[REQUIREMENT]
+UID: CTRL-REQ-9
+TITLE: Internal API Security
+STATEMENT: >>>
+The control plane shall require all requests from the Tenant via the Internal API are authenticated as originating from a legitimate Tenant instance.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-38
+
+[REQUIREMENT]
+UID: CTRL-REQ-10
+TITLE: Internal API Request Authentication
+STATEMENT: >>>
+The control plane shall authenticate requests to the Tenant via the Internal API in a way that asserts that the request originated from the control plane.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-38
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: User Profile & Management
+
+[REQUIREMENT]
+UID: CTRL-REQ-4
+TITLE: User Identifier
+STATEMENT: >>>
+The control plane shall create a User profile record and assign a unique user identifier to the account when a user account is created.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-22
+
+[REQUIREMENT]
+UID: CTRL-REQ-5
+TITLE: User Profile
+STATEMENT: >>>
+The control plane shall act as the single source of truth for the user profile record.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-22
+
+[REQUIREMENT]
+UID: CTRL-REQ-6
+TITLE: User Display Name
+STATEMENT: >>>
+The control plane shall provide an API for a user to view and update their display name.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-25
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: User Device Access
+
+[REQUIREMENT]
+UID: CTRL-REQ-11
+TITLE: User Devices List API
+STATEMENT: >>>
+The control plane shall provide an API to allow a user to view the devices they have access to, their level of access, the nickname of the device, and the connection information to the Tenant's Central Backend Platform.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-36
+- TYPE: Parent
+  VALUE: SYS-REQ-15
+
+[REQUIREMENT]
+UID: CTRL-REQ-13
+TITLE: User Devices List API Cache
+STATEMENT: >>>
+The control plane shall source the user-devices access list from Tenants using the Internal API.
+<<<
+RATIONALE: >>>
+The user device list at the control plane layer is basically a cache. Tenants maintain source of truth for device access.
+<<<
+
+[REQUIREMENT]
+UID: CTRL-REQ-12
+TITLE: User Device Access Update API
+STATEMENT: >>>
+The control plane shall provide an Internal API for a Tenant to update the list of devices a user has access to.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-36
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Tenant Routing
+
+[REQUIREMENT]
+UID: CTRL-REQ-14
+TITLE: Tenant API Routing
+STATEMENT: >>>
+The control plane shall provide a public API for the device or user application to look up the connection information for a specific Tenant's Central Backend Platform using a unique Tenant identifier.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-15
+
+[REQUIREMENT]
+UID: CTRL-REQ-16
+TITLE: Device Tenant Assignment
+STATEMENT: >>>
+The control plane shall maintain the authoritative record of which device a tenant belongs to.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-15
+
+[REQUIREMENT]
+UID: CTRL-REQ-15
+TITLE: Device-Tenant Routing
+STATEMENT: >>>
+The control plane shall provide an API for the device or user application to look up the connection information for the Central Backend Platform that the device belongs to.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-15
+
+[[/SECTION]]
