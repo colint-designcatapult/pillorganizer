@@ -6,7 +6,9 @@ services:
       - "4566:4566" # SQS
       - "1883:1883" # MQTT - IoT Core
     environment:
-      - SERVICES=sqs,iot,secretsmanager
+      - SERVICES=sqs,iot,secretsmanager,dynamodb
+      - ALLOW_NONSTANDARD_REGIONS=1
+      - DYNAMODB_SHARE_DB=1
     volumes:
       - ./init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
   postgres:
@@ -16,6 +18,4 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root
-      POSTGRES_MULTIPLE_DATABASES: "pillorganizer,healthe_global"
-    volumes:
-      - ./create-databases.sh:/docker-entrypoint-initdb.d/create-databases.sh
+      POSTGRES_DB: "pillorganizer"

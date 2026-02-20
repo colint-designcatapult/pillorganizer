@@ -351,6 +351,10 @@ The Patient needs the system to differentiate between multiple devices they may 
 <<<
 RATIONALE: >>>
 The system needs a way to identify a unique device other than via the patient (they may own multiple).
+UID: UN-505
+TITLE: Power Loss State Persistence
+STATEMENT: >>>
+The Patient needs the device to restore its previous state and operation automatically following a power loss, without requiring reconfiguration
 <<<
 
 [[/SECTION]]
