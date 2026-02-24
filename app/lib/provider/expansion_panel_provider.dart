@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 class ExpansionPanelProvider<T> extends ChangeNotifier {
-  Map<T, bool> _value = Map();
+  final Map<T, bool> _value = {};
   int _prevHashCode = 0;
 
   ExpansionPanelProvider<T> update(Set<T>? keyList) {

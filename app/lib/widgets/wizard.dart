@@ -1,6 +1,6 @@
 import 'package:app/service/provisioning_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -377,7 +377,7 @@ class WizardStep extends StatelessWidget {
                               SizedBox(
                                 width: 16.w,
                                 height: 16.h,
-                                child: CircularProgressIndicator(
+                                child: const CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation<Color>(
                                       Colors.white),

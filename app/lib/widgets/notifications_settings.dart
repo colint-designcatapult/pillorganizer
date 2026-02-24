@@ -1,9 +1,8 @@
 import 'package:app/api/device.dart';
 import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
-import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
@@ -42,7 +41,7 @@ class _NotificationsSettingsState extends State<NotificationsSettings>
           await Permission.notification.request().then((value) =>
               value.isGranted ? updateNotification(true, targetDevice) : null);
         } else if (status.isPermanentlyDenied) {
-          AppSettings.openAppSettings();
+          //AppSettings.openAppSettings();
         } else {
           updateNotification(true, targetDevice);
         }
@@ -80,10 +79,10 @@ class _NotificationsSettingsState extends State<NotificationsSettings>
                                 },
                                 activeTrackColor: const Color(0xff708F72),
                                 thumbIcon:
-                                    MaterialStateProperty.resolveWith<Icon?>(
-                                  (Set<MaterialState> states) {
+                                    WidgetStateProperty.resolveWith<Icon?>(
+                                  (Set<WidgetState> states) {
                                     if (states
-                                        .contains(MaterialState.selected)) {
+                                        .contains(WidgetState.selected)) {
                                       return Icon(Icons.check,
                                           color: const Color(0xff708F72),
                                           size: 18.h);

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:app/api/user.dart';
 import 'package:app/exceptions/auth_failed.dart';
-import 'package:app/provider/ble_provider.dart';
 import 'package:app/utils/api_utils.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
@@ -71,7 +70,6 @@ class AuthenticationProvider with ChangeNotifier {
     return credentialManager.signOut().then((value) {
       _user = null;
       notifyListeners();
-      Provider.of<DeviceBluetoothProvider>(context, listen: false).suppress();
       Navigator.of(context).pushNamedAndRemoveUntil("/", (route) => false);
     });
   }

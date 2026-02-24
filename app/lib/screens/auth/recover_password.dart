@@ -4,7 +4,7 @@ import 'package:app/service/error_handler.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
@@ -86,7 +86,7 @@ class _RecoverPasswordPromptState extends State<RecoverPasswordPrompt> {
   @override
   Widget build(BuildContext context) {
     var authUser = Provider.of<AuthenticationProvider>(context, listen: false)
-        .currentUser as User?;
+        .currentUser;
 
     Widget buildNoUserForm() {
       return Form(

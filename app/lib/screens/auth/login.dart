@@ -7,7 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
+
+
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -259,7 +262,6 @@ class _LoginPageState extends State<LoginPage> {
       _formKey.currentState?.save();
       _submitForm();
     }
-    ;
   }
 
   void _submitForm() {

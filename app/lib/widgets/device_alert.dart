@@ -1,6 +1,6 @@
 import 'package:app/widgets/button_icon.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 

@@ -9,7 +9,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
-import '../../platform/ble_auto_supress.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -20,8 +19,7 @@ class HomeScreen extends StatelessWidget {
         onInit: () {
           _askPermissions(context);
         },
-        child: BLEAutoSuppress(
-            child: AutoRefresh(
+        child: AutoRefresh(
           refreshable: Provider.of<DeviceStateProvider>(context),
           child: ScreenUtilWrapper(
             child: Scaffold(
@@ -71,7 +69,7 @@ class HomeScreen extends StatelessWidget {
               ]),
             ),
           ),
-        )));
+        ));
   }
 
   Future<void> _askPermissions(BuildContext context) async {

@@ -3,7 +3,7 @@ import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/widgets/multiple_devices.dart';
 import 'package:app/widgets/single_device.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 

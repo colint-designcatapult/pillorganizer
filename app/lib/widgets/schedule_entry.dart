@@ -8,7 +8,7 @@ import 'package:app/widgets/custom_time_picker.dart';
 import 'package:app/widgets/remove_device_modal.dart';
 import 'package:app/widgets/timezone_selection.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -292,23 +292,23 @@ class RemovalSection extends StatelessWidget {
                   deleteDevice(context);
                 },
                 style: ButtonStyle(
-                  side: MaterialStateProperty.all<BorderSide>(
+                  side: WidgetStateProperty.all<BorderSide>(
                     BorderSide(
                       color: Theme.of(context).colorScheme.error,
                       width: 1.0,
                     ),
                   ),
-                  shape: MaterialStateProperty.all<OutlinedBorder>(
+                  shape: WidgetStateProperty.all<OutlinedBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0).r,
                     ),
                   ),
-                  padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                  padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
                     EdgeInsets.symmetric(vertical: 16.h),
                   ),
-                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
-                      if (states.contains(MaterialState.pressed)) {
+                  backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
+                      if (states.contains(WidgetState.pressed)) {
                         return Theme.of(context)
                             .colorScheme
                             .error
@@ -317,9 +317,9 @@ class RemovalSection extends StatelessWidget {
                       return Colors.transparent;
                     },
                   ),
-                  overlayColor: MaterialStateProperty.resolveWith<Color>(
-                    (Set<MaterialState> states) {
-                      if (states.contains(MaterialState.pressed)) {
+                  overlayColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
+                      if (states.contains(WidgetState.pressed)) {
                         return Theme.of(context)
                             .colorScheme
                             .error

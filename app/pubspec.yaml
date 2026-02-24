@@ -35,65 +35,58 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
-  flutter_platform_widgets: ^6.0.0
+  flutter_platform_widgets: ^10.0.1
   flutter_svg: ^2.0.6
-  intl: ^0.18.0
-  http: ^0.13.4
+  intl: 0.20.2
+  http: ^1.6.0
   sleek_circular_slider: ^2.0.1
   modal_bottom_sheet: ^3.0.0-pre
-  dots_indicator: ^3.0.0
-  bloc: ^8.0.2
-  flutter_bloc: ^8.0.1
-  freezed_annotation: ^2.2.0
+  dots_indicator: ^4.0.1
+  bloc: ^9.2.0
+  flutter_bloc: ^9.1.1
+  freezed_annotation: ^3.1.0
   json_annotation: ^4.6.0
   animations: ^2.0.3
   retrofit: ^4.0.1
   shared_preferences: ^2.0.15
-  package_info_plus: ^4.0.1
-  flutter_secure_storage: ^8.0.0
+  package_info_plus: ^9.0.0
+  flutter_secure_storage: ^10.0.0
   validatorless: ^1.2.3
-  firebase_core: ^2.21.0
-  firebase_messaging: ^14.1.1
-  flutter_local_notifications: ^14.1.0
+  firebase_core: ^4.4.0
   provider: ^6.0.4
   settings_ui: ^2.0.2
   equatable: ^2.0.5
-  timezone: ^0.9.1
-  flutter_timezone: ^1.0.4
-  flutter_esp_ble_prov:
-    path: ./flutter_esp_ble_prov
+  timezone: ^0.11.0
+  flutter_timezone: ^5.0.1
   tuple: ^2.0.1
-  flutter_markdown: ^0.6.14
-  flutter_blue_plus:
-    path: ./flutter_blue_plus
-  protobuf: ^2.1.0
+  flutter_markdown: ^0.7.7+1
   shimmer: ^3.0.0
   dio: ^5.3.3
-  flutter_native_timezone: ^1.0.7
-  dotted_border: ^2.1.0
-  flutter_dotenv: ^5.1.0
+  dotted_border: ^3.1.0
+  flutter_dotenv: ^6.0.0
   phosphor_flutter: ^2.1.0
-  flutter_colorpicker: ^1.0.3
-  firebase_crashlytics: ^3.4.3
-  permission_handler: ^11.0.1
+  flutter_colorpicker: ^1.1.0
+  firebase_crashlytics: ^5.0.7
+  permission_handler: ^12.0.1
   flutter_screenutil: ^5.9.0
   pixel_perfect: any
-  app_settings: 4.2.0
-  app_links: ^3.5.1
+  app_links: ^7.0.0
+  amplify_flutter: ^2.10.0
+  amplify_auth_cognito: ^2.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  icons_launcher: ^2.1.0
-  freezed: ^2.3.2
-  retrofit_generator: ^7.0.1
+  icons_launcher: ^3.0.3
+  freezed: ^3.2.5
+  retrofit_generator: ^10.2.3
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^2.0.0
+  flutter_lints: ^6.0.0
   build_runner: ^2.1.11
   json_serializable: ^6.3.0
 
@@ -110,7 +103,6 @@ flutter:
   uses-material-design: true
 
   assets:
-    - .env
     - lib/assets/SVG/share.svg
     - lib/assets/noun-open-box-1485434.svg
     - lib/assets/package-svgrepo-com.svg

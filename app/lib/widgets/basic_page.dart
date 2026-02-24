@@ -1,7 +1,7 @@
 import 'package:app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -244,7 +244,6 @@ class _BasicFormState extends State<BasicForm> {
         widget.onSubmit!();
       }
     }
-    ;
   }
 
   VoidCallback? _onPressed(AsyncSnapshot snapshot) {

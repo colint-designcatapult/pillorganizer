@@ -4,7 +4,7 @@ import 'package:app/widgets/notifications_settings.dart';
 import 'package:app/widgets/schedule_entry.dart';
 import 'package:app/widgets/share_device.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -178,24 +178,24 @@ class _SingleDeviceState extends State<SingleDevice> {
                         });
                       },
                       style: ButtonStyle(
-                        shape: MaterialStateProperty.all<OutlinedBorder>(
+                        shape: WidgetStateProperty.all<OutlinedBorder>(
                             RoundedRectangleBorder(
                                 borderRadius:
                                     BorderRadiusDirectional.circular(8.r))),
-                        side: MaterialStateProperty.resolveWith<BorderSide>(
-                            (Set<MaterialState> states) {
+                        side: WidgetStateProperty.resolveWith<BorderSide>(
+                            (Set<WidgetState> states) {
                           return BorderSide(
                               color: const Color(0xFFBFD2DB), width: 1.h);
                         }),
                         backgroundColor:
-                            MaterialStateProperty.resolveWith<Color>(
-                                (Set<MaterialState> states) {
-                          if (states.contains(MaterialState.selected)) {
+                            WidgetStateProperty.resolveWith<Color>(
+                                (Set<WidgetState> states) {
+                          if (states.contains(WidgetState.selected)) {
                             return const Color(0xFFF1F5F6);
                           }
                           return Colors.white;
                         }),
-                        padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                        padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
                           EdgeInsets.symmetric(vertical: 16.h, horizontal: 0.w),
                         ),
                       ),

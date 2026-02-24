@@ -1,28 +1,43 @@
 import 'dart:io';
 
 import 'package:app/api/device.dart';
-import 'package:app/provider/ble_provider.dart';
 import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/device_state_provider.dart';
-import 'package:app/service/device_information_service.dart';
 import 'package:app/widgets/switch_device.dart';
-import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../provider/selected_device_provider.dart';
 
+
+IconData batteryIcon(int level, bool? charging) {
+  if (charging == true) {
+    return PhosphorIconsRegular.batteryCharging;
+  } else if (level == 0) {
+    return PhosphorIconsRegular.batteryEmpty;
+  } else if (level <= 20) {
+    return PhosphorIconsRegular.batteryLow;
+  } else if (level <= 50) {
+    return PhosphorIconsRegular.batteryMedium;
+  } else if (level <= 80) {
+    return PhosphorIconsRegular.batteryHigh;
+  }
+
+  return PhosphorIconsRegular.batteryFull;
+}
+
+
 class DeviceInfoHeader extends StatelessWidget {
   const DeviceInfoHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer4<SelectedDeviceProvider, DeviceBluetoothProvider,
+    return Consumer3<SelectedDeviceProvider,
             DeviceStateProvider, DeviceProvider>(
-        builder: (_, selectedDeviceProvider, bleProvider, deviceStateProvider,
+        builder: (_, selectedDeviceProvider, deviceStateProvider,
             deviceProvider, __) {
       int? batteryLevel;
       bool? batteryCharging;
@@ -32,16 +47,10 @@ class DeviceInfoHeader extends StatelessWidget {
       String deviceName = selectedDeviceProvider.device?.name ??
           AppLocalizations.of(context)!.loadingState;
 
-      bool isMissingPermission =
-          bleProvider.status == BLEConnectionStatus.missingPermission;
-      bool isConnecting = bleProvider.status == BLEConnectionStatus.connecting;
 
-      if (wifiIsConnected(context, bleProvider.status) && deviceState != null) {
+      if (deviceState != null) {
         batteryLevel = deviceState.battery;
         batteryCharging = deviceState.charging;
-      } else {
-        batteryLevel = bleProvider.batteryLevel;
-        batteryCharging = bleProvider.batteryCharging;
       }
 
       if (deviceState == null) {
@@ -87,7 +96,7 @@ class DeviceInfoHeader extends StatelessWidget {
                               shape: BoxShape.circle,
                               border: Border.all(
                                   width: 2.h,
-                                  color: isMissingPermission
+                                  color: true
                                       ? Colors.red
                                       : const Color.fromARGB(0, 0, 0, 0))),
                           child:
@@ -117,7 +126,7 @@ class DeviceInfoHeader extends StatelessWidget {
                   ]
                 ],
               )),
-          if (isConnecting)
+          if (false)
             Column(
               children: [
                 SizedBox(height: 8.h),
@@ -147,7 +156,7 @@ class DeviceInfoHeader extends StatelessWidget {
             ),
           if (numberOfDevices > 1)
             Column(
-              children: [SizedBox(height: 8.h), SwitchDevice()],
+              children: [SizedBox(height: 8.h), const SwitchDevice()],
             ),
           if (batteryLevel != null)
             Column(
@@ -189,12 +198,7 @@ class DeviceInfoHeader extends StatelessWidget {
     showDialog(
         context: context,
         builder: (_) =>
-            Consumer<DeviceBluetoothProvider>(builder: (_, bleProv, __) {
-              String bleText = bluetoothText(context, bleProv.status);
-              String wrlText = wirelessText(context, bleProv.status);
-              bool isMissingPermission =
-                  bleProv.status == BLEConnectionStatus.missingPermission;
-              return Dialog(
+               Dialog(
                   insetPadding:
                       EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
                   elevation: 0,
@@ -263,7 +267,7 @@ class DeviceInfoHeader extends StatelessWidget {
                                     SizedBox(width: 12.w),
                                     Expanded(
                                       child: Text(
-                                        wrlText,
+                                        "wrlText",
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodyMedium,
@@ -295,7 +299,7 @@ class DeviceInfoHeader extends StatelessWidget {
                                     SizedBox(width: 12.w),
                                     Expanded(
                                       child: Text(
-                                        bleText,
+                                        "bleText",
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodyMedium,
@@ -305,7 +309,7 @@ class DeviceInfoHeader extends StatelessWidget {
                                     )
                                   ],
                                 ))),
-                        if (isMissingPermission)
+                        if (false)
                           SizedBox(
                               height: 125.w,
                               child: Padding(
@@ -328,7 +332,7 @@ class DeviceInfoHeader extends StatelessWidget {
                                       padding: EdgeInsets.all(6.h),
                                       child: ElevatedButton(
                                         onPressed: () {
-                                          AppSettings.openAppSettings();
+                                          //AppSettings.openAppSettings();
                                         },
                                         child: Text(
                                             AppLocalizations.of(context)!
@@ -341,7 +345,8 @@ class DeviceInfoHeader extends StatelessWidget {
                                   ])))
                       ],
                     ),
-                  ));
-            }));
+                  )
+               )
+            );
   }
 }

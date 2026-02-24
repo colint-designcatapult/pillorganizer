@@ -6,7 +6,7 @@ import 'package:app/widgets/button_icon_text.dart';
 import 'package:app/widgets/generic_yes_no_modal.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
@@ -146,11 +146,12 @@ class IndexNewPills extends StatelessWidget {
           color: const Color(0xFFF8F8FA),
         ),
         child: DottedBorder(
-          borderType: BorderType.RRect,
-          color: Theme.of(context).primaryColor,
-          strokeWidth: 2,
-          dashPattern: const <double>[4, 4],
-          radius: const Radius.circular(8).r,
+          options: RoundedRectDottedBorderOptions(
+            color: Theme.of(context).primaryColor,
+            strokeWidth: 2,
+            dashPattern: const <double>[4, 4],
+            radius: const Radius.circular(8).r,
+          ),
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 32.h),
             child: Row(

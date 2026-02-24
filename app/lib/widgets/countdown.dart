@@ -11,6 +11,7 @@ class CountdownClock extends StatefulWidget {
       {Key? key, required this.target, required this.start, this.prompt})
       : super(key: key);
 
+  @override
   _CountdownClockState createState() => _CountdownClockState();
 }
 

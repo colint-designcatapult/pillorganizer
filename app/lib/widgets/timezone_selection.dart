@@ -3,10 +3,10 @@ import 'package:app/provider/device_provider.dart';
 import 'package:app/screens/modals/time_zone_selection.dart';
 import 'package:app/service/time_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_native_timezone/flutter_native_timezone.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/standalone.dart' as tz;
 
@@ -34,7 +34,7 @@ class TimeZoneSelectionState extends State<TimeZoneSelection> {
   }
 
   Future<void> _getCurrentPhoneLocation() async {
-    final String timeZoneName = await FlutterNativeTimezone.getLocalTimezone();
+    final String timeZoneName = (await FlutterTimezone.getLocalTimezone()).identifier;
     final tz.Location location = tz.getLocation(timeZoneName);
 
     setState(() {
@@ -139,15 +139,15 @@ class TimeZoneSelectionState extends State<TimeZoneSelection> {
             ? null
             : () => _updateDeviceTimezone(phoneLocation),
         style: ButtonStyle(
-          side: MaterialStateProperty.all<BorderSide>(
+          side: WidgetStateProperty.all<BorderSide>(
             const BorderSide(color: Color(0xFFBFD2DB), width: 2.0),
           ),
-          shape: MaterialStateProperty.all<OutlinedBorder>(
+          shape: WidgetStateProperty.all<OutlinedBorder>(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8.0).r,
             ),
           ),
-          padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+          padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
             EdgeInsets.symmetric(vertical: 16.h),
           ),
         ),

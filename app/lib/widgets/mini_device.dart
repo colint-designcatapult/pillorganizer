@@ -40,7 +40,7 @@ class _StateLed extends State<StateLed> {
     var height = 103 * ratio;
 
     return image == null
-        ? Container(width: widget.ledWidth, height: height)
+        ? SizedBox(width: widget.ledWidth, height: height)
         : Visibility(
             visible: !shouldBlink || blinkState,
             maintainSize: true,

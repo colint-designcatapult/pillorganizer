@@ -17,7 +17,7 @@ class DevicePeriodIcon extends StatelessWidget {
           ? "lib/assets/256w/DEV_SYM_AM.png"
           : "lib/assets/256w/DEV_SYM_PM.png",
       color: Theme.of(context).colorScheme.primary,
-      width: this.width,
+      width: width,
     );
   }
 }

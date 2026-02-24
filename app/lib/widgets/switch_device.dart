@@ -1,18 +1,17 @@
 import 'package:app/api/device.dart';
-import 'package:app/navigation/provision_navigator.dart';
-import 'package:app/provider/ble_provider.dart';
 import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/provisioning/join_device_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 
 class SwitchDevice extends StatefulWidget {
-  SwitchDevice({Key? key}) : super(key: key);
+  const SwitchDevice({Key? key}) : super(key: key);
 
+  @override
   _SwitchDeviceState createState() => _SwitchDeviceState();
 }
 
@@ -24,7 +23,7 @@ class _SwitchDeviceState extends State<SwitchDevice> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: const Color(0x101828).withOpacity(0.05), // Shadow color
+              color: const Color(0x00101828).withOpacity(0.05), // Shadow color
               offset: const Offset(0, 1), // Shadow position
               blurRadius: 2, // Shadow blur
               spreadRadius: 0, // Spread radius
@@ -72,8 +71,6 @@ class _SwitchDeviceState extends State<SwitchDevice> {
   }
 
   void _handleConnectNewDevice() {
-    Provider.of<DeviceBluetoothProvider>(context, listen: false).suppress();
-    startProvisioning(context);
   }
 
   void _handleJoinExistingDevice() {
@@ -184,7 +181,7 @@ class _SwitchDeviceState extends State<SwitchDevice> {
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
                 child: Text(
                   AppLocalizations.of(context)!.viewOnly,
-                  style: TextStyle(fontSize: 12, fontFamily: 'Poppins'),
+                  style: const TextStyle(fontSize: 12, fontFamily: 'Poppins'),
                 )),
           const SizedBox(width: 8), // Spacing between icon and text
           const Icon(PhosphorIconsRegular.arrowRight,

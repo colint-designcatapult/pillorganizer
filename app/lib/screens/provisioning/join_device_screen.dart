@@ -3,7 +3,7 @@ import 'package:app/provider/caregiver_provider.dart';
 import 'package:app/provider/device_provider.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -26,7 +26,7 @@ class _JoinDevicePageState extends State<JoinDevicePage> {
 
   void onValidateDigitCode(BuildContext context, String code) {
     var caregiverProvider =
-        Provider.of<CaregiverProvider>(context, listen: false);
+    Provider.of<CaregiverProvider>(context, listen: false);
 
     caregiverProvider.validateCaregiverCode(code: code).then((res) {
       Provider.of<DeviceProvider>(context, listen: false).refresh();
@@ -65,7 +65,7 @@ class _JoinDevicePageState extends State<JoinDevicePage> {
               padding: const EdgeInsets.only(top: 4),
               child: Text(AppLocalizations.of(context)!.joinDeviceErrorExpired,
                   style:
-                      const TextStyle(color: Color(0xff9A2D25), fontSize: 14)))
+                  const TextStyle(color: Color(0xff9A2D25), fontSize: 14)))
       ],
     );
   }
@@ -97,53 +97,53 @@ class _JoinDevicePageState extends State<JoinDevicePage> {
         backgroundColor: const Color(0xFFBFD2DB),
         body: KeyboardDismissWrapper(
             child: Container(
-          constraints: BoxConstraints.expand(
-            height: MediaQuery.of(context).size.height,
-          ),
-          child: Stack(
-            children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.max,
+              constraints: BoxConstraints.expand(
+                height: MediaQuery.of(context).size.height,
+              ),
+              child: Stack(
                 children: [
-                  SizedBox(height: 100.h),
-                  Container(
-                    margin: EdgeInsets.symmetric(horizontal: 24.w),
-                    child: Text(
-                      AppLocalizations.of(context)!.joinExistingDevice,
-                      textAlign: TextAlign.left,
-                      softWrap: true,
-                      overflow: TextOverflow.fade,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(fontSize: 32.h),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
-                    child: Material(
-                      elevation: 4,
-                      shadowColor: const Color.fromRGBO(0, 0, 0, 0.1),
-                      borderRadius: BorderRadius.all(Radius.circular(12.r)),
-                      child: Container(
-                        padding: EdgeInsets.all(20.h),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.all(Radius.circular(12.r)),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      SizedBox(height: 100.h),
+                      Container(
+                        margin: EdgeInsets.symmetric(horizontal: 24.w),
+                        child: Text(
+                          AppLocalizations.of(context)!.joinExistingDevice,
+                          textAlign: TextAlign.left,
+                          softWrap: true,
+                          overflow: TextOverflow.fade,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontSize: 32.h),
                         ),
-                        child: showCodeStep
-                            ? _securityCodeSection()
-                            : _confirmationSection(),
                       ),
-                    ),
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
+                        child: Material(
+                          elevation: 4,
+                          shadowColor: const Color.fromRGBO(0, 0, 0, 0.1),
+                          borderRadius: BorderRadius.all(Radius.circular(12.r)),
+                          child: Container(
+                            padding: EdgeInsets.all(20.h),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.all(Radius.circular(12.r)),
+                            ),
+                            child: showCodeStep
+                                ? _securityCodeSection()
+                                : _confirmationSection(),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-        )),
+            )),
         bottomNavigationBar: Container(
           height: 72.h,
           color: Theme.of(context).secondaryHeaderColor,
@@ -179,7 +179,7 @@ class _JoinDevicePageState extends State<JoinDevicePage> {
               Expanded(
                 child: GestureDetector(
                     onTap: () =>
-                        canProceed ? Navigator.of(context).pop() : null,
+                    canProceed ? Navigator.of(context).pop() : null,
                     behavior: HitTestBehavior.opaque,
                     child: Container(
                       height: 72.h,
@@ -198,9 +198,9 @@ class _JoinDevicePageState extends State<JoinDevicePage> {
                                   .bodyMedium
                                   ?.copyWith(fontWeight: FontWeight.w700)
                                   .copyWith(
-                                      color: canProceed
-                                          ? Colors.white
-                                          : const Color(0xffBED4D8))),
+                                  color: canProceed
+                                      ? Colors.white
+                                      : const Color(0xffBED4D8))),
                           SizedBox(
                             width: 8.w,
                           ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AddNewPills extends StatelessWidget {
@@ -32,7 +32,7 @@ class AddNewPills extends StatelessWidget {
           SizedBox(height: 44.h),
           GestureDetector(
               onTap: onAddMedicationClick,
-              child: Container(
+              child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: onAddMedicationClick,
