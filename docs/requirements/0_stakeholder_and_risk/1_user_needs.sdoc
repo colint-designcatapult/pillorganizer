@@ -176,6 +176,16 @@ The Caregiver needs to establish a unique, secure account capable of managing or
 <<<
 
 [USER_NEED]
+UID: UN-7312
+TITLE: Account Name
+STATEMENT: >>>
+The Patient needs to see which Caregiver accounts have access to their device, and be able to determine which Caregiver such account belongs to.
+<<<
+RATIONALE: >>>
+Need to present the user a name when listing account access so they know who each account belongs to.
+<<<
+
+[USER_NEED]
 UID: UN-303
 TITLE: Remote Monitoring Access
 STATEMENT: >>>
@@ -210,10 +220,24 @@ Existing users shall be able to authenticate securely to access their specific d
 UID: UN-307
 TITLE: Schedule Modification Privilege
 STATEMENT: >>>
-The Account Owner needs the system to restrict medication and schedule modification permissions exclusively to their authenticated account.
+The Patient needs the system to restrict medication and schedule modification permissions exclusively to their authenticated account.
 <<<
 RATIONALE: >>>
 Prevents unauthorized or accidental schedule changes by secondary users (Caregivers/Researchers), mitigating the risk of dosing errors and race conditions.
+<<<
+
+[USER_NEED]
+UID: UN-7311
+TITLE: Record Access Control
+STATEMENT: >>>
+The Patient needs the system to ensure only authorized users are permitted to access or make changes to their data, records, and configuration.
+<<<
+
+[USER_NEED]
+UID: UN-7314
+TITLE: Patient Device List & Switch
+STATEMENT: >>>
+The Patient and the Caregiver need to know all the devices they posses or have access to, and be able to easily select and switch between such devices to access or make changes to their data, records, and configuration.
 <<<
 
 [[/SECTION]]
@@ -310,6 +334,23 @@ The Patient needs to be able to claim "primary ownership" of a device that was p
 <<<
 
 [USER_NEED]
+UID: UN-7313
+TITLE: Physical Device Identification
+STATEMENT: >>>
+The Patient needs to be able to differentiate between multiple devices they may posses.
+<<<
+RATIONALE: >>>
+Need to be able to see a device in the app and know which real-life device it refers to.
+<<<
+
+[USER_NEED]
+UID: UN-7315
+TITLE: Logical Device Identification
+STATEMENT: >>>
+The Patient needs the system to differentiate between multiple devices they may posses.
+<<<
+RATIONALE: >>>
+The system needs a way to identify a unique device other than via the patient (they may own multiple).
 UID: UN-505
 TITLE: Power Loss State Persistence
 STATEMENT: >>>

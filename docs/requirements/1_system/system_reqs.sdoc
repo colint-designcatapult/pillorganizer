@@ -137,7 +137,7 @@ The Central Backend Platform shall ensure all user data is encrypted in transit 
 UID: SYS-REQ-14
 TITLE: Isolated Backend Environments
 STATEMENT: >>>
-The system shall allow for multiple, independent, and logically isolated Central Backend Platform environments to operate simultaneously.
+The system shall allow for multiple, independent, and logically isolated Central Backend Platform environments to operate simultaneously. Each such independent environment is a Tenant.
 <<<
 RATIONALE: >>>
 Allows separate/isolated production, staging, and testing environments along with an isolated instance for each clinical trial.
@@ -154,7 +154,7 @@ RELATIONS:
 UID: SYS-REQ-15
 TITLE: Backend Environment Routing
 STATEMENT: >>>
-The system shall provide a mechanism such that the device and the user applications are routed to the proper, isolated Central Backend Platform environment.
+The system shall provide a mechanism such that the device and the user applications are routed to the proper Tenant.
 <<<
 RATIONALE: >>>
 If we have multiple environments, we need a way to point the device/apps to the current one.
@@ -166,6 +166,315 @@ RELATIONS:
 - TYPE: Parent
   VALUE: RISK-DATA-1
   ROLE: Mitigates
+
+[REQUIREMENT]
+UID: SYS-REQ-38
+TITLE: Secure Tenant Coordination
+STATEMENT: >>>
+The system shall provide a secure mechanism for a Tenant to share explicitly designated shared state between other Tenants.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7309
+  ROLE: Refines
+- TYPE: Parent
+  VALUE: UN-7314
+  ROLE: Refines
+
+[[SECTION]]
+TITLE: Authentication & Accounts
+
+[REQUIREMENT]
+UID: SYS-REQ-21
+TITLE: User Account Creation
+STATEMENT: >>>
+The system shall allow a patient or caregiver to create an account using secure credentials to uniquely identify the user.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-301
+  ROLE: Refines
+- TYPE: Parent
+  VALUE: UN-302
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-22
+TITLE: Account Unique Identifier
+STATEMENT: >>>
+Every user account shall be assigned a unique, global, and permanent user identifier (user ID) that 1-to-1 maps to a user account.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-301
+  ROLE: Refines
+- TYPE: Parent
+  VALUE: UN-302
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-23
+TITLE: User Account Login
+STATEMENT: >>>
+The system shall allow a user to securely log in to their account using previously established user credentials, granting them a temporary session to authenticate user application requests with.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-306
+  ROLE: Refines
+- TYPE: Parent
+  VALUE: UN-7311
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-24
+TITLE: Global User Accounts
+STATEMENT: >>>
+The system shall allow a single patient or caregiver account to be used with all devices and tenants the user has authorized access to.
+<<<
+RATIONALE: >>>
+Single sign-on for tenants.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-601
+  ROLE: Refines
+- TYPE: Parent
+  VALUE: UN-501
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-25
+TITLE: User Account Name
+STATEMENT: >>>
+The system shall allow authenticated users to view and modify their own display name that may be displayed to other users.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7312
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-18
+TITLE: Backend Authentication Requirement
+STATEMENT: >>>
+The system shall require authentication for all inbound device and user application requests to the Central Backend Platform, attributable to a specific user or device, with the sole exception of explicitly documented public endpoints (e.g., health checks, initial authentication).
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7311
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-19
+TITLE: Backend Device Authorization
+STATEMENT: >>>
+The system shall require all authenticated inbound device requests to the Central Backend Platform to be authorized for that specific device.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: RISK-DATA-2
+  ROLE: Refines
+
+[[/SECTION]]
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Device Identity
+
+[REQUIREMENT]
+UID: SYS-REQ-36
+TITLE: Device List
+STATEMENT: >>>
+The system shall allow the user to view a list of all devices they posses or have authorized access to by device nickname.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7314
+  ROLE: Refines
+- TYPE: Parent
+  VALUE: UN-7313
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-37
+TITLE: Device Switch
+STATEMENT: >>>
+The system shall allow a user to switch which device they are accessing or modifying device state, configuration, or records for, amongst the devices they have authorized access to.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7314
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-26
+TITLE: Device Nickname
+STATEMENT: >>>
+The system shall allow the user to view and modify a nickname for the device.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7313
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-27
+TITLE: Device Nickname Display
+STATEMENT: >>>
+The system shall display the Device Nickname while viewing device state, making configuration changes, viewing adherence records, or in mobile app notifications.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: RISK-MED-4
+  ROLE: Mitigates
+
+[REQUIREMENT]
+UID: SYS-REQ-39
+TITLE: Device Serial Number
+STATEMENT: >>>
+The system shall identify a specific physical device with a permanent, unique serial number.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7313
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-40
+TITLE: Device Serial Number Display
+STATEMENT: >>>
+The system shall display the serial n
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7313
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-41
+TITLE: Device Logical Identifier
+STATEMENT: >>>
+The system shall assign a globally unique identifier, other than the serial number, that identifies a single physical device.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7315
+  ROLE: Refines
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Device Configuration
+
+[REQUIREMENT]
+UID: SYS-REQ-28
+TITLE: Device Primary User
+STATEMENT: >>>
+The device shall be associated with exactly one primary user account designated as the Primary User of the device.
+<<<
+RATIONALE: >>>
+Should never be no primary user (doesn't make sense) and should never have more than one for risk mitigation.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-307
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-30
+TITLE: Primary User Transfer
+STATEMENT: >>>
+The system shall allow a Primary User to transfer the Primary User status to another user account, and in doing so, removing their own Primary User status.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-503
+  ROLE: Refines
+- TYPE: Parent
+  VALUE: UN-504
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-31
+TITLE: Caregiver Access
+STATEMENT: >>>
+The system shall allow the Primary User to designate another user account as a Caregiver for the device.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-303
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-32
+TITLE: Caregiver Monitoring
+STATEMENT: >>>
+The system shall allow the Caregiver to view the device state, adherence records, and configuration, and mobile notifications.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-303
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-33
+TITLE: Caregiver Read-Access Only
+STATEMENT: >>>
+The system shall deny the Caregiver access to make changes to device configuration, state, or records.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-307
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-34
+TITLE: Caregiver List
+STATEMENT: >>>
+The system shall allow the Primary User to view the list of Caregivers authorized access to the device, and their Account Names.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-304
+  ROLE: Refines
+- TYPE: Parent
+  VALUE: UN-7312
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-35
+TITLE: Caregiver Revocation
+STATEMENT: >>>
+The system shall allow the Primary User to revoke Caregiver access to the device for a specific Caregiver account.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-304
+  ROLE: Refines
+
+[[SECTION]]
+TITLE: Device Provisioning
+
+[[/SECTION]]
+
+[REQUIREMENT]
+UID: SYS-REQ-29
+TITLE: Initial Primary User
+STATEMENT: >>>
+The system shall designate the user account that provisioned the device as the primary user of the device after provisioning if no explicit alternative Primary User is designated.
+<<<
+RATIONALE: >>>
+Sane default, prevents device from not having a primary user.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-503
+  ROLE: Refines
+- TYPE: Parent
+  VALUE: UN-501
+  ROLE: Refines
 
 [[/SECTION]]
 
