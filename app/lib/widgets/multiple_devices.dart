@@ -3,7 +3,7 @@ import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/widgets/add_device.dart';
 import 'package:app/widgets/single_device_modal.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
@@ -171,16 +171,16 @@ class MultipleDevices extends StatelessWidget {
                                               '/index', (route) => false);
                                     },
                                     style: ButtonStyle(
-                                      shape: MaterialStateProperty.all<
+                                      shape: WidgetStateProperty.all<
                                           OutlinedBorder>(
                                         RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(8.r),
                                         ),
                                       ),
-                                      side: MaterialStateProperty.resolveWith<
+                                      side: WidgetStateProperty.resolveWith<
                                           BorderSide>(
-                                        (Set<MaterialState> states) {
+                                        (Set<WidgetState> states) {
                                           return const BorderSide(
                                             color: Color(0xFF8BCAE5),
                                             width: 2.0,
@@ -215,18 +215,18 @@ class MultipleDevices extends StatelessWidget {
                                   color: const Color(0xFF206B8B),
                                   style: ButtonStyle(
                                     backgroundColor:
-                                        MaterialStateProperty.all<Color>(
+                                        WidgetStateProperty.all<Color>(
                                             Colors.transparent),
-                                    shape: MaterialStateProperty.all<
+                                    shape: WidgetStateProperty.all<
                                         OutlinedBorder>(
                                       RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(8.r),
                                       ),
                                     ),
-                                    side: MaterialStateProperty.resolveWith<
+                                    side: WidgetStateProperty.resolveWith<
                                         BorderSide>(
-                                      (Set<MaterialState> states) {
+                                      (Set<WidgetState> states) {
                                         return const BorderSide(
                                           color: Color(0xFF8BCAE5),
                                           width: 2.0,

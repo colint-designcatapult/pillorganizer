@@ -3,7 +3,7 @@ import 'package:app/provider/authentication_provider.dart';
 import 'package:app/service/error_handler.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
@@ -18,7 +18,7 @@ class ChangeEmail extends StatefulWidget {
 class _ChangeEmailState extends State<ChangeEmail> {
   @override
   Widget build(BuildContext context) {
-    return ChangeEmailModal();
+    return const ChangeEmailModal();
   }
 }
 

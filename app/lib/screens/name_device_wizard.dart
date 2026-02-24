@@ -4,7 +4,7 @@ import 'package:app/service/provisioning_service.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:app/widgets/wizard.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
@@ -19,7 +19,7 @@ class NameDeviceWizard extends StatefulWidget {
 
 class _NameDeviceWizard extends State<NameDeviceWizard> {
   final _textController = TextEditingController();
-  String _initialDeviceName = '';
+  final String _initialDeviceName = '';
 
   @override
   void initState() {

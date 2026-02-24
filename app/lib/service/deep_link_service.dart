@@ -34,7 +34,7 @@ class DeepLinkService {
 
   Future<Uri?> getInitialLink() async {
     try {
-      return await _appLinks.getInitialAppLink();
+      return await _appLinks.getInitialLink();
     } catch (e) {
       return null;
     }

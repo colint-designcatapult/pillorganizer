@@ -5,7 +5,7 @@ import 'package:app/screens/modals/add_new_pills_modal.dart';
 import 'package:app/widgets/addNewPill/medication_card_entry.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
@@ -101,11 +101,12 @@ class HomeEmptyDeviceBody extends StatelessWidget {
                                 });
                           },
                           child: DottedBorder(
-                            color: const Color(0xff206B8B),
-                            strokeWidth: 2.w,
-                            dashPattern: [10.w, 5.w],
-                            radius: Radius.circular(8.r),
-                            borderType: BorderType.RRect,
+                            options: RoundedRectDottedBorderOptions(
+                              color: const Color(0xff206B8B),
+                              strokeWidth: 2.w,
+                              dashPattern: [10.w, 5.w],
+                              radius: Radius.circular(8.r)
+                            ),
                             child: Container(
                               padding: EdgeInsets.all(24.w),
                               decoration: BoxDecoration(

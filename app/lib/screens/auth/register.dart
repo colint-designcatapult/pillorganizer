@@ -6,7 +6,7 @@ import 'package:app/service/error_handler.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
@@ -91,7 +91,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodyMedium
-                                            ?.copyWith(color: Color(0xff445860))
+                                            ?.copyWith(color: const Color(0xff445860))
                                             .copyWith(
                                                 fontWeight: FontWeight.w600)),
                                   ))

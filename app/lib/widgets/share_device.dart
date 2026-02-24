@@ -5,7 +5,7 @@ import 'package:app/provider/caregiver_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
@@ -192,13 +192,13 @@ class _ShareDeviceState extends State<ShareDevice> {
                         ? null
                         : _generateCode,
                     style: ButtonStyle(
-                      shape: MaterialStateProperty.all<OutlinedBorder>(
+                      shape: WidgetStateProperty.all<OutlinedBorder>(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                       ),
-                      side: MaterialStateProperty.resolveWith<BorderSide>(
-                        (Set<MaterialState> states) {
+                      side: WidgetStateProperty.resolveWith<BorderSide>(
+                        (Set<WidgetState> states) {
                           if (caregiverProvider.isGeneratingCode) {
                             return const BorderSide(
                               color: Color(0xFFCCCCCC),
@@ -217,7 +217,7 @@ class _ShareDeviceState extends State<ShareDevice> {
                           }
                         },
                       ),
-                      padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                      padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
                         EdgeInsets.symmetric(vertical: 16.h, horizontal: 12.w),
                       ),
                     ),

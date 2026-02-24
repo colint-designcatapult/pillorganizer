@@ -5,7 +5,6 @@ import 'package:app/api/intreceptors/auth-interceptors.dart';
 import 'package:app/service/time_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:retrofit/retrofit.dart';
@@ -16,7 +15,7 @@ part 'api.g.dart';
 
 class AppApi {
   static String base() {
-    return dotenv.env['API_URL'] ?? 'https://jctbackend.herokuapp.com/api/v1';
+    return 'https://jctbackend.herokuapp.com/api/v1';
   }
 
   static String deviceClass() {
@@ -478,7 +477,7 @@ class DeviceDTO {
     if (customName != null) {
       return customName!;
     } else {
-      return "Device #${id}";
+      return "Device #$id";
     }
   }
 }

@@ -8,7 +8,7 @@ import 'package:app/screens/tab/my_devices.dart';
 import 'package:app/screens/tab/pills_screen.dart';
 import 'package:app/utils/takecare_link_util.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';

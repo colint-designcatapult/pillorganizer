@@ -1,10 +1,9 @@
-import 'package:app/navigation/provision_navigator.dart';
+import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:app/navigation/tab_navigator.dart';
-import 'package:app/provider/ble_provider.dart';
 import 'package:app/provider/caregiver_provider.dart';
 import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/medication_provider.dart';
-import 'package:app/provider/provision_provider.dart';
 import 'package:app/provider/time_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
@@ -14,14 +13,9 @@ import 'package:app/screens/name_device_wizard.dart';
 import 'package:app/screens/post_setup_wizard.dart';
 import 'package:app/service/credential_manager.dart';
 import 'package:app/service/deep_link_service.dart';
-import 'package:app/service/notification_service.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -38,43 +32,57 @@ import 'provider/selected_device_provider.dart';
 import 'screens/auth/launch_page_login.dart';
 import 'screens/auth/patient_confirmation.dart';
 
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(
-    name: 'Cabinet',
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  // Handle the background message with translation
-  await BackgroundNotificationTranslator.handleBackgroundMessage(message);
-}
-
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
 
+const amplifyconfig = ''' {
+    "UserAgent": "aws-amplify-cli/2.0",
+    "Version": "1.0",
+    "auth": {
+        "plugins": {
+            "awsCognitoAuthPlugin": {
+                "CognitoUserPool": {
+                    "Default": {
+                        "PoolId": "ca-central-1_aF2K8pxyr",
+                        "AppClientId": "71cbl06ka8u85unhejsgaddt1m",
+                        "Region": "ca-central-1"
+                    }
+                },
+                "Auth": {
+                    "Default": {
+                        "OAuth": {
+                            "WebDomain": "ca-central-1af2k8pxyr.auth.ca-central-1.amazoncognito.com",
+                            "AppClientId": "71cbl06ka8u85unhejsgaddt1m",
+                            "SignInRedirectURI": "jct.pillorganizer.pills://callback",
+                            "SignOutRedirectURI": "jct.pillorganizer.pills://signout",
+                            "Scopes": [
+                                "profile",
+                                "openid"
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}''';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  await Firebase.initializeApp(
-    name: 'Cabinet',
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  FlutterError.onError = (errorDetails) {
-    if (!errorDetails.toString().contains('A RenderFlex overflowed by')) {
-      FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
-    }
-  };
-  // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
-  PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    return true;
-  };
   tz.initializeTimeZones();
-  await dotenv.load();
-
   DeepLinkService().initialize();
-
+  await _configureAmplify();
   runApp(const MyApp());
+}
+
+Future<void> _configureAmplify() async {
+  try {
+    await Amplify.addPlugin(AmplifyAuthCognito());
+    await Amplify.configure(amplifyconfig);
+    safePrint('Successfully configured');
+  } on Exception catch (e) {
+    safePrint('Error configuring Amplify: $e');
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -116,24 +124,13 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProvider<MinuteBasedTimeProvider>(
             create: (context) => MinuteBasedTimeProvider(),
           ),
-          ChangeNotifierProxyProvider<SelectedDeviceProvider,
-                  DeviceBluetoothProvider>(
-              create: (context) => DeviceBluetoothProvider(),
-              update: (context, dev, prov) {
-                if (prov != null) {
-                  prov.changeDevice(dev.device);
-                  return prov;
-                } else {
-                  return DeviceBluetoothProvider(selectedDevice: dev.device);
-                }
-              }),
           ChangeNotifierProvider<CaregiverProvider>(
               create: (_) => CaregiverProvider()),
         ],
         child: DeepLinkWrapper(
           child: MediaQuery(
               data: MediaQuery.of(context).copyWith(
-                textScaleFactor: 1.0,
+                textScaler: const TextScaler.linear(1.0),
               ),
               child: PlatformProvider(
                 settings: PlatformSettingsData(iosUsesMaterialWidgets: true),
@@ -157,11 +154,7 @@ class MyApp extends StatelessWidget {
                                   : null;
 
                               return MaterialPageRoute(
-                                builder: (context) =>
-                                    ChangeNotifierProvider<ProvisionProvider>(
-                                  create: (context) => ProvisionProvider(),
-                                  child: NameDeviceWizard(deviceId: deviceId),
-                                ),
+                                builder: (context) => NameDeviceWizard(deviceId: deviceId),
                               );
                             }
 
@@ -172,8 +165,6 @@ class MyApp extends StatelessWidget {
                             '/': (context) {
                               return const AppInitializer();
                             },
-                            '/provision': (context) =>
-                                const ProvisionNavigator(),
                             '/index': (context) => const TabNavigator(),
                             '/post_setup': (context) => const PostSetupWizard(),
                             '/register': (context) => const RegisterPage(),

@@ -4,7 +4,7 @@ import 'package:app/provider/authentication_provider.dart';
 import 'package:app/screens/auth/launch_page_login.dart';
 import 'package:app/utils/takecare_link_util.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 

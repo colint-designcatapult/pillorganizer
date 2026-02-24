@@ -1,3 +1,4 @@
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:app/main.dart';
 import 'package:app/provider/authentication_provider.dart';
 import 'package:app/screens/auth/recover_password.dart';
@@ -6,11 +7,21 @@ import 'package:app/service/error_handler.dart';
 import 'package:app/utils/takecare_link_util.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:validatorless/validatorless.dart';
+
+
+Future<void> signInWithWebUI() async {
+  try {
+    final result = await Amplify.Auth.signInWithWebUI();
+    safePrint('Sign in result: $result');
+  } on AuthException catch (e) {
+    safePrint('Error signing in: ${e.message}');
+  }
+}
 
 class LaunchPageLogin extends StatefulWidget {
   const LaunchPageLogin({Key? key}) : super(key: key);
@@ -35,6 +46,7 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
   bool _obscureText = true;
 
   void forgotPassword() {
+    signInWithWebUI();
     showModalBottomSheet<bool>(
         context: context,
         isScrollControlled: true,
@@ -120,7 +132,7 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium
-                                  ?.copyWith(color: Color(0xff445860))
+                                  ?.copyWith(color: const Color(0xff445860))
                                   .copyWith(fontWeight: FontWeight.w600),
                             ),
                           ),

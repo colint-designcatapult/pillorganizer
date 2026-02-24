@@ -4,7 +4,7 @@ import 'package:app/screens/modals/add_new_pills_modal.dart';
 import 'package:app/widgets/circular_bin_status_indicator.dart';
 import 'package:app/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
@@ -45,7 +45,7 @@ class DosePeriodArea extends StatelessWidget {
                   return false;
                 }
                 return element.scheduledTime
-                        ?.add(Duration(minutes: DELAY_TIME))
+                        ?.add(const Duration(minutes: DELAY_TIME))
                         .isAfter(now) ==
                     true;
               } else {

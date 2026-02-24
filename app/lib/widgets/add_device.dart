@@ -1,7 +1,6 @@
-import 'package:app/navigation/provision_navigator.dart';
 import 'package:app/screens/provisioning/join_device_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 const double _titleSubtitleSpacing = 8.0;
@@ -16,8 +15,7 @@ class AddDevice extends StatelessWidget {
   });
 
   void _startProvisioning(BuildContext context) {
-    Navigator.push(context,
-        MaterialPageRoute(builder: (context) => const ProvisionNavigator()));
+
   }
 
   void _handleJoinExistingDevice(BuildContext context) {
@@ -54,18 +52,18 @@ class AddDevice extends StatelessWidget {
           child: OutlinedButton(
             onPressed: () => _startProvisioning(context),
             style: ButtonStyle(
-              side: MaterialStateProperty.all<BorderSide>(
+              side: WidgetStateProperty.all<BorderSide>(
                 const BorderSide(
                   color: Color(0xFFBFD2DB),
                   width: 2.0,
                 ),
               ),
-              shape: MaterialStateProperty.all<OutlinedBorder>(
+              shape: WidgetStateProperty.all<OutlinedBorder>(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0).r,
                 ),
               ),
-              padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+              padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
                 EdgeInsets.symmetric(vertical: 16.h),
               ),
             ),
@@ -84,18 +82,18 @@ class AddDevice extends StatelessWidget {
           child: OutlinedButton(
             onPressed: () => _handleJoinExistingDevice(context),
             style: ButtonStyle(
-              side: MaterialStateProperty.all<BorderSide>(
+              side: WidgetStateProperty.all<BorderSide>(
                 const BorderSide(
                   color: Color(0xFFBFD2DB),
                   width: 2.0,
                 ),
               ),
-              shape: MaterialStateProperty.all<OutlinedBorder>(
+              shape: WidgetStateProperty.all<OutlinedBorder>(
                 RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0).r,
                 ),
               ),
-              padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+              padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
                 EdgeInsets.symmetric(vertical: 16.h),
               ),
             ),

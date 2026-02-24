@@ -6,12 +6,12 @@ import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/standalone.dart' as tz;
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:app/l10n/app_localizations.dart';
 
 import '../../service/time_service.dart';
 
 class TimeZoneOption extends StatelessWidget {
-  TimeZoneOption({super.key, required this.location}) {}
+  const TimeZoneOption({super.key, required this.location});
 
   final tz.Location location;
 

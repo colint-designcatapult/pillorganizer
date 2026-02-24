@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 
 class ScrollProvider extends ChangeNotifier implements ReassembleHandler {
-  ScrollController _controller = ScrollController();
+  final ScrollController _controller = ScrollController();
   ScrollController get controller => _controller;
   double _value = 0.0;
   double get value => _value;
