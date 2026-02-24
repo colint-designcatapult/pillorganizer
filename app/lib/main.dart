@@ -44,7 +44,7 @@ const amplifyconfig = ''' {
                 "CognitoUserPool": {
                     "Default": {
                         "PoolId": "ca-central-1_aF2K8pxyr",
-                        "AppClientId": "71cbl06ka8u85unhejsgaddt1m",
+                        "AppClientId": "3updmldq6t56n6rl27qrqh5in1",
                         "Region": "ca-central-1"
                     }
                 },
@@ -52,7 +52,7 @@ const amplifyconfig = ''' {
                     "Default": {
                         "OAuth": {
                             "WebDomain": "ca-central-1af2k8pxyr.auth.ca-central-1.amazoncognito.com",
-                            "AppClientId": "71cbl06ka8u85unhejsgaddt1m",
+                            "AppClientId": "3updmldq6t56n6rl27qrqh5in1",
                             "SignInRedirectURI": "jct.pillorganizer.pills://callback",
                             "SignOutRedirectURI": "jct.pillorganizer.pills://signout",
                             "Scopes": [

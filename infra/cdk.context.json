@@ -3,6 +3,7 @@
     "account": "114829892869",
     "region": "ca-central-1",
     "removalPolicy": "DESTROY",
+    "baseDomain": "app.healthesolutions.ca",
     "autoDeleteObjects": true,
     "tags": {
       "Environment": "Staging"
@@ -12,6 +13,7 @@
     "account": "114829892869",
     "region": "ca-central-1",
     "removalPolicy": "RETAIN",
+    "baseDomain": "app.healthesolutions.ca",
     "autoDeleteObjects": false,
     "tags": {
       "Environment": "Production"
@@ -24,5 +26,13 @@
     "ca-central-1a",
     "ca-central-1b",
     "ca-central-1d"
-  ]
+  ],
+  "hosted-zone:account=114829892869:domainName=app.healthesolutions.ca:region=us-east-1": {
+    "Id": "/hostedzone/Z0951150AXH5GYKE0JWX",
+    "Name": "app.healthesolutions.ca."
+  },
+  "hosted-zone:account=114829892869:domainName=app.healthesolutions.ca:region=ca-central-1": {
+    "Id": "/hostedzone/Z0951150AXH5GYKE0JWX",
+    "Name": "app.healthesolutions.ca."
+  }
 }
