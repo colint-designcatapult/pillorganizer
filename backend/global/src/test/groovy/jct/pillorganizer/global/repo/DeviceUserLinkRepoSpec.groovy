@@ -5,6 +5,7 @@ import jakarta.inject.Inject
 import jct.pillorganizer.global.model.DeviceControlPlaneEntityType
 import jct.pillorganizer.global.model.DeviceUserLinkEntity
 import jct.pillorganizer.global.persistence.BaseDeviceControlPlaneSpec
+import jct.pillorganizer.global.repo.projection.UserAndDevicesViewRepo
 import spock.lang.Shared
 import spock.lang.Subject
 
@@ -15,6 +16,10 @@ class DeviceUserLinkRepoSpec extends BaseDeviceControlPlaneSpec {
     @Shared
     @Subject
     DeviceUserLinkRepo repo
+
+    @Inject
+    @Shared
+    UserAndDevicesViewRepo userAndDevicesViewRepo
 
     def "should get DeviceUserLink by deviceId and userId"() {
         given:
@@ -113,5 +118,27 @@ class DeviceUserLinkRepoSpec extends BaseDeviceControlPlaneSpec {
 
         then:
         link.isEmpty()
+    }
+
+    def "should find user details and all devices for a user"() {
+        given:
+        def userId = "user-view-test"
+        def deviceId1 = "device-view-1"
+        def deviceId2 = "device-view-2"
+        def tenantId = "tenant-1"
+        def modelId = "MODEL-X"
+
+        this.insertUser(userId, "Test User View", "sub-view-test")
+        this.insertDeviceUserLink(deviceId1, userId, tenantId, modelId, true)
+        this.insertDeviceUserLink(deviceId2, userId, tenantId, modelId, false)
+
+        when:
+        def views = userAndDevicesViewRepo.findAllByUserId(userId)
+
+        then:
+        views.size() == 3
+        views.any { it.base.entityType == DeviceControlPlaneEntityType.USER && it.userName == "Test User View" }
+        views.any { it.base.entityType == DeviceControlPlaneEntityType.DEVICE_USER_LINK && it.deviceId == deviceId1 }
+        views.any { it.base.entityType == DeviceControlPlaneEntityType.DEVICE_USER_LINK && it.deviceId == deviceId2 }
     }
 }

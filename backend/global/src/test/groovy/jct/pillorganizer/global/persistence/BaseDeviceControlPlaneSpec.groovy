@@ -48,25 +48,28 @@ abstract class BaseDeviceControlPlaneSpec extends BaseDynamoDbSpec {
         ])
     }
 
-    void insertUser(String userId, String name = "Test User") {
+    void insertUser(String userId, String name = "Test User", String sub = "sub-1") {
         insertRawRecord([
                 "PK": UserEntity.pk(userId),
-                "SK": UserEntity.sk(),
+                "SK": UserEntity.sk(sub),
                 "GSI1_PK": UserEntity.gsi1Pk(),
                 "GSI1_SK": UserEntity.gsi1Sk(userId),
+                "GSI2_PK": UserEntity.gsi2Pk(sub),
+                "GSI2_SK": UserEntity.gsi2Sk(),
                 "EntityType": DeviceControlPlaneEntityType.USER.toString(),
                 "UserId": userId,
                 "UserName": name,
+                "UserSub": sub,
                 "Version": 1
         ])
     }
 
     void insertDeviceUserLink(String deviceId, String userId, String tenantId, String modelId = "MODEL-X", boolean isPrimary = false) {
         insertRawRecord([
-                "PK": DeviceUserLinkEntity.pk(deviceId),
-                "SK": DeviceUserLinkEntity.sk(userId),
-                "GSI1_PK": DeviceUserLinkEntity.gsi1Pk(userId),
-                "GSI1_SK": DeviceUserLinkEntity.gsi1Sk(deviceId),
+                "PK": DeviceUserLinkEntity.pk(userId),
+                "SK": DeviceUserLinkEntity.sk(deviceId),
+                "GSI1_PK": DeviceUserLinkEntity.gsi1Pk(deviceId),
+                "GSI1_SK": DeviceUserLinkEntity.gsi1Sk(userId),
                 "EntityType": DeviceControlPlaneEntityType.DEVICE_USER_LINK.toString(),
                 "UserId": userId,
                 "DeviceId": deviceId,
