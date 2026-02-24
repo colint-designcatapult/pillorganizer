@@ -1,0 +1,61 @@
+
+aws:
+  region: ca-central-1
+  cognito:
+    public-pool: ca-central-1_m0ffygrUk
+micronaut:
+  application:
+    name: backend
+  http:
+    client:
+      read-timeout: 1000ms
+  multitenancy:
+    filter:
+      enabled: true
+    propagation:
+      enabled: true
+      service-id-regex: ".*"
+    tenantwriter:
+      httpheader:
+        enabled: true
+        header-name: "x-tenant-id"
+    tenantresolver:
+      httpheader:
+        enabled: true
+        header-name: "x-tenant-id"
+  security:
+    enabled: true
+    authentication: bearer
+    basic-auth:
+      enabled: false
+    redirect:
+      enabled: false
+    token:
+      propagation:
+        enabled: true
+        service-id-regex: ".*"
+      jwt:
+        enabled: true
+        claims-validators:
+          issuer: https://cognito-idp.${aws.region}.amazonaws.com/${aws.cognito.public-pool}
+        signatures:
+          jwks:
+            cognito:
+              url: https://cognito-idp.${aws.region}.amazonaws.com/${aws.cognito.public-pool}/.well-known/jwks.json
+endpoints:
+  health:
+    enabled: true
+    sensitive: false
+app:
+  tenant:
+    list:
+      public:
+        id: "public"
+        active: true
+        hostname: "public.app.healthesolutions.ca"
+        api-base: "https://public.app.healthesolutions.ca"
+      local:
+        id: "local"
+        active: true
+        hostname: "localhost:8080"
+        api-base: "http://localhost:8080"

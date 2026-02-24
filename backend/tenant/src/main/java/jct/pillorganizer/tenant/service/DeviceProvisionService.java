@@ -10,7 +10,6 @@ import jakarta.transaction.Transactional;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.tenant.auth.AuthService;
-import jct.pillorganizer.tenant.auth.DeviceAuthService;
 import jct.pillorganizer.tenant.exceptions.AccessForbiddenException;
 import jct.pillorganizer.tenant.exceptions.DeviceProvisionExpiredException;
 import jct.pillorganizer.tenant.exceptions.DeviceProvisionNotFoundException;
@@ -38,10 +37,6 @@ public class DeviceProvisionService {
 
     @Inject
     DeviceRepository deviceRepository;
-
-    @Inject
-    DeviceAuthService deviceAuthService;
-
 
     @Inject
     AuthService authService;
