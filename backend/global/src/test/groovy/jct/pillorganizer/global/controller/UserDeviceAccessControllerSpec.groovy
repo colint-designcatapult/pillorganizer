@@ -39,18 +39,34 @@ class UserDeviceAccessControllerSpec extends BaseIntegrationSpec {
     // @relation(CTRL-REQ-15, scope=range_start)
     void "test getUserDeviceAccess returns aggregated results"() {
         given:
-        def device1 = new DeviceAccessDto("d1", "nickname1", "model1", "tenant1",
-                "http://test.backend", true)
+        def device1 = new DeviceAccessDto("d1", "nickname1", "model1", "tenant1", "apiBase1", true)
+        def device2 = new DeviceAccessDto("d2", "nickname2", "model2", "tenant2", "apiBase2", false)
         
         when:
         def request = HttpRequest.GET("/user/devices")
         def response = client.toBlocking().retrieve(request, UserAndDeviceAccessDto)
 
         then:
-        1 * userDeviceAccessService.getUserDeviceAccess() >> Flux.just(device1)
-        response.devices().size() == 1
-        response.devices().get(0).id() == "d1"
-        response.devices().get(0).id() == "http://test.backend"
+        1 * userDeviceAccessService.getUserDeviceAccess() >> Flux.just(device1, device2)
+        response.devices().size() == 2
+        
+        with(response.devices().find { it.id() == "d1" }) {
+            id() == "d1"
+            nickname() == "nickname1"
+            modelId() == "model1"
+            tenantId() == "tenant1"
+            apiBase() == "apiBase1"
+            primaryUser() == true
+        }
+
+        with(response.devices().find { it.id() == "d2" }) {
+            id() == "d2"
+            nickname() == "nickname2"
+            modelId() == "model2"
+            tenantId() == "tenant2"
+            apiBase() == "apiBase2"
+            primaryUser() == false
+        }
     }
     // @relation(CTRL-REQ-15, scope=range_end)
     // @relation(CTRL-REQ-11, scope=range_end)
