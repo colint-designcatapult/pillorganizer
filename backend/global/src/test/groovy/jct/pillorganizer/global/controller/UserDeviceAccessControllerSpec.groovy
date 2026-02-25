@@ -3,6 +3,7 @@ package jct.pillorganizer.global.controller
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
+import io.micronaut.serde.annotation.SerdeImport
 import io.micronaut.test.annotation.MockBean
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
@@ -31,7 +32,7 @@ class UserDeviceAccessControllerSpec extends BaseIntegrationSpec {
 
     @Override
     Map<String, String> getProperties() {
-        return ["micronaut.security.enabled": "false"]
+        return super.getProperties() + ["micronaut.security.enabled": "false"]
     }
 
     void "test getUserDeviceAccess returns aggregated results"() {

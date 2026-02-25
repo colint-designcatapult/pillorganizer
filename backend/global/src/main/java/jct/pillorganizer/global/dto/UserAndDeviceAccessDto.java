@@ -5,7 +5,7 @@ import jct.pillorganizer.core.dto.DeviceAccessDto;
 
 import java.util.List;
 
-@Serdeable.Serializable
+@Serdeable
 public record UserAndDeviceAccessDto(
         List<DeviceAccessDto> devices
 ) {
