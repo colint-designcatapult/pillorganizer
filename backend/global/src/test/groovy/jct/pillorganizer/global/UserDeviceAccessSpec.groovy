@@ -8,6 +8,7 @@ import reactor.core.publisher.Mono
 
 class UserDeviceAccessSpec extends BaseIntegrationSpec {
 
+    // @relation(CTRL-REQ-13, scope=range_start)
     void "test getUserDeviceAccess aggregates results from tenants"() {
         given:
         def tenant1 = Mock(TenantClient)
@@ -45,4 +46,5 @@ class UserDeviceAccessSpec extends BaseIntegrationSpec {
         result.size() == 1
         result.contains(device1)
     }
+    // @relation(CTRL-REQ-13, scope=range_end)
 }

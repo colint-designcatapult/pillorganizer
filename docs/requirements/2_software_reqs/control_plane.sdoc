@@ -127,36 +127,16 @@ RATIONALE: >>>
 The user device list at the control plane layer is basically a cache. Tenants maintain source of truth for device access.
 <<<
 
-[REQUIREMENT]
-UID: CTRL-REQ-12
-TITLE: User Device Access Update API
-STATEMENT: >>>
-The control plane shall provide an Internal API for a Tenant to update the list of devices a user has access to.
-<<<
-RELATIONS:
-- TYPE: Parent
-  VALUE: SYS-REQ-36
-
 [[/SECTION]]
 
 [[SECTION]]
 TITLE: Tenant Routing
 
 [REQUIREMENT]
-UID: CTRL-REQ-14
-TITLE: Tenant API Routing
-STATEMENT: >>>
-The control plane shall provide a public API for the device or user application to look up the connection information for a specific Tenant's Central Backend Platform using a unique Tenant identifier.
-<<<
-RELATIONS:
-- TYPE: Parent
-  VALUE: SYS-REQ-15
-
-[REQUIREMENT]
 UID: CTRL-REQ-16
 TITLE: Device Tenant Assignment
 STATEMENT: >>>
-The control plane shall maintain the authoritative record of which device a tenant belongs to.
+The control plane shall maintain the authoritative record of which tenant a device belongs to.
 <<<
 RELATIONS:
 - TYPE: Parent

@@ -35,9 +35,12 @@ class UserDeviceAccessControllerSpec extends BaseIntegrationSpec {
         return super.getProperties() + ["micronaut.security.enabled": "false"]
     }
 
+    // @relation(CTRL-REQ-11, scope=range_start)
+    // @relation(CTRL-REQ-15, scope=range_start)
     void "test getUserDeviceAccess returns aggregated results"() {
         given:
-        def device1 = new DeviceAccessDto("d1", "nickname1", "model1", "tenant1", "apiBase1", true)
+        def device1 = new DeviceAccessDto("d1", "nickname1", "model1", "tenant1",
+                "http://test.backend", true)
         
         when:
         def request = HttpRequest.GET("/user/devices")
@@ -47,5 +50,8 @@ class UserDeviceAccessControllerSpec extends BaseIntegrationSpec {
         1 * userDeviceAccessService.getUserDeviceAccess() >> Flux.just(device1)
         response.devices().size() == 1
         response.devices().get(0).id() == "d1"
+        response.devices().get(0).id() == "http://test.backend"
     }
+    // @relation(CTRL-REQ-15, scope=range_end)
+    // @relation(CTRL-REQ-11, scope=range_end)
 }
