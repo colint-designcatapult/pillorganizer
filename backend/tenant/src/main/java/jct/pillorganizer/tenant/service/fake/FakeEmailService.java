@@ -5,7 +5,6 @@ import jakarta.inject.Singleton;
 import jct.pillorganizer.tenant.service.EmailService;
 import lombok.extern.flogger.Flogger;
 
-@Requires(notEnv = "prod")
 @Singleton
 @Flogger
 public class FakeEmailService implements EmailService {

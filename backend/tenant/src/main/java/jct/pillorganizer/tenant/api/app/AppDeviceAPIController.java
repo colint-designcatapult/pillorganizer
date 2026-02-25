@@ -13,8 +13,6 @@ import jakarta.transaction.Transactional;
 
 import org.zalando.problem.Problem;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -199,23 +197,6 @@ public class AppDeviceAPIController {
 
         return deviceUserRepository.retrieveByUserIDAndDeviceID(userID, deviceID)
                 .get();
-    }
-
-    @Operation(summary = "App-proxied device sync")
-    @Post("/{id}/sync")
-    @Secured(SecurityRule.IS_AUTHENTICATED)
-    @DeviceABAC
-    @Transactional
-    public HttpResponse<?> sync(@DeviceABAC(idType = DeviceABACIDType.DEVICE) @PathVariable("id") long deviceID,
-            @Body String body) throws InvalidProtocolBufferException {
-        long userId = authService.getUserID();
-        Device device = deviceRepository.findById(deviceID)
-                .orElseThrow(() -> Problem.builder().withStatus(new HttpStatusType(HttpStatus.NOT_FOUND)).build());
-        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, deviceID);
-
-        byte[] parsedBody = Base64.getDecoder().decode(body);
-
-        throw new RuntimeException("Not implemented yet");
     }
 
     @Operation(summary = "Get device state on a particular date")

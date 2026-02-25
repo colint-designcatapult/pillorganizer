@@ -1,25 +1,17 @@
 package jct.pillorganizer.tenant.auth;
 
 import com.google.common.flogger.FluentLogger;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.security.authentication.AuthenticationException;
 import io.micronaut.security.utils.SecurityService;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.tenant.model.device.Device;
-import jct.pillorganizer.tenant.model.user.User;
 import jct.pillorganizer.tenant.model.user.UserRole;
 import jct.pillorganizer.tenant.repo.DeviceRepository;
 import jct.pillorganizer.tenant.repo.DeviceUserAsyncRepository;
 import jct.pillorganizer.tenant.repo.DeviceUserRepository;
-import jct.pillorganizer.tenant.repo.UserRepository;
-import org.mindrot.jbcrypt.BCrypt;
 
 import reactor.core.publisher.Mono;
-
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Utility functions for dealing with authentication and authorization.
@@ -40,90 +32,6 @@ public class AuthService {
 
     @Inject
     DeviceRepository deviceRepository;
-
-    @Inject
-    UserRepository userRepo;
-
-    // todo: why ascii here? check if there are any weird side effects
-    private static final Charset HASH_CARSET = StandardCharsets.US_ASCII;
-
-    public void changeEmail(String currentEmail, String newEmail) throws IllegalAccessException {
-        User user = userRepo.findById(getUserID()).block();
-        if (user == null) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "User not found");
-        }
-
-        if (!user.getEmail().equals(currentEmail)){
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Invalid email");
-        }
-
-        user.setEmail(newEmail);
-        userRepo.update(user).block();
-    }
-
-    /**
-     * Check if the specified password matches the user's password.
-     * 
-     * @param user     the user to check the password for
-     * @param password a character array of the password to check
-     * @return true if the password matches, false otherwise
-     */
-    public boolean checkPassword(User user, char[] password) {
-        return checkPassword(user.getPasswordHash(), password);
-    }
-
-    public void changePassword(String currentPassword, String newPassword) throws IllegalAccessException {
-        User user = userRepo.findById(getUserID()).block();
-        assert user != null;
-        if (!checkPassword(user.getPasswordHash(), currentPassword.toCharArray())) {
-            throw new IllegalAccessException("Current password is incorrect.");
-        } else {
-            byte[] newPasswordHash = hashPassword(newPassword.toCharArray());
-            user.setPasswordHash(newPasswordHash);
-            userRepo.update(user).block();
-        }
-    }
-
-    private boolean checkPassword(byte[] hash, char[] password) {
-        return BCrypt.checkpw(String.valueOf(password), new String(hash, HASH_CARSET));
-    }
-
-    /**
-     * New password just set the new password for the user.
-     * 
-     * @param email     the user to change the password for
-     * @param newPassword a character array of the password to check
-     * @return true if success, false otherwise
-     */
-    public void newPassword(String email, String newPassword) throws IllegalAccessException {
-        User user = userRepo.findByEmail(email).block();
-        if (user == null) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, "User not found");
-        }
-        byte[] newPasswordHash = hashPassword(newPassword.toCharArray());
-        user.setPasswordHash(newPasswordHash);
-        userRepo.update(user).block();
-    }
-
-    /**
-     * Hashes a plaintext password into a secure hash format.
-     * 
-     * @param plaintext the plaintext password to hash, as a character array.
-     * @return the hashed password as a byte array
-     */
-    public byte[] hashPassword(char[] plaintext) {
-        return BCrypt.hashpw(String.valueOf(plaintext), BCrypt.gensalt(10)).getBytes(HASH_CARSET);
-    }
-
-    /**
-     * Converts a plaintext password in string form to a character array.
-     * 
-     * @param plaintextPassword a plaintext password in string form
-     * @return the plaintext password as a character array
-     */
-    public char[] toCharArray(String plaintextPassword) {
-        return plaintextPassword.toCharArray();
-    }
 
     /**
      * Gets the currently logged-in user ID. Note that if the user type is Device,
