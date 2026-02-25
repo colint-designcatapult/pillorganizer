@@ -1,19 +1,18 @@
 {
-  "staging": {
+  "globals": {
     "account": "114829892869",
     "region": "ca-central-1",
+    "baseDomain": "app.healthesolutions.ca"
+  },
+  "staging": {
     "removalPolicy": "DESTROY",
-    "baseDomain": "app.healthesolutions.ca",
     "autoDeleteObjects": true,
     "tags": {
       "Environment": "Staging"
     }
   },
   "prod": {
-    "account": "114829892869",
-    "region": "ca-central-1",
     "removalPolicy": "RETAIN",
-    "baseDomain": "app.healthesolutions.ca",
     "autoDeleteObjects": false,
     "tags": {
       "Environment": "Production"

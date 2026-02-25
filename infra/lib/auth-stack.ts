@@ -3,7 +3,6 @@ import * as cognito from 'aws-cdk-lib/aws-cognito';
 import { Construct } from 'constructs';
 
 interface AuthStackProps extends cdk.StackProps {
-  baseDomain: string
 }
 
 export class AuthStack extends cdk.Stack {

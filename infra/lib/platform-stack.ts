@@ -8,7 +8,6 @@ import * as targets from 'aws-cdk-lib/aws-route53-targets';
 import { Construct } from 'constructs';
 
 interface PlatformStackProps extends cdk.StackProps {
-  baseDomain: string
 }
 
 /* This stack is configures base AWS resources, and should only be for things 
@@ -64,10 +63,6 @@ export class PlatformStack extends cdk.Stack {
       description: 'Role assumed by GitHub Actions to deploy the app',
     });
 
-    githubRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonEC2ContainerRegistryPowerUser'));
-    githubRole.addToPolicy(new iam.PolicyStatement({
-        actions: ['ecs:UpdateService', 'ecs:DescribeServices', 'ecs:RegisterTaskDefinition', 'ssm:GetParameter', 'iam:PassRole', 'ecs:DescribeTaskDefinition', 'ecs:DescribeTasks'],
-        resources: ['*']
-    }));
+    githubRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'));
   }
 }
