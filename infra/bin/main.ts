@@ -4,6 +4,7 @@ import * as cdk from 'aws-cdk-lib/core';
 import { PlatformStack } from '../lib/platform-stack';
 import { DataStack } from '../lib/data-stack';
 import { AppStack } from '../lib/app-stack';
+import { ControlPlaneStack } from '../lib/control-plane-stack';
 
 const app = new cdk.App();
 
@@ -39,6 +40,11 @@ const env = { account: envConfig.account, region: envConfig.region };
 const platformStack = new PlatformStack(app, `HealthePlatformStack`, {
   env,
   crossRegionReferences: true,
+  baseDomain: envConfig.baseDomain
+});
+
+const controlPlaneStack = new ControlPlaneStack(app, 'HealtheControlPlaneStack', {
+  env,
   baseDomain: envConfig.baseDomain
 });
 
