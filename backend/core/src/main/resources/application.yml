@@ -2,7 +2,7 @@
 aws:
   region: ca-central-1
   cognito:
-    public-pool: ca-central-1_m0ffygrUk
+    public-pool: ca-central-1_H0hSkGPqA
 micronaut:
   application:
     name: backend
