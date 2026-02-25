@@ -2,6 +2,9 @@ import * as cdk from 'aws-cdk-lib/core';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigw from 'aws-cdk-lib/aws-apigateway';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as targets from 'aws-cdk-lib/aws-route53-targets';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import { Construct } from 'constructs';
 
 interface ControlPlaneStackProps extends cdk.StackProps {
@@ -36,10 +39,30 @@ export class ControlPlaneStack extends cdk.Stack {
       version: version,
     });
 
-    new apigw.LambdaRestApi(this, 'ControlPlaneApiGateway', {
+    const zone = route53.HostedZone.fromLookup(this, 'HostedZone', {
+      domainName: props.baseDomain
+    });
+
+    const certificate = new acm.Certificate(this, 'ControlPlaneCertificate', {
+      domainName: domainName,
+      validation: acm.CertificateValidation.fromDns(zone),
+    });
+
+    const api = new apigw.LambdaRestApi(this, 'ControlPlaneApiGateway', {
       handler: alias, 
       proxy: true, 
       restApiName: 'Control Plane',
+      domainName: {
+        domainName: domainName,
+        certificate: certificate,
+        endpointType: apigw.EndpointType.REGIONAL,
+      }
+    });
+
+    new route53.ARecord(this, 'ControlPlaneAliasRecord', {
+      zone: zone,
+      recordName: 'control-plane',
+      target: route53.RecordTarget.fromAlias(new targets.ApiGatewayDomain(api.domainName!))
     });
   }
 }
