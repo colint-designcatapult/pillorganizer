@@ -5,6 +5,7 @@ import * as apigw from 'aws-cdk-lib/aws-apigateway';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as targets from 'aws-cdk-lib/aws-route53-targets';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import { Construct } from 'constructs';
 
 interface ControlPlaneStackProps extends cdk.StackProps {
@@ -31,6 +32,31 @@ export class ControlPlaneStack extends cdk.Stack {
         'MICRONAUT_ENVIRONMENTS': 'global', 
       },
     });
+
+    const table = new dynamodb.TableV2(this, 'DeviceControlPlaneTable', {
+      tableName: 'DeviceControlPlane',
+      partitionKey: { name: 'PK', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'SK', type: dynamodb.AttributeType.STRING },
+      billing: dynamodb.Billing.onDemand(),
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      deletionProtection: true,
+      globalSecondaryIndexes: [
+        {
+          indexName: 'GSI1',
+          partitionKey: { name: 'GSI1_PK', type: dynamodb.AttributeType.STRING },
+          sortKey: { name: 'GSI1_SK', type: dynamodb.AttributeType.STRING },
+          projectionType: dynamodb.ProjectionType.ALL,
+        },
+        {
+          indexName: 'GSI2',
+          partitionKey: { name: 'GSI2_PK', type: dynamodb.AttributeType.STRING },
+          sortKey: { name: 'GSI2_SK', type: dynamodb.AttributeType.STRING },
+          projectionType: dynamodb.ProjectionType.ALL,
+        }
+      ]
+    });
+
+    table.grantReadWriteData(appFunction);
 
     const version = appFunction.currentVersion;
     
