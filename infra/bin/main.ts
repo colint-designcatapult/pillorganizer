@@ -27,7 +27,8 @@ const globalEnv = { account: globals.account, region: globals.region };
 // These are deployed once and shared across environments
 
 const platformStack = new PlatformStack(app, `HealthePlatformStack`, {
-  env: globalEnv
+  env: globalEnv,
+  baseDomain: globals.baseDomain
 });
 
 const authStack = new AuthStack(app, 'HealtheAuthStack', {
@@ -36,6 +37,7 @@ const authStack = new AuthStack(app, 'HealtheAuthStack', {
 
 const controlPlaneStack = new ControlPlaneStack(app, 'HealtheControlPlaneStack', {
   env: globalEnv,
+  zone: platformStack.zone,
   baseDomain: globals.baseDomain
 });
 
@@ -70,12 +72,14 @@ if (envKey) {
 
   const appStack = new AppStack(app, `HealtheAppStack-${envKey}`, {
     env: globalEnv,
-    ecr: platformStack.backendContainer,
-    ecsCluster: platformStack.backendEcsCluster,
     dbCluster: dataStack.dbCluster,
+    dbProxy: dataStack.dbProxy,
     vpc: platformStack.vpc,
     removalPolicy: removalPolicy,
-    environmentName: envKey
+    environmentName: envKey,
+    baseDomain: globals.baseDomain,
+    subdomain: envConfig.subdomain || envKey,
+    zone: platformStack.zone
   });
 
   // Apply config tags to environment stacks

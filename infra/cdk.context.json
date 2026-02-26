@@ -4,19 +4,13 @@
     "region": "ca-central-1",
     "baseDomain": "app.healthesolutions.ca"
   },
-  "staging": {
-    "removalPolicy": "DESTROY",
-    "autoDeleteObjects": true,
-    "tags": {
-      "Environment": "Staging"
-    }
-  },
-  "prod": {
+  "public": {
     "removalPolicy": "RETAIN",
     "autoDeleteObjects": false,
     "tags": {
-      "Environment": "Production"
-    }
+      "Environment": "Public"
+    },
+    "subdomain": "public"
   },
   "acknowledged-issue-numbers": [
     34892

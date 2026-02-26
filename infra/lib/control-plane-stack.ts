@@ -1,7 +1,8 @@
 import * as cdk from 'aws-cdk-lib/core';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as apigw from 'aws-cdk-lib/aws-apigateway';
+import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
+import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as targets from 'aws-cdk-lib/aws-route53-targets';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
@@ -9,7 +10,8 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import { Construct } from 'constructs';
 
 interface ControlPlaneStackProps extends cdk.StackProps {
-  baseDomain: string
+  baseDomain: string,
+  zone: route53.IHostedZone
 }
 
 /* This stack configures the "control plane" backend. */
@@ -23,7 +25,7 @@ export class ControlPlaneStack extends cdk.Stack {
 
     const appFunction = new lambda.Function(this, 'ControlPlaneAppFunction', {
       runtime: lambda.Runtime.JAVA_21, 
-      handler: 'io.micronaut.function.aws.proxy.MicronautLambdaHandler',
+      handler: 'io.micronaut.function.aws.proxy.payload2.APIGatewayV2HTTPEventFunction',
       code: lambda.Code.fromAsset("../backend/global/target/global-0.1.jar"), 
       memorySize: 1024,
       timeout: cdk.Duration.seconds(30),
@@ -65,30 +67,28 @@ export class ControlPlaneStack extends cdk.Stack {
       version: version,
     });
 
-    const zone = route53.HostedZone.fromLookup(this, 'HostedZone', {
-      domainName: props.baseDomain
-    });
-
     const certificate = new acm.Certificate(this, 'ControlPlaneCertificate', {
       domainName: domainName,
-      validation: acm.CertificateValidation.fromDns(zone),
+      validation: acm.CertificateValidation.fromDns(props.zone),
     });
 
-    const api = new apigw.LambdaRestApi(this, 'ControlPlaneApiGateway', {
-      handler: alias, 
-      proxy: true, 
-      restApiName: 'Control Plane',
-      domainName: {
-        domainName: domainName,
-        certificate: certificate,
-        endpointType: apigw.EndpointType.REGIONAL,
-      }
+    const dn = new apigwv2.DomainName(this, 'ControlPlaneDomainName', {
+      domainName: domainName,
+      certificate: certificate,
+    });
+
+    const api = new apigwv2.HttpApi(this, 'ControlPlaneHttpApi', {
+      apiName: 'Control Plane',
+      defaultIntegration: new HttpLambdaIntegration('ControlPlaneIntegration', alias),
+      defaultDomainMapping: {
+        domainName: dn,
+      },
     });
 
     new route53.ARecord(this, 'ControlPlaneAliasRecord', {
-      zone: zone,
+      zone: props.zone,
       recordName: 'control-plane',
-      target: route53.RecordTarget.fromAlias(new targets.ApiGatewayDomain(api.domainName!))
+      target: route53.RecordTarget.fromAlias(new targets.ApiGatewayv2DomainProperties(dn.regionalDomainName, dn.regionalHostedZoneId))
     });
   }
 }

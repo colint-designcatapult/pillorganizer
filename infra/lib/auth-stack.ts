@@ -22,6 +22,7 @@ export class AuthStack extends cdk.Stack {
         }
       },
       customAttributes: {
+        // not used
         'userId': new cognito.StringAttribute({ minLen: 1, maxLen: 24, mutable: false })
       },
       signInAliases: {
