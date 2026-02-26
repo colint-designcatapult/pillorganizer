@@ -3,6 +3,14 @@ micronaut:
     port: ${PORT:8080}
   application:
     name: pillorganizer-backend
+  multitenancy:
+    propagation:
+      enabled: true
+      service-id-regex: ".*"
+    tenantwriter:
+      httpheader:
+        enabled: true
+        header-name: "x-tenant-id"
   security:
     intercept-url-map:
       - access: isAnonymous()

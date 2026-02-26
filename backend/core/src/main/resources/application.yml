@@ -8,15 +8,10 @@ micronaut:
     name: backend
   http:
     client:
-      read-timeout: 1000ms
+      read-timeout: 2000ms
   multitenancy:
     filter:
       enabled: true
-    tenantresolver:
-      httpheader:
-        enabled: false
-      subdomain:
-        enabled: true
   security:
     enabled: true
     authentication: bearer
