@@ -7,6 +7,7 @@ import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as targets from 'aws-cdk-lib/aws-route53-targets';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
 import { Construct } from 'constructs';
 
 interface ControlPlaneStackProps extends cdk.StackProps {
@@ -16,24 +17,29 @@ interface ControlPlaneStackProps extends cdk.StackProps {
 
 /* This stack configures the "control plane" backend. */
 export class ControlPlaneStack extends cdk.Stack {
-  public readonly vpc: ec2.Vpc;
+  public readonly postConfirmation: lambda.Function;
+  public readonly preTokenGeneration: lambda.Function;
+
+  createGlobalLambda(scope: Construct, id: string, handler: string, table: dynamodb.TableV2): lambda.Function {
+    const func = new lambda.Function(scope, id, {
+      runtime: lambda.Runtime.JAVA_21,
+      handler: handler,
+      code: lambda.Code.fromAsset("../backend/global/target/global-0.1.jar"),
+      memorySize: 1024,
+      timeout: cdk.Duration.seconds(30),
+      snapStart: lambda.SnapStartConf.ON_PUBLISHED_VERSIONS,
+      environment: {
+        'MICRONAUT_ENVIRONMENTS': 'global',
+      },
+    });
+    table.grantReadWriteData(func);
+    return func;
+  }
 
   constructor(scope: Construct, id: string, props: ControlPlaneStackProps) {
     super(scope, id, props);
 
     const domainName = `control-plane.${props.baseDomain}`;
-
-    const appFunction = new lambda.Function(this, 'ControlPlaneAppFunction', {
-      runtime: lambda.Runtime.JAVA_21, 
-      handler: 'io.micronaut.function.aws.proxy.payload2.APIGatewayV2HTTPEventFunction',
-      code: lambda.Code.fromAsset("../backend/global/target/global-0.1.jar"), 
-      memorySize: 1024,
-      timeout: cdk.Duration.seconds(30),
-      snapStart: lambda.SnapStartConf.ON_PUBLISHED_VERSIONS,
-      environment: {
-        'MICRONAUT_ENVIRONMENTS': 'global', 
-      },
-    });
 
     const table = new dynamodb.TableV2(this, 'DeviceControlPlaneTable', {
       tableName: 'DeviceControlPlane',
@@ -58,7 +64,15 @@ export class ControlPlaneStack extends cdk.Stack {
       ]
     });
 
-    table.grantReadWriteData(appFunction);
+    // Create the Control Plane Lambda function using the shared utility
+    const appFunction = this.createGlobalLambda(this, 'ControlPlaneAppFunction',
+       'io.micronaut.function.aws.proxy.payload2.APIGatewayV2HTTPEventFunction', table);
+
+    // Cognito triggers
+    this.postConfirmation = this.createGlobalLambda(this, 'PostConfirmation',
+       'jct.pillorganizer.global.function.CognitoPostConfirmationHandler', table);
+    this.preTokenGeneration = this.createGlobalLambda(this, 'PreTokenGeneration',
+       'jct.pillorganizer.global.function.CognitoPreTokenGenerationHandler', table);
 
     const version = appFunction.currentVersion;
     

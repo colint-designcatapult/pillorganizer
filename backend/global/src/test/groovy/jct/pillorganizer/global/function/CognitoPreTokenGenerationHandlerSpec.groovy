@@ -2,21 +2,35 @@ package jct.pillorganizer.global.function
 
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.events.CognitoUserPoolPreTokenGenerationEvent
+import io.micronaut.context.ApplicationContext
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import jct.pillorganizer.global.BaseIntegrationSpec
 import jct.pillorganizer.global.model.UserEntity
+import jct.pillorganizer.global.repo.UserRepo
 import jct.pillorganizer.global.service.UserService
+import spock.lang.Specification
 import spock.lang.Subject
 
 // @relation(CTRL-REQ-7, scope=file)
+@MicronautTest
 class CognitoPreTokenGenerationHandlerSpec extends BaseIntegrationSpec {
 
-    @Inject
     @Subject
     CognitoPreTokenGenerationHandler handler
 
     @Inject
+    ApplicationContext context
+
+    @Inject
     UserService userService
+
+    @Inject
+    UserRepo userRepo
+
+    def setup() {
+        handler = new CognitoPreTokenGenerationHandler(context, userService)
+    }
 
     def "should inject userId into ID token claims"() {
         given:
@@ -33,7 +47,7 @@ class CognitoPreTokenGenerationHandlerSpec extends BaseIntegrationSpec {
         response.response.claimsOverrideDetails.claimsToAddOrOverride["userId"] == user.userId
     }
 
-    def "should not inject userId if user not found"() {
+    def "should create user and inject userId if user not found"() {
         given:
         def sub = "non-existent-sub"
         def email = "non-existent@example.com"
@@ -44,7 +58,10 @@ class CognitoPreTokenGenerationHandlerSpec extends BaseIntegrationSpec {
         def response = handler.handleRequest(event, context)
 
         then:
-        response.response == null
+        response.response.claimsOverrideDetails.claimsToAddOrOverride["userId"] != null
+        def user = userRepo.findBySub(sub).get()
+        user.email == email
+        response.response.claimsOverrideDetails.claimsToAddOrOverride["userId"] == user.userId
     }
 
     private CognitoUserPoolPreTokenGenerationEvent createEvent(String sub, String email) {

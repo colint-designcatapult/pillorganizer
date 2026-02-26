@@ -1,27 +1,28 @@
 package jct.pillorganizer.global.function;
 
-import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.CognitoUserPoolPostConfirmationEvent;
-import io.micronaut.core.annotation.Introspected;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.function.aws.MicronautRequestHandler;
 import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import jct.pillorganizer.global.service.UserService;
 
-@Introspected
-@Singleton
-public class CognitoPostConfirmationHandler implements RequestHandler<CognitoUserPoolPostConfirmationEvent,
-        CognitoUserPoolPostConfirmationEvent> {
-
-    private final UserService userService;
+public class CognitoPostConfirmationHandler extends MicronautRequestHandler<CognitoUserPoolPostConfirmationEvent, CognitoUserPoolPostConfirmationEvent> {
 
     @Inject
-    public CognitoPostConfirmationHandler(UserService userService) {
+    UserService userService;
+
+    public CognitoPostConfirmationHandler() {
+        // Empty ctor for lambda
+    }
+
+    @Inject
+    public CognitoPostConfirmationHandler(ApplicationContext context, UserService userService) {
+        super(context);
         this.userService = userService;
     }
 
     @Override
-    public CognitoUserPoolPostConfirmationEvent handleRequest(CognitoUserPoolPostConfirmationEvent event, Context context) {
+    public CognitoUserPoolPostConfirmationEvent execute(CognitoUserPoolPostConfirmationEvent event) {
         String sub = event.getRequest().getUserAttributes().get("sub");
         String email = event.getRequest().getUserAttributes().get("email");
 

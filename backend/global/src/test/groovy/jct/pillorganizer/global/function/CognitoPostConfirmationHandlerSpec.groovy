@@ -2,22 +2,34 @@ package jct.pillorganizer.global.function
 
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.events.CognitoUserPoolPostConfirmationEvent
+import io.micronaut.context.ApplicationContext
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import jct.pillorganizer.global.BaseIntegrationSpec
-import jct.pillorganizer.global.model.UserEntity
 import jct.pillorganizer.global.repo.UserRepo
+import jct.pillorganizer.global.service.UserService
+import spock.lang.Specification
 import spock.lang.Subject
 
 // @relation(CTRL-REQ-4, scope=file)
-// @relation(CTRL-REQ-5, scope=file)
+@MicronautTest
 class CognitoPostConfirmationHandlerSpec extends BaseIntegrationSpec {
 
-    @Inject
     @Subject
     CognitoPostConfirmationHandler handler
 
     @Inject
+    ApplicationContext context
+
+    @Inject
+    UserService userService
+
+    @Inject
     UserRepo userRepo
+
+    def setup() {
+        handler = new CognitoPostConfirmationHandler(context, userService)
+    }
 
     def "should create a new user when one does not exist"() {
         given:
@@ -84,7 +96,6 @@ class CognitoPostConfirmationHandlerSpec extends BaseIntegrationSpec {
         user1.userSub == sub1
         user2.userSub == sub2
     }
-
     private CognitoUserPoolPostConfirmationEvent createEvent(String sub, String email) {
         return CognitoUserPoolPostConfirmationEvent.builder()
                 .withRequest(CognitoUserPoolPostConfirmationEvent.Request.builder()

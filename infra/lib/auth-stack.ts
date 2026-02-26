@@ -1,8 +1,11 @@
 import * as cdk from 'aws-cdk-lib/core';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 
 interface AuthStackProps extends cdk.StackProps {
+  postConfirmation: lambda.Function;
+  preTokenGeneration: lambda.Function;
 }
 
 export class AuthStack extends cdk.Stack {
@@ -20,6 +23,10 @@ export class AuthStack extends cdk.Stack {
           required: true,
           mutable: true
         }
+      },
+      lambdaTriggers: {
+        postConfirmation: props.postConfirmation,
+        preTokenGeneration: props.preTokenGeneration
       },
       customAttributes: {
         // not used
