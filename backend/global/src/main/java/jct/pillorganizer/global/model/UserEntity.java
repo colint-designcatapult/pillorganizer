@@ -24,6 +24,9 @@ public class UserEntity {
     @Getter(onMethod_ = @DynamoDbAttribute("UserSub"))
     String userSub;
 
+    @Getter(onMethod_ = @DynamoDbAttribute("Email"))
+    String email;
+
     public static String pk(String userId) {
         return "USER#" + userId;
     }

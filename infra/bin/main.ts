@@ -31,15 +31,19 @@ const platformStack = new PlatformStack(app, `HealthePlatformStack`, {
   baseDomain: globals.baseDomain
 });
 
-const authStack = new AuthStack(app, 'HealtheAuthStack', {
-  env: globalEnv,
-});
-
 const controlPlaneStack = new ControlPlaneStack(app, 'HealtheControlPlaneStack', {
   env: globalEnv,
   zone: platformStack.zone,
   baseDomain: globals.baseDomain
 });
+
+const authStack = new AuthStack(app, 'HealtheAuthStack', {
+  env: globalEnv,
+  postConfirmation: controlPlaneStack.postConfirmation,
+  preTokenGeneration: controlPlaneStack.preTokenGeneration
+});
+
+
 
 // Environment-specific Stacks (Data, App)
 // These require an 'env' context (e.g. -c env=staging)

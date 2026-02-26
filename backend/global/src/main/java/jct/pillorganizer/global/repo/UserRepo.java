@@ -3,7 +3,9 @@ package jct.pillorganizer.global.repo;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.global.model.UserEntity;
+import software.amazon.awssdk.enhanced.dynamodb.Expression;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
@@ -16,6 +18,20 @@ public class UserRepo extends BaseControlPlaneRepo<UserEntity> {
     @Inject
     public UserRepo(DynamoDbClient standardClient) {
         super(standardClient, UserEntity.class);
+    }
+
+    @Override
+    public void save(UserEntity entity) {
+        Expression condition = Expression.builder()
+                .expression("attribute_not_exists(PK)")
+                .build();
+
+        PutItemEnhancedRequest<UserEntity> request = PutItemEnhancedRequest.builder(UserEntity.class)
+                .item(entity)
+                .conditionExpression(condition)
+                .build();
+
+        this.table.putItem(request);
     }
 
     public List<UserEntity> findAllByUserId(String userId) {
