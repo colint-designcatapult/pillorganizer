@@ -1,23 +1,16 @@
 {
-  "staging": {
+  "globals": {
     "account": "114829892869",
     "region": "ca-central-1",
-    "removalPolicy": "DESTROY",
-    "baseDomain": "app.healthesolutions.ca",
-    "autoDeleteObjects": true,
-    "tags": {
-      "Environment": "Staging"
-    }
+    "baseDomain": "app.healthesolutions.ca"
   },
-  "prod": {
-    "account": "114829892869",
-    "region": "ca-central-1",
+  "public": {
     "removalPolicy": "RETAIN",
-    "baseDomain": "app.healthesolutions.ca",
     "autoDeleteObjects": false,
     "tags": {
-      "Environment": "Production"
-    }
+      "Environment": "Public"
+    },
+    "subdomain": "public"
   },
   "acknowledged-issue-numbers": [
     34892

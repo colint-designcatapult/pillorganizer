@@ -2,10 +2,18 @@ package jct.pillorganizer.tenant.service;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jct.pillorganizer.core.TenantDetails;
+import jct.pillorganizer.core.dto.DeviceAccessDto;
+import jct.pillorganizer.tenant.dto.DeviceUserDTO;
 import jct.pillorganizer.tenant.model.device.Device;
 import jct.pillorganizer.tenant.model.device.DeviceUser;
 import jct.pillorganizer.tenant.model.user.BaseUser;
 import jct.pillorganizer.tenant.repo.DeviceUserRepository;
+import reactor.core.publisher.Flux;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Business logic for `DeviceUser` relationships.
@@ -16,6 +24,18 @@ public class DeviceUserService {
     @Inject
     DeviceUserRepository repository;
 
+    public Set<DeviceUserDTO> getDevices(long userId) {
+        return repository.findByUserID(userId);
+    }
+
+    public Flux<DeviceAccessDto> getDeviceAccess(long userId, TenantDetails tenant) {
+        return Flux.fromIterable(getDevices(userId)
+                .stream().map((model) ->
+                        new DeviceAccessDto(Long.toString(model.deviceID()), model.customName(),
+                                model.deviceClass().name(),
+                                tenant.getId(), tenant.getApiBase(), model.primaryUser()))
+                .collect(Collectors.toList()));
+    }
 
     /**
      * Adds a user to a device.

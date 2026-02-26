@@ -84,10 +84,6 @@
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>dynamodb-enhanced</artifactId>
         </dependency>
-        <dependency>
-            <groupId>io.micronaut.crac</groupId>
-            <artifactId>micronaut-crac</artifactId>
-        </dependency>
     </dependencies>
     <build>
         <plugins>

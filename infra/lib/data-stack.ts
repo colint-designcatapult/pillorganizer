@@ -13,6 +13,7 @@ interface DataStackProps extends cdk.StackProps {
 /* This stack is configures persistent data stores. */
 export class DataStack extends cdk.Stack {
   public readonly dbCluster: rds.DatabaseCluster;
+  public readonly dbProxy: rds.DatabaseProxy;
 
   constructor(scope: Construct, id: string, props: DataStackProps) {
     super(scope, id, props);
@@ -31,7 +32,7 @@ export class DataStack extends cdk.Stack {
     // todo: change parameters for production
     // @relation(INFRA-DSGN-5, scope=range_start)
     this.dbCluster = new rds.DatabaseCluster(this, 'AuroraDb', {
-      engine: rds.DatabaseClusterEngine.auroraPostgres({ version: rds.AuroraPostgresEngineVersion.VER_17_6 }),
+      engine: rds.DatabaseClusterEngine.auroraPostgres({ version: rds.AuroraPostgresEngineVersion.VER_17_7 }),
       writer: rds.ClusterInstance.provisioned('writer', {
         publiclyAccessible: false
       }),
@@ -47,5 +48,11 @@ export class DataStack extends cdk.Stack {
       credentials: rds.Credentials.fromSecret(dbSecret),
     });
     // @relation(INFRA-DSGN-5, scope=range_end)
+
+    this.dbProxy = this.dbCluster.addProxy('DbProxy', {
+      secrets: [dbSecret],
+      vpc: props.vpc,
+      requireTLS: false,
+    });
   }
 }

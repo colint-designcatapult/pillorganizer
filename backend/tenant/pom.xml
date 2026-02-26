@@ -81,6 +81,20 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+            <groupId>io.micronaut.aws</groupId>
+            <artifactId>micronaut-aws-lambda-events-serde</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.aws</groupId>
+            <artifactId>micronaut-function-aws-api-proxy</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.aws</groupId>
+            <artifactId>micronaut-function-aws-api-proxy-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>io.micronaut.serde</groupId>
             <artifactId>micronaut-serde-jackson</artifactId>
             <scope>compile</scope>
@@ -95,22 +109,6 @@
             <version>2.2.0</version>
         </dependency>
         <dependency>
-            <groupId>com.sendgrid</groupId>
-            <artifactId>sendgrid-java</artifactId>
-            <version>4.10.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.firebase</groupId>
-            <artifactId>firebase-admin</artifactId>
-            <version>9.1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.mindrot</groupId>
-            <artifactId>jbcrypt</artifactId>
-            <version>0.4</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>42.7.9</version>
@@ -122,24 +120,6 @@
             <plugin>
                 <groupId>io.micronaut.maven</groupId>
                 <artifactId>micronaut-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>com.google.cloud.tools</groupId>
-                <artifactId>jib-maven-plugin</artifactId>
-                <configuration>
-                    <from>
-                        <image>amazoncorretto:21</image>
-                    </from>
-                    <to>
-                        <image>pillorganizer-backend:latest</image>
-                    </to>
-                    <container>
-                        <mainClass>jct.pillorganizer.tenant.TenantApplication</mainClass>
-                        <ports>
-                            <port>8080</port>
-                        </ports>
-                    </container>
-                </configuration>
             </plugin>
         </plugins>
     </build>

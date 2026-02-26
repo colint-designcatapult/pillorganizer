@@ -6,7 +6,6 @@ import jct.pillorganizer.tenant.dto.DeviceNotificationDetails;
 import jct.pillorganizer.tenant.service.MobileNotificationService;
 import lombok.extern.flogger.Flogger;
 
-@Requires(notEnv = "prod")
 @Singleton
 @Flogger
 public class FakeNotificationService implements MobileNotificationService {

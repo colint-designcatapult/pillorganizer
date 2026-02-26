@@ -1,147 +1,115 @@
 import * as cdk from 'aws-cdk-lib/core';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import * as ecs from 'aws-cdk-lib/aws-ecs';
-import * as ecr from 'aws-cdk-lib/aws-ecr';
-import * as ecsPatterns from 'aws-cdk-lib/aws-ecs-patterns';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
+import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
-import * as logs from 'aws-cdk-lib/aws-logs';
-import * as ssm from 'aws-cdk-lib/aws-ssm';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as targets from 'aws-cdk-lib/aws-route53-targets';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import { Construct } from 'constructs';
 
 interface AppStackProps extends cdk.StackProps {
   vpc: ec2.Vpc;
-  ecr: ecr.Repository;
-  ecsCluster: ecs.Cluster;
   dbCluster: rds.DatabaseCluster;
+  dbProxy: rds.DatabaseProxy;
   removalPolicy: cdk.RemovalPolicy;
   environmentName: string;
+  baseDomain: string;
+  subdomain: string;
+  zone: route53.IHostedZone;
 }
 
 /* This stack configures the actual application. */
 export class AppStack extends cdk.Stack {
-  public readonly apiService: ecs.Cluster;
+  public readonly api: apigwv2.HttpApi;
 
   constructor(scope: Construct, id: string, props: AppStackProps) {
     super(scope, id, props);
 
-    // -- Logging --
+    const fullDomainName = `${props.subdomain}.${props.baseDomain}`;
 
-    const logGroup = new logs.LogGroup(this, 'AppLogGroup', {
-      logGroupName: `/ecs/pillorganizer-${props.environmentName}`, 
-      retention: logs.RetentionDays.ONE_WEEK, // todo: change in prod
-      removalPolicy: props.removalPolicy 
+    // -- Lambda --
+
+    const appFunction = new lambda.Function(this, 'AppFunction', {
+      runtime: lambda.Runtime.JAVA_21,
+      handler: 'io.micronaut.function.aws.proxy.payload2.APIGatewayV2HTTPEventFunction',
+      code: lambda.Code.fromAsset("../backend/tenant/target/tenant-0.1.jar"),
+      memorySize: 1024,
+      timeout: cdk.Duration.seconds(30),
+      snapStart: lambda.SnapStartConf.ON_PUBLISHED_VERSIONS,
+      tracing: lambda.Tracing.ACTIVE,
+      insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_498_0,
+      vpc: props.vpc,
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+      environment: {
+        MICRONAUT_ENVIRONMENTS: `tenant,${props.environmentName}`,
+        DB_HOST: props.dbProxy.endpoint,
+        DB_PORT: '5432',
+        DB_NAME: 'pillorganizer'
+      },
     });
 
-    // -- API Container & Service --
-    // @relation(INFRA-DSGN-11, scope=range_start)
+    // -- IAM & Security --
 
-    const apiTaskDef = new ecs.FargateTaskDefinition(this, 'ApiTaskDef', {
-      memoryLimitMiB: 1024,
-      cpu: 512,
+    // Grant access to DB Secret
+    props.dbCluster.secret?.grantRead(appFunction);
 
+    // Allow access to RDS Proxy
+    props.dbProxy.grantConnect(appFunction, 'postgres');
+
+    // Manually create ingress rule to avoid cyclic dependency (DataStack -> AppStack)
+    const ingressRule = new ec2.CfnSecurityGroupIngress(this, 'DbProxyIngress', {
+      groupId: props.dbProxy.connections.securityGroups[0].securityGroupId,
+      sourceSecurityGroupId: appFunction.connections.securityGroups[0].securityGroupId,
+      ipProtocol: 'tcp',
+      fromPort: 5432,
+      toPort: 5432,
+      description: 'Allow Lambda access to DB Proxy',
     });
 
-    const apiContainer = apiTaskDef.addContainer('ApiContainer', {
-        image: ecs.ContainerImage.fromEcrRepository(props.ecr, props.environmentName),
-        logging: ecs.LogDrivers.awsLogs({
-          streamPrefix: 'api',
-          logGroup
-        }),
-        portMappings: [{ containerPort: 8080 }],
-        environment: {
-          MICRONAUT_ENVIRONMENTS: `${props.environmentName}`,
-          DB_HOST: props.dbCluster.clusterEndpoint.hostname,
-          DB_PORT: props.dbCluster.clusterEndpoint.port.toString(),
-          DB_NAME: 'pillorganizer'
-        },
-        healthCheck: {
-          command: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"],
-        },
-    });
-
-    const apiService = new ecsPatterns.ApplicationLoadBalancedFargateService(this, "ApiService", {
-      cluster: props.ecsCluster,
-      taskDefinition: apiTaskDef,
-      desiredCount: 1,
-      circuitBreaker: { rollback: true },
-      publicLoadBalancer: true,
-      minHealthyPercent: 0 // todo: change in production
-    });
-
-
-    // @relation(INFRA-DSGN-11, scope=range_end)
-
-    // -- IAM --
-
-    // Grant service ability to fetch DB secrets
-    props.dbCluster.secret?.grantRead(apiTaskDef.taskRole);
+    // Ensure the Lambda function waits for the ingress rule to be created
+    // This is critical for SnapStart, as the app tries to connect to the DB during init
+    (appFunction.node.defaultChild as lambda.CfnFunction).addDependency(ingressRule);
 
     // Micronaut must be able to list secrets
     // This isn't a security risk because listing doesn't imply access
-    apiTaskDef.addToTaskRolePolicy(new iam.PolicyStatement({
+    appFunction.addToRolePolicy(new iam.PolicyStatement({
       actions: ['secretsmanager:ListSecrets'],
       resources: ['*'], 
     }));
 
-    // -- Networking --
+    // -- API Gateway --
 
-    // Allow access to Aurora from our container. Workaround for circular dependencies.
-    // Done this way so the security can be defined in AppStack
-    // @relation(INFRA-DSGN-8, scope=range_start)
-    const appSg = apiService.service.connections.securityGroups[0];
-    const dbSg = props.dbCluster.connections.securityGroups[0];
-    new ec2.CfnSecurityGroupIngress(this, 'DbIngressRule', {
-      groupId: dbSg.securityGroupId,
-      ipProtocol: 'tcp',
-      fromPort: 5432,
-      toPort: 5432,
-      sourceSecurityGroupId: appSg.securityGroupId 
-    });
-    // @relation(INFRA-DSGN-8, scope=range_end)
-
-    // -- ALB --
-
-    // Configure the ALB Target Group Health Check to use Micronaut Management /health endpoint
-    apiService.targetGroup.configureHealthCheck({
-      path: '/health',
-      port: '8080', 
-      healthyHttpCodes: '200',
+    const version = appFunction.currentVersion;
+    const alias = new lambda.Alias(this, 'AppAlias', {
+      aliasName: `live-${props.environmentName}`,
+      version: version,
     });
 
-    // Block Public Access to /health
-    apiService.listener.addAction('BlockHealthEndpoint', {
-      priority: 10, // High priority (runs before the default "Forward" rule)
-      conditions: [
-        elbv2.ListenerCondition.pathPatterns(['/health', '/health/*'])
-      ],
-      action: elbv2.ListenerAction.fixedResponse(403, {
-        contentType: 'text/plain',
-        messageBody: 'Access Denied',
-      }),
+    const certificate = new acm.Certificate(this, 'AppCertificate', {
+      domainName: fullDomainName,
+      validation: acm.CertificateValidation.fromDns(props.zone),
     });
 
-    // -- Output names to SSM for CI/CD --
-
-    // These values are stored in AWS SSM Parameter Store so that our CI/CD
-    // pipeline knows where to deploy the backend to. Changes to these must
-    // be reflected in the backend.yml GitHub Actions workflow.
-
-    new ssm.StringParameter(this, 'ParamClusterName', {
-      parameterName: `/pillorganizer/${props.environmentName}/backend/cluster-name`,
-      stringValue: props.ecsCluster.clusterName,
+    const domainName = new apigwv2.DomainName(this, 'AppDomainNameV2', {
+      domainName: fullDomainName,
+      certificate: certificate,
     });
 
-    new ssm.StringParameter(this, 'ParamServiceName', {
-      parameterName: `/pillorganizer/${props.environmentName}/backend/service-name`,
-      stringValue: apiService.service.serviceName,
+    this.api = new apigwv2.HttpApi(this, 'AppHttpApi', {
+      apiName: `PillOrganizer Tenant Backend (${props.environmentName})`,
+      defaultIntegration: new HttpLambdaIntegration('ControlPlaneIntegration', alias),
+      defaultDomainMapping: {
+        domainName: domainName,
+      },
     });
 
-    new ssm.StringParameter(this, 'ParamContainerName', {
-      parameterName: `/pillorganizer/${props.environmentName}/backend/container-name`,
-      stringValue: apiContainer.containerName,
+    new route53.ARecord(this, 'AppAliasRecord', {
+      zone: props.zone,
+      recordName: props.subdomain,
+      target: route53.RecordTarget.fromAlias(new targets.ApiGatewayv2DomainProperties(domainName.regionalDomainName, domainName.regionalHostedZoneId))
     });
-
   }
 }

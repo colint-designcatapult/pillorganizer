@@ -1,9 +1,6 @@
 package jct.pillorganizer.global.repo;
 
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbIndex;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 public class BaseControlPlaneRepo<T> {
@@ -23,6 +20,10 @@ public class BaseControlPlaneRepo<T> {
         // Initialize GSI lookups
         this.gsi1 = this.table.index("GSI1");
         this.gsi2 = this.table.index("GSI2");
+    }
+
+    public T get(String pk, String sk) {
+        return table.getItem(Key.builder().partitionValue(pk).sortValue(sk).build());
     }
 
     public void save(T entity) {

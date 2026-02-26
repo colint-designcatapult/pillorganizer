@@ -5,24 +5,19 @@
 
 ## Environments
 
-A command-line parameter switches between two environments: `staging` and `prod`.
-Pass the `-c (staging|prod)` flag to switch between the two.
+A command-line parameter switches between environments.
+Environments generally refer to a tenant.
+Define tenants in `cdk.context.json`.
+Pass the `-c (tenant name)` flag to switch between tenants.
 This flag is required for all CDK commands.
 
 The environment (`${env}`) impacts the names of stacks (see below).
-
-**NOTE: currently only the staging environment is used during this stage of development**
-
-| Environment | Description |
-| ----------- | ----------- |
-| `prod`      | (NOTE: not currently used). Intended to be the live, production environment. Resources/data *will* be retained upon destruction. |
-| `staging`   | Testing and staging new changes, particularly to the cloud. Designed to be ephermeral and a `destroy` command will destroy all resources provisioned in this environment. |
 
 ## Stacks
 
 ### HealthePlatformStack
 
-**Note:** this stack is *shared* between `prod` and `staging`!
+**Note:** this stack is *shared* between environments.
 
 This stack contains resources that don't change often, or that changing may have second- or third-order effects.
 Updating this stack should be reserved for when absolutely necessary.
@@ -34,6 +29,31 @@ For example, we can't define an ECS service until we've pushed an image into ECR
 * Creates a container repository (ECR).
 * Defines an ECS cluster.
 * Sets up GitHub 
+
+### HealtheAuthStack
+
+**Note:** this stack is *shared* between environments.
+
+This stack contains user authentication resources (AWS Cognito) shared between environments.
+This stack should only be updated sparingly as it contains the Cognito user pools.
+Changes to Cognito may result in a different user pool ID, client credentials, etc. 
+Take care to review the diff before deploying changes.
+
+* Defines Cognito user pool.
+* Creates a fixed domain for the user pool.
+* Creates a Cognito client for the mobile app (Flutter).
+* Creates a default managed login.
+
+### HealtheControlPlaneStack
+
+**Note:** this stack is *shared* between environments.
+
+This stack hosts the control plane, which is a resource shared between all tenants.
+
+* Defines a Lambda function for the control plane, based on the "shadow" fat JAR produced by Micronaut in `backend/global/target`.
+* Creates an API gateway for the control plane.
+* Configures Route 53 for `control-plane.app.healthesolutions.ca` points to the control plane.
+* Generates HTTPS certificates for the domain.
 
 ### HealtheDataStack-${env}
 

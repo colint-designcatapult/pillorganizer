@@ -3,3 +3,8 @@ micronaut:
     port: ${PORT:8081}
   application:
     name: control-plane
+  multitenancy:
+    tenantresolver:
+      httpheader:
+        enabled: true
+        header-name: "x-tenant-id"

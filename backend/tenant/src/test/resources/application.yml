@@ -1,35 +1,44 @@
 micronaut:
   server:
-    port: 8080
+    port: ${PORT:8080}
   application:
-    name: backend
-  security:
-    authentication: bearer
-    redirect:
-      enabled: false
-      forbidden:
-        enabled: false
-      unauthorized:
-        enabled: false
-    endpoints:
-      login:
+    name: pillorganizer-backend
+  multitenancy:
+    propagation:
+      enabled: true
+      service-id-regex: ".*"
+    tenantwriter:
+      httpheader:
         enabled: true
-        path: /login
-    token:
-      jwt:
-        signatures:
-          secret:
-            generator:
-              secret: ${JWT_GENERATOR_SIGNATURE_SECRET:pleaseChangeThisSecretForANewOne}
+        header-name: "x-tenant-id"
+  security:
+    intercept-url-map:
+      - access: isAnonymous()
+        pattern: /swagger/**
+      - access: isAnonymous()
+        pattern: /swagger-ui/**
+  router:
+    static-resources:
+      swagger:
+        paths: classpath:META-INF/swagger
+        mapping: /swagger/**
+      swagger-ui:
+        paths: classpath:META-INF/swagger/views/swagger-ui
+        mapping: /swagger-ui/**
 datasources:
   default:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:pillorganizer}
     driverClassName: org.postgresql.Driver
     schema-generate: NONE
+    allow-pool-suspension: true
+jpa.default.properties.hibernate:
+  hbm2ddl.auto: none
+  format_sql: true
 flyway:
   datasources:
     default:
       enabled: true
       baselineOnMigrate: true
-jpa.default.properties.hibernate:
-  hbm2ddl.auto: none
-  format_sql: true
+      hikari:
+        maximumPoolSize: ${DB_MAX_POOL_SIZE:10}
+        minimumIdle: ${DB_MIN_IDLE:10}

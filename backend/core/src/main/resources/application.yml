@@ -2,27 +2,16 @@
 aws:
   region: ca-central-1
   cognito:
-    public-pool: ca-central-1_m0ffygrUk
+    public-pool: ca-central-1_H0hSkGPqA
 micronaut:
   application:
     name: backend
   http:
     client:
-      read-timeout: 1000ms
+      read-timeout: 2000ms
   multitenancy:
     filter:
       enabled: true
-    propagation:
-      enabled: true
-      service-id-regex: ".*"
-    tenantwriter:
-      httpheader:
-        enabled: true
-        header-name: "x-tenant-id"
-    tenantresolver:
-      httpheader:
-        enabled: true
-        header-name: "x-tenant-id"
   security:
     enabled: true
     authentication: bearer

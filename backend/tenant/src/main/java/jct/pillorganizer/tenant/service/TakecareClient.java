@@ -21,7 +21,6 @@ import jct.pillorganizer.tenant.dto.ReferenceDTO;
 import lombok.extern.flogger.Flogger;
 import reactor.core.publisher.Mono;
 
-@Singleton
 @Flogger
 public class TakecareClient {
 
