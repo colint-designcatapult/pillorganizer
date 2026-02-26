@@ -1,4 +1,0 @@
-endpoints:
-  health:
-    enabled: true
-    sensitive: false

@@ -3,8 +3,6 @@ package jct.pillorganizer.tenant.model.device;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
-import jct.pillorganizer.tenant.model.user.Authenticatable;
-import jct.pillorganizer.tenant.model.user.UserType;
 import jct.pillorganizer.tenant.serde.SerialNumberSerde;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,7 +22,7 @@ import java.util.List;
 @Setter
 @Introspected
 @Serdeable
-public class Device implements Authenticatable {
+public class Device {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "device_seq")
@@ -91,15 +89,6 @@ public class Device implements Authenticatable {
     @Column(name = "engr_data", nullable = true, columnDefinition = "jsonb")
     private String engr_data;
 
-    @Override
-    public long getId() {
-        return id;
-    }
-
-    @Override
-    public UserType getUserType() {
-        return UserType.DEVICE;
-    }
 
     @JsonIgnore
     @Transient

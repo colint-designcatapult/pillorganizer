@@ -43,16 +43,16 @@ const amplifyconfig = ''' {
             "awsCognitoAuthPlugin": {
                 "CognitoUserPool": {
                     "Default": {
-                        "PoolId": "ca-central-1_aF2K8pxyr",
-                        "AppClientId": "71cbl06ka8u85unhejsgaddt1m",
+                        "PoolId": "ca-central-1_m0ffygrUk",
+                        "AppClientId": "2a9r6i2k53pbc9sli8jhdf17r0",
                         "Region": "ca-central-1"
                     }
                 },
                 "Auth": {
                     "Default": {
                         "OAuth": {
-                            "WebDomain": "ca-central-1af2k8pxyr.auth.ca-central-1.amazoncognito.com",
-                            "AppClientId": "71cbl06ka8u85unhejsgaddt1m",
+                            "WebDomain": "healthesolutions.auth.ca-central-1.amazoncognito.com",
+                            "AppClientId": "2a9r6i2k53pbc9sli8jhdf17r0",
                             "SignInRedirectURI": "jct.pillorganizer.pills://callback",
                             "SignOutRedirectURI": "jct.pillorganizer.pills://signout",
                             "Scopes": [

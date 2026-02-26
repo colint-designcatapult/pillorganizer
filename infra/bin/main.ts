@@ -35,8 +35,11 @@ const removalPolicy = envConfig.removalPolicy === 'DESTROY'
 // Build standard env object based on config
 const env = { account: envConfig.account, region: envConfig.region };
 
+
 const platformStack = new PlatformStack(app, `HealthePlatformStack`, {
-  env
+  env,
+  crossRegionReferences: true,
+  baseDomain: envConfig.baseDomain
 });
 
 // @relation(INFRA-DSGN-7, scope=range_start)
