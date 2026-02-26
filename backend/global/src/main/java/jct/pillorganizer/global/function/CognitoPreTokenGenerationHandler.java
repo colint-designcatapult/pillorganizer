@@ -33,6 +33,7 @@ public class CognitoPreTokenGenerationHandler extends MicronautRequestHandler<Co
 
         Map<String, String> claimsToAddOrOverride = new HashMap<>();
         claimsToAddOrOverride.put("userId", user.getUserId());
+        claimsToAddOrOverride.put("userDisplayName", user.getUserName());
 
         event.setResponse(CognitoUserPoolPreTokenGenerationEvent.Response.builder()
                 .withClaimsOverrideDetails(CognitoUserPoolPreTokenGenerationEvent.ClaimsOverrideDetails.builder()
