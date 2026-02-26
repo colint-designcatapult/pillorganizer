@@ -12,17 +12,11 @@ micronaut:
   multitenancy:
     filter:
       enabled: true
-    propagation:
-      enabled: true
-      service-id-regex: ".*"
-    tenantwriter:
-      httpheader:
-        enabled: true
-        header-name: "x-tenant-id"
     tenantresolver:
       httpheader:
+        enabled: false
+      subdomain:
         enabled: true
-        header-name: "x-tenant-id"
   security:
     enabled: true
     authentication: bearer

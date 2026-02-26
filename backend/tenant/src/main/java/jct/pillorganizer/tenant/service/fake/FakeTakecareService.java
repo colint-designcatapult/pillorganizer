@@ -15,7 +15,6 @@ import reactor.core.publisher.Mono;
 import java.time.Instant;
 import java.time.ZoneId;
 
-@Requires(notEnv = "prod")
 @Replaces(TakecareService.class)
 @Singleton
 @Flogger

@@ -1,13 +1,10 @@
 micronaut:
   application:
-    name: healthe-global
+    name: control-plane
   config-client:
     enabled: true
 
 aws:
   region: ca-central-1
   secretsmanager:
-    enabled: true
-    secrets:
-      - secret-name: database
-        prefix: datasources.default
+    enabled: false

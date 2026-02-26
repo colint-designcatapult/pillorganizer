@@ -2,7 +2,7 @@ micronaut:
   server:
     port: ${PORT:8080}
   application:
-    name: backend
+    name: pillorganizer-backend
   security:
     intercept-url-map:
       - access: isAnonymous()
