@@ -37,15 +37,6 @@ public class AppUserController {
     @Inject
     AuthService authService;
 
-    @Get("/devices")
-    @Secured(SecurityRule.IS_AUTHENTICATED)
-    public Flux<DeviceAccessDto> devices(TenantDetails tenant, Principal authentication) {
-        return Flux.just(
-                new DeviceAccessDto("test-1", "test-1-nick", "model-1", tenant.getId(), tenant.getApiBase(), true),
-                new DeviceAccessDto("test-2", "test-2-nick", "model-2", tenant.getId(), tenant.getApiBase(), true)
-        );
-    }
-
     @Operation(summary = "Gets info about currently signed-in user")
     @Get("/me")
     @Secured({ "user", "anon" })

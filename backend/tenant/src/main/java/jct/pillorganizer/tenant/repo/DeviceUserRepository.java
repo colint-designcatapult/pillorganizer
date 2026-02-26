@@ -50,10 +50,10 @@ public interface DeviceUserRepository extends CrudRepository<DeviceUser, Long> {
 
     Optional<Device> retrieveDeviceByUserIDAndDeviceIDAndDeletedFalse(long userID, long deviceID);
 
-    @Query("select new jct.pillorganizer.dto.DeviceUserDTO(du.id, du.deviceID, d.deviceClass, d.customName, d.lastSync, d.serialNo, du.primaryUser, du.owner, du.notificationToken is not null, d.baseTZ) from device_user du join du.device d where du.userID = :user AND du.deleted = false")
+    @Query("select new jct.pillorganizer.tenant.dto.DeviceUserDTO(du.id, du.deviceID, d.deviceClass, d.customName, d.lastSync, d.serialNo, du.primaryUser, du.owner, du.notificationToken is not null, d.baseTZ) from device_user du join du.device d where du.userID = :user AND du.deleted = false")
     Set<DeviceUserDTO> findByUserID(long user);
 
-    @Query("select new jct.pillorganizer.dto.DeviceUserDTO(du.id, du.deviceID, d.deviceClass, d.customName, d.lastSync, d.serialNo, du.primaryUser, du.owner, du.notificationToken is not null, d.baseTZ) from device_user du join du.device d where du.userID = :user and du.deviceID = :device and du.deleted = false")
+    @Query("select new jct.pillorganizer.tenant.dto.DeviceUserDTO(du.id, du.deviceID, d.deviceClass, d.customName, d.lastSync, d.serialNo, du.primaryUser, du.owner, du.notificationToken is not null, d.baseTZ) from device_user du join du.device d where du.userID = :user and du.deviceID = :device and du.deleted = false")
     Optional<DeviceUserDTO> retrieveByUserIDAndDeviceID(long user, long device);
 
     @Query("UPDATE device_user du SET du.deleted = true WHERE du.userID = :userId AND du.deviceID= :deviceId")

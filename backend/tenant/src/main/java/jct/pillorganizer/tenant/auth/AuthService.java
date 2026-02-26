@@ -1,6 +1,7 @@
 package jct.pillorganizer.tenant.auth;
 
 import com.google.common.flogger.FluentLogger;
+import io.micronaut.security.authentication.Authentication;
 import io.micronaut.security.authentication.AuthenticationException;
 import io.micronaut.security.utils.SecurityService;
 import jakarta.inject.Inject;
@@ -12,6 +13,8 @@ import jct.pillorganizer.tenant.repo.DeviceUserAsyncRepository;
 import jct.pillorganizer.tenant.repo.DeviceUserRepository;
 
 import reactor.core.publisher.Mono;
+
+import java.util.Optional;
 
 /**
  * Utility functions for dealing with authentication and authorization.
@@ -42,8 +45,10 @@ public class AuthService {
      * @return a user ID or device ID of the currently logged-in user
      */
     public long getUserID() {
-        return (long) securityService.getAuthentication()
-                .orElseThrow(() -> new AuthenticationException("No authentication")).getAttributes().get("id");
+        Optional<Authentication> auth = securityService.getAuthentication();
+        return (long) auth.orElseThrow(() -> new AuthenticationException("No authentication"))
+                .getAttributes()
+                .get("id");
     }
 
     /**

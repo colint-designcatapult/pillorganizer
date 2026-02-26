@@ -25,8 +25,17 @@ public class TenantClient {
         this.tenantDetails = tenantDetails;
     }
 
+    private String makeUri(String api) {
+        return tenantDetails.getApiBase() + api;
+    }
+
     public Mono<List<DeviceAccessDto>> getDeviceAccess() {
-        String uri = tenantDetails.getApiBase() + "/api/v1/user/devices";
-        return Mono.from(httpClient.retrieve(HttpRequest.GET(uri), Argument.listOf(DeviceAccessDto.class)));
+        return Mono.from(httpClient.retrieve(HttpRequest.GET(makeUri("/internal/user/devices")),
+                Argument.listOf(DeviceAccessDto.class)));
+    }
+
+    public Mono<Boolean> healthCheck() {
+        return Mono.from(httpClient.retrieve(HttpRequest.GET(makeUri("/health")),
+                Argument.of(Boolean.class)));
     }
 }
