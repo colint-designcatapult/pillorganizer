@@ -7,12 +7,16 @@ on:
     paths:
       - '.github/workflows/backend.yml'
       - 'backend/**'
+      - 'infra/lib/app-stack.ts'
+      - 'infra/lib/control-plane-stack.ts'
   pull_request:
     branches:
       - 'master'
     paths:
       - '.github/workflows/backend.yml'
       - 'backend/**'
+      - 'infra/lib/app-stack.ts'
+      - 'infra/lib/control-plane-stack.ts'
 
   workflow_dispatch:
 
@@ -38,28 +42,41 @@ jobs:
         working-directory: backend
         env:
           MAVEN_OPTS: "-Xmx1024m"
-        run: mvn --batch-mode --update-snapshots clean package -pl tenant -am
+        run: mvn --batch-mode --update-snapshots clean package -pl tenant,global -am
 
-      - name: Upload Artifact
+      - name: Upload Tenant Artifact
         uses: actions/upload-artifact@v4
         with:
           name: backend-jar
           path: backend/tenant/target/tenant-0.1.jar
           retention-days: 1
+
+      - name: Upload Global Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: global-jar
+          path: backend/global/target/global-0.1.jar
+          retention-days: 1
   
   deploy-lambda:
-    name: Deploy to AWS Lambda
+    name: Deploy to AWS
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v3
 
-      - name: Download Artifact
+      - name: Download Tenant Artifact
         uses: actions/download-artifact@v4
         with:
           name: backend-jar
           path: backend/tenant/target
+
+      - name: Download Global Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: global-jar
+          path: backend/global/target
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -86,4 +103,6 @@ jobs:
       - name: Deploy
         working-directory: infra
         run: |
+          cdk deploy HealtheControlPlaneStack --require-approval never --exclusively
           cdk deploy HealtheAppStack-public --require-approval never --exclusively -c env=public
+          
