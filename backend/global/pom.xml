@@ -84,6 +84,11 @@
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>dynamodb-enhanced</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.github.ksuid</groupId>
+            <artifactId>ksuid</artifactId>
+            <version>1.1.4</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
