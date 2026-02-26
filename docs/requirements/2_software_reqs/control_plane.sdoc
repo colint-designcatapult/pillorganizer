@@ -72,7 +72,7 @@ TITLE: User Profile & Management
 
 [REQUIREMENT]
 UID: CTRL-REQ-4
-TITLE: User Identifier
+TITLE: User Identifier Creation
 STATEMENT: >>>
 The control plane shall create a User profile record and assign a unique user identifier to the account when a user account is created.
 <<<
@@ -99,6 +99,16 @@ The control plane shall provide an API for a user to view and update their displ
 RELATIONS:
 - TYPE: Parent
   VALUE: SYS-REQ-25
+
+  [REQUIREMENT]
+UID: CTRL-REQ-7
+TITLE: User Identifier Use
+STATEMENT: >>>
+The control plane shall identify users in the internal API by user identifier.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-22
 
 [[/SECTION]]
 

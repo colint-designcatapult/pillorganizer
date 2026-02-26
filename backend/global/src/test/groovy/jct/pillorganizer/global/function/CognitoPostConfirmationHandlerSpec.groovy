@@ -9,6 +9,7 @@ import jct.pillorganizer.global.repo.UserRepo
 import spock.lang.Subject
 
 // @relation(CTRL-REQ-4, scope=file)
+// @relation(CTRL-REQ-5, scope=file)
 class CognitoPostConfirmationHandlerSpec extends BaseIntegrationSpec {
 
     @Inject
