@@ -1,18 +1,22 @@
-name: backend
+name: control-plane
 
 on:
   push:
     branches:
       - 'master'
     paths:
-      - '.github/workflows/backend.yml'
-      - 'backend/**'
+      - '.github/workflows/control-plane.yml'
+      - 'backend/global/**'
+      - 'backend/pom.xml'
+      - 'infra/lib/control-plane-stack.ts'
   pull_request:
     branches:
       - 'master'
     paths:
-      - '.github/workflows/backend.yml'
-      - 'backend/**'
+      - '.github/workflows/control-plane.yml'
+      - 'backend/global/**'
+      - 'backend/pom.xml'
+      - 'infra/lib/control-plane-stack.ts'
 
   workflow_dispatch:
 
@@ -22,7 +26,7 @@ permissions:
 
 jobs:
   build:
-    name: Build and Test
+    name: Compile and Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -34,32 +38,33 @@ jobs:
           distribution: 'corretto'
           cache: 'maven'
       
-      - name: Build with Maven
+      - name: Compile and Package
         working-directory: backend
         env:
           MAVEN_OPTS: "-Xmx1024m"
-        run: mvn --batch-mode --update-snapshots clean package -pl tenant -am
+        run: mvn --batch-mode --update-snapshots clean package -pl global -am
 
       - name: Upload Artifact
+        if: github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v4
         with:
-          name: backend-jar
-          path: backend/tenant/target/tenant-0.1.jar
+          name: global-jar
+          path: backend/global/target/global-0.1.jar
           retention-days: 1
-  
-  deploy-lambda:
-    name: Deploy to AWS Lambda
+
+  deploy:
+    name: Deploy Control Plane
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v3
-
+      
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
-          name: backend-jar
-          path: backend/tenant/target
+          name: global-jar
+          path: backend/global/target
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -86,4 +91,5 @@ jobs:
       - name: Deploy
         working-directory: infra
         run: |
-          cdk deploy HealtheAppStack-public --require-approval never --exclusively -c env=public
+          # Deploying to staging environment as per backend.yml pattern
+          cdk deploy HealtheControlPlaneStack --require-approval never --exclusively
