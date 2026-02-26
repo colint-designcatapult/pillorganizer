@@ -5,18 +5,13 @@
 
 ## Environments
 
-A command-line parameter switches between two environments: `staging` and `prod`.
-Pass the `-c (staging|prod)` flag to switch between the two.
+A command-line parameter switches between environments.
+Environments generally refer to a tenant.
+Define tenants in `cdk.context.json`.
+Pass the `-c (tenant name)` flag to switch between tenants.
 This flag is required for all CDK commands.
 
 The environment (`${env}`) impacts the names of stacks (see below).
-
-**NOTE: currently only the staging environment is used during this stage of development**
-
-| Environment | Description |
-| ----------- | ----------- |
-| `prod`      | (NOTE: not currently used). Intended to be the live, production environment. Resources/data *will* be retained upon destruction. |
-| `staging`   | Testing and staging new changes, particularly to the cloud. Designed to be ephermeral and a `destroy` command will destroy all resources provisioned in this environment. |
 
 ## Stacks
 
