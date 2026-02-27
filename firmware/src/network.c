@@ -506,7 +506,8 @@ void network_bin_event_task(void* parm)
 {
     for(;;) {
         if(wifi_is_connected()) {
-            engineering_start_server(); // reentrant
+            // TODO: Engineering server breaks compilation after ESP-IDF 6.9.0 upgrade
+            // engineering_start_server(); // reentrant
 
             bool registered = provision_record.registered;
 
@@ -549,7 +550,8 @@ void network_bin_event_task(void* parm)
             }
 
         } else {
-            engineering_stop_server(); // reentrant
+            // TODO: Engineering server breaks compilation after ESP-IDF 6.9.0 upgrade 
+            // engineering_stop_server(); // reentrant
             vTaskDelay(pdMS_TO_TICKS(1000));
         }
         esp_task_wdt_reset();

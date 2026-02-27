@@ -4,6 +4,7 @@ extern "C" {
 #include "pill_gpio.h"
 #include "util.h"
 #include "rtc_sntp.h"
+#include "sdkconfig.h"
 
 #include <esp_wifi.h>
 #include <wifi_provisioner.h>
@@ -262,6 +263,20 @@ public:
         };
 
         ESP_ERROR_CHECK(wifi_prov_mgr_init(config));
+
+        #ifdef CONFIG_DEV_WIFI_ENABLED
+        // TEMPORARY: Skip BLE provisioning when DEV_WIFI_ENABLED is set in sdkconfig
+        wifi_config_t wifi_config = {};
+        strcpy((char*)wifi_config.sta.ssid, CONFIG_DEV_WIFI_SSID);
+        strcpy((char*)wifi_config.sta.password, CONFIG_DEV_WIFI_PASSWORD);
+        
+        ESP_LOGI(TAG, "Hardcoded WiFi - connecting to %s", wifi_config.sta.ssid);
+        ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
+        
+        // Mark as already provisioned to skip BLE
+        _prov_already = true;
+        // ==================== END BLOCK ====================
+        #endif
 
         bool provisioned = false;
         ESP_ERROR_CHECK(wifi_prov_mgr_is_provisioned(&provisioned));

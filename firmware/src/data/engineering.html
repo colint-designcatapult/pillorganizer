@@ -29,6 +29,10 @@
                     <div class="flex two">
                         <div><form action="/reboot" method="post"><button class='error' type="submit">Reboot</button></form></div>
                         <div><form action="/reset" method="post"><button class='error' type="submit">Factory Reset</button></form></div>
+                        <div>
+                            <h3>Telemetry</h3>
+                            <button id="heartbeatBtn" class="success" onclick="toggleHeartbeat()">Stop Heartbeat</button>
+                        </div>
                     </div>
 
                 </div>
@@ -217,6 +221,33 @@ message EngineeringAllBins {
 
                 setTimeout(arguments.callee, 500);
             })();
+
+            let heartbeatEnabled = true;
+
+            function toggleHeartbeat() {
+                const btn = document.getElementById("heartbeatBtn");
+                
+                // Toggle the local UI state first for instant feedback
+                heartbeatEnabled = !heartbeatEnabled;
+                
+                // Update button appearance
+                btn.innerHTML = heartbeatEnabled ? "Stop Heartbeat" : "Start Heartbeat";
+                btn.className = heartbeatEnabled ? "success" : "warning";
+
+                // Send the command to the ESP32
+                fetch('/toggle-heartbeat', { method: 'POST' })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        console.log("Heartbeat state toggled to:", heartbeatEnabled);
+                    })
+                    .catch(err => {
+                        console.error("Failed to toggle heartbeat:", err);
+                        // Revert UI if the request fails
+                        heartbeatEnabled = !heartbeatEnabled;
+                        btn.innerHTML = heartbeatEnabled ? "Stop Heartbeat" : "Start Heartbeat";
+                        btn.className = heartbeatEnabled ? "success" : "warning";
+                    });
+            }
 
         </script>
     </body>
