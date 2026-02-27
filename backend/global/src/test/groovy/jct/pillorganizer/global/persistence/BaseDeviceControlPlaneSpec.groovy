@@ -1,8 +1,8 @@
 package jct.pillorganizer.global.persistence
 
+import jct.pillorganizer.global.model.DeviceClaimEntity
 import jct.pillorganizer.global.model.DeviceControlPlaneEntityType
 import jct.pillorganizer.global.model.DeviceEntity
-import jct.pillorganizer.global.model.ProvisioningStatus
 import jct.pillorganizer.global.model.UserEntity
 
 abstract class BaseDeviceControlPlaneSpec extends BaseDynamoDbSpec {
@@ -12,23 +12,15 @@ abstract class BaseDeviceControlPlaneSpec extends BaseDynamoDbSpec {
         return "DeviceControlPlane"
     }
 
-
-
-    void insertDevice(String deviceId, String tenantId, String serialNumber, String modelId = "MODEL-X",
-                      ProvisioningStatus status = ProvisioningStatus.ACTIVE) {
+    void insertDevice(String tenantId, String serialNumber) {
         insertRawRecord([
-                "PK": DeviceEntity.pk(deviceId),
+                "PK": DeviceEntity.pk(serialNumber),
                 "SK": DeviceEntity.sk(),
                 "GSI1_PK": DeviceEntity.gsi1Pk(tenantId),
-                "GSI1_SK": DeviceEntity.gsi1Sk(deviceId),
-                "GSI2_PK": DeviceEntity.gsi2Pk(serialNumber),
-                "GSI2_SK": DeviceEntity.gsi2Sk(deviceId),
+                "GSI1_SK": DeviceEntity.gsi1Sk(serialNumber),
                 "EntityType": DeviceControlPlaneEntityType.DEVICE.toString(),
-                "DeviceId": deviceId,
                 "TenantId": tenantId,
                 "SerialNumber": serialNumber,
-                "ModelId": modelId,
-                "ProvisioningStatus": status.toString(),
                 "Version": 1
         ])
     }
@@ -45,6 +37,21 @@ abstract class BaseDeviceControlPlaneSpec extends BaseDynamoDbSpec {
                 "UserId": userId,
                 "UserName": name,
                 "UserSub": sub,
+                "Version": 1
+        ])
+    }
+
+    void insertDeviceClaim(String serialNumber, String claimId, String userId, String tenantId = "tenant-1") {
+        insertRawRecord([
+                "PK": DeviceClaimEntity.pk(serialNumber),
+                "SK": DeviceClaimEntity.sk(claimId),
+                "GSI1_PK": DeviceClaimEntity.gsi1Pk(userId),
+                "GSI1_SK": DeviceClaimEntity.gsi1Sk(claimId),
+                "EntityType": DeviceControlPlaneEntityType.DEVICE_CLAIM.toString(),
+                "SerialNumber": serialNumber,
+                "ClaimToken": claimId,
+                "UserId": userId,
+                "TenantId": tenantId,
                 "Version": 1
         ])
     }

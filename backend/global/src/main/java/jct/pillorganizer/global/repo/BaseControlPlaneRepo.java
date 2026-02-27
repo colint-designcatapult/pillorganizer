@@ -7,11 +7,12 @@ public class BaseControlPlaneRepo<T> {
     protected final DynamoDbTable<T> table;
     protected final DynamoDbIndex<T> gsi1;
     protected final DynamoDbIndex<T> gsi2;
+    protected final DynamoDbEnhancedClient enhancedClient;
 
     protected static final String TABLE_NAME = "DeviceControlPlane";
 
     protected BaseControlPlaneRepo(DynamoDbClient standardClient, Class<T> entityType) {
-        DynamoDbEnhancedClient enhancedClient = DynamoDbEnhancedClient.builder()
+        this.enhancedClient = DynamoDbEnhancedClient.builder()
                 .dynamoDbClient(standardClient)
                 .build();
 
@@ -22,12 +23,15 @@ public class BaseControlPlaneRepo<T> {
         this.gsi2 = this.table.index("GSI2");
     }
 
-    public T get(String pk, String sk) {
-        return table.getItem(Key.builder().partitionValue(pk).sortValue(sk).build());
-    }
-
     public void save(T entity) {
         this.table.putItem(entity);
     }
 
+    public DynamoDbTable<T> getTable() {
+        return table;
+    }
+
+    public DynamoDbEnhancedClient getEnhancedClient() {
+        return enhancedClient;
+    }
 }

@@ -37,6 +37,7 @@ endpoints:
     sensitive: false
 app:
   tenant:
+    default: "public"
     list:
       public:
         id: "public"

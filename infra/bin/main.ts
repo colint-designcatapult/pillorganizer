@@ -6,6 +6,7 @@ import { DataStack } from '../lib/data-stack';
 import { AppStack } from '../lib/app-stack';
 import { AuthStack } from '../lib/auth-stack';
 import { ControlPlaneStack } from '../lib/control-plane-stack';
+import { IotStack } from '../lib/iot-stack';
 
 const app = new cdk.App();
 
@@ -43,7 +44,13 @@ const authStack = new AuthStack(app, 'HealtheAuthStack', {
   preTokenGeneration: controlPlaneStack.preTokenGeneration
 });
 
-
+const iotStack = new IotStack(app, `HealtheIotStack`, {
+  env: globalEnv,
+  zone: platformStack.zone,
+  baseDomain: globals.baseDomain,
+  mqttDomain: `mqtt`,
+  controlPlaneTable: controlPlaneStack.controlPlaneTable
+});
 
 // Environment-specific Stacks (Data, App)
 // These require an 'env' context (e.g. -c env=staging)

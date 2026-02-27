@@ -24,11 +24,12 @@ interface AppStackProps extends cdk.StackProps {
 /* This stack configures the actual application. */
 export class AppStack extends cdk.Stack {
   public readonly api: apigwv2.HttpApi;
+  public readonly fullDomainName: string;
 
   constructor(scope: Construct, id: string, props: AppStackProps) {
     super(scope, id, props);
 
-    const fullDomainName = `${props.subdomain}.${props.baseDomain}`;
+    this.fullDomainName = `${props.subdomain}.${props.baseDomain}`;
 
     // -- Lambda --
 
@@ -89,12 +90,12 @@ export class AppStack extends cdk.Stack {
     });
 
     const certificate = new acm.Certificate(this, 'AppCertificate', {
-      domainName: fullDomainName,
+      domainName: this.fullDomainName,
       validation: acm.CertificateValidation.fromDns(props.zone),
     });
 
     const domainName = new apigwv2.DomainName(this, 'AppDomainNameV2', {
-      domainName: fullDomainName,
+      domainName: this.fullDomainName,
       certificate: certificate,
     });
 

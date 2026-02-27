@@ -89,6 +89,10 @@
             <artifactId>ksuid</artifactId>
             <version>1.1.4</version>
         </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>iot</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
