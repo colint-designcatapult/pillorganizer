@@ -26,6 +26,20 @@ public class DeviceRepo extends BaseControlPlaneRepo<DeviceEntity> {
         return Optional.ofNullable(this.table.getItem(key));
     }
 
+    public Optional<DeviceEntity> findByDeviceId(String deviceId) {
+        QueryConditional queryConditional = QueryConditional.keyEqualTo(
+                Key.builder()
+                        .partitionValue(DeviceEntity.gsi2Pk(deviceId))
+                        .sortValue(DeviceEntity.gsi2Sk())
+                        .build()
+        );
+
+        return this.gsi2.query(queryConditional)
+                .stream()
+                .flatMap(page -> page.items().stream())
+                .findFirst();
+    }
+
     public List<DeviceEntity> findByTenantId(String tenantId) {
         QueryConditional queryConditional = QueryConditional.sortBeginsWith(
                 Key.builder()

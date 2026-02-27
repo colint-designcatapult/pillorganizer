@@ -80,18 +80,21 @@ public class DeviceProvisionService {
         String tenantId = claim.getTenantId();
 
         DeviceEntity device = DeviceEntity.builder()
-                .base(DeviceEntity.buildBase(serialNumber, tenantId))
+                .base(DeviceEntity.buildBase(serialNumber, tenantId, deviceId))
                 .serialNumber(serialNumber)
                 .deviceId(deviceId)
                 .tenantId(tenantId)
                 .build();
 
-        deviceRepo.save(device);
-
         DeviceClaimEntity updatedClaim = claim.toBuilder()
                 .deviceId(deviceId)
                 .build();
-        deviceClaimRepo.save(updatedClaim);
+
+        // Perform transactional write to ensure both entities are updated together
+        deviceRepo.getEnhancedClient().transactWriteItems(r -> r
+                .addPutItem(deviceRepo.getTable(), device)
+                .addPutItem(deviceClaimRepo.getTable(), updatedClaim)
+        );
 
         return Optional.of(device);
     }

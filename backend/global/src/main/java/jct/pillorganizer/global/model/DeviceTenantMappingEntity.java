@@ -9,17 +9,14 @@ import java.time.Instant;
 
 @Value
 @Builder
-@DynamoDbImmutable(builder = DeviceEntity.DeviceEntityBuilder.class)
-public class DeviceEntity {
+@DynamoDbImmutable(builder = DeviceTenantMappingEntity.DeviceTenantMappingEntityBuilder.class)
+public class DeviceTenantMappingEntity {
 
     @Getter(onMethod_ = {@DynamoDbFlatten})
     BaseControlPlaneEntity base;
 
     @Getter(onMethod_ = @DynamoDbAttribute("SerialNumber"))
     String serialNumber;
-
-    @Getter(onMethod_ = @DynamoDbAttribute("DeviceId"))
-    String deviceId;
 
     @Getter(onMethod_ = @DynamoDbAttribute("TenantId"))
     String tenantId;
@@ -29,7 +26,7 @@ public class DeviceEntity {
     }
 
     public static String sk() {
-        return "METADATA";
+        return "TENANT_MAPPING";
     }
 
     public static String gsi1Pk(String tenantId) {
@@ -40,23 +37,13 @@ public class DeviceEntity {
         return "SN#" + serialNumber;
     }
 
-    public static String gsi2Pk(String deviceId) {
-        return "DEVICE#" + deviceId;
-    }
-
-    public static String gsi2Sk() {
-        return "METADATA";
-    }
-
-    public static BaseControlPlaneEntity buildBase(String serialNumber, String tenantId, String deviceId) {
+    public static BaseControlPlaneEntity buildBase(String serialNumber, String tenantId) {
         return BaseControlPlaneEntity.builder()
                 .pk(pk(serialNumber))
                 .sk(sk())
-                .entityType(DeviceControlPlaneEntityType.DEVICE)
+                .entityType(DeviceControlPlaneEntityType.DEVICE_TENANT_MAPPING)
                 .gsi1Pk(gsi1Pk(tenantId))
                 .gsi1Sk(gsi1Sk(serialNumber))
-                .gsi2Pk(gsi2Pk(deviceId))
-                .gsi2Sk(gsi2Sk())
                 .createdAt(Instant.now())
                 .lastModified(Instant.now())
                 .build();

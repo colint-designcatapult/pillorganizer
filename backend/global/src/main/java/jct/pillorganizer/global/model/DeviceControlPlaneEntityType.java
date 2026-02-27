@@ -5,5 +5,6 @@ public enum DeviceControlPlaneEntityType {
     DEVICE,
     USER,
     DEVICE_USER_LINK,
-    DEVICE_CLAIM
+    DEVICE_CLAIM,
+    DEVICE_TENANT_MAPPING
 }

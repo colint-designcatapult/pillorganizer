@@ -6,6 +6,7 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import jakarta.inject.Inject;
+import jct.pillorganizer.core.service.GlobalAuthService;
 import jct.pillorganizer.global.dto.ProvisioningClaimDto;
 import jct.pillorganizer.global.service.DeviceProvisionService;
 
@@ -15,10 +16,13 @@ public class DeviceController {
     @Inject
     DeviceProvisionService provisionService;
 
+    @Inject
+    GlobalAuthService authService;
+
     @Post("/claim/{serialNumber}")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public ProvisioningClaimDto getProvisioningClaim(@PathVariable String serialNumber) {
-        return provisionService.generateProvisioningClaim(serialNumber, "test");
+        return provisionService.generateProvisioningClaim(serialNumber, authService.getUserID());
     }
 
 }

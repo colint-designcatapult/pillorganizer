@@ -32,6 +32,23 @@ class DeviceRepoSpec extends BaseDeviceControlPlaneSpec {
         device.get().serialNumber == serialNumber
     }
 
+    def "should get Device by device id"() {
+        given:
+        def tenantId = "tenant-1"
+        def serialNumber = "SN-123"
+        def deviceId = "device-abc"
+
+        this.insertDevice(tenantId, serialNumber, deviceId)
+
+        when:
+        def device = repo.findByDeviceId(deviceId)
+
+        then:
+        device.isPresent()
+        device.get().deviceId == deviceId
+        device.get().serialNumber == serialNumber
+    }
+
     def "should get Devices by tenant id"() {
         given:
         def tenantId1 = "tenant-1"
@@ -58,11 +75,13 @@ class DeviceRepoSpec extends BaseDeviceControlPlaneSpec {
         given:
         def tenantId = "tenant-1"
         def serialNumber = "SN-NEW"
+        def deviceId = "device-new"
 
         def device = DeviceEntity.builder()
-                .base(DeviceEntity.buildBase(serialNumber, tenantId))
+                .base(DeviceEntity.buildBase(serialNumber, tenantId, deviceId))
                 .tenantId(tenantId)
                 .serialNumber(serialNumber)
+                .deviceId(deviceId)
                 .build()
 
         when:
@@ -72,7 +91,11 @@ class DeviceRepoSpec extends BaseDeviceControlPlaneSpec {
         def savedDevice = repo.findBySerialNumber(serialNumber)
         savedDevice.get().tenantId == tenantId
         savedDevice.get().serialNumber == serialNumber
+        savedDevice.get().deviceId == deviceId
         savedDevice.get().base.entityType == DeviceControlPlaneEntityType.DEVICE
+        
+        and:
+        repo.findByDeviceId(deviceId).isPresent()
     }
 
     def "should fail to find non-existent Device"() {
