@@ -184,9 +184,9 @@ class BaseBleGatt {
 
 public:
     void build_advertise_fields(ble_hs_adv_fields* fields) {
-        // TODO: Add UUIDs for provisioning services once implemented
-        // Currently no services defined
+        // Services will be discovered after connection
     }
+
 private:
     static constexpr std::initializer_list<ble_gatt_svc_def> service_definitions_cexpr = {
         (SVC::definition)...,

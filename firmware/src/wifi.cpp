@@ -272,7 +272,16 @@ extern "C" {
         strncpy((char*)wifi_config.sta.password, password, sizeof(wifi_config.sta.password) - 1);
         
         ESP_LOGI(TAG, "Setting WiFi credentials for SSID: %s", ssid);
-        return esp_wifi_set_config(WIFI_IF_STA, &wifi_config);
+        esp_err_t err = esp_wifi_set_config(WIFI_IF_STA, &wifi_config);
+        
+        if(err == ESP_OK) {
+            // Trigger reconnection with new credentials
+            ESP_LOGI(TAG, "Reconnecting to WiFi with new credentials");
+            esp_wifi_disconnect();
+            esp_wifi_connect();
+        }
+        
+        return err;
     }
 }
 
