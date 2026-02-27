@@ -20,7 +20,6 @@
 #include "driver/touch_sensor.h"
 #include "esp_sleep.h"
 
-#include "wifi_provisioner.h"
 #include "pill_gpio.h"
 #include "pill_state.h"
 #include "nvs_wrapper.h"
