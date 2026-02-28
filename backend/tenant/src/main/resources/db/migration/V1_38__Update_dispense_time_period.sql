@@ -1,1 +1,0 @@
-alter table device_dispense_time add column period char not null default 'A';

@@ -3,6 +3,7 @@ package jct.pillorganizer.global.service;
 import com.github.ksuid.Ksuid;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jct.pillorganizer.core.service.GlobalAuthService;
 import jct.pillorganizer.global.model.UserEntity;
 import jct.pillorganizer.global.repo.UserRepo;
 import lombok.extern.flogger.Flogger;
@@ -55,5 +56,9 @@ public class UserService {
 
         log.atWarning().log("User with sub %s does not exist, creating one", sub);
         return createUser(sub, email);
+    }
+
+    public Optional<UserEntity> get(String userId) {
+        return userRepo.findAllByUserId(userId).stream().findFirst();
     }
 }

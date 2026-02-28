@@ -51,6 +51,11 @@ class BaseIntegrationSpec extends Specification implements TestPropertyProvider 
         return [
                 // Postgres Config
                 "datasources.default.url": postgres.getJdbcUrl(),
+                "datasources.default.username": postgres.getUsername(),
+                "datasources.default.password": postgres.getPassword(),
+                "datasources.default.driverClassName": "org.postgresql.Driver",
+                "datasources.default.allow-pool-suspension": "true",
+                "flyway.datasources.default.enabled": "true",
 
                 // AWS Config
                 "aws.region": localstack.getRegion(),

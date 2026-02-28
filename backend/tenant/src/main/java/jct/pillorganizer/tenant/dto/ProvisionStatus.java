@@ -10,6 +10,6 @@ import lombok.Data;
 public class ProvisionStatus {
 
     private final boolean provisioned;
-    private final long deviceID;
+    private final String deviceID;
 
 }

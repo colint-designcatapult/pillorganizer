@@ -23,11 +23,6 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>io.micronaut.data</groupId>
-            <artifactId>micronaut-data-tx-hibernate</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
@@ -37,13 +32,12 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>io.micronaut</groupId>
-            <artifactId>micronaut-http-client</artifactId>
-            <scope>compile</scope>
+            <groupId>io.micronaut.data</groupId>
+            <artifactId>micronaut-data-jdbc</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.micronaut.sql</groupId>
-            <artifactId>micronaut-hibernate-jpa</artifactId>
+            <groupId>io.micronaut</groupId>
+            <artifactId>micronaut-http-client</artifactId>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -54,11 +48,6 @@
         <dependency>
             <groupId>io.micronaut.beanvalidation</groupId>
             <artifactId>micronaut-hibernate-validator</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.micronaut.data</groupId>
-            <artifactId>micronaut-data-hibernate-jpa</artifactId>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -74,11 +63,16 @@
         <dependency>
             <groupId>io.micronaut.aws</groupId>
             <artifactId>micronaut-aws-sdk-v2</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.micronaut.aws</groupId>
-            <artifactId>micronaut-aws-secretsmanager</artifactId>
-            <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>netty-nio-client</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>apache-client</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.micronaut.aws</groupId>
@@ -88,6 +82,12 @@
         <dependency>
             <groupId>io.micronaut.aws</groupId>
             <artifactId>micronaut-function-aws-api-proxy</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.micronaut</groupId>
+                    <artifactId>micronaut-http-server-netty</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.micronaut.aws</groupId>
@@ -114,12 +114,46 @@
             <version>42.7.9</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>com.github.ksuid</groupId>
+            <artifactId>ksuid</artifactId>
+            <version>1.1.4</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.dsql</groupId>
+            <artifactId>aurora-dsql-jdbc-connector</artifactId>
+            <version>1.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.dsql</groupId>
+            <artifactId>aurora-dsql-flyway-support</artifactId>
+            <version>1.0.1</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
             <plugin>
                 <groupId>io.micronaut.maven</groupId>
                 <artifactId>micronaut-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <configuration>
+                    <createDependencyReducedPom>false</createDependencyReducedPom>
+                    <filters>
+                        <filter>
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
+                                <exclude>com/amazonaws/lambda/thirdparty/com/fasterxml/jackson/**</exclude>
+                                <exclude>org/apache/http/**</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                </configuration>
             </plugin>
         </plugins>
     </build>

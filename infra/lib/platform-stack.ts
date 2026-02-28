@@ -2,33 +2,89 @@ import * as cdk from 'aws-cdk-lib/core';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
+import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
+import * as targets from 'aws-cdk-lib/aws-route53-targets';
+import * as iot from 'aws-cdk-lib/aws-iot';
+import * as cr from 'aws-cdk-lib/custom-resources';
 import { Construct } from 'constructs';
 
 interface PlatformStackProps extends cdk.StackProps {
-  baseDomain: string
+  baseDomain: string;
+  mqttSubdomain?: string;
 }
 
 /* This stack is configures base AWS resources, and should only be for things 
    that change rarely. Think VPCs, ECR, ECS clusters etc. */
 export class PlatformStack extends cdk.Stack {
-  public readonly vpc: ec2.Vpc;
   public readonly zone: route53.IHostedZone;
+  public readonly controlPlaneDomainName: apigwv2.IDomainName;
 
 
   constructor(scope: Construct, id: string, props: PlatformStackProps) {
     super(scope, id, props);
 
-    // Create VPC with minimal resources 
-    this.vpc = new ec2.Vpc(this, 'AppVpc', {
-      //
-      // WARNING: changes to VPC may destroy dependent services!
-      //
-      maxAzs: 2,
-      natGateways: 1,
-    });
-
     this.zone = route53.HostedZone.fromLookup(this, 'HostedZone', {
       domainName: props.baseDomain
+    });
+
+    const cpDomainName = `control-plane.${props.baseDomain}`;
+
+    const certificate = new acm.Certificate(this, 'ControlPlaneCertificate', {
+      domainName: cpDomainName,
+      validation: acm.CertificateValidation.fromDns(this.zone),
+    });
+
+    this.controlPlaneDomainName = new apigwv2.DomainName(this, 'ControlPlaneDomainName', {
+      domainName: cpDomainName,
+      certificate: certificate,
+    });
+
+    new route53.ARecord(this, 'ControlPlaneAliasRecord', {
+      zone: this.zone,
+      recordName: 'control-plane',
+      target: route53.RecordTarget.fromAlias(new targets.ApiGatewayv2DomainProperties(this.controlPlaneDomainName.regionalDomainName, this.controlPlaneDomainName.regionalHostedZoneId))
+    });
+
+    // -- IoT Domain --
+
+    const mqttSubdomain = props.mqttSubdomain || 'mqtt';
+    const fullMqttDomainName = `${mqttSubdomain}.${props.baseDomain}`;
+
+    const mqttCertificate = new acm.Certificate(this, 'MqttCertificate', {
+      domainName: fullMqttDomainName,
+      validation: acm.CertificateValidation.fromDns(this.zone),
+      allowExport: false
+    });
+
+    new iot.CfnDomainConfiguration(this, 'MqttDomainConfig', {
+      domainName: fullMqttDomainName,
+      serverCertificateArns: [mqttCertificate.certificateArn],
+      serviceType: 'DATA',
+      domainConfigurationStatus: 'ENABLED'
+    });
+
+    const endpoint = new cr.AwsCustomResource(this, 'IotEndpoint', {
+      onCreate: {
+        service: 'Iot',
+        action: 'describeEndpoint',
+        parameters: {
+          endpointType: 'iot:Data-ATS',
+        },
+        physicalResourceId: cr.PhysicalResourceId.of('IotEndpoint'),
+      },
+      policy: cr.AwsCustomResourcePolicy.fromSdkCalls({
+        resources: cr.AwsCustomResourcePolicy.ANY_RESOURCE,
+      }),
+    });
+
+    const iotEndpointAddress = endpoint.getResponseField('endpointAddress');
+
+    new route53.CnameRecord(this, 'MqttCname', {
+      zone: this.zone,
+      recordName: mqttSubdomain,
+      domainName: iotEndpointAddress,
+      ttl: cdk.Duration.minutes(5),
     });
 
     // -- GitHub OIDC --

@@ -1,30 +1,24 @@
 package jct.pillorganizer.tenant.repo;
 
-import jakarta.annotation.Nullable;
-
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.repository.reactive.ReactorCrudRepository;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
 import jct.pillorganizer.tenant.dto.UserInfoDTO;
 import jct.pillorganizer.tenant.model.user.User;
-import reactor.core.publisher.Mono;
 
-@Repository
-public interface UserRepository extends ReactorCrudRepository<User, Long> {
+@JdbcRepository(dialect = Dialect.POSTGRES)
+public interface UserRepository extends CrudRepository<User, String> {
 
-    Mono<User> findByEmail(String email);
+    @Query(value = "select id from users where id = :id")
+    UserInfoDTO findUserInfoDTOFromID(String id);
 
-    Mono<Integer> countByEmail(String email);
+    @Query(value = "INSERT INTO users (id, name, email, user_type) VALUES (:id, :name, :email, 'USER') ON CONFLICT (id) " +
+            "DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email RETURNING *")
+    User upsert(String id, String name, String email);
 
-    @Query(value = "select new jct.pillorganizer.dto.UserInfoDTO(id, email, case when takecarePatientId is not null then true else false end) from users where id = :id")
-    Mono<UserInfoDTO> findUserInfoDTOFromID(long id);
-
-    @Query("UPDATE users u SET u.recoveryCode = :recoveryCode WHERE u.email = :email")
-    void updateUserRecoveryCode(@Nullable Long recoveryCode, String email);
-
-    @Query("UPDATE users u SET u.takecarePatientId = :takecarePatientId WHERE u.id = :userId")
-    Mono<Integer> updateTakecarePatientIdById(String takecarePatientId, Long userId);
-
-    Mono<Long> getRecoveryCodeByEmail(String email);
+    @Query(value = "INSERT INTO users (id, user_type) VALUES (:id, 'USER') ON CONFLICT (id) " +
+            "DO UPDATE SET id = EXCLUDED.id RETURNING *")
+    User saveIdepotent(String id);
 
 }

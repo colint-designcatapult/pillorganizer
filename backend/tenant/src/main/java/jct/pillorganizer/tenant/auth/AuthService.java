@@ -7,11 +7,12 @@ import io.micronaut.security.utils.SecurityService;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.tenant.model.device.Device;
+import jct.pillorganizer.tenant.model.user.User;
 import jct.pillorganizer.tenant.model.user.UserRole;
 import jct.pillorganizer.tenant.repo.DeviceRepository;
-import jct.pillorganizer.tenant.repo.DeviceUserAsyncRepository;
 import jct.pillorganizer.tenant.repo.DeviceUserRepository;
 
+import jct.pillorganizer.tenant.repo.UserRepository;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
@@ -27,14 +28,14 @@ public class AuthService {
     @Inject
     SecurityService securityService;
 
-    @Inject
-    DeviceUserAsyncRepository asyncRepository;
 
     @Inject
     DeviceUserRepository deviceUserRepository;
 
     @Inject
     DeviceRepository deviceRepository;
+    @Inject
+    private UserRepository userRepository;
 
     /**
      * Gets the currently logged-in user ID. Note that if the user type is Device,
@@ -44,22 +45,16 @@ public class AuthService {
      * @throws AuthenticationException if no user is currently signed in
      * @return a user ID or device ID of the currently logged-in user
      */
-    public long getUserID() {
+    public String getUserID() {
         Optional<Authentication> auth = securityService.getAuthentication();
-        return (long) auth.orElseThrow(() -> new AuthenticationException("No authentication"))
+        return (String) auth.orElseThrow(() -> new AuthenticationException("No authentication"))
                 .getAttributes()
-                .get("id");
+                .get("userId");
     }
 
-    /**
-     * Attempt to asynchronously access a device using the currently logged-in
-     * user's credentials.
-     * 
-     * @param deviceID device ID to access
-     * @return a Mono wrapping a future device
-     */
-    public Mono<Device> accessDeviceAsync(long deviceID) {
-        return asyncRepository.retrieveDeviceByUserIDAndDeviceIDAndDeletedFalse(getUserID(), deviceID);
+    public User getUser() {
+        return userRepository.findById(getUserID())
+                .orElseThrow(() -> new IllegalStateException("User entity doesn't exist"));
     }
 
     /**
@@ -71,13 +66,14 @@ public class AuthService {
      * @throws AuthenticationException if the user doesn't have access to the
      *                                 specified device
      */
-    public Device accessDevice(long deviceID) {
+    public Device accessDevice(String deviceID) {
         if (isAdmin()) {
             return deviceRepository.findById(deviceID)
                     .orElseThrow(() -> new RuntimeException("Device ID does not exist"));
         } else {
-            return deviceUserRepository.retrieveDeviceByUserIDAndDeviceIDAndDeletedFalse(getUserID(), deviceID)
-                    .orElseThrow(() -> new AuthenticationException("No access"));
+            return deviceUserRepository.findByUserIdAndDeviceId(getUserID(), deviceID)
+                    .orElseThrow(() -> new AuthenticationException("No access"))
+                    .getDevice();
         }
     }
 

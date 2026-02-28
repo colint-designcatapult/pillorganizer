@@ -1,1 +1,0 @@
-ALTER TABLE device_state ADD dispense_time_id bigint;

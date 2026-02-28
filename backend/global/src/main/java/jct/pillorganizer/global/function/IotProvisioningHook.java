@@ -46,7 +46,7 @@ public class IotProvisioningHook extends MicronautRequestHandler<Map<String, Obj
             return generateAllowResponse(tenantId, deviceId);
 
         } catch (Exception e) {
-            log.atInfo().log("Error processing Pre-Provisioning Hook request", e);
+            log.atInfo().withCause(e).log("Error processing Pre-Provisioning Hook request");
             return generateDenyResponse();
         }
     }

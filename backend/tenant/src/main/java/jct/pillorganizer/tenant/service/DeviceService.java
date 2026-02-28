@@ -5,7 +5,6 @@ import jakarta.transaction.Transactional;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.tenant.model.device.Device;
-import jct.pillorganizer.tenant.model.device.DeviceClass;
 import jct.pillorganizer.tenant.repo.DeviceRepository;
 
 /**
@@ -14,30 +13,20 @@ import jct.pillorganizer.tenant.repo.DeviceRepository;
 @Singleton
 public class DeviceService {
 
-
     @Inject
     DeviceRepository deviceRepository;
 
-    /**
-     * Fetches a Device object by serial number and class, if such device already exists, and if not, creates a new
-     * Device object with those specifications.
-     * @param sn serial number of the device
-     * @param deviceClass class of the device
-     * @return Device domain object, either existing or freshly persisted into the database
-     */
     @Transactional
-    public Device findOrCreateDevice(long sn, DeviceClass deviceClass) {
-        return deviceRepository.findBySerialNo(sn).orElseGet(() -> {
-            Device d = new Device();
-            d.setId(null);
-            d.setSerialNo(sn);
-            d.setDeviceClass(deviceClass);
-            return deviceRepository.save(d);
-        });
+    public Device create(String deviceId, String serialNo, String claimToken) {
+        Device device = new Device();
+        device.setId(deviceId);
+        device.setSerialNo(serialNo);
+        device.setClaimToken(claimToken);
+        return deviceRepository.save(device);
     }
 
     @Transactional
-    public Device findById(long id) {
+    public Device findById(String id) {
         return deviceRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Device not found"));
     }
 }

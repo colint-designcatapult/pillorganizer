@@ -1,45 +1,23 @@
 package jct.pillorganizer.tenant.repo;
 
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.annotation.Nullable;
-
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.annotation.Version;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 import jct.pillorganizer.tenant.model.device.Device;
-import jct.pillorganizer.tenant.model.device.DeviceProvision;
 
-@Repository
-public interface DeviceRepository extends CrudRepository<Device, Long> {
+@JdbcRepository(dialect = Dialect.POSTGRES)
+public interface DeviceRepository extends CrudRepository<Device, String> {
 
-    Optional<Device> findBySerialNo(long serialNo);
-
-    @Query("from device where currentProvision is not null")
-    List<Device> findAllProvisioned();
-
-    @Query("select d from device d join d.users u on u.userID = :userID")
-    List<Device> findByUserID(long userID);
+    Optional<Device> findBySerialNo(String serialNo);
 
     List<Device> findAll();
 
-    void update(@Id Long id, @Version Long version, long stateHash, long eventCounter);
-
-    void update(@Id Long id, @Version Long version, DeviceProvision currentProvision);
-
-    void updateLastSyncAndIpv4AndIpv6AndBatteryAndChargingAndEngrData(@Id Long id, @Version Long version, Timestamp lastSync,
-                                                                      @Nullable Integer ipv4, @Nullable byte[] ipv6, @Nullable Integer battery, @Nullable Boolean charging, @Nullable String engr_data);
-
-    void update(@Id Long id, String customName);
-
-    void updateBaseTZById(@Id Long id, String baseTZ);
-
-    Optional<Device> findBySerialNoAndCurrentProvisionOobKey(long sn, byte[] oob);
-
-    Optional<Device> findByCurrentProvisionOobKey(byte[] oob);
+    @Query("UPDATE device SET nickname = :nickname WHERE id = :id")
+    void update(@Id String id, String nickname);
 
 }

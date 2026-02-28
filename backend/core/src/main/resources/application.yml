@@ -2,7 +2,7 @@
 aws:
   region: ca-central-1
   cognito:
-    public-pool: ca-central-1_H0hSkGPqA
+    public-pool: ca-central-1_PHR6msiks
 micronaut:
   application:
     name: backend
@@ -49,3 +49,8 @@ app:
         active: true
         hostname: "localhost:8080"
         api-base: "http://localhost:8080"
+      staging:
+        id: "staging"
+        active: true
+        hostname: "staging.app.healthesolutions.ca"
+        api-base: "https://staging.app.healthesolutions.ca"

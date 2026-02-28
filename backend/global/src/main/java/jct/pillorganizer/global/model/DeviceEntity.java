@@ -8,7 +8,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbImmut
 import java.time.Instant;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 @DynamoDbImmutable(builder = DeviceEntity.DeviceEntityBuilder.class)
 public class DeviceEntity {
 

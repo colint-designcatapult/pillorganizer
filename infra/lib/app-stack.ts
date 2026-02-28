@@ -1,24 +1,18 @@
 import * as cdk from 'aws-cdk-lib/core';
-import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
-import * as rds from 'aws-cdk-lib/aws-rds';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as route53 from 'aws-cdk-lib/aws-route53';
-import * as targets from 'aws-cdk-lib/aws-route53-targets';
-import * as acm from 'aws-cdk-lib/aws-certificatemanager';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as lambdaEventSources from 'aws-cdk-lib/aws-lambda-event-sources';
 import { Construct } from 'constructs';
 
 interface AppStackProps extends cdk.StackProps {
-  vpc: ec2.Vpc;
-  dbCluster: rds.DatabaseCluster;
-  dbProxy: rds.DatabaseProxy;
+  dsqlCluster: string;
+  dsqlEndpoint: string;
   removalPolicy: cdk.RemovalPolicy;
   environmentName: string;
-  baseDomain: string;
-  subdomain: string;
-  zone: route53.IHostedZone;
+  domainName: apigwv2.IDomainName;
 }
 
 /* This stack configures the actual application. */
@@ -29,57 +23,71 @@ export class AppStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: AppStackProps) {
     super(scope, id, props);
 
-    this.fullDomainName = `${props.subdomain}.${props.baseDomain}`;
+    // -- SQS --
+
+    const tenantQueue = new sqs.Queue(this, 'TenantQueue', {
+      queueName: `tenant-${props.environmentName}`,
+      visibilityTimeout: cdk.Duration.seconds(300),
+      retentionPeriod: cdk.Duration.days(7),
+    });
+
+    // Allow all AWS resources (within this account) to push to the queue
+    tenantQueue.addToResourcePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      principals: [new iam.AnyPrincipal()],
+      actions: ['sqs:SendMessage'],
+      resources: [tenantQueue.queueArn],
+      conditions: { StringEquals: { 'aws:PrincipalAccount': this.account } }
+    }));
 
     // -- Lambda --
 
-    const appFunction = new lambda.Function(this, 'AppFunction', {
-      runtime: lambda.Runtime.JAVA_21,
-      handler: 'io.micronaut.function.aws.proxy.payload2.APIGatewayV2HTTPEventFunction',
-      code: lambda.Code.fromAsset("../backend/tenant/target/tenant-0.1.jar"),
-      memorySize: 1024,
-      timeout: cdk.Duration.seconds(30),
-      snapStart: lambda.SnapStartConf.ON_PUBLISHED_VERSIONS,
-      tracing: lambda.Tracing.ACTIVE,
-      insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_498_0,
-      vpc: props.vpc,
-      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
-      environment: {
-        MICRONAUT_ENVIRONMENTS: `tenant,${props.environmentName}`,
-        DB_HOST: props.dbProxy.endpoint,
-        DB_PORT: '5432',
-        DB_NAME: 'pillorganizer'
-      },
-    });
+    const createTenantFunction = (id: string, handler: string) => {
+      const fn = new lambda.Function(this, id, {
+        runtime: lambda.Runtime.JAVA_21,
+        handler: handler,
+        code: lambda.Code.fromAsset("../backend/tenant/target/tenant-0.1.jar"),
+        memorySize: 1024,
+        timeout: cdk.Duration.seconds(30),
+        snapStart: lambda.SnapStartConf.ON_PUBLISHED_VERSIONS,
+        tracing: lambda.Tracing.ACTIVE,
+        insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_498_0,
+        environment: {
+          MICRONAUT_ENVIRONMENTS: `tenant,${props.environmentName}`,
+          DB_HOST: props.dsqlEndpoint,
+          DB_PORT: '5432',
+          DB_NAME: 'pillorganizer'
+        },
+      });
 
-    // -- IAM & Security --
+      // -- IAM & Security --
+      fn.addToRolePolicy(
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            // Use 'dsql:DbConnectAdmin' to connect as the default admin.
+            // If you set up a custom DSQL user/role later, use 'dsql:DbConnect'.
+            'dsql:DbConnectAdmin' 
+          ],
+          resources: [
+            // Formulate the DSQL Cluster ARN using the generated cluster ID
+            cdk.Stack.of(this).formatArn({
+              service: 'dsql',
+              resource: 'cluster',
+              resourceName: props.dsqlCluster,
+            })
+          ]
+        })
+      );
 
-    // Grant access to DB Secret
-    props.dbCluster.secret?.grantRead(appFunction);
+      return fn;
+    };
 
-    // Allow access to RDS Proxy
-    props.dbProxy.grantConnect(appFunction, 'postgres');
+    const appFunction = createTenantFunction('AppFunction', 'io.micronaut.function.aws.proxy.payload2.APIGatewayV2HTTPEventFunction');
+    const queueProcessor = createTenantFunction('QueueProcessor', 'jct.pillorganizer.tenant.function.TenantQueueProcessor');
 
-    // Manually create ingress rule to avoid cyclic dependency (DataStack -> AppStack)
-    const ingressRule = new ec2.CfnSecurityGroupIngress(this, 'DbProxyIngress', {
-      groupId: props.dbProxy.connections.securityGroups[0].securityGroupId,
-      sourceSecurityGroupId: appFunction.connections.securityGroups[0].securityGroupId,
-      ipProtocol: 'tcp',
-      fromPort: 5432,
-      toPort: 5432,
-      description: 'Allow Lambda access to DB Proxy',
-    });
-
-    // Ensure the Lambda function waits for the ingress rule to be created
-    // This is critical for SnapStart, as the app tries to connect to the DB during init
-    (appFunction.node.defaultChild as lambda.CfnFunction).addDependency(ingressRule);
-
-    // Micronaut must be able to list secrets
-    // This isn't a security risk because listing doesn't imply access
-    appFunction.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['secretsmanager:ListSecrets'],
-      resources: ['*'], 
-    }));
+    // Wire up SQS trigger (using currentVersion to support SnapStart)
+    queueProcessor.currentVersion.addEventSource(new lambdaEventSources.SqsEventSource(tenantQueue));
 
     // -- API Gateway --
 
@@ -89,28 +97,12 @@ export class AppStack extends cdk.Stack {
       version: version,
     });
 
-    const certificate = new acm.Certificate(this, 'AppCertificate', {
-      domainName: this.fullDomainName,
-      validation: acm.CertificateValidation.fromDns(props.zone),
-    });
-
-    const domainName = new apigwv2.DomainName(this, 'AppDomainNameV2', {
-      domainName: this.fullDomainName,
-      certificate: certificate,
-    });
-
     this.api = new apigwv2.HttpApi(this, 'AppHttpApi', {
       apiName: `PillOrganizer Tenant Backend (${props.environmentName})`,
       defaultIntegration: new HttpLambdaIntegration('ControlPlaneIntegration', alias),
       defaultDomainMapping: {
-        domainName: domainName,
+        domainName: props.domainName,
       },
-    });
-
-    new route53.ARecord(this, 'AppAliasRecord', {
-      zone: props.zone,
-      recordName: props.subdomain,
-      target: route53.RecordTarget.fromAlias(new targets.ApiGatewayv2DomainProperties(domainName.regionalDomainName, domainName.regionalHostedZoneId))
     });
   }
 }

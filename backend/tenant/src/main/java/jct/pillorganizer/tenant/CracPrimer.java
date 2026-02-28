@@ -8,6 +8,7 @@ import jct.pillorganizer.core.TenantDetails;
 import jct.pillorganizer.tenant.api.app.AppUserController;
 import jct.pillorganizer.tenant.api.internal.InternalUserController;
 import jct.pillorganizer.tenant.service.DeviceUserService;
+import jct.pillorganizer.tenant.service.UserService;
 import org.crac.Context;
 import org.crac.Resource;
 
@@ -17,10 +18,12 @@ import java.security.Principal;
 @Requires(notEnv = "test")
 public class CracPrimer implements OrderedResource {
     private final DeviceUserService deviceUserService;
+    private final UserService userService;
 
     @Inject
-    public CracPrimer(DeviceUserService deviceUserService) {
+    public CracPrimer(DeviceUserService deviceUserService, UserService userService) {
         this.deviceUserService = deviceUserService;
+        this.userService = userService;
     }
 
     @Override
@@ -29,7 +32,7 @@ public class CracPrimer implements OrderedResource {
         details.setId("primer");
         details.setActive(false);
         details.setHostname("primer-host");
-        this.deviceUserService.getDeviceAccess(0, details);
+        this.userService.get("fake_user");
     }
 
     @Override

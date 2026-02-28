@@ -15,35 +15,19 @@ import io.micronaut.security.rules.SecurityRule;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 import jct.pillorganizer.tenant.dto.PatientValidationRequestDTO;
-import jct.pillorganizer.tenant.service.TakecareService;
 import lombok.extern.flogger.Flogger;
 import reactor.core.publisher.Mono;
 
 @Controller("/api/v1/takecare")
 @Flogger
 public class AppTakecareController {
-    
-    @Inject
-    TakecareService takecareService;
 
     @Operation(summary = "Validate and link a Takecare patient with form data")
     @Post("/validate/{patientID}")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public Mono<MutableHttpResponse<Object>> validateAndLinkTakecarePatient(
-            @PathVariable String patientID, 
+            @PathVariable String patientID,
             @Body PatientValidationRequestDTO validationRequest) {
-        return takecareService.validateAndLinkTakecarePatient(patientID, validationRequest)
-                .doOnSuccess(ignored -> log.atInfo().log("Successfully validated and linked Takecare patient"))
-                .thenReturn(HttpResponse.ok())
-                .onErrorResume(throwable -> {
-                    if (throwable instanceof Problem) {
-                        return Mono.error(throwable);
-                    } else {
-                        log.atSevere().withCause(throwable).log("Error validating patient: %s", patientID);
-                        return Mono.error(Problem.builder()
-                                .withStatus(new HttpStatusType(HttpStatus.INTERNAL_SERVER_ERROR))
-                                .build());
-                    }
-                });
+        throw new RuntimeException("not implemented");
     }
 }

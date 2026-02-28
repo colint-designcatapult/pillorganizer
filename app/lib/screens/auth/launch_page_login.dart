@@ -1,8 +1,6 @@
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:app/main.dart';
 import 'package:app/provider/authentication_provider.dart';
-import 'package:app/screens/auth/recover_password.dart';
-import 'package:app/screens/auth/register.dart';
 import 'package:app/service/error_handler.dart';
 import 'package:app/utils/takecare_link_util.dart';
 import 'package:app/widgets/basic_page.dart';
@@ -11,17 +9,6 @@ import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import 'package:validatorless/validatorless.dart';
-
-
-Future<void> signInWithWebUI() async {
-  try {
-    final result = await Amplify.Auth.signInWithWebUI();
-    safePrint('Sign in result: $result');
-  } on AuthException catch (e) {
-    safePrint('Error signing in: ${e.message}');
-  }
-}
 
 class LaunchPageLogin extends StatefulWidget {
   const LaunchPageLogin({Key? key}) : super(key: key);
@@ -41,27 +28,6 @@ class LaunchPageLogin extends StatefulWidget {
 class _LaunchPageLoginState extends State<LaunchPageLogin> {
   Future<bool>? _checkAuthFuture;
   Future<void>? _loginFuture;
-  String? username;
-  String? password;
-  bool _obscureText = true;
-
-  void forgotPassword() {
-    signInWithWebUI();
-    showModalBottomSheet<bool>(
-        context: context,
-        isScrollControlled: true,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(16.r),
-          ),
-        ),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width,
-        ),
-        builder: (context) =>
-            RecoverPassword(onBack: () => {Navigator.of(context).pop()}));
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -114,7 +80,7 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
                           width: double.infinity,
                           child: OutlinedButton(
                             onPressed: () {
-                              _handleRegisterRedirect();
+                              _signInWithAmplify();
                             },
                             style: OutlinedButton.styleFrom(
                               shape: RoundedRectangleBorder(
@@ -128,7 +94,7 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
                               ),
                             ),
                             child: Text(
-                              AppLocalizations.of(context)!.createAnAccount,
+                              "Make an account with Amplify",
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium
@@ -146,44 +112,10 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
   Widget _formComponent() {
     return BasicFormContainer(
       subtitleText: AppLocalizations.of(context)!.signInBackSubtitle,
-      buttonText: AppLocalizations.of(context)!.signInAction,
-      onSubmit: _submitForm,
+      buttonText: "Sign In with Amplify",
+      onSubmit: _signInWithAmplify,
       future: _loginFuture,
-      children: [
-        BasicPageTextFormField(
-          labelText: AppLocalizations.of(context)!.email,
-          validator: Validatorless.multiple([
-            Validatorless.email(AppLocalizations.of(context)!.emailNotValid),
-            Validatorless.required(AppLocalizations.of(context)!.emailRequired)
-          ]),
-          onSaved: (val) => username = val,
-        ),
-        BasicPageTextFormField(
-          labelText: AppLocalizations.of(context)!.password,
-          validator: Validatorless.required(
-              AppLocalizations.of(context)!.passwordRequired),
-          onFieldSubmitted: (value) => (),
-          //To trigger the form submit function
-          onSaved: (val) => password = val,
-          textInputAction: TextInputAction.done,
-          onRevealText: () {
-            setState(() {
-              _obscureText = !_obscureText;
-            });
-          },
-          obscureText: _obscureText,
-          paddingBottom: 12,
-        ),
-        Align(
-            alignment: Alignment.topRight,
-            child: GestureDetector(
-                onTap: () => forgotPassword(),
-                child: Text(AppLocalizations.of(context)!.forgotPassword,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: const Color(0xFF2680A6),
-                        decoration: TextDecoration.underline,
-                        decorationColor: const Color(0xFF2680A6))))),
-      ],
+      children: [],
     );
   }
 
@@ -223,25 +155,22 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
     });
   }
 
-  void _handleRegisterRedirect() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (BuildContext context) => const RegisterPage(),
-      ),
-    );
+  void _signInWithAmplify() {
+    setState(() {
+      _loginFuture = _performSignIn();
+    });
   }
 
-  void _submitForm() {
-    var prov = Provider.of<AuthenticationProvider>(context, listen: false);
-
-    _loginFuture =
-        prov.logIn(username: username ?? '', password: password ?? '');
-
-    _loginFuture!.then((_) {
-      _handleSuccessfulLogin();
-    }).catchError((err) {
-      loginHandleError(context, err);
-    });
+  Future<void> _performSignIn() async {
+    try {
+      final result = await Amplify.Auth.signInWithWebUI();
+      safePrint('Sign in result: $result');
+      if (result.isSignedIn) {
+        _handleSuccessfulLogin();
+      }
+    } on AuthException catch (e) {
+      safePrint('Error signing in: ${e.message}');
+    }
   }
 
   void _handleSuccessfulLogin() async {

@@ -40,7 +40,6 @@ public class CracPrimer implements OrderedResource {
 
     @Override
     public void afterRestore(Context<? extends Resource> context) throws Exception {
-
     }
 
     @Override

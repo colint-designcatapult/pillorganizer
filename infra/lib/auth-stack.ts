@@ -1,11 +1,12 @@
 import * as cdk from 'aws-cdk-lib/core';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import { Construct } from 'constructs';
+import { createGlobalLambda } from './lambda-utils';
 
 interface AuthStackProps extends cdk.StackProps {
-  postConfirmation: lambda.Function;
-  preTokenGeneration: lambda.Function;
+  controlPlaneTable: dynamodb.ITableV2;
 }
 
 export class AuthStack extends cdk.Stack {
@@ -13,6 +14,13 @@ export class AuthStack extends cdk.Stack {
 
   constructor(scope: Construct, id: string, props: AuthStackProps) {
     super(scope, id, props);
+
+    // -- Lambda Triggers --
+    const postConfirmation = createGlobalLambda(this, 'PostConfirmation',
+      'jct.pillorganizer.global.function.CognitoPostConfirmationHandler', props.controlPlaneTable);
+    
+    const preTokenGeneration = createGlobalLambda(this, 'PreTokenGeneration',
+      'jct.pillorganizer.global.function.CognitoPreTokenGenerationHandler', props.controlPlaneTable);
 
     // -- Cognito User Pool --
     this.userPool = new cognito.UserPool(this, 'HealtheUserPool', {
@@ -25,12 +33,8 @@ export class AuthStack extends cdk.Stack {
         }
       },
       lambdaTriggers: {
-        postConfirmation: props.postConfirmation,
-        preTokenGeneration: props.preTokenGeneration
-      },
-      customAttributes: {
-        // not used
-        'userId': new cognito.StringAttribute({ minLen: 1, maxLen: 24, mutable: false })
+        postConfirmation: postConfirmation,
+        preTokenGeneration: preTokenGeneration
       },
       signInAliases: {
         email: true,

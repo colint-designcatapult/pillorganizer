@@ -1,32 +1,19 @@
 package jct.pillorganizer.tenant.api.app;
 
 import java.text.ParseException;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
-import java.util.Base64;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import jakarta.transaction.Transactional;
-
-import org.zalando.problem.Problem;
-
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Delete;
 import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Put;
 import io.micronaut.http.annotation.QueryValue;
-import io.micronaut.problem.HttpStatusType;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,17 +23,10 @@ import jct.pillorganizer.tenant.auth.DeviceABAC;
 import jct.pillorganizer.tenant.auth.DeviceABACIDType;
 import jct.pillorganizer.tenant.dto.DeviceStateDTO;
 import jct.pillorganizer.tenant.dto.DeviceUserDTO;
-import jct.pillorganizer.tenant.dto.ProvisionStatus;
-import jct.pillorganizer.tenant.dto.StartProvision;
 import jct.pillorganizer.tenant.dto.UpdateDeviceUserSettings;
-import jct.pillorganizer.tenant.dto.VerifyProvision;
 import jct.pillorganizer.tenant.model.device.Device;
-import jct.pillorganizer.tenant.model.device.DeviceClass;
-import jct.pillorganizer.tenant.model.device.DeviceProvision;
-import jct.pillorganizer.tenant.model.device.DeviceUser;
 import jct.pillorganizer.tenant.repo.DeviceRepository;
 import jct.pillorganizer.tenant.repo.DeviceUserRepository;
-import jct.pillorganizer.tenant.service.DeviceProvisionService;
 import jct.pillorganizer.tenant.service.DeviceUserService;
 import lombok.extern.flogger.Flogger;
 
@@ -59,9 +39,6 @@ public class AppDeviceAPIController {
 
     @Inject
     DeviceRepository deviceRepository;
-
-    @Inject
-    DeviceProvisionService deviceProvisionService;
 
 
     @Inject
@@ -77,91 +54,36 @@ public class AppDeviceAPIController {
     @Get("/list")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public Set<DeviceUserDTO> listDeviceUser() {
-        long userId = authService.getUserID();
-        Set<DeviceUserDTO> baseResults = deviceUserRepository.findByUserID(userId);
-        
-        if (authService.isAdmin()) {
-            Set<Long> existingDeviceIds = baseResults.stream()
-                .map(DeviceUserDTO::deviceID)
-                .collect(Collectors.toSet());
-            
-            deviceRepository.findAll()
-                .stream()
-                .filter(d -> !existingDeviceIds.contains(d.getId()))
-                .forEach(d -> {
-                    baseResults.add(new DeviceUserDTO(
-                        -1,
-                        d.getId(),
-                        d.getDeviceClass(),
-                        d.getCustomName(),
-                        d.getLastSync(),
-                        d.getSerialNo(),
-                        false,
-                        false,
-                        false,
-                        d.getBaseTZ()
-                    ));
-                });
-        }
-        
-        return baseResults;
+        return deviceUserService.getDevices(authService.getUser());
+    }
+
+    @Operation(summary = "Checks if the user has access to a device with the given claim token")
+    @Post("/check")
+    @Secured(SecurityRule.IS_AUTHENTICATED)
+    public Optional<DeviceUserDTO> checkDeviceAccess(@QueryValue("claimToken") String claimToken) {
+        return deviceUserService.getDeviceByClaimToken(authService.getUser(), claimToken);
     }
 
     @Operation(summary = "Soft deletes the device user link")
     @Delete("/{id}")
     @Secured(SecurityRule.IS_AUTHENTICATED)
-    public HttpResponse<?> removeDeviceFromUser(@QueryValue long id) {
-        Device device = authService.accessDevice(id);
-        deviceUserService.removeDeviceFromUser(authService.getUserID(), device.getId());
-        return HttpResponse.ok();
+    public HttpResponse<?> removeDeviceFromUser(@PathVariable String id) {
+        throw new RuntimeException("not implemented");
     }
 
-    @Operation(summary = "Initiates provisioning")
-    @Post("/provision/start")
-    @Secured(SecurityRule.IS_AUTHENTICATED)
-    public DeviceProvision startProvisioning(@Body StartProvision startProvision,
-            @Header("X-Local-TZ") @Nullable String timezone) {
-        String tz = "UTC";
-        if (timezone != null) {
-            if (ZoneId.getAvailableZoneIds().contains(timezone)) {
-                tz = timezone;
-            } else {
-                throw Problem.builder().withStatus(new HttpStatusType(HttpStatus.BAD_REQUEST))
-                        .withTitle("Invalid timezone")
-                        .build();
-            }
-        }
-
-        return deviceProvisionService.startProvisioning(
-                startProvision.getSerialNo(),
-                DeviceClass.valueOf(startProvision.getDeviceClass()),
-                tz);
-    }
-
-    @Operation(summary = "Checks provisioning status")
-    @Post("/provision/{id}/verify")
-    @Secured(SecurityRule.IS_AUTHENTICATED)
-    public HttpResponse<?> checkProvisionStatus(@QueryValue long id, @Body VerifyProvision vp) {
-        Device d = deviceProvisionService.checkProvisioning(id, vp.getSerialNo(), vp.getSsid());
-        return HttpResponse.ok(new ProvisionStatus(
-                true, d.getId()));
-    }
 
     @Operation(summary = "Queries info about a device")
     @Get("/{id}")
     @Secured(SecurityRule.IS_AUTHENTICATED)
-    public Device device(@QueryValue long id) {
+    public Device device(@PathVariable String id) {
         return deviceRepository.findById(id).get();
     }
 
     @Operation(summary = "Reloads the pills on a device")
     @Post("/{id}/reload")
     @Secured(SecurityRule.IS_AUTHENTICATED)
-    public void reload(@QueryValue long id) {
-        long userId = authService.getUserID();
-        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, id);
-
-        throw new RuntimeException("Not implemented yet");
+    public void reload(@PathVariable String id) {
+        throw new IllegalStateException("not implemented");
     }
 
     @Operation(summary = "Updates device basic settings", description = "Updates non-schedule settings for a device, including timezone, name, and notification token.")
@@ -169,50 +91,17 @@ public class AppDeviceAPIController {
     @Secured(SecurityRule.IS_AUTHENTICATED)
     @DeviceABAC
     public DeviceUserDTO setDeviceSettings(
-            @DeviceABAC(idType = DeviceABACIDType.DEVICE) @PathVariable("id") long deviceID,
+            @DeviceABAC(idType = DeviceABACIDType.DEVICE) @PathVariable("id") String deviceID,
             @Body UpdateDeviceUserSettings dto) {
-        long userID = authService.getUserID();
-        var devUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userID, deviceID);
-
-        if (dto.deviceName().isPresent()) {
-            deviceRepository.update(deviceID, dto.deviceName().get());
-        }
-        if (dto.notifications().isPresent()) {
-            if (dto.notifications().get()) {
-                deviceUserRepository.update(devUser.getId(), dto.notificationToken().get());
-            } else {
-                deviceUserRepository.updateNotificationTokenById(devUser.getId(), null);
-            }
-        }
-        if (dto.timezone().isPresent()) {
-            String tzString = dto.timezone().get();
-            if (ZoneId.getAvailableZoneIds().contains(tzString)) {
-                deviceRepository.updateBaseTZById(deviceID, tzString);
-            } else {
-                throw Problem.builder().withStatus(new HttpStatusType(HttpStatus.BAD_REQUEST))
-                        .withTitle("Invalid timezone")
-                        .build();
-            }
-        }
-
-        return deviceUserRepository.retrieveByUserIDAndDeviceID(userID, deviceID)
-                .get();
+        throw new RuntimeException("not implemented");
     }
 
     @Operation(summary = "Get device state on a particular date")
     @Post(value = "/{id}/state", consumes = { MediaType.APPLICATION_FORM_URLENCODED })
     @Secured(SecurityRule.IS_AUTHENTICATED)
     @DeviceABAC
-    public DeviceStateDTO consolidatedState(@DeviceABAC(idType = DeviceABACIDType.DEVICE) @PathVariable long id,
+    public DeviceStateDTO consolidatedState(@DeviceABAC(idType = DeviceABACIDType.DEVICE) @PathVariable String id,
             @QueryValue("date") String dateString) throws ParseException {
-        long userId = authService.getUserID();
-        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
-        TemporalAccessor parsed = formatter.parse(dateString);
-        LocalDate date = LocalDate.from(parsed);
-
-        Device device = deviceRepository.findById(id)
-                .orElseThrow(() -> Problem.builder().withStatus(new HttpStatusType(HttpStatus.NOT_FOUND)).build());
-        DeviceUser deviceUser = deviceUserRepository.findByUserIDAndDeviceIDAndDeletedFalseOrThrow(userId, id);
 
         throw new RuntimeException("Not implemented yet");
     }

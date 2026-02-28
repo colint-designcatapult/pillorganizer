@@ -24,8 +24,8 @@ public class InternalUserController {
 
     @Get("/devices")
     @Secured(SecurityRule.IS_AUTHENTICATED)
-    public Flux<DeviceAccessDto> devices(TenantDetails tenant) {
-        return deviceUserService.getDeviceAccess(authService.getUserID(), tenant);
+    public Flux<DeviceAccessDto> devices() {
+        return deviceUserService.getDeviceAccess(authService.getUser());
     }
 
 }

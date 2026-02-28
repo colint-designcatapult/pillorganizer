@@ -3,10 +3,12 @@ package jct.pillorganizer.core;
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.serde.annotation.Serdeable;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @EachProperty("app.tenant.list")
 @Data
+@AllArgsConstructor
 @Serdeable.Serializable
 public class TenantDetails {
 

@@ -1,91 +1,39 @@
 package jct.pillorganizer.tenant.model.device;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.micronaut.core.annotation.Nullable;
-import jct.pillorganizer.tenant.model.device.schedule.DeviceBaseScheduleStrategy;
-import jct.pillorganizer.tenant.model.user.BaseUser;
-import lombok.Getter;
-import lombok.Setter;
-import jakarta.persistence.*;
-import java.util.List;
-import java.util.Set;
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
+import jct.pillorganizer.tenant.model.user.User;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.sql.Timestamp;
 
-/**
- * Relates a `BaseUser` to a `Device`. The role the user has to a device is recorded here, whether they are the
- * designated primary user of the device, etc. The notification token for push notification delivery is also stored
- * here. Thus, push notification delivery is routed on a per-device per-user basis.
- * 
- * Note: This entity has a partial unique constraint created via database migration:
- * UNIQUE INDEX device_user_unique_not_deleted ON device_user (device_id, user_id) WHERE deleted = false
- * This allows the same device_id + user_id combination to exist multiple times as long as only one has deleted = false.
- * 
- * TODO: move notification token to another entity to resolve notification counter-intuitiveness
- */
-@Entity(name = "device_user")
-@Table(name = "device_user")
+@MappedEntity("device_user")
 @Getter
 @Setter
 public class DeviceUser {
 
     @Id
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="device_user_seq")
-    @SequenceGenerator(name = "device_user_seq", sequenceName = "device_user_seq", allocationSize = 1)
-    private Long id;
+    private String id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "device_id", referencedColumnName = "id", insertable = false, updatable = false)
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
     private Device device;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", referencedColumnName = "id", insertable = false, updatable = false)
-    private BaseUser user;
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    private User user;
 
-    @Column(name = "user_id")
-    private long userID;
-
-    @Column(name = "device_id")
-    private long deviceID;
-
-    @Column(name = "primary_user")
     private boolean primaryUser;
 
-    @Column(name = "owner")
-    private boolean owner;
-
-    @Column(name = "notification_token")
-    private String notificationToken;
-
-    @Column(name = "deleted")
-    private boolean deleted = false;
-
     @DateCreated
-    @Column(name = "created_at")
     @JsonIgnore
     private Timestamp createdAt;
 
     @DateUpdated
-    @Column(name = "updated_at")
     @JsonIgnore
     private Timestamp updatedAt;
 
-    @Column(name = "deleted_at")
-    @JsonIgnore
-    private Timestamp deletedAt;
-
-    @OneToOne(fetch = FetchType.LAZY, mappedBy = "deviceUser", orphanRemoval = true, optional = true)
-    @JsonIgnore
-    @Nullable
-    private DeviceBaseScheduleStrategy scheduleStrategy;
-
-    @OneToMany(targetEntity = DeviceState.class, mappedBy = "deviceUser", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<DeviceState> state;
-
-    @OneToMany(targetEntity = DeviceEvent.class, mappedBy = "deviceUser", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private Set<DeviceEvent> events;
 }

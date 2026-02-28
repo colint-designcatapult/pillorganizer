@@ -1,17 +1,19 @@
 package jct.pillorganizer.tenant.service;
 
+import com.github.ksuid.Ksuid;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.core.TenantDetails;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.tenant.dto.DeviceUserDTO;
+import jct.pillorganizer.tenant.dto.DeviceUserMapper;
 import jct.pillorganizer.tenant.model.device.Device;
 import jct.pillorganizer.tenant.model.device.DeviceUser;
-import jct.pillorganizer.tenant.model.user.BaseUser;
+import jct.pillorganizer.tenant.model.user.User;
 import jct.pillorganizer.tenant.repo.DeviceUserRepository;
 import reactor.core.publisher.Flux;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -23,51 +25,57 @@ public class DeviceUserService {
 
     @Inject
     DeviceUserRepository repository;
+    @Inject
+    private KsuidService ksuidService;
+    @Inject
+    private TenantService tenantService;
+    @Inject
+    DeviceUserMapper deviceUserMapper;
 
-    public Set<DeviceUserDTO> getDevices(long userId) {
-        return repository.findByUserID(userId);
+    public Set<DeviceUserDTO> getDevices(User user) {
+        return repository.findDevicesByUserId(user.getId()).stream()
+                .map((e) -> deviceUserMapper.toDTO(e))
+                .collect(Collectors.toSet());
     }
 
-    public Flux<DeviceAccessDto> getDeviceAccess(long userId, TenantDetails tenant) {
-        return Flux.fromIterable(getDevices(userId)
+    public Optional<DeviceUserDTO> getDeviceByClaimToken(User user, String claimToken) {
+        return repository.findDevicesByUserId(user.getId()).stream()
+                .filter(d -> d.getClaimToken().equals(claimToken))
+                .map(e -> deviceUserMapper.toDTO(e))
+                .findFirst();
+    }
+
+    public Flux<DeviceAccessDto> getDeviceAccess(User user) {
+        TenantDetails tenant = tenantService.getCurrentTenant()
+                .orElseThrow(() -> new IllegalStateException("No tenant context found"));
+
+        return Flux.fromIterable(repository.findDevicesByUserId(user.getId())
                 .stream().map((model) ->
-                        new DeviceAccessDto(Long.toString(model.deviceID()), model.customName(),
-                                model.deviceClass().name(),
-                                tenant.getId(), tenant.getApiBase(), model.primaryUser()))
+                        new DeviceAccessDto(model.getDeviceId(), model.getNickname(),
+                                model.getDeviceClass().toString(),
+                                tenant.getId(), tenant.getApiBase(), model.isPrimaryUser()))
                 .collect(Collectors.toList()));
     }
 
     /**
      * Adds a user to a device.
-     * @param userID user ID to add to the device
-     * @param deviceID  device ID to add the user to
-     * @param owner whether the user has "owner" privileges over the device
+     * @param user user to add to the device
+     * @param device  device to add the user to
      * @param primaryUser whether the user should be marked as the primary user of the device
      */
-    public void addUserToDevice(long userID, long deviceID, boolean owner, boolean primaryUser) {
-        if(!doesUserBelongToDevice(userID, deviceID)) {
+    public void addUserToDevice(User user, Device device, boolean primaryUser) {
+        if(!doesUserBelongToDevice(user, device)) {
             DeviceUser du = new DeviceUser();
-            du.setDeviceID(deviceID);
-            du.setUserID(userID);
+            du.setId(ksuidService.generateKsuid());
+            
+            du.setDevice(device);
+            du.setUser(user);
+            
             du.setPrimaryUser(primaryUser);
-            du.setOwner(owner);
             repository.save(du);
         }
     }
 
-    /**
-     * Removes the device_user link
-     * @param userID the user id
-     * @param deviceID the device to remove
-     */
-    public void removeDeviceFromUser(long userID, long deviceID) {
-        if(doesUserBelongToDevice(userID, deviceID)) {
-            repository.softDelete(userID, deviceID);
-        }
-        else {
-            throw new IllegalArgumentException("User is not linked to deviceId");
-        }
-    }
 
     /**
      * Checks if a user is added to a specific device.
@@ -75,36 +83,18 @@ public class DeviceUserService {
      * @param device the device to see whether the user is related to it or not
      * @return true if the user is related to the device
      */
-    public boolean doesUserBelongToDevice(BaseUser user, Device device) {
-        return repository.countByUserAndDeviceAndDeletedFalse(user, device) != 0;
-    }
-    /**
-     * Checks if a user is added to a specific device.
-     * @param userID the user ID to test membership
-     * @param deviceID the device ID to see whether the user is related to it or not
-     * @return true if the user is related to the device
-     */
-    public boolean doesUserBelongToDevice(long userID, long deviceID) {
-        return repository.countByUserIDAndDeviceIDAndDeletedFalse(userID, deviceID) != 0;
+    public boolean doesUserBelongToDevice(User user, Device device) {
+        return repository.countByUserIdAndDeviceId(user.getId(), device.getId()) != 0;
     }
 
     /**
      * Checks if a user has access to a device (is related to the device).
-     * @param userID the user ID
-     * @param deviceID the device ID
+     * @param user the user
+     * @param device the device
      * @return true if the user has access to the device
      */
-    public boolean userHasAccessToDevice(long userID, long deviceID) {
-        return doesUserBelongToDevice(userID, deviceID);
+    public boolean userHasAccessToDevice(User user, Device device) {
+        return doesUserBelongToDevice(user, device);
     }
 
-    /**
-     * Checks if a user owns a specific device.
-     * @param userID the user ID
-     * @param deviceID the device ID
-     * @return true if the user owns the device
-     */
-    public boolean userOwnsDevice(long userID, long deviceID) {
-        return repository.countByUserIDAndDeviceIDAndOwnerTrueAndDeletedFalse(userID, deviceID) != 0;
-    }
 }
