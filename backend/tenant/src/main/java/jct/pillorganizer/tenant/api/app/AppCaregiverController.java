@@ -14,7 +14,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 import jct.pillorganizer.tenant.auth.AuthService;
 import jct.pillorganizer.tenant.service.DeviceService;
-import jct.pillorganizer.tenant.service.DeviceUserService;
 import lombok.extern.flogger.Flogger;
 
 /**
@@ -23,16 +22,6 @@ import lombok.extern.flogger.Flogger;
 @Controller("/api/v1/caregiver")
 @Flogger
 public class AppCaregiverController {
-    @Inject
-    AuthService authService;
-
-    @Inject
-    DeviceUserService deviceUserService;
-
-    @Inject
-    private DeviceService deviceService;
-
-
 
     @Operation(summary = "Validate caregiver's code")
     @Post("/validate/{code}")

@@ -175,6 +175,10 @@
               </exclusions>
             </path>
             <path>
+              <groupId>io.micronaut.validation</groupId>
+              <artifactId>micronaut-validation-processor</artifactId>
+            </path>
+            <path>
               <groupId>io.micronaut.security</groupId>
               <artifactId>micronaut-security-annotations</artifactId>
               <version>${micronaut.security.version}</version>

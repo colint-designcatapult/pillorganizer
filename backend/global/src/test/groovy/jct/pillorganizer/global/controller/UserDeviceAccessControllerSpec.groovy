@@ -3,17 +3,14 @@ package jct.pillorganizer.global.controller
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
-import io.micronaut.serde.annotation.SerdeImport
 import io.micronaut.test.annotation.MockBean
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import io.micronaut.test.support.TestPropertyProvider
 import jakarta.inject.Inject
 import jct.pillorganizer.core.dto.DeviceAccessDto
 import jct.pillorganizer.global.BaseIntegrationSpec
 import jct.pillorganizer.global.dto.UserAndDeviceAccessDto
 import jct.pillorganizer.global.service.UserDeviceAccessService
 import reactor.core.publisher.Flux
-import spock.lang.Specification
 
 @MicronautTest
 class UserDeviceAccessControllerSpec extends BaseIntegrationSpec {
@@ -39,8 +36,8 @@ class UserDeviceAccessControllerSpec extends BaseIntegrationSpec {
     // @relation(CTRL-REQ-15, scope=range_start)
     void "test getUserDeviceAccess returns aggregated results"() {
         given:
-        def device1 = new DeviceAccessDto("d1", "nickname1", "model1", "tenant1", "apiBase1", true)
-        def device2 = new DeviceAccessDto("d2", "nickname2", "model2", "tenant2", "apiBase2", false)
+        def device1 = new DeviceAccessDto("d1", "dev1", "nickname1", "sn1", "model1", "tenant1", "apiBase1", true)
+        def device2 = new DeviceAccessDto("d2", "dev2", "nickname2", "sn2", "model2", "tenant2", "apiBase2", false)
         
         when:
         def request = HttpRequest.GET("/user/devices")
@@ -52,7 +49,9 @@ class UserDeviceAccessControllerSpec extends BaseIntegrationSpec {
         
         with(response.devices().find { it.id() == "d1" }) {
             id() == "d1"
+            deviceId() == "dev1"
             nickname() == "nickname1"
+            serialNo() == "sn1"
             modelId() == "model1"
             tenantId() == "tenant1"
             apiBase() == "apiBase1"
@@ -61,7 +60,9 @@ class UserDeviceAccessControllerSpec extends BaseIntegrationSpec {
 
         with(response.devices().find { it.id() == "d2" }) {
             id() == "d2"
+            deviceId() == "dev2"
             nickname() == "nickname2"
+            serialNo() == "sn2"
             modelId() == "model2"
             tenantId() == "tenant2"
             apiBase() == "apiBase2"

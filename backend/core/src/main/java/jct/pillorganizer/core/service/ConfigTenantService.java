@@ -1,8 +1,10 @@
-package jct.pillorganizer.core;
+package jct.pillorganizer.core.service;
 
 
+import io.micronaut.http.context.ServerRequestContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jct.pillorganizer.core.TenantDetails;
 import lombok.Getter;
 
 import java.util.Collection;
@@ -12,6 +14,8 @@ import java.util.stream.Collectors;
 
 @Singleton
 public class ConfigTenantService implements TenantService {
+    private static final String ATTRIBUTE_TENANT = "tenantIdentifier";
+
     @Getter
     private final Collection<TenantDetails> tenantList;
     @Getter
@@ -35,5 +39,13 @@ public class ConfigTenantService implements TenantService {
 
     public Optional<TenantDetails> getTenantByHostname(String hostname) {
         return Optional.ofNullable(hostToTenantMap.get(hostname));
+    }
+
+    @Override
+    public Optional<TenantDetails> getCurrentTenant() {
+        return ServerRequestContext.currentRequest()
+                .flatMap(request -> request.getAttribute(ATTRIBUTE_TENANT, String.class))
+                .flatMap(this::getTenantDetails);
+
     }
 }

@@ -1,8 +1,8 @@
 CREATE TABLE users (
-    id VARCHAR(255) PRIMARY KEY,
-    user_type VARCHAR(31) NOT NULL,
-    name VARCHAR(255),
-    email VARCHAR(255),
+    id TEXT PRIMARY KEY,
+    user_type TEXT NOT NULL,
+    name TEXT,
+    email TEXT,
     created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

@@ -5,11 +5,8 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
-import io.micronaut.security.token.propagation.TokenPropagationHttpClientFilter;
-import io.micronaut.security.token.propagation.TokenPropagator;
 import jct.pillorganizer.core.TenantDetails;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 import java.util.List;

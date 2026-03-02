@@ -6,24 +6,24 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 import jct.pillorganizer.tenant.auth.AuthService;
 import jct.pillorganizer.tenant.dto.*;
+import jct.pillorganizer.tenant.model.user.User;
+import jct.pillorganizer.tenant.projection.UserProfileView;
 import jct.pillorganizer.tenant.repo.UserRepository;
+import jct.pillorganizer.tenant.service.UserService;
 import reactor.core.publisher.Mono;
+
+import java.util.Optional;
 
 @Controller("/api/v1/user")
 public class AppUserController {
 
     @Inject
-    UserRepository userRepo;
+    UserService userService;
 
-    @Inject
-    AuthService authService;
-
-    @Operation(summary = "Gets info about currently signed-in user")
+    @Operation(summary = "Gets the current user profile.")
     @Get("/me")
-    @Secured({ "user", "anon" })
-    public UserInfoDTO authenticationStatus() {
-        String userID = authService.getUserID();
-        return userRepo.findUserInfoDTOFromID(userID);
+    public Optional<UserProfileView> authenticationStatus(User user) {
+        return userService.getUserProfile(user.getId());
     }
 
 }

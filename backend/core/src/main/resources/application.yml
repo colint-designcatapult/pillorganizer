@@ -14,7 +14,7 @@ micronaut:
       enabled: true
   security:
     enabled: true
-    authentication: bearer
+    authentication: idtoken
     basic-auth:
       enabled: false
     redirect:

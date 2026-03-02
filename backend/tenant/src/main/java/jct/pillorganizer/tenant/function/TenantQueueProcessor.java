@@ -8,10 +8,12 @@ import io.micronaut.serde.ObjectMapper;
 import jakarta.inject.Inject;
 import jct.pillorganizer.core.message.BaseMessage;
 import jct.pillorganizer.tenant.service.QueueProcessorService;
+import lombok.extern.flogger.Flogger;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Flogger
 public class TenantQueueProcessor extends MicronautRequestHandler<SQSEvent, SQSBatchResponse> {
     @Inject
     ObjectMapper mapper;
@@ -41,7 +43,8 @@ public class TenantQueueProcessor extends MicronautRequestHandler<SQSEvent, SQSB
                 this.queueProcessorService.processQueueMessage(baseMessage);
 
             } catch (Exception e) {
-                // If it fails, add the message ID to the failure list
+                log.atInfo().withCause(e).log("Could not process message: %s", message.getBody());
+                // Add the message ID to the failure list
                 batchItemFailures.add(new SQSBatchResponse.BatchItemFailure(message.getMessageId()));
             }
         }

@@ -2,11 +2,11 @@ package jct.pillorganizer.tenant.service
 
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import jct.pillorganizer.core.message.BaseMessage
 import jct.pillorganizer.core.message.DeviceProvisionMessage
 import jct.pillorganizer.core.message.GrantUserMessage
 import jct.pillorganizer.tenant.BaseIntegrationSpec
-import jct.pillorganizer.tenant.model.device.Device
-import jct.pillorganizer.tenant.model.user.User
+import jct.pillorganizer.tenant.repo.ProvisionRecordRepository
 import spock.lang.Subject
 
 @MicronautTest
@@ -20,63 +20,58 @@ class QueueProcessorServiceSpec extends BaseIntegrationSpec {
     UserService userService
 
     @Inject
-    DeviceService deviceService
+    ProvisionRecordRepository provisionRecordRepository
 
-    @Inject
-    DeviceUserService deviceUserService
-
-    def "processQueueMessage should handle GrantUserMessage"() {
+    def "should grant a new user"() {
         given:
-        String userId = "user-grant-1"
-        String userName = "Grant User"
-        String email = "grant@example.com"
-        GrantUserMessage message = new GrantUserMessage(userId, userName, email)
+        def message = GrantUserMessage.builder()
+                .userId("test-user-id")
+                .userName("Test User")
+                .email("test@example.com")
+                .build()
 
         when:
         queueProcessorService.processQueueMessage(message)
 
         then:
-        Optional<User> user = userService.get(userId)
+        def user = userService.get("test-user-id")
         user.isPresent()
-        user.get().name == userName
-        user.get().email == email
+        user.get().name == "Test User"
+        user.get().email == "test@example.com"
     }
 
-    def "processQueueMessage should handle DeviceProvisionMessage"() {
+    def "should provision a device"() {
         given:
-        String userId = "user-prov-1"
-        String deviceId = "device-prov-1"
-        String serialNo = "SN-PROV-1"
-        String claimToken = "token-prov-1"
-        
-        // User must exist first for provision to work (as per implementation)
-        User user = userService.upsert(userId, "Prov User", "prov@example.com")
-        
-        DeviceProvisionMessage message = new DeviceProvisionMessage(claimToken, deviceId, userId, serialNo)
+        def user = userService.upsert("provisioner-user", "Provisioner", "provisioner@example.com")
+        def message = DeviceProvisionMessage.builder()
+                .deviceId("test-device-id")
+                .userId(user.id)
+                .serialNo("serial-123")
+                .claimToken("claim-456")
+                .build()
 
         when:
         queueProcessorService.processQueueMessage(message)
 
         then:
-        Device device = deviceService.findById(deviceId)
-        device != null
-        device.serialNo == serialNo
-        
-        and:
-        deviceUserService.doesUserBelongToDevice(user, device)
+        def provisionRecord = provisionRecordRepository.findById("test-device-id")
+        provisionRecord.isPresent()
+        provisionRecord.get().serialNo == "serial-123"
+        provisionRecord.get().claimToken == "claim-456"
+        provisionRecord.get().provisionedBy.id == user.id
     }
 
-    def "processQueueMessage should throw exception for unknown message type"() {
+    def "should throw exception for invalid message type"() {
         given:
-        def unknownMessage = new jct.pillorganizer.core.message.BaseMessage() {
+        def invalidMessage = new BaseMessage() {
             @Override
             String getType() {
-                return "UNKNOWN"
+                return "invalid"
             }
         }
 
         when:
-        queueProcessorService.processQueueMessage(unknownMessage)
+        queueProcessorService.processQueueMessage(invalidMessage)
 
         then:
         thrown(IllegalStateException)

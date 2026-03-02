@@ -3,6 +3,10 @@ package jct.pillorganizer.global.service;
 import com.github.ksuid.Ksuid;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jct.pillorganizer.core.message.DeviceProvisionMessage;
+import jct.pillorganizer.core.message.GrantUserMessage;
+import jct.pillorganizer.core.service.SecureRandomService;
+import jct.pillorganizer.core.uid.KsuidService;
 import jct.pillorganizer.global.dto.ProvisioningClaimDto;
 import jct.pillorganizer.global.model.DeviceClaimEntity;
 import jct.pillorganizer.global.model.DeviceEntity;
@@ -16,6 +20,7 @@ import software.amazon.awssdk.services.iot.model.CreateProvisioningClaimRequest;
 import software.amazon.awssdk.services.iot.model.CreateProvisioningClaimResponse;
 
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.Optional;
 
 @Flogger
@@ -28,21 +33,29 @@ public class DeviceProvisionService {
     private final DeviceService deviceService;
     private final TenantMessageService messageService;
     private final UserService userService;
+    private final SecureRandomService secureRandomService;
+    private final KsuidService ksuidService;
 
     @Inject
     public DeviceProvisionService(IotClient iotClient, DeviceClaimRepo deviceClaimRepo, DeviceRepo deviceRepo,
                                   DeviceService deviceService, TenantMessageService messageService,
-                                  UserService userService) {
+                                  UserService userService, SecureRandomService secureRandomService, KsuidService ksuidService) {
         this.iotClient = iotClient;
         this.deviceClaimRepo = deviceClaimRepo;
         this.deviceService = deviceService;
         this.deviceRepo = deviceRepo;
         this.messageService = messageService;
         this.userService = userService;
+        this.secureRandomService = secureRandomService;
+        this.ksuidService = ksuidService;
+    }
+
+    private String generateClaimToken() {
+        return secureRandomService.generateRandomToken();
     }
 
     private String createClaimRecord(String serialNumber, String userId, String tenant) {
-        String claimToken = Ksuid.newKsuid().toString();
+        String claimToken = generateClaimToken();
 
         deviceClaimRepo.save(
                 DeviceClaimEntity.builder()
@@ -85,7 +98,7 @@ public class DeviceProvisionService {
         }
 
         DeviceClaimEntity claim = claimOpt.get();
-        String deviceId = Ksuid.newKsuid().toString();
+        String deviceId = ksuidService.generateKsuid();
         String tenantId = claim.getTenantId();
         String userId = claim.getUserId();
 
@@ -126,7 +139,13 @@ public class DeviceProvisionService {
         );
         // Let the tenant know they should have a user record
         try {
-            messageService.grantUser(tenantId, userEntity.getUserId(), userEntity.getUserName(), userEntity.getEmail());
+            GrantUserMessage grantUserMessage = GrantUserMessage.builder()
+                    .userId(userId)
+                    .userName(userEntity.getUserName())
+                    .email(userEntity.getEmail())
+                    .tenantId(tenantId)
+                    .build();
+            messageService.grantUser(grantUserMessage);
         } catch (IOException ex) {
             log.atWarning().withCause(ex).log("Failed to notify tenant of user");
             return Optional.empty();
@@ -134,7 +153,14 @@ public class DeviceProvisionService {
 
         // Let tenant know the device is provisioned
         try {
-            messageService.provisionDevice(tenantId, claim.getUserId(), claimToken, deviceId, serialNumber);
+            DeviceProvisionMessage message = DeviceProvisionMessage.builder()
+                    .deviceId(deviceId)
+                    .tenantId(tenantId)
+                    .serialNo(serialNumber)
+                    .userId(userId)
+                    .claimToken(claimToken)
+                    .build();
+            messageService.provisionDevice(message);
         } catch (IOException ex) {
             log.atWarning().withCause(ex).log("Failed to notify tenant of provisioning");
             return Optional.empty();

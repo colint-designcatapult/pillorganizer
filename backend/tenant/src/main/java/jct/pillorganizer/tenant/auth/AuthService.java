@@ -1,21 +1,22 @@
 package jct.pillorganizer.tenant.auth;
 
+import com.github.ksuid.Ksuid;
 import com.google.common.flogger.FluentLogger;
-import io.micronaut.security.authentication.Authentication;
+import io.micronaut.http.context.ServerRequestContext;
 import io.micronaut.security.authentication.AuthenticationException;
 import io.micronaut.security.utils.SecurityService;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import jct.pillorganizer.tenant.model.device.Device;
+import jct.pillorganizer.tenant.model.device.LogicalDevice;
 import jct.pillorganizer.tenant.model.user.User;
-import jct.pillorganizer.tenant.model.user.UserRole;
-import jct.pillorganizer.tenant.repo.DeviceRepository;
+import jct.pillorganizer.tenant.model.user.UserType;
+import jct.pillorganizer.tenant.repo.LogicalDeviceRepository;
 import jct.pillorganizer.tenant.repo.DeviceUserRepository;
 
 import jct.pillorganizer.tenant.repo.UserRepository;
-import reactor.core.publisher.Mono;
+import jct.pillorganizer.tenant.service.DeviceService;
 
-import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Utility functions for dealing with authentication and authorization.
@@ -28,33 +29,37 @@ public class AuthService {
     @Inject
     SecurityService securityService;
 
-
     @Inject
     DeviceUserRepository deviceUserRepository;
 
     @Inject
-    DeviceRepository deviceRepository;
+    LogicalDeviceRepository deviceRepository;
+
     @Inject
     private UserRepository userRepository;
+    @Inject
+    private DeviceService deviceService;
 
-    /**
-     * Gets the currently logged-in user ID. Note that if the user type is Device,
-     * this will return a device ID and not
-     * a user ID.
-     * 
-     * @throws AuthenticationException if no user is currently signed in
-     * @return a user ID or device ID of the currently logged-in user
-     */
+    private Object getRequestAttribute(String attr) {
+        return ServerRequestContext.currentRequest()
+                .flatMap(req -> req.getAttribute(attr))
+                .orElseThrow(() -> new AuthenticationException("No authentication"));
+    }
+
     public String getUserID() {
-        Optional<Authentication> auth = securityService.getAuthentication();
-        return (String) auth.orElseThrow(() -> new AuthenticationException("No authentication"))
-                .getAttributes()
-                .get("userId");
+        Object idObj = getRequestAttribute(UserFilter.USER_ID_ATTRIBUTE);
+        if(idObj instanceof String) {
+            return (String) idObj;
+        }
+        throw new IllegalStateException("Invalid object in request user ID attribute");
     }
 
     public User getUser() {
-        return userRepository.findById(getUserID())
-                .orElseThrow(() -> new IllegalStateException("User entity doesn't exist"));
+        Object idObj = getRequestAttribute(UserFilter.USER_ENTITY_ATTRIBUTE);
+        if(idObj instanceof User) {
+            return (User) idObj;
+        }
+        throw new IllegalStateException("Invalid object in request user entity attribute");
     }
 
     /**
@@ -66,15 +71,9 @@ public class AuthService {
      * @throws AuthenticationException if the user doesn't have access to the
      *                                 specified device
      */
-    public Device accessDevice(String deviceID) {
-        if (isAdmin()) {
-            return deviceRepository.findById(deviceID)
-                    .orElseThrow(() -> new RuntimeException("Device ID does not exist"));
-        } else {
-            return deviceUserRepository.findByUserIdAndDeviceId(getUserID(), deviceID)
-                    .orElseThrow(() -> new AuthenticationException("No access"))
-                    .getDevice();
-        }
+    public LogicalDevice accessDevice(UUID deviceID) {
+        log.atSevere().log("Using legacy access control: allowing");
+        return deviceRepository.findById(deviceID).get();
     }
 
     /**
@@ -83,7 +82,7 @@ public class AuthService {
      * @return true if the logged-in user is an administrator, false otherwise
      */
     public boolean isAdmin() {
-        return securityService.hasRole(UserRole.ADMIN.toString());
+        return securityService.hasRole(UserType.ADMIN.toString());
     }
 
 }

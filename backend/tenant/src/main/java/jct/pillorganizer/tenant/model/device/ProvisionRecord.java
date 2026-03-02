@@ -3,28 +3,36 @@ package jct.pillorganizer.tenant.model.device;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.annotation.*;
+import io.micronaut.serde.annotation.Serdeable;
+import jct.pillorganizer.tenant.model.user.BaseUser;
 import jct.pillorganizer.tenant.model.user.User;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.sql.Timestamp;
-import java.util.UUID;
 
-@MappedEntity("device_user")
+@MappedEntity("provision_record")
 @Getter
 @Setter
 @Introspected
-public class DeviceUser {
+@Serdeable
+public class ProvisionRecord {
     @Id
-    private UUID id;
+    private String deviceId;
+
+    private String serialNo;
+
+    private String claimToken;
+
+    private DeviceClass deviceClass = DeviceClass.v1_7x2;
 
     @Relation(value = Relation.Kind.MANY_TO_ONE)
-    private LogicalDevice device;
+    @JsonIgnore
+    private LogicalDevice logicalDevice;
 
     @Relation(value = Relation.Kind.MANY_TO_ONE)
-    private User user;
-
-    private boolean primaryUser;
+    @JsonIgnore
+    private User provisionedBy;
 
     @DateCreated
     @JsonIgnore
@@ -34,4 +42,5 @@ public class DeviceUser {
     @JsonIgnore
     private Timestamp updatedAt;
 
+    private Timestamp disabledAt = null;
 }

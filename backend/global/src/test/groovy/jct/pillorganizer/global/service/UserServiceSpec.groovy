@@ -1,5 +1,6 @@
 package jct.pillorganizer.global.service
 
+import jct.pillorganizer.core.uid.KsuidService
 import jct.pillorganizer.global.model.UserEntity
 import jct.pillorganizer.global.repo.UserRepo
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException
@@ -11,9 +12,10 @@ import spock.lang.Subject
 class UserServiceSpec extends Specification {
 
     UserRepo userRepo = Mock()
+    KsuidService ksuidService = new KsuidService()
 
     @Subject
-    UserService userService = new UserService(userRepo)
+    UserService userService = new UserService(userRepo, ksuidService)
 
     def "should create a new user when one does not exist"() {
         given:

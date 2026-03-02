@@ -2,28 +2,48 @@ package jct.pillorganizer.tenant.service;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jct.pillorganizer.core.service.TenantService;
+import jct.pillorganizer.tenant.mapper.DeviceMapper;
 import jct.pillorganizer.tenant.model.user.User;
+import jct.pillorganizer.tenant.projection.UserProfileView;
 import jct.pillorganizer.tenant.repo.UserRepository;
-import reactor.core.publisher.Mono;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Singleton
 public class UserService {
 
     @Inject
     UserRepository repository;
+    @Inject
+    private DeviceMapper deviceMapper;
+    @Inject
+    TenantService tenantService;
 
     public User upsert(String userId, String name, String email) {
         return repository.upsert(userId, name, email);
     }
 
     public User ensureExists(String userId) {
-        return repository.saveIdepotent(userId);
+        return repository.saveIdempotent(userId);
     }
 
     public Optional<User> get(String userId) {
         return repository.findById(userId);
+    }
+
+    public Optional<UserProfileView> getUserProfile(String userId) {
+        return repository.findById(userId).map(user -> new UserProfileView(
+                user.getId(),
+                user.getUserType().name(),
+                user.getName(),
+                user.getEmail(),
+                user.getDevices()
+                        .stream()
+                        .map(d -> deviceMapper.toAccessDTO(d, tenantService.getCurrentTenant().get()))
+                        .collect(Collectors.toList())
+        ));
     }
 
 }

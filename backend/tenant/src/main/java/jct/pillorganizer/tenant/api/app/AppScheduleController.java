@@ -13,8 +13,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 import jct.pillorganizer.tenant.auth.AuthService;
 import jct.pillorganizer.tenant.dto.SimpleScheduleDTO;
-import jct.pillorganizer.tenant.model.device.Device;
 import jct.pillorganizer.tenant.model.device.DeviceUser;
+import jct.pillorganizer.tenant.model.device.LogicalDevice;
 import jct.pillorganizer.tenant.repo.DeviceUserRepository;
 import lombok.extern.flogger.Flogger;
 
