@@ -20,7 +20,6 @@
 #include "driver/touch_sensor.h"
 #include "esp_sleep.h"
 
-#include "wifi_provisioner.h"
 #include "pill_gpio.h"
 #include "pill_state.h"
 #include "nvs_wrapper.h"
@@ -35,6 +34,16 @@
 #include "esp_console.h"
 #include "wifi.h"
 #include "ble.h"
+
+#include "iot_telemetry.h"
+#include "mqtt_handler.h"
+
+#include <time.h>
+#include "esp_sntp.h"
+
+#include "core_mqtt.h"
+#include "shadow.h"
+#include "core_json.h"
 
 
 #define TAG "MAIN"
@@ -58,7 +67,23 @@ static void heartbeat_task(void* arg) {
 }
 */
 
+void check_and_print_time() {
+    time_t now;
+    struct tm timeinfo;
+    
+    // Get current system time
+    time(&now);
+    localtime_r(&now, &timeinfo);
 
+    // If year is less than 2020, time isn't set yet
+    if (timeinfo.tm_year < (2020 - 1900)) {
+        ESP_LOGW("TIME_CHECK", "Time is not yet synchronized. MQTT may fail.");
+    } else {
+        char strftime_buf[64];
+        strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+        ESP_LOGI("TIME_CHECK", "Current synchronized time: %s", strftime_buf);
+    }
+}
 
 static int enter_deep_sleep(int argc, char **argv)
 {
@@ -209,7 +234,17 @@ void app_main(void)
     esp_console_start_repl(o);
 
     ble_init();
-    wifi_init(); 
+    wifi_init();
+
+    vTaskDelay(pdMS_TO_TICKS(2000));
+
+    check_and_print_time();
+
+    // START THE MQTT CLIENT HERE
+    // mqtt_app_start();
+
+    // Start 10-second MQTT heartbeat
+    // iot_telemetry_start();
 
     // todo: remove this
     // replace with power management

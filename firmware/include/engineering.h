@@ -5,6 +5,7 @@
 
 
 bool engineering_mode();
+uint32_t engineering_get_bin_voltage(int bin_id);
 void engineering_handle_sync(SyncResponse* sync);
 EngineeringRequest* engineering_request();
 void engineering_print_samples();
@@ -20,3 +21,5 @@ void engineering_toggle_leds();
 void engineering_red_leds();
 
 void engineering_restart(int delay);
+
+extern bool telemetry_heartbeat_active;

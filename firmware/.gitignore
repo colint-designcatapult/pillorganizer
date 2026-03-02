@@ -13,8 +13,14 @@
 .clang_complete
 .gcc-flags.json
 
-# End of https://www.toptal.com/developers/gitignore/api/platformio
+# Secrets/Certs
+sdkconfig.esp32dev
+sdkconfig.esp32dev.old
+src/certs/device_cert.crt
+src/certs/device_key.key
+src/certs/root_ca.pem
 
+# End of https://www.toptal.com/developers/gitignore/api/platformio
 
 hs_err_pid*
 Screenshot_*

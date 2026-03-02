@@ -3,7 +3,7 @@
 
 // Whether the BLE backend is running without WiFi
 //       Set to TRUE when ESP32 Wifi Provisioning is not in use
-#define BLE_STANDALONE  false
+#define BLE_STANDALONE  true
 
 
 #define BLE_STRUCT struct __attribute__((__packed__))

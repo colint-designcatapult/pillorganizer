@@ -19,6 +19,7 @@ SemaphoreHandle_t engr_sphr = { 0 };
 EngineeringRequest req = EngineeringRequest_init_zero;
 EngineeringData data = EngineeringData_init_default;
 bool engr_mode = false;
+bool telemetry_heartbeat_active = true;
 
 RingbufHandle_t buf_handle;
 
@@ -26,6 +27,17 @@ RingbufHandle_t buf_handle;
 bool engineering_mode()
 {
     return engr_mode;
+}
+
+uint32_t engineering_get_bin_voltage(int bin_id) {
+    if (bin_id < 0 || bin_id >= 14) return 0;
+
+    uint32_t val = 0;
+    if (xSemaphoreTake(engr_sphr, pdMS_TO_TICKS(10)) == pdTRUE) {
+        val = data.voltages[bin_id];
+        xSemaphoreGive(engr_sphr);
+    }
+    return val;
 }
 
 void engineering_handle_sync(SyncResponse* sync)
@@ -112,7 +124,6 @@ esp_err_t get_handler(httpd_req_t *req)
 }
 
 esp_err_t get_logs_handler(httpd_req_t* req) {
-
     size_t size;
     char* msg;
     while((msg = (char*)xRingbufferReceive(buf_handle, &size, 1)) != NULL) {
@@ -206,6 +217,15 @@ esp_err_t post_update_handler(httpd_req_t *req) {
     return err;
 }
 
+esp_err_t post_toggle_heartbeat_handler(httpd_req_t *req) {
+    telemetry_heartbeat_active = !telemetry_heartbeat_active;
+    ESP_LOGI(TAG, "Telemetry heartbeat toggled: %s", telemetry_heartbeat_active ? "ON" : "OFF");
+    
+    // Send a simple success response
+    httpd_resp_send(req, "OK", 2); 
+    return ESP_OK;
+}
+
 
 
 
@@ -260,6 +280,13 @@ httpd_uri_t uri_update = {
     .user_ctx = NULL
 };
 
+httpd_uri_t uri_toggle_heartbeat = {
+    .uri      = "/toggle-heartbeat",
+    .method   = HTTP_POST,
+    .handler  = post_toggle_heartbeat_handler,
+    .user_ctx = NULL
+};
+
 
 
 /* Function for starting the webserver */
@@ -281,6 +308,7 @@ httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(server, &uri_reboot);
         httpd_register_uri_handler(server, &uri_reset);
         httpd_register_uri_handler(server, &uri_update);
+        httpd_register_uri_handler(server, &uri_toggle_heartbeat);
     }
     /* If server failed to start, handle will be NULL */
     return server;
@@ -323,8 +351,8 @@ int print_original(const char* str, ...) {
 }
 
 int engineering_vprintf(const char* str, va_list args) {
-
     int size = original_vprintf(str, args);
+
     if(size > 0) {
         if(size > 128) {
             char* buf = (char*)malloc(size + 1);
@@ -361,6 +389,7 @@ void engineering_init()
 
     original_vprintf = esp_log_set_vprintf(engineering_vprintf);
     buf_handle = xRingbufferCreate(4096, RINGBUF_TYPE_ALLOWSPLIT);
+    
     engr_sphr = xSemaphoreCreateBinary();
     xSemaphoreGive(engr_sphr);
 }

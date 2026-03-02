@@ -1,0 +1,27 @@
+menu "Development Configuration"
+
+config DEV_WIFI_ENABLED
+    bool "Enable development WiFi (skip BLE provisioning)"
+    default y
+    help
+        Use hardcoded WiFi credentials for development.
+
+config DEV_WIFI_SSID
+    string "WiFi SSID"
+    depends on DEV_WIFI_ENABLED
+    default ""
+
+config DEV_WIFI_PASSWORD
+    string "WiFi Password"
+    depends on DEV_WIFI_ENABLED
+    default ""
+
+config AWS_IOT_ENDPOINT
+    string "AWS IoT Endpoint"
+    default "mqtt.app.healthesolutions.ca"
+
+config AWS_IOT_THING_NAME
+    string "AWS IoT Thing Name"
+    default "PillOrganizer_Test_001"
+
+endmenu

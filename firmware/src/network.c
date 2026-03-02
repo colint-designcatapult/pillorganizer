@@ -59,18 +59,6 @@ static esp_err_t load_provision_record() {
     return nvs_read_blob(NVS_TAG_OOB_KEY, &provision_record, sizeof(provision_record));
 }
 
-esp_err_t network_set_oob_key(const uint8_t* key, size_t len)
-{
-    if(len != sizeof(provision_record.oob_key))
-        return ESP_ERR_INVALID_ARG;
-
-    memcpy(provision_record.oob_key, key, len);
-
-    esp_err_t err = save_provision_record();
-    ESP_LOGI(TAG, "Set OOB key exited with %d", err);
-    return err;
-}
-
 static esp_err_t load_ota_host_record() {
     //1byte true/false + 2 byte length + url string = blob size
     esp_err_t err;
@@ -98,81 +86,32 @@ static esp_err_t load_ota_host_record() {
     }
 }
 
-bool searchPatterns(const uint8_t *sourceString, const uint8_t *searchString) 
-{
-    char *firstPattern = strstr((const char *)sourceString, (const char *)searchString);
-
-    if (firstPattern == NULL) {
-        ESP_LOGI(TAG, "string not found.\n");
-        return false;
-    }
-
-    return true;
-}
-
-esp_err_t network_set_server_url(const uint8_t* pServerUrl, size_t len )
-{
-    esp_err_t err;
-    ESP_LOGI(TAG, "Received Url:%s, len=%d", pServerUrl, len);
-
-    // expect the app will only send to the device "cabinet-staging-a663e71fb1a6.herokuapp.com"
-    // or "jctbackend.herokuapp.com"
-
-    if( searchPatterns(pServerUrl, (const uint8_t*)"cabinet-staging-a663e71fb1a6.herokuapp.com") )    
-    {
-        stCustomUrl.custom_url = true;
-        stCustomUrl.wLen = sizeof("cabinet-staging-a663e71fb1a6.herokuapp.com");
-        memcpy(stCustomUrl.awBuf, "cabinet-staging-a663e71fb1a6.herokuapp.com", stCustomUrl.wLen);
-        ESP_LOGI(TAG, "Copy Url:%s, len=%d\n", stCustomUrl.awBuf, stCustomUrl.wLen);
-        err = nvs_write_blob(NVS_TAG_OTA_URL, &stCustomUrl, sizeof(stCustomUrl));
-        return err; //return the status of the nvs write blob either OK or FAIL to let BT endpoint checking
-    }
-    else if( searchPatterns(pServerUrl, (const uint8_t*)"jctbackend.herokuapp.com") ) 
-    {
-        stCustomUrl.custom_url = true;
-        stCustomUrl.wLen = sizeof("jctbackend.herokuapp.com");
-        memcpy(stCustomUrl.awBuf, "jctbackend.herokuapp.com", stCustomUrl.wLen);
-        ESP_LOGI(TAG, "Copy Url:%s, len=%d\n", stCustomUrl.awBuf, stCustomUrl.wLen);
-        err = nvs_write_blob(NVS_TAG_OTA_URL, &stCustomUrl, sizeof(stCustomUrl));
-        return err; //return the status of the nvs write blob either OK or FAIL to let BT endpoint checking
-    }
-    else if( searchPatterns(pServerUrl, (const uint8_t*)"staging.cabinet-app.ca") ) 
-    {
-        stCustomUrl.custom_url = true;
-        stCustomUrl.wLen = sizeof("staging.cabinet-app.ca");
-        memcpy(stCustomUrl.awBuf, "staging.cabinet-app.ca", stCustomUrl.wLen);
-        ESP_LOGI(TAG, "Copy Url:%s, len=%d\n", stCustomUrl.awBuf, stCustomUrl.wLen);
-        ESP_LOGI(TAG, "HERE");
-        err = nvs_write_blob(NVS_TAG_OTA_URL, &stCustomUrl, sizeof(stCustomUrl));
-        return err; //return the status of the nvs write blob either OK or FAIL to let BT endpoint checking
-    }
-    else if( searchPatterns(pServerUrl, (const uint8_t*)"cabinet-app.ca") ) 
-    {
-        stCustomUrl.custom_url = true;
-        stCustomUrl.wLen = sizeof("cabinet-app.ca");
-        memcpy(stCustomUrl.awBuf, "cabinet-app.ca", stCustomUrl.wLen);
-        ESP_LOGI(TAG, "Copy Url:%s, len=%d\n", stCustomUrl.awBuf, stCustomUrl.wLen);
-        ESP_LOGI(TAG, "HERE");
-        err = nvs_write_blob(NVS_TAG_OTA_URL, &stCustomUrl, sizeof(stCustomUrl));
-        return err; //return the status of the nvs write blob either OK or FAIL to let BT endpoint checking
-    }
-    else
-    {
-        //force clear Url to make sure there is no url else beside the 2 known ones 
-        memset(&stCustomUrl.custom_url, 0, sizeof(stCustomUrl)); //clear previous url if there is any
-        err = nvs_write_blob(NVS_TAG_OTA_URL, &stCustomUrl, sizeof(stCustomUrl));
-        return ESP_FAIL; //regardless of the write state still return fail since provision is not correctly done
-    }
-
-}
-
-
 bool encode_oob_key(pb_ostream_t *stream, const pb_field_t *field, void * const *arg)
 {
     if (!pb_encode_tag_for_field(stream, field))
         return false;
 
     return pb_encode_string(stream, (uint8_t*)provision_record.oob_key, sizeof(provision_record.oob_key));
+}
+
+// Provisioning helpers for BLE
+esp_err_t network_set_certificate(const uint8_t* cert, size_t len)
+{
+    if(len != sizeof(provision_record.oob_key))
+        return ESP_ERR_INVALID_ARG;
+
+    memcpy(provision_record.oob_key, cert, len);
+
+    esp_err_t err = save_provision_record();
+    ESP_LOGI(TAG, "Set certificate exited with %d", err);
+    return err;
+}
+
+void network_get_serial_number(uint8_t* sn_out, size_t* len_out)
+{
+    const wifi_info_t* wifi_info = wifi_get_info();
+    memcpy(sn_out, wifi_info->sn.bytes.mac, 6);
+    *len_out = 6;
 }
 
 void network_bin_event_task(void* parm);
@@ -506,7 +445,8 @@ void network_bin_event_task(void* parm)
 {
     for(;;) {
         if(wifi_is_connected()) {
-            engineering_start_server(); // reentrant
+            // TODO: Engineering server breaks compilation after ESP-IDF 6.9.0 upgrade
+            // engineering_start_server(); // reentrant
 
             bool registered = provision_record.registered;
 
@@ -549,7 +489,8 @@ void network_bin_event_task(void* parm)
             }
 
         } else {
-            engineering_stop_server(); // reentrant
+            // TODO: Engineering server breaks compilation after ESP-IDF 6.9.0 upgrade 
+            // engineering_stop_server(); // reentrant
             vTaskDelay(pdMS_TO_TICKS(1000));
         }
         esp_task_wdt_reset();
