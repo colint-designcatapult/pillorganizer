@@ -7,7 +7,7 @@ import io.micronaut.multitenancy.tenantresolver.AbstractSubdomainTenantResolver;
 import io.micronaut.multitenancy.tenantresolver.TenantResolver;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import jct.pillorganizer.core.ConfigTenantService;
+import jct.pillorganizer.core.service.ConfigTenantService;
 
 import java.io.Serializable;
 

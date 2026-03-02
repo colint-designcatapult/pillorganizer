@@ -1,61 +1,28 @@
 package jct.pillorganizer.tenant.repo;
 
-import java.util.Optional;
-import java.util.Set;
-
-import org.zalando.problem.Problem;
-
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.problem.HttpStatusType;
-import jct.pillorganizer.tenant.dto.DeviceUserDTO;
-import jct.pillorganizer.tenant.model.device.Device;
 import jct.pillorganizer.tenant.model.device.DeviceUser;
-import jct.pillorganizer.tenant.model.user.BaseUser;
+import jct.pillorganizer.tenant.model.device.LogicalDevice;
+import jct.pillorganizer.tenant.model.user.User;
 
-@Repository
-public interface DeviceUserRepository extends CrudRepository<DeviceUser, Long> {
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
-    int countByUserIDAndDeviceIDAndDeletedFalse(long user, long device);
-    int countByUserAndDeviceAndDeletedFalse(BaseUser user, Device device);
-    int countByUserIDAndDeviceIDAndOwnerTrueAndDeletedFalse(long user, long device);
-    
-    Optional<DeviceUser> findByDeviceIDAndOwnerTrueAndDeletedFalse(long deviceID);
-    
-    java.util.List<DeviceUser> findByDeviceIDAndDeletedFalse(long deviceID);
+@JdbcRepository(dialect = Dialect.POSTGRES)
+public interface DeviceUserRepository extends CrudRepository<DeviceUser, UUID> {
+    @Join(value = "device", type = Join.Type.LEFT_FETCH)
+    @Join(value = "device.physicalDevice", type = Join.Type.LEFT_FETCH)
+    Optional<DeviceUser> findByUserAndDevice(User userId, LogicalDevice deviceId);
 
-    /*@Query(nativeQuery = true, readOnly = false, value = "INSERT INTO device_user (id, device_id, user_id, primary_user, owner)" +
-            " VALUES (nextval('device_user_seq'), :user, :device, :primaryUser, :owner) ON CONFLICT (device_id, user_id) DO NOTHING")
-    void saveOrUpdate(long user, long device, boolean primaryUser, boolean owner);*/
+    @Join(value = "device", type = Join.Type.LEFT_FETCH)
+    @Join(value = "device.physicalDevice", type = Join.Type.LEFT_FETCH)
+    @Join(value = "user", type = Join.Type.LEFT_FETCH)
+    List<DeviceUser> findByUserId(String userId);
 
-    void update(@Id Long id, String notificationToken);
-
-    void updateNotificationTokenById(@Id Long id, @Nullable String notificationToken);
-
-
-    Optional<DeviceUser> findByUserIDAndDeviceIDAndDeletedFalse(long user, long device);
-
-    default DeviceUser findByUserIDAndDeviceIDAndDeletedFalseOrThrow(long user, long device) {
-        return findByUserIDAndDeviceIDAndDeletedFalse(user, device)
-                .orElseThrow(() -> Problem.builder()
-                        .withStatus(new HttpStatusType(HttpStatus.PRECONDITION_FAILED))
-                        .withTitle("Device not provisioned")
-                        .withDetail("Device must be fully provisioned before this operation can be performed")
-                        .build());
-    }
-
-    Optional<Device> retrieveDeviceByUserIDAndDeviceIDAndDeletedFalse(long userID, long deviceID);
-
-    @Query("select new jct.pillorganizer.tenant.dto.DeviceUserDTO(du.id, du.deviceID, d.deviceClass, d.customName, d.lastSync, d.serialNo, du.primaryUser, du.owner, du.notificationToken is not null, d.baseTZ) from device_user du join du.device d where du.userID = :user AND du.deleted = false")
-    Set<DeviceUserDTO> findByUserID(long user);
-
-    @Query("select new jct.pillorganizer.tenant.dto.DeviceUserDTO(du.id, du.deviceID, d.deviceClass, d.customName, d.lastSync, d.serialNo, du.primaryUser, du.owner, du.notificationToken is not null, d.baseTZ) from device_user du join du.device d where du.userID = :user and du.deviceID = :device and du.deleted = false")
-    Optional<DeviceUserDTO> retrieveByUserIDAndDeviceID(long user, long device);
-
-    @Query("UPDATE device_user du SET du.deleted = true WHERE du.userID = :userId AND du.deviceID= :deviceId")
-    void softDelete(Long userId, Long deviceId);
+    @Join(value = "user", type = Join.Type.LEFT_FETCH)
+    List<DeviceUser> findByDeviceId(UUID deviceId);
 }

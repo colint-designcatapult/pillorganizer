@@ -3,6 +3,8 @@ package jct.pillorganizer.global.service;
 import com.github.ksuid.Ksuid;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jct.pillorganizer.core.service.GlobalAuthService;
+import jct.pillorganizer.core.uid.KsuidService;
 import jct.pillorganizer.global.model.UserEntity;
 import jct.pillorganizer.global.repo.UserRepo;
 import lombok.extern.flogger.Flogger;
@@ -13,11 +15,13 @@ import java.util.Optional;
 @Singleton
 @Flogger
 public class UserService {
+    private final KsuidService ksuidService;
     private final UserRepo userRepo;
 
     @Inject
-    public UserService(UserRepo userRepo) {
+    public UserService(UserRepo userRepo, KsuidService ksuidService) {
         this.userRepo = userRepo;
+        this.ksuidService = ksuidService;
     }
 
     public UserEntity createUser(String sub, String email) {
@@ -27,7 +31,7 @@ public class UserService {
             return existingUser.get();
         }
 
-        String userId = Ksuid.newKsuid().toString();
+        String userId = ksuidService.generateKsuid();
         UserEntity newUser = UserEntity.builder()
                 .userId(userId)
                 .userSub(sub)
@@ -55,5 +59,9 @@ public class UserService {
 
         log.atWarning().log("User with sub %s does not exist, creating one", sub);
         return createUser(sub, email);
+    }
+
+    public Optional<UserEntity> get(String userId) {
+        return userRepo.findAllByUserId(userId).stream().findFirst();
     }
 }

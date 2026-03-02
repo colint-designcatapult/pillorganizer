@@ -17,7 +17,7 @@ public class UserDeviceAccessController {
 
     @Get("/devices")
     @Secured(SecurityRule.IS_AUTHENTICATED)
-    public Mono<UserAndDeviceAccessDto> test() {
+    public Mono<UserAndDeviceAccessDto> listDevices() {
         return userDeviceAccessService.getUserDeviceAccess()
                 .collectList()
                 .map(UserAndDeviceAccessDto::new);

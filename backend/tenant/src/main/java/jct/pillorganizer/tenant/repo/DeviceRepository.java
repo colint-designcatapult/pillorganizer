@@ -1,45 +1,22 @@
 package jct.pillorganizer.tenant.repo;
 
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
-
-import jakarta.annotation.Nullable;
+import java.util.UUID;
 
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.annotation.Version;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
-import jct.pillorganizer.tenant.model.device.Device;
-import jct.pillorganizer.tenant.model.device.DeviceProvision;
+import jct.pillorganizer.tenant.model.device.LogicalDevice;
 
-@Repository
-public interface DeviceRepository extends CrudRepository<Device, Long> {
+@JdbcRepository(dialect = Dialect.POSTGRES)
+public interface DeviceRepository extends CrudRepository<LogicalDevice, UUID> {
 
-    Optional<Device> findBySerialNo(long serialNo);
+    List<LogicalDevice> findAll();
 
-    @Query("from device where currentProvision is not null")
-    List<Device> findAllProvisioned();
-
-    @Query("select d from device d join d.users u on u.userID = :userID")
-    List<Device> findByUserID(long userID);
-
-    List<Device> findAll();
-
-    void update(@Id Long id, @Version Long version, long stateHash, long eventCounter);
-
-    void update(@Id Long id, @Version Long version, DeviceProvision currentProvision);
-
-    void updateLastSyncAndIpv4AndIpv6AndBatteryAndChargingAndEngrData(@Id Long id, @Version Long version, Timestamp lastSync,
-                                                                      @Nullable Integer ipv4, @Nullable byte[] ipv6, @Nullable Integer battery, @Nullable Boolean charging, @Nullable String engr_data);
-
-    void update(@Id Long id, String customName);
-
-    void updateBaseTZById(@Id Long id, String baseTZ);
-
-    Optional<Device> findBySerialNoAndCurrentProvisionOobKey(long sn, byte[] oob);
-
-    Optional<Device> findByCurrentProvisionOobKey(byte[] oob);
+    @Query("UPDATE logical_device SET nickname = :nickname WHERE id = :id")
+    void update(@Id UUID id, String nickname);
 
 }

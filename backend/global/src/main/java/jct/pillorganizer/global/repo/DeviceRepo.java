@@ -18,26 +18,26 @@ public class DeviceRepo extends BaseControlPlaneRepo<DeviceEntity> {
         super(standardClient, DeviceEntity.class);
     }
 
-    public Optional<DeviceEntity> findByDeviceId(String deviceId) {
+    public Optional<DeviceEntity> findBySerialNumber(String serialNumber) {
         Key key = Key.builder()
-                .partitionValue(DeviceEntity.pk(deviceId))
+                .partitionValue(DeviceEntity.pk(serialNumber))
                 .sortValue(DeviceEntity.sk())
                 .build();
         return Optional.ofNullable(this.table.getItem(key));
     }
 
-    public List<DeviceEntity> findBySerialNumber(String serialNumber) {
-        QueryConditional queryConditional = QueryConditional.sortBeginsWith(
+    public Optional<DeviceEntity> findByDeviceId(String deviceId) {
+        QueryConditional queryConditional = QueryConditional.keyEqualTo(
                 Key.builder()
-                        .partitionValue(DeviceEntity.gsi2Pk(serialNumber))
-                        .sortValue(DeviceEntity.gsi2Sk(""))
+                        .partitionValue(DeviceEntity.gsi2Pk(deviceId))
+                        .sortValue(DeviceEntity.gsi2Sk())
                         .build()
         );
 
         return this.gsi2.query(queryConditional)
                 .stream()
                 .flatMap(page -> page.items().stream())
-                .collect(Collectors.toList());
+                .findFirst();
     }
 
     public List<DeviceEntity> findByTenantId(String tenantId) {

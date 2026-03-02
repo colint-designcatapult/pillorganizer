@@ -7,10 +7,11 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.security.authentication.AuthenticationException;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import jct.pillorganizer.tenant.model.device.Device;
+import jct.pillorganizer.tenant.model.device.LogicalDevice;
 import lombok.extern.flogger.Flogger;
 
 import java.util.Objects;
+import java.util.UUID;
 
 
 @Singleton
@@ -36,8 +37,8 @@ public class DeviceABACInterceptor implements MethodInterceptor<Object, Object> 
                         return authorizeByDeviceID(id, context);
                     }
                 }
-            } else if(value.getType().equals(Device.class)) {
-                Device device = (Device) pair.getValue().getValue();
+            } else if(value.getType().equals(LogicalDevice.class)) {
+                LogicalDevice device = (LogicalDevice) pair.getValue().getValue();
                 return authorizeByDeviceID(device.getId(), context);
             }
         }
@@ -56,20 +57,12 @@ public class DeviceABACInterceptor implements MethodInterceptor<Object, Object> 
         return new AuthenticationException("Access denied to device");
     }
 
-    private Object authorizeByDeviceID(long id, MethodInvocationContext<Object, Object> context) {
+    private Object authorizeByDeviceID(UUID id, MethodInvocationContext<Object, Object> context) {
         if(context.getReturnType().isReactive()) {
-            return authService.accessDeviceAsync(id)
-                    .mapNotNull((d) -> {
-                        if(d != null) {
-                            log.atFinest().log("Authorized user access to device %d", id);
-                            return context.proceed();
-                        } else {
-                            throw unauthorized();
-                        }
-                    });
+            return authService.accessDevice(id);
         } else {
             if(authService.accessDevice(id) != null) {
-                log.atFinest().log("Authorized user access to device %d", id);
+                log.atFinest().log("Authorized user access to device %s", id);
                 return context.proceed();
             } else {
                 throw unauthorized();

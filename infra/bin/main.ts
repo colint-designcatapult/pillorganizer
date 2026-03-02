@@ -6,6 +6,9 @@ import { DataStack } from '../lib/data-stack';
 import { AppStack } from '../lib/app-stack';
 import { AuthStack } from '../lib/auth-stack';
 import { ControlPlaneStack } from '../lib/control-plane-stack';
+import { IotStack } from '../lib/iot-stack';
+import { TenantPlatformStack } from '../lib/tenant-platform-stack';
+import { ControlPlaneDataStack } from '../lib/control-plane-data-stack';
 
 const app = new cdk.App();
 
@@ -28,22 +31,29 @@ const globalEnv = { account: globals.account, region: globals.region };
 
 const platformStack = new PlatformStack(app, `HealthePlatformStack`, {
   env: globalEnv,
-  baseDomain: globals.baseDomain
+  baseDomain: globals.baseDomain,
+  mqttSubdomain: 'mqtt'
+});
+
+const controlPlaneDataStack = new ControlPlaneDataStack(app, 'HealtheControlPlaneDataStack', {
+  env: globalEnv,
 });
 
 const controlPlaneStack = new ControlPlaneStack(app, 'HealtheControlPlaneStack', {
   env: globalEnv,
-  zone: platformStack.zone,
-  baseDomain: globals.baseDomain
+  domainName: platformStack.controlPlaneDomainName,
+  controlPlaneTable: controlPlaneDataStack.controlPlaneTable
 });
 
 const authStack = new AuthStack(app, 'HealtheAuthStack', {
   env: globalEnv,
-  postConfirmation: controlPlaneStack.postConfirmation,
-  preTokenGeneration: controlPlaneStack.preTokenGeneration
+  controlPlaneTable: controlPlaneDataStack.controlPlaneTable
 });
 
-
+const iotStack = new IotStack(app, `HealtheIotStack`, {
+  env: globalEnv,
+  controlPlaneTable: controlPlaneDataStack.controlPlaneTable
+});
 
 // Environment-specific Stacks (Data, App)
 // These require an 'env' context (e.g. -c env=staging)
@@ -68,28 +78,33 @@ if (envKey) {
   // @relation(INFRA-DSGN-7, scope=range_start)
   const dataStack = new DataStack(app, `HealtheDataStack-${envKey}`, {
     env: globalEnv,
-    vpc: platformStack.vpc,
     removalPolicy: removalPolicy,
     environmentName: envKey,
   });
   // @relation(INFRA-DSGN-7, scope=range_end)
 
-  const appStack = new AppStack(app, `HealtheAppStack-${envKey}`, {
+  const tenantPlatformStack = new TenantPlatformStack(app, `HealtheTenantPlatformStack-${envKey}`, {
     env: globalEnv,
-    dbCluster: dataStack.dbCluster,
-    dbProxy: dataStack.dbProxy,
-    vpc: platformStack.vpc,
-    removalPolicy: removalPolicy,
-    environmentName: envKey,
     baseDomain: globals.baseDomain,
     subdomain: envConfig.subdomain || envKey,
-    zone: platformStack.zone
+    zone: platformStack.zone,
+    removalPolicy: removalPolicy,
+  });
+
+  const appStack = new AppStack(app, `HealtheAppStack-${envKey}`, {
+    env: globalEnv,
+    dsqlCluster: dataStack.clusterId,
+    dsqlEndpoint: dataStack.clusterEndpoint,
+    removalPolicy: removalPolicy,
+    environmentName: envKey,
+    domainName: tenantPlatformStack.domainName,
   });
 
   // Apply config tags to environment stacks
   if (envConfig.tags) {
     for (const [key, value] of Object.entries(envConfig.tags)) {
       cdk.Tags.of(dataStack).add(key, value as string);
+      cdk.Tags.of(tenantPlatformStack).add(key, value as string);
       cdk.Tags.of(appStack).add(key, value as string);
     }
   }

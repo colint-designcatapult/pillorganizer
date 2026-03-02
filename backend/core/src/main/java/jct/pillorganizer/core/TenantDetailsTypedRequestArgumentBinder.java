@@ -6,6 +6,7 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.bind.binders.TypedRequestArgumentBinder;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jct.pillorganizer.core.service.TenantService;
 
 import java.util.Optional;
 

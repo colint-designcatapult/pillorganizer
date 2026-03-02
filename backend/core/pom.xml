@@ -39,6 +39,11 @@
       <artifactId>micronaut-serde-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>io.micronaut.security</groupId>
       <artifactId>micronaut-security</artifactId>
       <scope>compile</scope>
@@ -55,6 +60,16 @@
     <dependency>
       <groupId>io.micronaut.crac</groupId>
       <artifactId>micronaut-crac</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.github.ksuid</groupId>
+      <artifactId>ksuid</artifactId>
+      <version>1.1.4</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.uuid</groupId>
+      <artifactId>java-uuid-generator</artifactId>
+      <version>5.1.0</version>
     </dependency>
   </dependencies>
 

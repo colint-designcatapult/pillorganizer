@@ -1,0 +1,51 @@
+package jct.pillorganizer.global.model;
+
+import lombok.*;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbFlatten;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbImmutable;
+
+import java.time.Instant;
+
+@Value
+@Builder
+@DynamoDbImmutable(builder = DeviceTenantMappingEntity.DeviceTenantMappingEntityBuilder.class)
+public class DeviceTenantMappingEntity {
+
+    @Getter(onMethod_ = {@DynamoDbFlatten})
+    BaseControlPlaneEntity base;
+
+    @Getter(onMethod_ = @DynamoDbAttribute("SerialNumber"))
+    String serialNumber;
+
+    @Getter(onMethod_ = @DynamoDbAttribute("TenantId"))
+    String tenantId;
+
+    public static String pk(String serialNumber) {
+        return "SN#" + serialNumber;
+    }
+
+    public static String sk() {
+        return "TENANT_MAPPING";
+    }
+
+    public static String gsi1Pk(String tenantId) {
+        return "TENANT#" + tenantId;
+    }
+
+    public static String gsi1Sk(String serialNumber) {
+        return "SN#" + serialNumber;
+    }
+
+    public static BaseControlPlaneEntity buildBase(String serialNumber, String tenantId) {
+        return BaseControlPlaneEntity.builder()
+                .pk(pk(serialNumber))
+                .sk(sk())
+                .entityType(DeviceControlPlaneEntityType.DEVICE_TENANT_MAPPING)
+                .gsi1Pk(gsi1Pk(tenantId))
+                .gsi1Sk(gsi1Sk(serialNumber))
+                .createdAt(Instant.now())
+                .lastModified(Instant.now())
+                .build();
+    }
+}
