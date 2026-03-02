@@ -71,31 +71,3 @@ int WiFiCredentialsCharacteristic::write(uint16_t conn_handle, uint16_t attr_han
     ESP_LOGI(TAG, "WiFi credentials set successfully");
     return 0;
 }
-
-// Certificate Characteristic - receives 16-byte certificate/OOB key
-int CertificateCharacteristic::write(uint16_t conn_handle, uint16_t attr_handle, struct ble_gatt_access_ctxt* ctxt) {
-    uint8_t buffer[16];
-    uint16_t len;
-    
-    // Receive exactly 16 bytes
-    int err = ble_receive(ctxt->om, 16, 16, buffer, &len);
-    if (err != 0) {
-        ESP_LOGE(TAG, "Failed to receive certificate - expected 16 bytes");
-        return BLE_ATT_ERR_INVALID_ATTR_VALUE_LEN;
-    }
-    
-    ESP_LOGI(TAG, "Received certificate (%d bytes)", len);
-    
-    // Store certificate
-    esp_err_t result = network_set_certificate(buffer, len);
-    
-    if (result != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to store certificate: %d", result);
-        return BLE_ATT_ERR_UNLIKELY;
-    }
-    
-    ESP_LOGI(TAG, "Certificate stored successfully");
-    return 0;
-}
-
-

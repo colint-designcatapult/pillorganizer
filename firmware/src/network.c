@@ -10,6 +10,7 @@
 #include "nvs_wrapper.h"
 #include "engineering.h"
 #include "ota.h"
+#include <nvs.h>
 
 #include "pb_encode.h"
 #include "pb_decode.h"
@@ -112,6 +113,66 @@ void network_get_serial_number(uint8_t* sn_out, size_t* len_out)
     const wifi_info_t* wifi_info = wifi_get_info();
     memcpy(sn_out, wifi_info->sn.bytes.mac, 6);
     *len_out = 6;
+}
+
+// Save PEM certificate/key to NVS
+esp_err_t network_save_cert_to_nvs(const char* nvs_key, const char* cert_pem)
+{
+    return nvs_write_blob(nvs_key, cert_pem, strlen(cert_pem) + 1);
+}
+
+// Load PEM certificate/key from NVS (caller must free *cert_out)
+esp_err_t network_load_cert_from_nvs(const char* nvs_key, char** cert_out, size_t* len_out)
+{
+    nvs_handle_t h;
+    esp_err_t err = nvs_open("storage", NVS_READONLY, &h);
+    if (err != ESP_OK) return err;
+
+    size_t required_size = 0;
+    err = nvs_get_blob(h, nvs_key, NULL, &required_size);
+    if (err != ESP_OK) {
+        nvs_close(h);
+        return err;
+    }
+
+    *cert_out = malloc(required_size);
+    if (*cert_out == NULL) {
+        nvs_close(h);
+        return ESP_ERR_NO_MEM;
+    }
+
+    err = nvs_get_blob(h, nvs_key, *cert_out, &required_size);
+    nvs_close(h);
+    if (err != ESP_OK) {
+        free(*cert_out);
+        *cert_out = NULL;
+        return err;
+    }
+
+    if (len_out) *len_out = required_size;
+    return ESP_OK;
+}
+
+// Save Thing name to NVS
+esp_err_t network_save_thing_name(const char* thing_name)
+{
+    return nvs_write_blob("THING_NAME", thing_name, strlen(thing_name) + 1);
+}
+
+// Load Thing name from NVS
+esp_err_t network_load_thing_name(char* thing_name_out, size_t max_len)
+{
+    nvs_handle_t h;
+    esp_err_t err = nvs_open("storage", NVS_READONLY, &h);
+    if (err != ESP_OK) return err;
+
+    size_t len = max_len;
+    err = nvs_get_blob(h, "THING_NAME", thing_name_out, &len);
+    nvs_close(h);
+    if (err != ESP_OK) return err;
+
+    ESP_LOGI(TAG, "Loaded Thing name from NVS: %s", thing_name_out);
+    return ESP_OK;
 }
 
 void network_bin_event_task(void* parm);
@@ -391,7 +452,7 @@ bool network_send_provision()
     uint8_t buffer[256];
     pb_ostream_t ostream = pb_ostream_from_buffer(buffer, sizeof(buffer));
     pb_encode(&ostream, DeviceProvisionRequest_fields, &req);
-    ESP_LOGI(TAG, "Encoded provision record");
+    // ESP_LOGI(TAG, "Encoded provision record");
 
     SyncResponse resp = SyncResponse_init_zero;
 
@@ -399,7 +460,7 @@ bool network_send_provision()
     esp_err_t res = network_send_protobuf_request("/api/v1_2/device/provision",
             HTTP_METHOD_POST, buffer, ostream.bytes_written, &status, SyncResponse_fields, &resp);
 
-    ESP_LOGI(TAG, "Provision status %d esp_err_t %d", status, res);
+    // ESP_LOGI(TAG, "Provision status %d esp_err_t %d", status, res);
     if(res == ERR_OK) {
         if(status == 200) {
 
@@ -448,15 +509,8 @@ void network_bin_event_task(void* parm)
             // TODO: Engineering server breaks compilation after ESP-IDF 6.9.0 upgrade
             // engineering_start_server(); // reentrant
 
-            bool registered = provision_record.registered;
-
-            // If not registered, attempt to
-            if(!registered) {
-                vTaskDelay(pdMS_TO_TICKS(1000));
-                ESP_LOGI(TAG, "Attempting to send provision record to server");
-                registered = network_send_provision();
-                ESP_LOGI(TAG, "Provisioning responded with %d", registered);
-            }
+            // Device registration handled by AWS IoT Fleet Provisioning
+            bool registered = true;
 
             if(registered) {
                 //if the device is provisioned and not connect to BT
@@ -475,7 +529,7 @@ void network_bin_event_task(void* parm)
 
                     SemaphoreHandle_t sem = event_bin_queue_mutex();
                     if(xSemaphoreTake(sem, 0)) {
-                        network_send_sync(); //send the data to back end every 20seconds if there is no bluetooth
+                        // network_send_sync(); // Legacy HTTP backend - replaced by AWS IoT MQTT telemetry
                         xSemaphoreGive(sem);
                     }
                 } else {

@@ -24,4 +24,18 @@ config AWS_IOT_THING_NAME
     string "AWS IoT Thing Name"
     default "PillOrganizer_Test_001"
 
+config DEV_CLAIM_TENANT_ID
+    string "Claim Tenant ID"
+    default "public"
+    help
+        Tenant ID returned from the claim credential exchange.
+        Obtained by running the iot_provision.py script.
+
+config DEV_CLAIM_TOKEN
+    string "Claim Token (claimId)"
+    default ""
+    help
+        claimId returned from the claim credential exchange.
+        Obtained by running the iot_provision.py script.
+
 endmenu
