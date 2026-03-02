@@ -52,6 +52,12 @@ export class AuthStack extends cdk.Stack {
     const flutterAppClient = this.userPool.addClient('CabinetAppClient', {
       userPoolClientName: 'healthe-cabinet-mobile',
       generateSecret: false, 
+      authFlows: {
+        userPassword: true, 
+        userSrp: true,
+        custom: true,
+        user: true
+      },
       oAuth: {
         flows: {
           authorizationCodeGrant: true, 
