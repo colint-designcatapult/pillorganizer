@@ -4,5 +4,5 @@ import io.micronaut.serde.annotation.Serdeable;
 
 @Serdeable
 public record ProvisioningClaimDto(String certificatePem, String privateKey,
-                                   String expiration, String claimId, String tenantId) {
+                                   String expiration, String claimId, String tenantId, String tenantApiBase) {
 }
