@@ -17,7 +17,6 @@
 
 #include "wifi.h"
 #include "wire_codec.h"
-#include "ble.h"
 #include <esp_bt.h>
 #include <string.h>
 
@@ -513,9 +512,9 @@ void network_bin_event_task(void* parm)
             bool registered = true;
 
             if(registered) {
-                //if the device is provisioned and not connect to BT
-                //device will send sync data every 20seconds
-                if(!ble_has_sync_preemption()) {
+                // WiFi provisioning via BLE is now handled by ESP-IDF, doesn't preempt sync
+                // Always send bin sync data periodically
+                {
                     BinEvent be = { 0 };
                     bool has_bin_event = false;
                     for(int i = 0; i < 20; i++) {
@@ -532,9 +531,6 @@ void network_bin_event_task(void* parm)
                         // network_send_sync(); // Legacy HTTP backend - replaced by AWS IoT MQTT telemetry
                         xSemaphoreGive(sem);
                     }
-                } else {
-                    // Bluetooth has preemption, so do nothing
-                    vTaskDelay(pdMS_TO_TICKS(1000));
                 }
             } else {
                 // Failed to register

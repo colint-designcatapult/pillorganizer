@@ -40,6 +40,8 @@ idf_component_register(
         coreJSON
         backoffAlgorithm
         Fleet-Provisioning-for-AWS-IoT-embedded-sdk
+        wifi_provisioning
+        protocomm
 )
 
 # Set C++23 standard

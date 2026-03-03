@@ -33,7 +33,6 @@
 #include "event.h"
 #include "esp_console.h"
 #include "wifi.h"
-#include "ble.h"
 #include "network.h"
 
 #include "iot_telemetry.h"
@@ -131,6 +130,14 @@ static int ip_command(int argc, char **argv)
 static int led_command(int argc, char **argv)
 {    
     engineering_red_leds();
+    return 0;
+}
+
+static int restart_command(int argc, char **argv)
+{
+    ESP_LOGI(TAG, "Restarting device...");
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    esp_restart();
     return 0;
 }
 
@@ -300,6 +307,12 @@ void app_main(void)
         .func = &exit_command,
     };
 
+    esp_console_cmd_t restart_cmd = {
+        .command = "restart",
+        .help = "Restart the device",
+        .func = &restart_command,
+    };
+
     esp_console_new_repl_uart(&uart_config, &rc, &o);
     esp_console_cmd_register(&read_cmd);
     esp_console_cmd_register(&logs_cmd);
@@ -307,12 +320,12 @@ void app_main(void)
     esp_console_cmd_register(&led_cmd);
     esp_console_cmd_register(&exit_cmd);
     esp_console_cmd_register(&enter_deep_sleep_cmd);
+    esp_console_cmd_register(&restart_cmd);
 
 
     //engineering_logs_off();
     esp_console_start_repl(o);
 
-    ble_init();
     wifi_init();
 
     // Start fleet provisioning task
@@ -325,7 +338,7 @@ void app_main(void)
     // START THE MQTT CLIENT HERE
     // mqtt_app_start();
 
-    // Start 10-second MQTT heartbeat
+    // Start MQTT event monitoring
     // iot_telemetry_start();
 
     // todo: remove this

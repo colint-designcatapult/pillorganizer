@@ -38,4 +38,11 @@ config DEV_CLAIM_TOKEN
         claimId returned from the claim credential exchange.
         Obtained by running the iot_provision.py script.
 
+config RESET_PROVISIONED_ON_BOOT
+    bool "Reset WiFi provisioning on boot (for testing)"
+    default n
+    help
+        Erase WiFi provisioning credentials on every boot to test BLE provisioning.
+        AWS IoT certificates are preserved. Disable this after testing.
+
 endmenu

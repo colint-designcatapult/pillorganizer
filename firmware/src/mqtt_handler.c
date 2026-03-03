@@ -306,15 +306,8 @@ esp_err_t mqtt_connect_with_certs(const char* client_id, const char* root_ca,
         return ESP_ERR_NO_MEM;
     }
     
-    // Clean up any stale TLS context from a previous dropped connection.
-    // Without this, the old allocation leaks and mbedTLS fails with -0x7F00 on reconnect.
-    if (networkContext.xTlsContextSemaphore != NULL) {
-        xTlsDisconnect(&networkContext);
-        vSemaphoreDelete(networkContext.xTlsContextSemaphore);
-        networkContext.xTlsContextSemaphore = NULL;
-    }
-
     // Initialize network context with dynamic certs
+    // memset zeros out any old semaphore handle, so we start fresh
     memset(&networkContext, 0, sizeof(networkContext));
     networkContext.pcHostname = AWS_IOT_ENDPOINT;
     networkContext.xPort = 8883;
@@ -345,7 +338,7 @@ esp_err_t mqtt_connect_with_certs(const char* client_id, const char* root_ca,
     vTlsSetSendTimeout(5000);
     vTlsSetRecvTimeout(5000);
     
-    // Connect TLS
+    // Connect TLS (expensive ECDH operations, timeout is 60 seconds which is sufficient)
     TlsTransportStatus_t tlsStatus = xTlsConnect(&networkContext);
     if (tlsStatus != TLS_TRANSPORT_SUCCESS) {
         ESP_LOGE(TAG, "TLS connection failed: %d", tlsStatus);
