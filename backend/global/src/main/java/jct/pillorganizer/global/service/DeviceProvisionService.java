@@ -1,11 +1,14 @@
 package jct.pillorganizer.global.service;
 
 import com.github.ksuid.Ksuid;
+import io.micronaut.multitenancy.exceptions.TenantNotFoundException;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jct.pillorganizer.core.TenantDetails;
 import jct.pillorganizer.core.message.DeviceProvisionMessage;
 import jct.pillorganizer.core.message.GrantUserMessage;
 import jct.pillorganizer.core.service.SecureRandomService;
+import jct.pillorganizer.core.service.TenantService;
 import jct.pillorganizer.core.uid.KsuidService;
 import jct.pillorganizer.global.dto.ProvisioningClaimDto;
 import jct.pillorganizer.global.model.DeviceClaimEntity;
@@ -35,11 +38,13 @@ public class DeviceProvisionService {
     private final UserService userService;
     private final SecureRandomService secureRandomService;
     private final KsuidService ksuidService;
+    private final TenantService tenantService;
 
     @Inject
     public DeviceProvisionService(IotClient iotClient, DeviceClaimRepo deviceClaimRepo, DeviceRepo deviceRepo,
                                   DeviceService deviceService, TenantMessageService messageService,
-                                  UserService userService, SecureRandomService secureRandomService, KsuidService ksuidService) {
+                                  UserService userService, SecureRandomService secureRandomService,
+                                  KsuidService ksuidService, TenantService tenantService) {
         this.iotClient = iotClient;
         this.deviceClaimRepo = deviceClaimRepo;
         this.deviceService = deviceService;
@@ -48,6 +53,7 @@ public class DeviceProvisionService {
         this.userService = userService;
         this.secureRandomService = secureRandomService;
         this.ksuidService = ksuidService;
+        this.tenantService = tenantService;
     }
 
     private String generateClaimToken() {
@@ -81,12 +87,14 @@ public class DeviceProvisionService {
 
         // Lookup which tenant this device belongs to
         String tenantId = deviceService.lookupTenant(serialNumber);
+        TenantDetails tenantDetails = tenantService.getTenantDetails(tenantId)
+                .orElseThrow(() -> new TenantNotFoundException("Device assigned to unregistered tenant: " + tenantId));
 
         // Create a claim token
         String claimToken = createClaimRecord(serialNumber, userId, tenantId);
 
         return new ProvisioningClaimDto(response.certificatePem(), response.keyPair().privateKey(),
-                response.expiration().toString(), claimToken, tenantId);
+                response.expiration().toString(), claimToken, tenantId, tenantDetails.getApiBase());
     }
 
     public Optional<DeviceEntity> provisionDevice(String serialNumber, String claimToken) {

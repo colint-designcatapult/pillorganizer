@@ -8,15 +8,16 @@ import io.micronaut.multitenancy.tenantresolver.TenantResolver;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.core.service.ConfigTenantService;
+import jct.pillorganizer.core.service.TenantService;
 
 import java.io.Serializable;
 
 @Singleton
 public class DomainTenantResolver extends AbstractSubdomainTenantResolver implements TenantResolver {
-    ConfigTenantService service;
+    TenantService service;
 
     @Inject
-    public DomainTenantResolver(HttpHostResolver httpHostResolver, ConfigTenantService service) {
+    public DomainTenantResolver(HttpHostResolver httpHostResolver, TenantService service) {
         super(httpHostResolver);
         this.service = service;
     }
