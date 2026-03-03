@@ -2,7 +2,6 @@ import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
-import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:provider/provider.dart';
@@ -55,16 +54,14 @@ class DeviceSelectorModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PlatformScaffold(
-      appBar: PlatformAppBar(
+    return Scaffold(
+      appBar: AppBar(
         title: Text(
           AppLocalizations.of(context)!.switchPillOrganizers,
           style: Theme.of(context).textTheme.labelLarge,
         ),
         automaticallyImplyLeading: false,
       ),
-      material: (_, __) => MaterialScaffoldData(),
-      cupertino: (_, __) => CupertinoPageScaffoldData(),
       body: SafeArea(
         bottom: false,
         child: Consumer<DeviceProvider>(

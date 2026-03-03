@@ -173,7 +173,7 @@ int createDaysOfWeekFlag(Set<DayOfWeek> set) {
 }
 
 @freezed
-class ScheduledMedication extends Equatable with _$ScheduledMedication {
+abstract class ScheduledMedication extends Equatable with _$ScheduledMedication {
   const ScheduledMedication._();
   const factory ScheduledMedication(
           {int? id,

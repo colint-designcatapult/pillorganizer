@@ -18,7 +18,7 @@ enum BinStatus { DISABLED, TAKEN, MISSED, PENDING, TAKE_NOW }
 enum EventType { OPENED, CLOSED, MISSED }
 
 @freezed
-class BinEvent with _$BinEvent {
+abstract class BinEvent with _$BinEvent {
   const BinEvent._();
 
   const factory BinEvent(
@@ -42,7 +42,7 @@ class BinEvent with _$BinEvent {
 }
 
 @freezed
-class BinSchedule with _$BinSchedule {
+abstract class BinSchedule with _$BinSchedule {
   const BinSchedule._();
 
   const factory BinSchedule(
@@ -58,7 +58,7 @@ class BinSchedule with _$BinSchedule {
 }
 
 @freezed
-class BinState with _$BinState {
+abstract class BinState with _$BinState {
   const BinState._();
 
   const factory BinState(
@@ -88,7 +88,7 @@ class BinState with _$BinState {
 }
 
 @freezed
-class DosePeriod with _$DosePeriod {
+abstract class DosePeriod with _$DosePeriod {
   const DosePeriod._();
 
   const factory DosePeriod(
@@ -128,7 +128,7 @@ List<BinStatus> decodePackedStatus(int? bins) {
 }
 
 @freezed
-class DeviceState extends Equatable with _$DeviceState {
+abstract class DeviceState extends Equatable with _$DeviceState {
   const DeviceState._();
 
   const factory DeviceState(
@@ -211,7 +211,7 @@ bool isOnlineFromLastSeen(DateTime? lastSeen) {
 }
 
 @freezed
-class DeviceUser extends Equatable with _$DeviceUser {
+abstract class DeviceUser extends Equatable with _$DeviceUser {
   const DeviceUser._();
   const factory DeviceUser({
     required int id,

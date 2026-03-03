@@ -1,12 +1,10 @@
-import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:app/main.dart';
 import 'package:app/provider/authentication_provider.dart';
-import 'package:app/service/error_handler.dart';
+import 'package:app/service/amplify_service.dart';
 import 'package:app/utils/takecare_link_util.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
-import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
@@ -14,8 +12,7 @@ class LaunchPageLogin extends StatefulWidget {
   const LaunchPageLogin({Key? key}) : super(key: key);
 
   static Route<LaunchPageLogin> route(context) {
-    return platformPageRoute(
-        context: context,
+    return MaterialPageRoute(
         builder: (_) {
           return const LaunchPageLogin();
         });
@@ -28,6 +25,7 @@ class LaunchPageLogin extends StatefulWidget {
 class _LaunchPageLoginState extends State<LaunchPageLogin> {
   Future<bool>? _checkAuthFuture;
   Future<void>? _loginFuture;
+  final AmplifyService _amplifyService = AmplifyService();
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +92,7 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
                               ),
                             ),
                             child: Text(
-                              "Make an account with Amplify",
+                              "Create an account",
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium
@@ -112,7 +110,7 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
   Widget _formComponent() {
     return BasicFormContainer(
       subtitleText: AppLocalizations.of(context)!.signInBackSubtitle,
-      buttonText: "Sign In with Amplify",
+      buttonText: "Sign In",
       onSubmit: _signInWithAmplify,
       future: _loginFuture,
       children: [],
@@ -162,14 +160,9 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
   }
 
   Future<void> _performSignIn() async {
-    try {
-      final result = await Amplify.Auth.signInWithWebUI();
-      safePrint('Sign in result: $result');
-      if (result.isSignedIn) {
-        _handleSuccessfulLogin();
-      }
-    } on AuthException catch (e) {
-      safePrint('Error signing in: ${e.message}');
+    final isSignedIn = await _amplifyService.signInWithWebUI();
+    if (isSignedIn) {
+      _handleSuccessfulLogin();
     }
   }
 

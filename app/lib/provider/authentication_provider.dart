@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:app/api/user.dart';
 import 'package:app/exceptions/auth_failed.dart';
+import 'package:app/service/amplify_service.dart';
 import 'package:app/utils/api_utils.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
@@ -96,7 +97,14 @@ class AuthenticationProvider with ChangeNotifier {
     return _future;
   }
 
-  Future<bool> checkAuthStatus() {
+  Future<bool> checkAuthStatus() async {
+    final amplifyService = AmplifyService();
+    final idToken = await amplifyService.getIdToken();
+
+    if (idToken != null) {
+      await credentialManager.updateJWT(JwtCredentials(access_token: idToken));
+    }
+
     return client.authStatus().then((user) {
       _user = User(
           id: user.id,

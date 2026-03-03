@@ -483,7 +483,7 @@ class DeviceDTO {
 }
 
 @freezed
-class EmailPasswordCredentialsDTO with _$EmailPasswordCredentialsDTO {
+abstract class EmailPasswordCredentialsDTO with _$EmailPasswordCredentialsDTO {
   const factory EmailPasswordCredentialsDTO(
       {required String? username,
       required String? password}) = _EmailPasswordCredentialsDTO;

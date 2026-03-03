@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:app/provider/authentication_provider.dart';
 import 'package:app/screens/auth/launch_page_login.dart';
+import 'package:app/service/amplify_service.dart';
 import 'package:app/utils/takecare_link_util.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
@@ -17,6 +18,7 @@ class FirstLaunchPage extends StatefulWidget {
 
 class _FirstLaunchPageState extends State<FirstLaunchPage> {
   Future<bool>? _checkAuthFuture;
+  final AmplifyService _amplifyService = AmplifyService();
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +90,7 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
                               height: buttonHeight.h,
                               child: OutlinedButton(
                                   onPressed: () {
-                                    _handleCreateAccount();
+                                    _signInWithAmplify();
                                   },
                                   style: OutlinedButton.styleFrom(
                                     shape: RoundedRectangleBorder(
@@ -113,7 +115,7 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
                             height: buttonHeight.h,
                             child: OutlinedButton(
                                 onPressed: () {
-                                  _login();
+                                  _signInWithAmplify();
                                 },
                                 style: OutlinedButton.styleFrom(
                                   shape: RoundedRectangleBorder(
@@ -152,7 +154,9 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
   }
 
   void _handleSuccessfulAuth() async {
+    if (!mounted) return;
     final route = await TakecareLinkUtil.handlePostAuthNavigation(context);
+    if (!mounted) return;
     Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => false);
   }
 
@@ -163,7 +167,6 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
       });
       return false;
     } else {
-      print('Unhandled error type: $err');
       return false;
     }
   }
@@ -185,13 +188,11 @@ class _FirstLaunchPageState extends State<FirstLaunchPage> {
     });
   }
 
-  void _handleCreateAccount() {
-    Navigator.of(context, rootNavigator: true)
-        .pushNamedAndRemoveUntil('/register', (route) => false);
-  }
-
-  void _login() {
-    Navigator.of(context).push(LaunchPageLogin.route(context));
+  void _signInWithAmplify() async {
+    final isSignedIn = await _amplifyService.signInWithWebUI();
+    if (isSignedIn) {
+      _handleSuccessfulAuth();
+    }
   }
 
   @override

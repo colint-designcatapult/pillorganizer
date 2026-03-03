@@ -29,6 +29,7 @@ class Pillbox extends StatelessWidget {
       final bool isDeviceActive =
           notice.name != 'empty' && notice.name != 'disconnected';
 
+
       return SizedBox(
           height: 250.h,
           child: ShimmerPlaceholder(

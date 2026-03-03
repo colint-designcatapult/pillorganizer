@@ -7,7 +7,7 @@ part 'medication_entry_wizard.freezed.dart';
 enum NewMedicationStage { name, appearance, schedule }
 
 @freezed
-class NewMedicationState with _$NewMedicationState {
+abstract class NewMedicationState with _$NewMedicationState {
   const factory NewMedicationState(
       {ScheduledMedication? existing,
       required int deviceID,

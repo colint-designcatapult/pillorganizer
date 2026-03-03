@@ -1,5 +1,3 @@
-import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
-import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:app/navigation/tab_navigator.dart';
 import 'package:app/provider/caregiver_provider.dart';
 import 'package:app/provider/device_provider.dart';
@@ -7,17 +5,17 @@ import 'package:app/provider/medication_provider.dart';
 import 'package:app/provider/time_provider.dart';
 import 'package:app/provider/user_registration_provider.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
-import 'package:app/screens/auth/register.dart';
 import 'package:app/screens/first_launch.dart';
 import 'package:app/screens/name_device_wizard.dart';
 import 'package:app/screens/post_setup_wizard.dart';
+import 'package:app/service/amplify_service.dart';
 import 'package:app/service/credential_manager.dart';
 import 'package:app/service/deep_link_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,54 +33,12 @@ import 'screens/auth/patient_confirmation.dart';
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
 
-const amplifyconfig = ''' {
-    "UserAgent": "aws-amplify-cli/2.0",
-    "Version": "1.0",
-    "auth": {
-        "plugins": {
-            "awsCognitoAuthPlugin": {
-                "CognitoUserPool": {
-                    "Default": {
-                        "PoolId": "ca-central-1_H0hSkGPqA",
-                        "AppClientId": "431ke1u8b59tuuvr81d1bji34g",
-                        "Region": "ca-central-1"
-                    }
-                },
-                "Auth": {
-                    "Default": {
-                        "OAuth": {
-                            "WebDomain": "healthesolutions.auth.ca-central-1.amazoncognito.com",
-                            "AppClientId": "431ke1u8b59tuuvr81d1bji34g",
-                            "SignInRedirectURI": "jct.pillorganizer.pills://callback",
-                            "SignOutRedirectURI": "jct.pillorganizer.pills://signout",
-                            "Scopes": [
-                                "profile",
-                                "openid"
-                            ]
-                        }
-                    }
-                }
-            }
-        }
-    }
-}''';
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   tz.initializeTimeZones();
   DeepLinkService().initialize();
-  await _configureAmplify();
-  runApp(const MyApp());
-}
-
-Future<void> _configureAmplify() async {
-  try {
-    await Amplify.addPlugin(AmplifyAuthCognito());
-    await Amplify.configure(amplifyconfig);
-    safePrint('Successfully configured');
-  } on Exception catch (e) {
-    safePrint('Error configuring Amplify: $e');
-  }
+  await AmplifyService().configureAmplify();
+  runApp(ProviderScope(child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -114,8 +70,7 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProxyProvider<SelectedDeviceProvider,
                   MedicationsProvider>(
               create: (context) => MedicationsProvider(
-                  Provider.of<SelectedDeviceProvider>(context, listen: false)
-                      .device),
+                  null),
               update: (context, device, old) => old!.update(device.device)),
           ChangeNotifierProxyProvider<SelectedDeviceProvider, ScheduleProvider>(
               create: (context) => ScheduleProvider(),
@@ -132,8 +87,7 @@ class MyApp extends StatelessWidget {
               data: MediaQuery.of(context).copyWith(
                 textScaler: const TextScaler.linear(1.0),
               ),
-              child: PlatformProvider(
-                settings: PlatformSettingsData(iosUsesMaterialWidgets: true),
+              child: Builder(
                 builder: (context) =>
                     Consumer2<DeepLinkProvider, LanguageProvider>(
                   builder:
@@ -167,11 +121,10 @@ class MyApp extends StatelessWidget {
                             },
                             '/index': (context) => const TabNavigator(),
                             '/post_setup': (context) => const PostSetupWizard(),
-                            '/register': (context) => const RegisterPage(),
                             '/patient_confirmation': (context) =>
                                 const PatientConfirmationPage()
                           },
-                          supportedLocales: const [Locale('en'), Locale('fr')],
+                          supportedLocales: const [Locale('en')],
                           localizationsDelegates: const <LocalizationsDelegate<
                               dynamic>>[
                             AppLocalizations.delegate,
@@ -293,11 +246,11 @@ class _DeepLinkWrapperState extends State<DeepLinkWrapper> {
   }
 
   void _handlePatientDeepLink(String patientId) {
-    final deepLinkProvider =
+    /*final deepLinkProvider =
         Provider.of<DeepLinkProvider>(context, listen: false);
 
     deepLinkProvider.setPatientId(patientId, shouldAutoValidate: false);
-    deepLinkProvider.setPendingNavigation(true);
+    deepLinkProvider.setPendingNavigation(true);*/
   }
 
   @override
