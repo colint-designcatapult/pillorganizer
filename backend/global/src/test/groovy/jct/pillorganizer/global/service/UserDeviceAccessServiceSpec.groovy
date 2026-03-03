@@ -1,12 +1,12 @@
-package jct.pillorganizer.global
+package jct.pillorganizer.global.service
 
 import io.micronaut.http.client.exceptions.HttpClientException
 import jct.pillorganizer.core.dto.DeviceAccessDto
+import jct.pillorganizer.global.BaseIntegrationSpec
 import jct.pillorganizer.global.client.TenantClient
-import jct.pillorganizer.global.service.UserDeviceAccessService
 import reactor.core.publisher.Mono
 
-class UserDeviceAccessSpec extends BaseIntegrationSpec {
+class UserDeviceAccessServiceSpec extends BaseIntegrationSpec {
 
     // @relation(CTRL-REQ-13, scope=range_start)
     void "test getUserDeviceAccess aggregates results from tenants"() {

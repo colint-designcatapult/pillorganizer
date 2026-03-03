@@ -11,6 +11,7 @@ import jct.pillorganizer.global.client.TenantClient;
 import lombok.extern.flogger.Flogger;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -30,11 +31,10 @@ public class TenantMessageService {
     Collection<TenantClient> clients;
 
     public String getQueueUrl(String tenantId) {
-        /*GetQueueUrlRequest getQueueUrlRequest = GetQueueUrlRequest.builder()
+        GetQueueUrlRequest getQueueUrlRequest = GetQueueUrlRequest.builder()
                 .queueName("tenant-" + tenantId)
                 .build();
-        return client.getQueueUrl(getQueueUrlRequest).queueUrl();*/
-        return "https://sqs.ca-central-1.amazonaws.com/114829892869/tenant-" + tenantId;
+        return client.getQueueUrl(getQueueUrlRequest).queueUrl();
     }
 
     public void provisionDevice(DeviceProvisionMessage message)
