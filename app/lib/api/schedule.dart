@@ -7,7 +7,7 @@ import 'api.dart';
 part 'schedule.freezed.dart';
 
 @freezed
-class MedicationDispenseTime extends Equatable with _$MedicationDispenseTime {
+abstract class MedicationDispenseTime extends Equatable with _$MedicationDispenseTime {
   const MedicationDispenseTime._();
   const factory MedicationDispenseTime(
       {required int dispenseTimeID,
@@ -28,7 +28,7 @@ class MedicationDispenseTime extends Equatable with _$MedicationDispenseTime {
 }
 
 @freezed
-class DispenseTime extends Equatable with _$DispenseTime {
+abstract class DispenseTime extends Equatable with _$DispenseTime {
   const DispenseTime._();
   const factory DispenseTime(
       {int? id,
@@ -39,7 +39,7 @@ class DispenseTime extends Equatable with _$DispenseTime {
 }
 
 @freezed
-class SimpleSchedule extends Equatable with _$SimpleSchedule {
+abstract class SimpleSchedule extends Equatable with _$SimpleSchedule {
   const SimpleSchedule._();
   const factory SimpleSchedule({DispenseTime? am, DispenseTime? pm}) =
       _SimpleSchedule;

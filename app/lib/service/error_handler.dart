@@ -2,7 +2,6 @@ import 'package:app/api/api.dart';
 import 'package:app/service/authentication_service.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
-import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 
 void loginHandleError(context, err) {
   if (err is ProblemJsonException) {
@@ -39,16 +38,16 @@ Future<void> passwordHandleError(context, err) async {
 }
 
 Future<void> showErrorDialog(BuildContext context, String message) {
-  return showPlatformDialog(
+  return showDialog(
       context: context,
       builder: (context) {
-        return PlatformAlertDialog(
+        return AlertDialog(
             content: Text(
               message,
               style: Theme.of(context).textTheme.labelLarge,
             ),
             actions: [
-              PlatformDialogAction(
+              ElevatedButton(
                 child: Text(AppLocalizations.of(context)!.genericOK),
                 onPressed: () {
                   Navigator.of(context).pop();

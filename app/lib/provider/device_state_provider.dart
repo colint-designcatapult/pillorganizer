@@ -52,7 +52,14 @@ class DeviceStateProvider extends RefreshableValueNotifier<DeviceState?> {
     if (_device == null || _baseDate == null) {
       return Future.value(null);
     } else {
-      return deviceRepo.deviceState(_device!.deviceID, _baseDate!);
+      return Future.value(DeviceState(
+        id: 1,
+        battery: 100,
+        charging: false,
+        lastSync: DateTime.now(),
+        bins: List.generate(14, (index) => index == 1 ? BinStatus.TAKEN : BinStatus.DISABLED),
+        dosePeriods: List.generate(2, (index) => DosePeriod(binID: index, scheduledTime: DateTime.now(), status: BinStatus.TAKEN, medicationIDs: [1]))
+      ));
     }
   }
 }

@@ -2,7 +2,6 @@ import 'package:app/provider/filterable_timezone_provider.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/standalone.dart' as tz;
@@ -29,8 +28,8 @@ class TimeZoneSelectionModal extends StatelessWidget {
   const TimeZoneSelectionModal({super.key});
 
   static Route<TimeZoneLocation> route(context) {
-    return platformPageRoute(
-        context: context, builder: (_) => const TimeZoneSelectionModal());
+    return MaterialPageRoute(
+        builder: (_) => const TimeZoneSelectionModal());
   }
 
   Widget _buildZoneItem(BuildContext context, tz.Location location) {
@@ -67,41 +66,23 @@ class TimeZoneSelectionModal extends StatelessWidget {
                         Padding(
                           padding: EdgeInsets.symmetric(
                               horizontal: 8.w, vertical: 8.h),
-                          child: PlatformWidget(
-                            cupertino: (context, _) {
-                              return CupertinoSearchTextField(
-                                style: Theme.of(context).textTheme.bodySmall,
-                                onChanged: (val) {
-                                  Provider.of<FilterableTimeZoneProvider>(
-                                          context,
-                                          listen: false)
-                                      .filter(val);
-                                },
-                                placeholder: AppLocalizations.of(context)!
-                                    .searchTimezones,
-                                autofocus: true,
-                              );
+                          child: TextField(
+                            onChanged: (val) {
+                              Provider.of<FilterableTimeZoneProvider>(
+                                  context,
+                                  listen: false)
+                                  .filter(val);
                             },
-                            material: (context, _) {
-                              return TextField(
-                                onChanged: (val) {
-                                  Provider.of<FilterableTimeZoneProvider>(
-                                          context,
-                                          listen: false)
-                                      .filter(val);
-                                },
-                                decoration: InputDecoration(
-                                    border: OutlineInputBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(10.0).r,
-                                    ),
-                                    filled: true,
-                                    prefixIcon: const Icon(Icons.search),
-                                    hintText: AppLocalizations.of(context)!
-                                        .searchTimezones),
-                                autofocus: true,
-                              );
-                            },
+                            decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius:
+                                  BorderRadius.circular(10.0).r,
+                                ),
+                                filled: true,
+                                prefixIcon: const Icon(Icons.search),
+                                hintText: AppLocalizations.of(context)!
+                                    .searchTimezones),
+                            autofocus: true,
                           ),
                           /*child: PlatformTextField(
                        onChanged: (val) {

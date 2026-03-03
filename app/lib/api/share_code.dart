@@ -5,7 +5,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'share_code.freezed.dart';
 
 @freezed
-class ShareCode extends Equatable with _$ShareCode {
+abstract class ShareCode extends Equatable with _$ShareCode {
   const ShareCode._();
 
   const factory ShareCode({

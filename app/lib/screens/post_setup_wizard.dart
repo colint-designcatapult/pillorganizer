@@ -16,7 +16,6 @@ import 'package:app/widgets/wizard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:app/l10n/app_localizations.dart';
-import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
@@ -76,8 +75,8 @@ class PostSetupWizard extends StatelessWidget {
 class NotificationStep extends StatelessWidget {
   const NotificationStep({super.key});
 
-  static Route<NotificationStep> route(context) => platformPageRoute(
-      context: context, builder: (_) => const NotificationStep());
+  static Route<NotificationStep> route(context) => MaterialPageRoute(
+      builder: (_) => const NotificationStep());
 
   @override
   Widget build(BuildContext context) {
@@ -107,8 +106,8 @@ class MedicationEntryStep extends StatefulWidget {
   @override
   _MedicationEntryStepState createState() => _MedicationEntryStepState();
 
-  static Route<MedicationEntryStep> route(context) => platformPageRoute(
-      context: context, builder: (_) => const MedicationEntryStep());
+  static Route<MedicationEntryStep> route(context) => MaterialPageRoute(
+      builder: (_) => const MedicationEntryStep());
 }
 
 class _MedicationEntryStepState extends State<MedicationEntryStep> {
@@ -338,8 +337,8 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
 class CreateAccountStep extends StatefulWidget {
   const CreateAccountStep({super.key});
 
-  static Route<CreateAccountStep> route(context) => platformPageRoute(
-      context: context, builder: (_) => const CreateAccountStep());
+  static Route<CreateAccountStep> route(context) => MaterialPageRoute(
+      builder: (_) => const CreateAccountStep());
 
   @override
   State<CreateAccountStep> createState() => _CreateAccountStepState();

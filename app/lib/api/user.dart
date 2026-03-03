@@ -47,7 +47,7 @@ class UserService {
 final UserService userService = UserService();
 
 @freezed
-class UserRegistration extends Equatable with _$UserRegistration {
+abstract class UserRegistration extends Equatable with _$UserRegistration {
   const UserRegistration._();
   const factory UserRegistration(
       {required String email, required String password}) = _UserRegistration;

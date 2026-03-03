@@ -1,6 +1,8 @@
 import 'package:app/api/api.dart';
 import 'package:app/api/device.dart';
 import 'package:app/api/medication.dart';
+import 'package:app/api/schedule.dart';
+import 'package:flutter/material.dart';
 
 class MedicationsProvider
     extends RefreshableValueNotifier<List<ScheduledMedication>?> {
@@ -28,6 +30,9 @@ class MedicationsProvider
   Future<List<ScheduledMedication>?> _load() {
     if (_device != null) {
       isUpdateMedication = true;
+      return Future.value(List.of([
+        ScheduledMedication(id: 1, name: "Test", dispenseTimes: [MedicationDispenseTime(dispenseTimeID: 1, quantity: 1, period: DayPeriod.am, timeOfDay: TimeOfDay.now())])
+      ]));
       return medicationRepo.medications(_device!.deviceID).then((value) {
         _idToMed = {for (var v in value) v.id ?? 0: v};
         return value;

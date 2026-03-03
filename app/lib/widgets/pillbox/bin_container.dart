@@ -19,6 +19,7 @@ class BinContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     Color backgroundColor = isDeviceActive
         ? (isToday ? const Color(0xFF206B8B) : const Color(0xFFBFD2DB))
         : Colors.white;

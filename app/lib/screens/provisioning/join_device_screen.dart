@@ -4,15 +4,14 @@ import 'package:app/provider/device_provider.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
-import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 class JoinDevicePage extends StatefulWidget {
   const JoinDevicePage({super.key});
 
-  static Route<JoinDevicePage> route(BuildContext context) => platformPageRoute(
-      context: context, builder: (_) => const JoinDevicePage());
+  static Route<JoinDevicePage> route(BuildContext context) => MaterialPageRoute(
+      builder: (_) => const JoinDevicePage());
 
   @override
   _JoinDevicePageState createState() => _JoinDevicePageState();

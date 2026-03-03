@@ -2,7 +2,6 @@ import 'package:app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:app/l10n/app_localizations.dart';
-import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 // Custom formatter to detect backspace on empty fields
@@ -77,7 +76,7 @@ class BasicPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PlatformScaffold(
+    return Scaffold(
       backgroundColor: bgColor,
       body: SafeArea(
         child: KeyboardDismissWrapper(

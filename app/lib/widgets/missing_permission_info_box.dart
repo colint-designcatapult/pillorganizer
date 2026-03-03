@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class MissingPermissionInfoBox extends StatefulWidget {
@@ -19,14 +18,14 @@ class _MissingPermissionInfoBoxState extends State<MissingPermissionInfoBox> {
         child: Padding(
             padding: const EdgeInsets.only(top: 16),
             child: Column(children: [
-              Expanded(
-                  child: MarkdownBody(
-                shrinkWrap: true,
-                data: Platform.isIOS
+              /*Expanded(
+                  child: Text.rich(
+                //shrinkWrap: true,
+                text: Platform.isIOS
                     ? AppLocalizations.of(context)!.missingPermissionInfoTextIos
                     : AppLocalizations.of(context)!
                         .missingPermissionInfoTextAndroid,
-              )),
+              )),*/
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: ElevatedButton(

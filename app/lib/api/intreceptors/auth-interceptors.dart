@@ -1,3 +1,4 @@
+import 'package:app/service/amplify_service.dart';
 import 'package:dio/dio.dart';
 
 import '../../service/credential_manager.dart';
@@ -18,6 +19,14 @@ class JwtAuthInterceptor extends Interceptor {
       RequestOptions options, RequestInterceptorHandler handler) async {
     // If a JWT token exists, add it to the request headers
     String? jwt = (await credentialManager.getJWT())?.access_token;
+    
+    // Check if we have an Amplify session and update the token if needed
+    final amplifyService = AmplifyService();
+    final idToken = await amplifyService.getIdToken();
+    if (idToken != null) {
+      jwt = idToken;
+    }
+
     if (jwt != null) {
       options.headers['Authorization'] = 'Bearer $jwt';
     }

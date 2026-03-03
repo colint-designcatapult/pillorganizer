@@ -1,4 +1,5 @@
 import 'package:app/screens/provisioning/join_device_screen.dart';
+import 'package:app/screens/provisioning/provision.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -15,7 +16,7 @@ class AddDevice extends StatelessWidget {
   });
 
   void _startProvisioning(BuildContext context) {
-
+    Navigator.of(context).push(ProvisionPage.route(context));
   }
 
   void _handleJoinExistingDevice(BuildContext context) {

@@ -40,10 +40,18 @@ class DeviceProvider with ChangeNotifier {
   }
 
   Future<List<DeviceUser>> _fetchDevices() {
-    return client.listMyDevices().then((res) => res
-        .map((e) => DeviceUser.fromDTO(dto: e))
-        .sortedBy<num>((element) => element.id)
-        .toList());
+    return Future.value(List.of({DeviceUser(
+        id: 0,
+        deviceID: 0,
+        deviceClass: '',
+        name: '',
+        serialNo: 0,
+        isOnline: false,
+        primaryUser: false,
+        owner: false,
+        notifications: false,
+        timezone: null
+    )}));
   }
 
   Future<DeviceUser> updateDeviceName(int deviceID, String newName) async {
