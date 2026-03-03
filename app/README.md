@@ -20,3 +20,21 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+## Code Generation
+
+This project uses code generation for freezed, json_serializable, and retrofit.
+The project will not build successfully until you manually run code generation.
+
+To generate code, run:
+
+`dart run build_runner build --delete-conflicting-outputs`
+
+This is required every time you modify a file that uses code generation (ends in `.g.dart` or `.freezed.dart`).
+
+There is also a dev command that will automatically generate code when you save a file:
+
+`dart run build_runner watch --delete-conflicting-outputs`
+
+This command will run in the background and automatically generate code when you save a file.
+It will also watch for changes in the `lib/api` folder and regenerate code when needed.
