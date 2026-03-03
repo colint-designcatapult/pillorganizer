@@ -1,32 +1,31 @@
 import 'package:app/provider/device_provider.dart';
 import 'package:app/widgets/single_device.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SingleDeviceModal extends StatelessWidget {
+class SingleDeviceModal extends ConsumerWidget {
   final int deviceId;
 
   const SingleDeviceModal({super.key, required this.deviceId});
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<DeviceProvider>(
-      builder: (context, deviceProvider, _) {
-        if (deviceProvider.devices.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
-        }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final deviceListAsync = ref.watch(deviceListProvider);
+    final devices = deviceListAsync.value ?? [];
 
-        final device = deviceProvider.devices.firstWhere(
-          (d) => d.deviceID == deviceId,
-          orElse: () => deviceProvider.devices.first,
-        );
+    if (devices.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-        return SingleDevice(
-          showAddDeviceSection: false,
-          device: device,
-          isModal: true,
-        );
-      },
+    final device = devices.firstWhere(
+      (d) => d.deviceID == deviceId,
+      orElse: () => devices.first,
+    );
+
+    return SingleDevice(
+      showAddDeviceSection: false,
+      device: device,
+      isModal: true,
     );
   }
 }

@@ -3,19 +3,19 @@ import 'package:app/screens/auth/change_password.dart';
 import 'package:app/widgets/generic_yes_no_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:provider/provider.dart';
 
 import '../../provider/authentication_provider.dart';
 import '../../provider/device_provider.dart';
 import '../../provider/language_provider.dart';
 
-class AccountScreen extends StatelessWidget {
+class AccountScreen extends ConsumerWidget {
   const AccountScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     void signout(BuildContext context) {
       showDialog(
           context: context,
@@ -25,11 +25,9 @@ class AccountScreen extends StatelessWidget {
                 subtitle: AppLocalizations.of(context)!.signingOutSubtitle,
                 saveWidgetText: AppLocalizations.of(context)!.signOut,
                 saveWidgetAction: () {
-                  final deviceProvider =
-                      Provider.of<DeviceProvider>(context, listen: false);
-                  deviceProvider.updateNotificationsForAllDevices(false).then(
-                      (value) => Provider.of<AuthenticationProvider>(context,
-                              listen: false)
+                  ref.read(deviceListProvider.notifier)
+                      .updateNotificationsForAllDevices(false).then(
+                      (value) => ref.read(authenticationProvider.notifier)
                           .signOut(context));
                 },
               ));
@@ -68,8 +66,8 @@ class AccountScreen extends StatelessWidget {
     }
 
     void changeLanguage() {
-      final languageProvider =
-          Provider.of<LanguageProvider>(context, listen: false);
+      final languageNotifier = ref.read(languageProvider.notifier);
+      final currentLocale = ref.watch(languageProvider);
 
       showModalBottomSheet<void>(
         context: context,
@@ -94,21 +92,21 @@ class AccountScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               SizedBox(height: 24.h),
-              ...languageProvider.supportedLanguages.map(
+              ...languageNotifier.supportedLanguages.map(
                 (lang) => ListTile(
                   title: Text(lang['name']!),
                   leading: Radio<String>(
                     value: lang['code']!,
-                    groupValue: languageProvider.locale.languageCode,
+                    groupValue: currentLocale.languageCode,
                     onChanged: (value) {
                       if (value != null) {
-                        languageProvider.setLanguage(value);
+                        languageNotifier.setLanguage(value);
                         Navigator.of(context).pop();
                       }
                     },
                   ),
                   onTap: () {
-                    languageProvider.setLanguage(lang['code']!);
+                    languageNotifier.setLanguage(lang['code']!);
                     Navigator.of(context).pop();
                   },
                 ),

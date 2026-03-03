@@ -6,25 +6,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:validatorless/validatorless.dart';
 
-class RecoverPassword extends StatefulWidget {
+class RecoverPassword extends ConsumerStatefulWidget {
   final VoidCallback onBack;
-  const RecoverPassword({Key? key, required this.onBack}) : super(key: key);
+  const RecoverPassword({super.key, required this.onBack});
 
   @override
-  State<RecoverPassword> createState() => _RecoverPasswordState();
+  ConsumerState<RecoverPassword> createState() => _RecoverPasswordState();
 }
 
-class _RecoverPasswordState extends State<RecoverPassword> {
+class _RecoverPasswordState extends ConsumerState<RecoverPassword> {
   bool showRecoveryInput = false;
   String? usedEmail;
 
   Future<void> _sendRecoveryEmail(String email) async {
     try {
-      await Provider.of<AuthenticationProvider>(context, listen: false)
-          .sendRecoveryCode(email);
+      await ref.read(authenticationProvider.notifier).sendRecoveryCode(email);
     } catch (e) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         showErrorDialog(context, AppLocalizations.of(context)!.genericTryAgain)
@@ -59,7 +58,7 @@ class _RecoverPasswordState extends State<RecoverPassword> {
   }
 }
 
-class RecoverPasswordPrompt extends StatefulWidget {
+class RecoverPasswordPrompt extends ConsumerStatefulWidget {
   final Future<void> Function(String) gotoRecoveryInput;
   final VoidCallback onBack;
   static const navFooterHeight = 72.0;
@@ -71,10 +70,10 @@ class RecoverPasswordPrompt extends StatefulWidget {
   });
 
   @override
-  State<RecoverPasswordPrompt> createState() => _RecoverPasswordPromptState();
+  ConsumerState<RecoverPasswordPrompt> createState() => _RecoverPasswordPromptState();
 }
 
-class _RecoverPasswordPromptState extends State<RecoverPasswordPrompt> {
+class _RecoverPasswordPromptState extends ConsumerState<RecoverPasswordPrompt> {
   String? email;
   final _formKey = GlobalKey<FormState>();
 
@@ -85,8 +84,7 @@ class _RecoverPasswordPromptState extends State<RecoverPasswordPrompt> {
 
   @override
   Widget build(BuildContext context) {
-    var authUser = Provider.of<AuthenticationProvider>(context, listen: false)
-        .currentUser;
+    var authUser = ref.watch(authenticationProvider);
 
     Widget buildNoUserForm() {
       return Form(
@@ -242,10 +240,9 @@ class _RecoverPasswordPromptState extends State<RecoverPasswordPrompt> {
                       child: SizedBox(
                           width: double.infinity,
                           height: RecoverPasswordPrompt.navFooterHeight,
-                          child: FutureBuilder(
-                              future:
-                                  context.read<AuthenticationProvider>().future,
-                              builder: (context, snapshot) {
+                          child: Consumer(
+                              builder: (context, ref, child) {
+                                final authState = ref.watch(authenticationProvider);
                                 return GestureDetector(
                                   onTap: () {
                                     if (_formKey.currentState?.validate() ??
@@ -296,7 +293,7 @@ class _RecoverPasswordPromptState extends State<RecoverPasswordPrompt> {
   }
 }
 
-class RecoverPasswordInput extends StatefulWidget {
+class RecoverPasswordInput extends ConsumerStatefulWidget {
   final VoidCallback onBack;
   final VoidCallback onSendAgain;
   final String usedEmail;
@@ -308,10 +305,10 @@ class RecoverPasswordInput extends StatefulWidget {
     required this.usedEmail,
   });
   @override
-  State<RecoverPasswordInput> createState() => _RecoverPasswordInputState();
+  ConsumerState<RecoverPasswordInput> createState() => _RecoverPasswordInputState();
 }
 
-class _RecoverPasswordInputState extends State<RecoverPasswordInput> {
+class _RecoverPasswordInputState extends ConsumerState<RecoverPasswordInput> {
   static const navFooterHeight = 72.0;
   final _formKey = GlobalKey<FormState>();
   String? newPassword;
@@ -566,11 +563,9 @@ class _RecoverPasswordInputState extends State<RecoverPasswordInput> {
                           child: SizedBox(
                               width: double.infinity,
                               height: navFooterHeight,
-                              child: FutureBuilder(
-                                  future: context
-                                      .read<AuthenticationProvider>()
-                                      .future,
-                                  builder: (context, snapshot) {
+                              child: Consumer(
+                              builder: (context, ref, child) {
+                                final authState = ref.watch(authenticationProvider);
                                     return GestureDetector(
                                       onTap: () {
                                         if (_formKey.currentState?.validate() ??
@@ -646,7 +641,7 @@ class _RecoverPasswordInputState extends State<RecoverPasswordInput> {
       BuildContext context, String code, String email) async {
     try {
       bool isCodeValid =
-          await Provider.of<AuthenticationProvider>(context, listen: false)
+          await ref.read(authenticationProvider.notifier)
               .validateRecoveryCode(int.parse(code), email);
       if (isCodeValid) {
         setState(() {
@@ -672,7 +667,7 @@ class _RecoverPasswordInputState extends State<RecoverPasswordInput> {
   }
 
   Future<bool> _changePassword(String email, String password) async {
-    await Provider.of<AuthenticationProvider>(context, listen: false)
+    await ref.read(authenticationProvider.notifier)
         .newPassword(
             email: email, newPassword: password, recoveryCode: recoveryCode!);
     return true;

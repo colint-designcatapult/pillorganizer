@@ -6,18 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SwitchDevice extends StatefulWidget {
-  const SwitchDevice({Key? key}) : super(key: key);
+class SwitchDevice extends ConsumerWidget {
+  const SwitchDevice({super.key});
 
   @override
-  _SwitchDeviceState createState() => _SwitchDeviceState();
-}
-
-class _SwitchDeviceState extends State<SwitchDevice> {
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       child: Container(
         decoration: BoxDecoration(
@@ -36,7 +31,7 @@ class _SwitchDeviceState extends State<SwitchDevice> {
           borderRadius: BorderRadius.circular(8),
           child: InkWell(
             borderRadius: BorderRadius.circular(8),
-            onTap: () => _showQuickSwitchDialog(),
+            onTap: () => _showQuickSwitchDialog(context, ref),
             child: ElevatedButton(
               onPressed: null, // InkWell handles the tap
               style: ElevatedButton.styleFrom(
@@ -51,7 +46,7 @@ class _SwitchDeviceState extends State<SwitchDevice> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(AppLocalizations.of(context)!.quickSwitch,
+                   Text(AppLocalizations.of(context)!.quickSwitch,
                       style: const TextStyle(
                           fontSize: 14,
                           color: Color(0xffffffff),
@@ -70,16 +65,14 @@ class _SwitchDeviceState extends State<SwitchDevice> {
     );
   }
 
-  void _handleConnectNewDevice() {
-  }
-
-  void _handleJoinExistingDevice() {
+  void _handleJoinExistingDevice(BuildContext context) {
     Navigator.of(context).pop();
     Navigator.of(context).push(JoinDevicePage.route(context));
   }
 
-  void _showQuickSwitchDialog() {
-    var devices = Provider.of<DeviceProvider>(context, listen: false).devices;
+  void _showQuickSwitchDialog(BuildContext context, WidgetRef ref) {
+    final devicesAsync = ref.watch(deviceListProvider);
+    final devices = devicesAsync.value ?? [];
 
     showDialog(
       context: context,
@@ -121,13 +114,15 @@ class _SwitchDeviceState extends State<SwitchDevice> {
                         color: Color(0xff31454D),
                         fontFamily: 'Poppins')),
                 const SizedBox(height: 24),
-                ...devices.map((device) => _deviceSelectButton(device)),
+                ...devices.map((device) => _deviceSelectButton(context, ref, device)),
                 _deviceJoinButton(
+                    context,
                     AppLocalizations.of(context)!.quickSwitchNewDevice,
-                    _handleConnectNewDevice),
+                    () {}), // handleConnectNewDevice was empty
                 _deviceJoinButton(
+                    context,
                     AppLocalizations.of(context)!.quickSwitchExistingDevice,
-                    _handleJoinExistingDevice),
+                    () => _handleJoinExistingDevice(context)),
               ],
             ),
           ),
@@ -136,20 +131,19 @@ class _SwitchDeviceState extends State<SwitchDevice> {
     );
   }
 
-  void _handleSelectDevice(DeviceUser device) {
-    Provider.of<SelectedDeviceProvider>(context, listen: false)
-        .selectDevice(device);
+  void _handleSelectDevice(BuildContext context, WidgetRef ref, DeviceUser device) {
+    ref.read(activeDeviceProvider.notifier).selectDevice(device);
     Navigator.of(context).pop();
   }
 
-  Widget _deviceSelectButton(DeviceUser device) {
+  Widget _deviceSelectButton(BuildContext context, WidgetRef ref, DeviceUser device) {
     return GestureDetector(
         child: Container(
       padding: EdgeInsets.symmetric(horizontal: 0, vertical: 0.h),
       margin: EdgeInsets.only(bottom: 8.h),
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: () => _handleSelectDevice(device),
+        onPressed: () => _handleSelectDevice(context, ref, device),
         style: ElevatedButton.styleFrom(
           elevation: 0,
           backgroundColor: Colors.white,
@@ -191,7 +185,7 @@ class _SwitchDeviceState extends State<SwitchDevice> {
     ));
   }
 
-  Widget _deviceJoinButton(String btnText, void Function() onPress) {
+  Widget _deviceJoinButton(BuildContext context, String btnText, void Function() onPress) {
     return GestureDetector(
         child: Container(
       padding: EdgeInsets.symmetric(horizontal: 0, vertical: 0.h),

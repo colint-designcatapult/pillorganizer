@@ -1,28 +1,26 @@
 import 'package:flutter/widgets.dart';
-import 'package:provider/provider.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-class ScrollProvider extends ChangeNotifier implements ReassembleHandler {
-  final ScrollController _controller = ScrollController();
-  ScrollController get controller => _controller;
-  double _value = 0.0;
-  double get value => _value;
+part 'scroll_provider.g.dart';
 
-  ScrollProvider() {
-    _addListener();
-  }
-
-  void _addListener() {
-    _controller.addListener(_scrollEvent);
-  }
-
-  void _scrollEvent() {
-    _value = _controller.offset;
-    notifyListeners();
-  }
-
+@riverpod
+class ScrollNotifier extends _$ScrollNotifier {
+  late ScrollController _controller;
+  
   @override
-  void reassemble() {
-    _controller.removeListener(_scrollEvent);
-    _addListener();
+  ScrollController build() {
+    _controller = ScrollController();
+    ref.onDispose(() => _controller.dispose());
+    return _controller;
+  }
+
+  void scrollToTop() {
+    if (_controller.hasClients) {
+      _controller.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 }

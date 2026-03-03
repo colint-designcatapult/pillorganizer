@@ -5,22 +5,22 @@ import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:validatorless/validatorless.dart';
 
 import '../provider/selected_device_provider.dart';
 import 'basic_page.dart';
 
-class ChangeDeviceNameDialog extends StatefulWidget {
+class ChangeDeviceNameDialog extends ConsumerStatefulWidget {
   final DeviceUser? device;
 
   const ChangeDeviceNameDialog({super.key, this.device});
 
   @override
-  State<StatefulWidget> createState() => _ChangeDeviceNameDialogState();
+  ConsumerState<ConsumerStatefulWidget> createState() => _ChangeDeviceNameDialogState();
 }
 
-class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
+class _ChangeDeviceNameDialogState extends ConsumerState<ChangeDeviceNameDialog> {
   final _formKey = GlobalKey<FormState>();
   bool enableOK = false;
   String? value;
@@ -82,10 +82,7 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
                   padding: const EdgeInsets.symmetric(horizontal: 20.0).w,
                   child: BasicPageTextFormField(
                       labelText: widget.device?.name ??
-                          Provider.of<SelectedDeviceProvider>(context,
-                                  listen: false)
-                              .device
-                              ?.name ??
+                          ref.read(activeDeviceProvider)?.name ??
                           AppLocalizations.of(context)!.deviceName,
                       onChanged: (newName) {
                         value = newName;
@@ -172,13 +169,10 @@ class _ChangeDeviceNameDialogState extends State<ChangeDeviceNameDialog> {
 
   Future<void> _save() async {
     if (value != null) {
-      final deviceToUpdate = widget.device ??
-          Provider.of<SelectedDeviceProvider>(context, listen: false).device;
+      final deviceToUpdate = widget.device ?? ref.read(activeDeviceProvider);
 
       if (deviceToUpdate != null) {
-        final deviceProvider =
-            Provider.of<DeviceProvider>(context, listen: false);
-        await deviceProvider.updateDeviceName(deviceToUpdate.deviceID, value!);
+        await ref.read(deviceListProvider.notifier).updateDeviceName(deviceToUpdate.deviceID, value!);
       }
     }
   }

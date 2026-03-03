@@ -1,37 +1,35 @@
 import 'package:app/provider/authentication_provider.dart';
 import 'package:app/provider/deep_link_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TakecareLinkUtil {
   TakecareLinkUtil._();
 
-  static Future<String> handlePostAuthNavigation(BuildContext context) async {
-    final deepLinkProvider =
-        Provider.of<DeepLinkProvider>(context, listen: false);
+  static Future<String> handlePostAuthNavigation(BuildContext context, WidgetRef ref) async {
+    final deepLinkState = ref.read(deepLinkProvider);
 
-    if (!_hasPendingTakecareLink(deepLinkProvider)) {
+    if (!_hasPendingTakecareLink(deepLinkState)) {
       return '/index';
     }
 
-    final isAlreadyLinked = await _checkIfUserIsLinkedToTakecare(context);
+    final isAlreadyLinked = await _checkIfUserIsLinkedToTakecare(context, ref);
 
-    _clearDeepLink(deepLinkProvider, clearPatientId: isAlreadyLinked);
+    _clearDeepLink(ref, clearPatientId: isAlreadyLinked);
 
     return isAlreadyLinked ? '/index' : '/patient_confirmation';
   }
 
-  static Future<void> handleDeepLinkInApp(BuildContext context) async {
-    final deepLinkProvider =
-        Provider.of<DeepLinkProvider>(context, listen: false);
+  static Future<void> handleDeepLinkInApp(BuildContext context, WidgetRef ref) async {
+    final deepLinkState = ref.read(deepLinkProvider);
 
-    if (!_hasPendingTakecareLink(deepLinkProvider)) {
+    if (!_hasPendingTakecareLink(deepLinkState)) {
       return;
     }
 
-    final isAlreadyLinked = await _checkIfUserIsLinkedToTakecare(context);
+    final isAlreadyLinked = await _checkIfUserIsLinkedToTakecare(context, ref);
 
-    _clearDeepLink(deepLinkProvider, clearPatientId: isAlreadyLinked);
+    _clearDeepLink(ref, clearPatientId: isAlreadyLinked);
 
     if (!isAlreadyLinked) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -41,24 +39,23 @@ class TakecareLinkUtil {
     }
   }
 
-  static bool _hasPendingTakecareLink(DeepLinkProvider deepLinkProvider) {
-    return deepLinkProvider.hasPendingNavigation &&
-        deepLinkProvider.hasPatientId;
+  static bool _hasPendingTakecareLink(DeepLinkState state) {
+    return state.pendingNavigation &&
+        state.patientId != null;
   }
 
   static Future<bool> _checkIfUserIsLinkedToTakecare(
-      BuildContext context) async {
-    final authProvider =
-        Provider.of<AuthenticationProvider>(context, listen: false);
-    await authProvider.checkAuthStatus();
-    return authProvider.currentUser?.isLinkedToTakecare ?? false;
+      BuildContext context, WidgetRef ref) async {
+    final authNotifier = ref.read(authenticationProvider.notifier);
+    await authNotifier.checkAuthStatus();
+    return ref.read(authenticationProvider)?.isLinkedToTakecare ?? false;
   }
 
-  static void _clearDeepLink(DeepLinkProvider deepLinkProvider,
+  static void _clearDeepLink(WidgetRef ref,
       {required bool clearPatientId}) {
-    deepLinkProvider.clearPendingNavigation();
+    ref.read(deepLinkProvider.notifier).setPendingNavigation(false);
     if (clearPatientId) {
-      deepLinkProvider.clearPatientId();
+      ref.read(deepLinkProvider.notifier).clearPatientId();
     }
   }
 }

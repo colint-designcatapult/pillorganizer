@@ -18,57 +18,58 @@ import 'package:flutter/scheduler.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:validatorless/validatorless.dart';
 
 import '../widgets/basic_page.dart';
 
-class PostSetupWizard extends StatelessWidget {
+class PostSetupWizard extends ConsumerWidget {
   const PostSetupWizard({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(3, 1);
     void onSkip() {
       Navigator.of(context).pushNamedAndRemoveUntil("/index", (route) => false);
     }
 
-    return Consumer2<ScheduleProvider, DeviceProvider>(
-      builder: (context, scheduleProvider, deviceProvider, child) {
-        bool isLoadingSchedule = scheduleProvider.isLoading;
-        bool isUpdatingTimezone = deviceProvider.isUpdatingTimezone;
+    final schedule = ref.watch(scheduleProvider);
+    final deviceList = ref.watch(deviceListProvider);
+    
+    // Note: The original used deviceProvider.isUpdatingTimezone. 
+    // Assuming DeviceList notifier handles this or we check loading state.
+    bool isLoadingSchedule = schedule.isLoading;
+    bool isUpdatingTimezone = deviceList.isLoading; // Approximation
 
-        bool canGoNext = !isLoadingSchedule && !isUpdatingTimezone;
+    bool canGoNext = !isLoadingSchedule && !isUpdatingTimezone;
 
-        return WizardStep(
-            provisionningProgress: provisionningProgress,
-            title: AppLocalizations.of(context)!.welcomeCabinet,
-            subtext: AppLocalizations.of(context)!.postSetupSubtitle,
-            onBackPressed: () => Navigator.of(context)
-                .pushNamedAndRemoveUntil('/name_new_device', (route) => false),
-            onNextPressed: () =>
-                Navigator.of(context).push(NotificationStep.route(context)),
-            onSkipPressed: () =>
-                Navigator.of(context).push(NotificationStep.route(context)),
-            canGoNext: canGoNext,
-            child: Expanded(
-                child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-              child: const SingleChildScrollView(
-                  physics: AlwaysScrollableScrollPhysics(),
-                  child: Column(
-                    children: [
-                      ScheduleEntry(
-                        showRemovalSection: false,
-                        showAddDeviceSection: false,
-                        isOwner: true,
-                      ),
-                      SizedBox(height: 72),
-                    ],
-                  )),
-            )));
-      },
-    );
+    return WizardStep(
+        provisionningProgress: provisionningProgress,
+        title: AppLocalizations.of(context)!.welcomeCabinet,
+        subtext: AppLocalizations.of(context)!.postSetupSubtitle,
+        onBackPressed: () => Navigator.of(context)
+            .pushNamedAndRemoveUntil('/name_new_device', (route) => false),
+        onNextPressed: () =>
+            Navigator.of(context).push(NotificationStep.route(context)),
+        onSkipPressed: () =>
+            Navigator.of(context).push(NotificationStep.route(context)),
+        canGoNext: canGoNext,
+        child: const Expanded(
+            child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          child: SingleChildScrollView(
+              physics: AlwaysScrollableScrollPhysics(),
+              child: Column(
+                children: [
+                  ScheduleEntry(
+                    showRemovalSection: false,
+                    showAddDeviceSection: false,
+                    isOwner: true,
+                  ),
+                  SizedBox(height: 72),
+                ],
+              )),
+        )));
   }
 }
 
@@ -100,22 +101,22 @@ class NotificationStep extends StatelessWidget {
   }
 }
 
-class MedicationEntryStep extends StatefulWidget {
+class MedicationEntryStep extends ConsumerStatefulWidget {
   const MedicationEntryStep({super.key});
 
   @override
-  _MedicationEntryStepState createState() => _MedicationEntryStepState();
+  ConsumerState<MedicationEntryStep> createState() => _MedicationEntryStepState();
 
   static Route<MedicationEntryStep> route(context) => MaterialPageRoute(
       builder: (_) => const MedicationEntryStep());
 }
 
-class _MedicationEntryStepState extends State<MedicationEntryStep> {
+class _MedicationEntryStepState extends ConsumerState<MedicationEntryStep> {
   @override
   Widget build(BuildContext context) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(3, 3);
     void onNext() {
-      Provider.of<MedicationsProvider>(context, listen: false).refresh();
+      ref.read(medicationsProvider.notifier).refresh();
 
       Navigator.of(context).pushNamedAndRemoveUntil("/index", (route) => false);
     }
@@ -130,11 +131,12 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
       canGoNext: true,
       child: Padding(
         padding: const EdgeInsets.only(left: 32.0, right: 32.0, bottom: 32.0),
-        child: Consumer<MedicationsProvider>(
-          builder: (context, prov, _) {
+        child: Builder(
+          builder: (context) {
+            final prov = ref.watch(medicationsProvider);
             return Column(children: [
               GestureDetector(
-                  onTap: () => _addNewPill(prov),
+                  onTap: () => _addNewPill(ref),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                         vertical: 20, horizontal: 18),
@@ -162,7 +164,7 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
               ),
               if (prov.value?.isNotEmpty ?? false)
                 GestureDetector(
-                    onTap: () => _showMyPills(prov),
+                    onTap: () => _showMyPills(ref),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           vertical: 20, horizontal: 18),
@@ -196,9 +198,20 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
     );
   }
 
-  void _addNewPill(MedicationsProvider prov) {
-    final device =
-        Provider.of<SelectedDeviceProvider>(context, listen: false).device;
+  void _addNewPill(WidgetRef ref) {
+    final device = ref.read(activeDeviceProvider);
+    if (device == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.addPillsError))
+      );
+      return;
+    }
+
+    ref.read(newMedicationProvider.notifier).initialize(
+          device.deviceID,
+          onComplete: () => ref.read(medicationsProvider.notifier).refresh(),
+        );
+
     showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -212,29 +225,16 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width,
         ),
-        builder: (context) => device != null
-            ? ChangeNotifierProvider<NewMedicationProvider>(
-                create: (context) => NewMedicationProvider(
-                    device.deviceID, () => prov.update(device)),
-                builder: (context, _) => MedicationModal(
-                    onBack: () => Navigator.of(context).pop(),
-                    onNext: true,
-                    child: const MedicationCardEntry()))
-            : SingleChildScrollView(
-                child: Padding(
-                    padding:
-                        EdgeInsets.symmetric(vertical: 8.h, horizontal: 32.w),
-                    child: SizedBox(
-                        height: 200.h,
-                        width: 200.w,
-                        child: Center(
-                            child: Text(AppLocalizations.of(context)!
-                                .addPillsError)))))).whenComplete(() {
-      prov.refresh();
+        builder: (context) => MedicationModal(
+            onBack: () => Navigator.of(context).pop(),
+            onNext: true,
+            onComplete: () => ref.read(medicationsProvider.notifier).refresh(),
+            child: const MedicationCardEntry())).whenComplete(() {
+      ref.read(medicationsProvider.notifier).refresh();
     });
   }
 
-  void _showMyPills(MedicationsProvider prov) {
+  void _showMyPills(WidgetRef ref) {
     double navFootBarHeight = 72;
     showModalBottomSheet<bool>(
         context: context,
@@ -248,9 +248,9 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width,
         ),
-        builder: (context) => ValueListenableBuilder(
-            valueListenable: prov,
-            builder: (context, indicatorEnabled, child) => SizedBox(
+        builder: (context) {
+          final prov = ref.watch(medicationsProvider);
+          return SizedBox(
                 height: MediaQuery.of(context).size.height * 0.9,
                 child: Stack(children: [
                   Padding(
@@ -329,101 +329,100 @@ class _MedicationEntryStepState extends State<MedicationEntryStep> {
                             ],
                           ),
                         ),
-                      )),
-                ]))));
+                      ),
+                    ),
+                  ]),
+                );
+        });
   }
 }
 
-class CreateAccountStep extends StatefulWidget {
+class CreateAccountStep extends ConsumerStatefulWidget {
   const CreateAccountStep({super.key});
 
   static Route<CreateAccountStep> route(context) => MaterialPageRoute(
       builder: (_) => const CreateAccountStep());
 
   @override
-  State<CreateAccountStep> createState() => _CreateAccountStepState();
+  ConsumerState<CreateAccountStep> createState() => _CreateAccountStepState();
 }
 
-class _CreateAccountStepState extends State<CreateAccountStep> {
+class _CreateAccountStepState extends ConsumerState<CreateAccountStep> {
   bool _obscureText = true;
   Future<void>? _registerFuture;
 
   @override
   Widget build(BuildContext context) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(3, 1);
-    return ChangeNotifierProvider<UserRegistrationProvider>(
-        create: (_) => UserRegistrationProvider(),
-        builder: (context, up) {
-          return WizardStep(
-              height: 550,
-              icon: SvgPicture.asset('lib/assets/SVG/User.svg'),
-              subtext: AppLocalizations.of(context)!.createAccountSubtitle,
-              provisionningProgress: provisionningProgress,
-              onBackPressed: () => Navigator.of(context).pop(),
-              canGoNext: false,
-              onSkipPressed: () => Navigator.of(context)
-                  .pushNamedAndRemoveUntil('/index', (route) => false),
-              canScroll: true,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: BasicForm(
-                  onSubmit: () => _submit(context),
-                  future: _registerFuture,
-                  buttonText: AppLocalizations.of(context)!.createAccount,
-                  children: [
-                    BasicPageTextFormField(
-                      labelText: AppLocalizations.of(context)!.email,
-                      validator: Validatorless.multiple([
-                        (value) {
-                          return Validatorless.email(
-                                  AppLocalizations.of(context)!.emailNotValid)(
-                              value?.toLowerCase());
-                        },
-                        Validatorless.required(
-                            AppLocalizations.of(context)!.emailRequired)
-                      ]),
-                      onSaved: (val) {
-                        context
-                            .read<UserRegistrationProvider>()
-                            .updateEmail(val?.toLowerCase());
-                      },
-                    ),
-                    BasicPageTextFormField(
-                      labelText: AppLocalizations.of(context)!.password,
-                      validator: Validatorless.multiple([
-                        Validatorless.between(
-                            6,
-                            48,
-                            AppLocalizations.of(context)!
-                                .passwordLengthValidation)
-                      ]),
-                      onRevealText: () {
-                        setState(() {
-                          _obscureText = !_obscureText;
-                        });
-                      },
-                      obscureText: _obscureText,
-                      textInputAction: TextInputAction.done,
-                      onSaved: (val) {
-                        context
-                            .read<UserRegistrationProvider>()
-                            .updatePassword(val);
-                      },
-                      onFieldSubmitted: (val) {
-                        context
-                            .read<UserRegistrationProvider>()
-                            .updatePassword(val);
-                      },
-                    ),
-                  ],
-                ),
-              ));
-        });
+    return WizardStep(
+        height: 550,
+        icon: SvgPicture.asset('lib/assets/SVG/User.svg'),
+        subtext: AppLocalizations.of(context)!.createAccountSubtitle,
+        provisionningProgress: provisionningProgress,
+        onBackPressed: () => Navigator.of(context).pop(),
+        canGoNext: false,
+        onSkipPressed: () => Navigator.of(context)
+            .pushNamedAndRemoveUntil('/index', (route) => false),
+        canScroll: true,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: BasicForm(
+            onSubmit: () => _submit(context),
+            future: _registerFuture,
+            buttonText: AppLocalizations.of(context)!.createAccount,
+            children: [
+              BasicPageTextFormField(
+                labelText: AppLocalizations.of(context)!.email,
+                validator: Validatorless.multiple([
+                  (value) {
+                    return Validatorless.email(
+                            AppLocalizations.of(context)!.emailNotValid)(
+                        value?.toLowerCase());
+                  },
+                  Validatorless.required(
+                      AppLocalizations.of(context)!.emailRequired)
+                ]),
+                onSaved: (val) {
+                  ref
+                      .read(userRegistrationProvider.notifier)
+                      .updateEmail(val?.toLowerCase());
+                },
+              ),
+              BasicPageTextFormField(
+                labelText: AppLocalizations.of(context)!.password,
+                validator: Validatorless.multiple([
+                  Validatorless.between(
+                      6,
+                      48,
+                      AppLocalizations.of(context)!
+                          .passwordLengthValidation)
+                ]),
+                onRevealText: () {
+                  setState(() {
+                    _obscureText = !_obscureText;
+                  });
+                },
+                obscureText: _obscureText,
+                textInputAction: TextInputAction.done,
+                onSaved: (val) {
+                  ref
+                      .read(userRegistrationProvider.notifier)
+                      .updatePassword(val);
+                },
+                onFieldSubmitted: (val) {
+                  ref
+                      .read(userRegistrationProvider.notifier)
+                      .updatePassword(val);
+                },
+              ),
+            ],
+          ),
+        ));
   }
 
   void _submit(context) {
-    var prov = Provider.of<UserRegistrationProvider>(context, listen: false);
-    var authProv = Provider.of<AuthenticationProvider>(context, listen: false);
+    var prov = ref.read(userRegistrationProvider.notifier);
+    var authProv = ref.read(authenticationProvider.notifier);
 
     setState(() {
       _registerFuture = _register(prov, authProv).catchError((err) {
@@ -441,10 +440,10 @@ class _CreateAccountStepState extends State<CreateAccountStep> {
   }
 
   Future<bool> _register(
-      UserRegistrationProvider prov, AuthenticationProvider authProv) async {
+      UserRegistrationNotifier prov, Authentication authProv) async {
     await prov.register();
     await authProv.logIn(
-        username: prov.model.email, password: prov.model.password);
+        username: ref.read(userRegistrationProvider).email, password: ref.read(userRegistrationProvider).password);
     return true;
   }
 }

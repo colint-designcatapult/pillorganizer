@@ -799,6 +799,20 @@ class DeviceCaregiverCodeDTO {
     required this.deleted,
   });
 
+  bool get isValid =>
+      !deleted &&
+      DateTime.now().isBefore(
+          DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000, isUtc: true));
+
+  int get remainingSeconds {
+    final expiry =
+        DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000, isUtc: true);
+    final diff = expiry.difference(DateTime.now()).inSeconds;
+    return diff > 0 ? diff : 0;
+  }
+
+  String get codeString => code.toString().padLeft(6, '0');
+
   factory DeviceCaregiverCodeDTO.fromJson(Map<String, dynamic> json) =>
       _$DeviceCaregiverCodeDTOFromJson(json);
 

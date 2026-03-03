@@ -7,15 +7,15 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class HomeEmptyDeviceBody extends StatelessWidget {
+class HomeEmptyDeviceBody extends ConsumerWidget {
   final bool isOwner;
 
   const HomeEmptyDeviceBody({super.key, required this.isOwner});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final subtext = isOwner
         ? AppLocalizations.of(context)!.homeEmptySubtextOwner
         : AppLocalizations.of(context)!.homeEmptySubtextCaregiver;
@@ -52,17 +52,18 @@ class HomeEmptyDeviceBody extends StatelessWidget {
                       if (isOwner)
                         GestureDetector(
                           onTap: () {
-                            final medicationsProvider =
-                                Provider.of<MedicationsProvider>(context,
-                                    listen: false);
-                            final selectedDeviceProvider =
-                                Provider.of<SelectedDeviceProvider>(context,
-                                    listen: false);
-                            final device = selectedDeviceProvider.device;
+                            final device = ref.read(activeDeviceProvider);
 
                             if (device == null) {
                               return;
                             }
+
+                            ref.read(newMedicationProvider.notifier).initialize(
+                              device.deviceID,
+                              onComplete: () {
+                                ref.invalidate(medicationsProvider);
+                              },
+                            );
 
                             showModalBottomSheet(
                                 context: context,
@@ -78,26 +79,13 @@ class HomeEmptyDeviceBody extends StatelessWidget {
                                   maxWidth: MediaQuery.of(context).size.width,
                                 ),
                                 builder: (context) {
-                                  return StatefulBuilder(builder:
-                                      (BuildContext context,
-                                          StateSetter setState) {
-                                    return ChangeNotifierProvider<
-                                            NewMedicationProvider>(
-                                        create: (context) =>
-                                            NewMedicationProvider(
-                                                device.deviceID, () {
-                                              medicationsProvider
-                                                  .update(device);
-                                            }),
-                                        builder: (context, _) =>
-                                            MedicationModal(
-                                              onBack: () =>
-                                                  {Navigator.of(context).pop()},
-                                              onNext: true,
-                                              child:
-                                                  const MedicationCardEntry(),
-                                            ));
-                                  });
+                                  return MedicationModal(
+                                    onBack: () =>
+                                        {Navigator.of(context).pop()},
+                                    onNext: true,
+                                    child:
+                                        const MedicationCardEntry(),
+                                  );
                                 });
                           },
                           child: DottedBorder(

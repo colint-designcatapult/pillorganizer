@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/device.dart';
 import '../../platform/bottom_modal.dart';
@@ -22,13 +22,13 @@ class DeviceListHeader extends StatelessWidget {
   }
 }
 
-class DeviceListEntry extends StatelessWidget {
+class DeviceListEntry extends ConsumerWidget {
   final DeviceUser device;
 
   const DeviceListEntry({super.key, required this.device});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0).h,
       child: ListTile(
@@ -39,8 +39,7 @@ class DeviceListEntry extends StatelessWidget {
                 ? DeviceConnectionStatus.online
                 : DeviceConnectionStatus.offline),
         onTap: () {
-          Provider.of<SelectedDeviceProvider>(context, listen: false)
-              .selectDevice(device);
+          ref.read(activeDeviceProvider.notifier).selectDevice(device);
           Navigator.of(context)
               .pushNamedAndRemoveUntil('/index', (route) => false);
         },
@@ -49,11 +48,11 @@ class DeviceListEntry extends StatelessWidget {
   }
 }
 
-class DeviceSelectorModal extends StatelessWidget {
+class DeviceSelectorModal extends ConsumerWidget {
   const DeviceSelectorModal({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -64,12 +63,12 @@ class DeviceSelectorModal extends StatelessWidget {
       ),
       body: SafeArea(
         bottom: false,
-        child: Consumer<DeviceProvider>(
-          builder: (_, prov, __) {
-            Iterable<Widget> yourDevices = prov.devices
+        child: ref.watch(deviceListProvider).when(
+          data: (devices) {
+            Iterable<Widget> yourDevices = devices
                 .where((element) => element.owner)
                 .map((e) => DeviceListEntry(device: e));
-            Iterable<Widget> otherDevices = prov.devices
+            Iterable<Widget> otherDevices = devices
                 .where((element) => !element.owner)
                 .map((e) => DeviceListEntry(device: e));
 
@@ -90,6 +89,8 @@ class DeviceSelectorModal extends StatelessWidget {
               ],
             );
           },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, s) => Center(child: Text(e.toString())),
         ),
       ),
     );
@@ -101,7 +102,9 @@ Future<DeviceUser?> showDeviceSelectorModal(BuildContext context) {
       context: context,
       expand: false,
       builder: (context) {
-        Provider.of<DeviceProvider>(context, listen: false).refresh();
-        return const DeviceSelectorModal();
+        return Consumer(builder: (context, ref, child) {
+          ref.read(deviceListProvider.notifier).refresh();
+          return const DeviceSelectorModal();
+        });
       });
 }

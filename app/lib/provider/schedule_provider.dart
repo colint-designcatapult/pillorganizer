@@ -1,112 +1,54 @@
 import 'package:app/api/api.dart';
 import 'package:app/api/device.dart';
-import 'package:app/api/schedule.dart';
+import 'package:app/provider/selected_device_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-class ScheduleProvider with ChangeNotifier {
-  final Map<int, SimpleSchedule> _schedules = {};
-  final Map<int, Future<SimpleSchedule?>> _futures = {};
+part 'schedule_provider.g.dart';
 
-  bool _isLoading = false;
-  bool _isUpdatingAMSchedule = false;
-  bool _isUpdatingPMSchedule = false;
+@riverpod
+class Schedule extends _$Schedule {
+  @override
+  FutureOr<SimpleScheduleDTO> build() async {
+    final device = ref.watch(activeDeviceProvider);
+    if (device == null) return SimpleScheduleDTO();
 
-  bool get isLoading => _isLoading;
-  bool get isUpdatingAMSchedule => _isUpdatingAMSchedule;
-  bool get isUpdatingPMSchedule => _isUpdatingPMSchedule;
-
-  final ScheduleRepository repo = ScheduleRepository(client: client);
-
-  ScheduleProvider update(DeviceUser? selected) {
-    if (selected != null) {
-      load(selected.deviceID);
-    }
-    return this;
+    return client.getDispenseTimes(device.deviceID);
   }
 
-  ScheduleProvider(
-      {SimpleSchedule? schedule, DeviceUser? selectedDevice, int? deviceID}) {
-    if (schedule != null && deviceID != null) {
-      _schedules[deviceID] = schedule;
-    }
-    if (selectedDevice != null) {
-      load(selectedDevice.deviceID);
-    } else if (deviceID != null) {
-      load(deviceID);
-    }
+  Future<void> load(int deviceID) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      return client.getDispenseTimes(deviceID);
+    });
   }
 
-  Future<SimpleSchedule?> load(int deviceID) async {
-    if (_schedules.containsKey(deviceID)) {
-      return _schedules[deviceID];
-    }
-
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      final value = await repo.getDispenseTimes(deviceID);
-      _schedules[deviceID] = value;
-      _futures[deviceID] = Future.value(value);
-      return value;
-    } catch (error) {
-      rethrow;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+  Future<void> updateTime(DayPeriod period, TimeOfDay time, int deviceID) async {
+    final current = state.asData?.value ?? SimpleScheduleDTO();
+    final secondsFrom00 = time.hour * 3600 + time.minute * 60;
+    
+    final newSchedule = period == DayPeriod.am
+        ? SimpleScheduleDTO(
+            amID: current.amID,
+            amSecondsFrom00: secondsFrom00,
+            pmID: current.pmID,
+            pmSecondsFrom00: current.pmSecondsFrom00,
+          )
+        : SimpleScheduleDTO(
+            amID: current.amID,
+            amSecondsFrom00: current.amSecondsFrom00,
+            pmID: current.pmID,
+            pmSecondsFrom00: secondsFrom00,
+          );
+    
+    await updateSchedule(newSchedule);
   }
 
-  Future<SimpleSchedule?> updateTime(
-      DayPeriod period, TimeOfDay tod, int deviceID) async {
-    SimpleSchedule currentSchedule =
-        _schedules[deviceID] ?? const SimpleSchedule();
+  Future<void> updateSchedule(SimpleScheduleDTO newSchedule) async {
+    final device = ref.read(activeDeviceProvider);
+    if (device == null) return;
 
-    TimeOfDay? existingTime;
-    if (period == DayPeriod.am) {
-      existingTime = currentSchedule.am?.time;
-    } else if (period == DayPeriod.pm) {
-      existingTime = currentSchedule.pm?.time;
-    }
-
-    if (existingTime != null &&
-        existingTime.hour == tod.hour &&
-        existingTime.minute == tod.minute) {
-      return currentSchedule;
-    }
-
-    if (period == DayPeriod.am) {
-      _isUpdatingAMSchedule = true;
-    } else if (period == DayPeriod.pm) {
-      _isUpdatingPMSchedule = true;
-    }
-    notifyListeners();
-
-    if (period == DayPeriod.am) {
-      currentSchedule = currentSchedule.copyWith(
-          am: currentSchedule.am?.copyWith(time: tod) ??
-              DispenseTime(time: tod, period: DayPeriod.am));
-    } else if (period == DayPeriod.pm) {
-      currentSchedule = currentSchedule.copyWith(
-          pm: currentSchedule.pm?.copyWith(time: tod) ??
-              DispenseTime(time: tod, period: DayPeriod.pm));
-    }
-
-    try {
-      final value = await repo.updateDispenseTimes(deviceID, currentSchedule);
-      _schedules[deviceID] = value;
-      _futures[deviceID] = Future.value(value);
-      return value;
-    } catch (error) {
-      rethrow;
-    } finally {
-      _isUpdatingAMSchedule = false;
-      _isUpdatingPMSchedule = false;
-      notifyListeners();
-    }
-  }
-
-  SimpleSchedule? getScheduleForDevice(int deviceID) {
-    return _schedules[deviceID];
+    await client.updateDispenseTimes(device.deviceID, newSchedule);
+    state = AsyncValue.data(newSchedule);
   }
 }

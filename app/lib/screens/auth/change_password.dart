@@ -7,17 +7,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:validatorless/validatorless.dart';
 
-class ChangePassword extends StatefulWidget {
-  const ChangePassword({Key? key}) : super(key: key);
+class ChangePassword extends ConsumerStatefulWidget {
+  const ChangePassword({super.key});
 
   @override
-  State<ChangePassword> createState() => _ChangePasswordState();
+  ConsumerState<ChangePassword> createState() => _ChangePasswordState();
 }
 
-class _ChangePasswordState extends State<ChangePassword> {
+class _ChangePasswordState extends ConsumerState<ChangePassword> {
   bool showForgotPassword = false;
 
   @override
@@ -36,7 +36,7 @@ class _ChangePasswordState extends State<ChangePassword> {
   }
 }
 
-class ChangePasswordModal extends StatefulWidget {
+class ChangePasswordModal extends ConsumerStatefulWidget {
   final VoidCallback gotoForgotPassword;
 
   const ChangePasswordModal({
@@ -44,10 +44,10 @@ class ChangePasswordModal extends StatefulWidget {
     required this.gotoForgotPassword,
   });
   @override
-  State<ChangePasswordModal> createState() => _ChangePasswordModalState();
+  ConsumerState<ChangePasswordModal> createState() => _ChangePasswordModalState();
 }
 
-class _ChangePasswordModalState extends State<ChangePasswordModal> {
+class _ChangePasswordModalState extends ConsumerState<ChangePasswordModal> {
   static const navFooterHeight = 72.0;
   final _formKey = GlobalKey<FormState>();
   String? currentPassword;
@@ -56,14 +56,12 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<AuthenticationProvider>(
-        create: (_) => AuthenticationProvider(),
-        child: KeyboardDismissWrapper(
-            child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.8,
-                child: Form(
-                    key: _formKey,
-                    child: Stack(children: [
+    return KeyboardDismissWrapper(
+        child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.8,
+            child: Form(
+                key: _formKey,
+                child: Stack(children: [
                       CustomScrollView(slivers: [
                         SliverAppBar(
                           iconTheme: IconThemeData(size: 24.h),
@@ -223,13 +221,10 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                   ),
                                 ),
                                 Expanded(
-                                  child: SizedBox(
-                                      width: double.infinity,
-                                      height: navFooterHeight,
-                                      child: FutureBuilder(
-                                          future: context
-                                              .read<AuthenticationProvider>()
-                                              .future,
+                                  child: FutureBuilder(
+                                          future: ref
+                                              .read(authenticationProvider.notifier)
+                                              .checkAuthStatus(),
                                           builder: (context, snapshot) {
                                             return GestureDetector(
                                               onTap: () => _onSubmit(context),
@@ -270,12 +265,12 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
                                                 ),
                                               ),
                                             );
-                                          })),
+                                          }),
                                 ),
                               ],
                             ),
                           )),
-                    ])))));
+                    ]))));
   }
 
   void _onSubmit(context) {
@@ -286,7 +281,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
   }
 
   void _submit(BuildContext context) {
-    var authProv = Provider.of<AuthenticationProvider>(context, listen: false);
+    var authProv = ref.read(authenticationProvider.notifier);
 
     if (currentPassword == newPassword) {
       showErrorDialog(
@@ -306,7 +301,7 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
     }
   }
 
-  Future<bool> _changePassword(AuthenticationProvider authProv,
+  Future<bool> _changePassword(Authentication authProv,
       String currentPassword, String newPassword) async {
     await authProv.changePassword(
         currentPassword: currentPassword, newPassword: newPassword);

@@ -3,7 +3,7 @@ import 'package:app/screens/ScreenUtilWrapper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timezone/standalone.dart' as tz;
 import 'package:app/l10n/app_localizations.dart';
 
@@ -24,7 +24,7 @@ class TimeZoneOption extends StatelessWidget {
   }
 }
 
-class TimeZoneSelectionModal extends StatelessWidget {
+class TimeZoneSelectionModal extends ConsumerWidget {
   const TimeZoneSelectionModal({super.key});
 
   static Route<TimeZoneLocation> route(context) {
@@ -43,11 +43,10 @@ class TimeZoneSelectionModal extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-        create: (BuildContext context) => FilterableTimeZoneProvider(),
-        builder: (BuildContext context, Widget? v) {
-          return ScreenUtilWrapper(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final filterableTimeZone = ref.watch(filterableTimeZoneProvider);
+    
+    return ScreenUtilWrapper(
             child: Container(
               color: Colors.white,
               child: Padding(
@@ -68,10 +67,7 @@ class TimeZoneSelectionModal extends StatelessWidget {
                               horizontal: 8.w, vertical: 8.h),
                           child: TextField(
                             onChanged: (val) {
-                              Provider.of<FilterableTimeZoneProvider>(
-                                  context,
-                                  listen: false)
-                                  .filter(val);
+                              ref.read(filterableTimeZoneProvider.notifier).filter(val);
                             },
                             decoration: InputDecoration(
                                 border: OutlineInputBorder(
@@ -107,22 +103,17 @@ class TimeZoneSelectionModal extends StatelessWidget {
                         ),
                         const Divider(),
                         Expanded(
-                          child: Consumer<FilterableTimeZoneProvider>(
-                            builder: (context, val, _) {
-                              return ListView.builder(
-                                  itemBuilder: (context, index) {
-                                    return _buildZoneItem(
-                                        context, val.filteredZones[index]);
-                                  },
-                                  itemCount: val.filteredZones.length);
-                            },
-                          ),
+                          child: ListView.builder(
+                              itemBuilder: (context, index) {
+                                return _buildZoneItem(
+                                    context, filterableTimeZone[index]);
+                              },
+                              itemCount: filterableTimeZone.length),
                         )
                       ],
                     )),
               ),
             ),
           );
-        });
   }
 }

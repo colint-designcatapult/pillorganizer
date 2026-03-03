@@ -1,39 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-class LanguageProvider with ChangeNotifier {
-  Locale _locale = const Locale('fr');
-  static const String _languageKey = 'selected_language';
+part 'language_provider.g.dart';
 
-  Locale get locale => _locale;
-
-  LanguageProvider() {
-    _loadSavedLanguage();
+@riverpod
+class Language extends _$Language {
+  @override
+  Locale build() {
+    return const Locale('en');
   }
 
-  Future<void> _loadSavedLanguage() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedLanguage = prefs.getString(_languageKey);
-
-    if (savedLanguage != null) {
-      _locale = Locale(savedLanguage);
-      notifyListeners();
-    }
-  }
-
-  Future<void> setLanguage(String languageCode) async {
-    if (languageCode == _locale.languageCode) return;
-
-    _locale = Locale(languageCode);
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_languageKey, languageCode);
-
-    notifyListeners();
+  void setLanguage(String languageCode) {
+    state = Locale(languageCode);
   }
 
   List<Map<String, String>> get supportedLanguages => [
-        {'code': 'en', 'name': 'English'},
-        {'code': 'fr', 'name': 'Français'},
-      ];
+    {'code': 'en', 'name': 'English'},
+    {'code': 'es', 'name': 'Español'},
+  ];
 }

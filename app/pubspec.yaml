@@ -41,8 +41,6 @@ dependencies:
   sleek_circular_slider: ^2.0.1
   modal_bottom_sheet: ^3.0.0-pre
   dots_indicator: ^4.0.1
-  bloc: ^9.2.0
-  flutter_bloc: ^9.1.1
   freezed_annotation: ^3.1.0
   json_annotation: ^4.11.0
   animations: ^2.0.3
@@ -52,9 +50,7 @@ dependencies:
   flutter_secure_storage: ^10.0.0
   validatorless: ^1.2.3
   firebase_core: ^4.4.0
-  provider: ^6.0.4
   settings_ui: ^2.0.2
-  equatable: ^2.0.5
   timezone: ^0.11.0
   flutter_timezone: ^5.0.1
   tuple: ^2.0.1
@@ -72,6 +68,7 @@ dependencies:
   amplify_flutter: ^2.10.0
   amplify_auth_cognito: ^2.0.0
   flutter_riverpod: ^3.2.1
+  riverpod_annotation: ^4.0.2
 
 dev_dependencies:
   flutter_test:
@@ -86,8 +83,9 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
-  build_runner: ^2.11.1
-  json_serializable: ^6.13.0
+  build_runner: any
+  json_serializable: any
+  riverpod_generator: ^4.0.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

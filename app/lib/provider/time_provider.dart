@@ -1,38 +1,32 @@
 import 'dart:async';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'package:flutter/widgets.dart';
-import 'package:provider/provider.dart';
+part 'time_provider.g.dart';
 
-class MinuteBasedTimeProvider extends ChangeNotifier
-    implements ReassembleHandler {
-  late DateTime _value;
-  DateTime get value => _value;
+@riverpod
+class MinuteBasedTime extends _$MinuteBasedTime {
   late Timer _timer;
 
-  MinuteBasedTimeProvider() {
+  @override
+  DateTime build() {
     _scheduleOnMinute();
-  }
-
-  void _tick() {
-    _value = DateTime.now();
-    notifyListeners();
+    
+    // Cleanup on dispose
+    ref.onDispose(() => _timer.cancel());
+    
+    return DateTime.now();
   }
 
   void _scheduleOnMinute() {
-    _value = DateTime.now();
+    final now = DateTime.now();
     var nextMinute = DateTime(
-        _value.year, _value.month, _value.day, _value.hour, _value.minute + 1);
-    _timer = Timer(nextMinute.difference(_value), () {
+        now.year, now.month, now.day, now.hour, now.minute + 1);
+    
+    _timer = Timer(nextMinute.difference(now), () {
+      state = DateTime.now();
       _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
-        _tick();
+        state = DateTime.now();
       });
     });
-    notifyListeners();
-  }
-
-  @override
-  void reassemble() {
-    _timer.cancel();
-    _scheduleOnMinute();
   }
 }

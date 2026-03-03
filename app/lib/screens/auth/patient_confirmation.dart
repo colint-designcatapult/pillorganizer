@@ -3,17 +3,17 @@ import 'package:app/provider/deep_link_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class PatientConfirmationPage extends StatefulWidget {
-  const PatientConfirmationPage({Key? key}) : super(key: key);
+class PatientConfirmationPage extends ConsumerStatefulWidget {
+  const PatientConfirmationPage({super.key});
 
   @override
-  State<PatientConfirmationPage> createState() =>
+  ConsumerState<PatientConfirmationPage> createState() =>
       _PatientConfirmationPageState();
 }
 
-class _PatientConfirmationPageState extends State<PatientConfirmationPage> {
+class _PatientConfirmationPageState extends ConsumerState<PatientConfirmationPage> {
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -34,10 +34,9 @@ class _PatientConfirmationPageState extends State<PatientConfirmationPage> {
     }
 
     try {
-      final deepLinkProvider =
-          Provider.of<DeepLinkProvider>(context, listen: false);
+      final deepLinkState = ref.read(deepLinkProvider);
 
-      if (deepLinkProvider.patientId == null) {
+      if (deepLinkState.patientId == null) {
         throw Exception('No patient ID available');
       }
 
@@ -47,8 +46,8 @@ class _PatientConfirmationPageState extends State<PatientConfirmationPage> {
             '${_selectedDateOfBirth!.year}-${_selectedDateOfBirth!.month.toString().padLeft(2, '0')}-${_selectedDateOfBirth!.day.toString().padLeft(2, '0')}';
       }
 
-      await deepLinkProvider.validateAndLinkTakecarePatient(
-        patientId: deepLinkProvider.patientId!,
+      await ref.read(deepLinkProvider.notifier).validateAndLinkTakecarePatient(
+        patientId: deepLinkState.patientId!,
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         birthDate: birthDateString,
@@ -82,9 +81,7 @@ class _PatientConfirmationPageState extends State<PatientConfirmationPage> {
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  final deepLinkProvider =
-                      Provider.of<DeepLinkProvider>(context, listen: false);
-                  deepLinkProvider.clearPatientId();
+                  ref.read(deepLinkProvider.notifier).clearPatientId();
                   Navigator.of(context)
                       .pushNamedAndRemoveUntil('/index', (route) => false);
                 },
@@ -153,9 +150,9 @@ class _PatientConfirmationPageState extends State<PatientConfirmationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<DeepLinkProvider>(
-      builder: (context, deepLinkProvider, child) {
-        return Scaffold(
+    final deepLinkState = ref.watch(deepLinkProvider);
+
+    return Scaffold(
           resizeToAvoidBottomInset: true,
           backgroundColor: const Color(0xFFBFD2DB),
           body: KeyboardDismissWrapper(
@@ -281,72 +278,62 @@ class _PatientConfirmationPageState extends State<PatientConfirmationPage> {
                                   },
                                 ),
                                 const SizedBox(height: 32),
-                                Consumer<DeepLinkProvider>(
-                                  builder: (context, deepLinkProvider, child) {
-                                    return ElevatedButton(
-                                      onPressed: deepLinkProvider.isValidating
-                                          ? null
-                                          : _verifyAccount,
-                                      style: ElevatedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8.0),
+                                ElevatedButton(
+                                  onPressed: deepLinkState.isValidating
+                                      ? null
+                                      : _verifyAccount,
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
+                                    backgroundColor:
+                                        Theme.of(context).primaryColor,
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  child: deepLinkState.isValidating
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                    Colors.white),
+                                          ),
+                                        )
+                                      : Text(
+                                          AppLocalizations.of(context)!
+                                              .verifyAccount,
+                                          style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold),
                                         ),
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 16),
-                                        backgroundColor:
-                                            Theme.of(context).primaryColor,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                      child: deepLinkProvider.isValidating
-                                          ? const SizedBox(
-                                              height: 20,
-                                              width: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                valueColor:
-                                                    AlwaysStoppedAnimation<
-                                                        Color>(Colors.white),
-                                              ),
-                                            )
-                                          : Text(
-                                              AppLocalizations.of(context)!
-                                                  .verifyAccount,
-                                              style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                    );
-                                  },
                                 ),
                                 const SizedBox(height: 16),
-                                Consumer<DeepLinkProvider>(
-                                  builder: (context, deepLinkProvider, child) {
-                                    return OutlinedButton(
-                                      onPressed: deepLinkProvider.isValidating
-                                          ? null
-                                          : () {
-                                              deepLinkProvider.clearPatientId();
-                                              Navigator.of(context)
-                                                  .pushNamedAndRemoveUntil(
-                                                      '/index',
-                                                      (route) => false);
-                                            },
-                                      style: OutlinedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8.0),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 16),
-                                      ),
-                                      child: Text(
-                                        AppLocalizations.of(context)!
-                                            .genericCancel,
-                                        style: const TextStyle(fontSize: 16),
-                                      ),
-                                    );
-                                  },
+                                OutlinedButton(
+                                  onPressed: deepLinkState.isValidating
+                                      ? null
+                                      : () {
+                                          ref
+                                              .read(deepLinkProvider.notifier)
+                                              .clearPatientId();
+                                          Navigator.of(context)
+                                              .pushNamedAndRemoveUntil(
+                                                  '/index', (route) => false);
+                                        },
+                                  style: OutlinedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
+                                  ),
+                                  child: Text(
+                                    AppLocalizations.of(context)!.genericCancel,
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
                                 ),
                               ],
                             ),
@@ -360,7 +347,5 @@ class _PatientConfirmationPageState extends State<PatientConfirmationPage> {
             ),
           ),
         );
-      },
-    );
   }
 }

@@ -6,23 +6,22 @@ import 'package:app/service/amplify_service.dart';
 import 'package:app/utils/api_utils.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:provider/provider.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../api/api.dart';
 import '../models/user.dart';
 import '../service/credential_manager.dart';
 
+part 'authentication_provider.g.dart';
+
 final CredentialManager credentialManager = CredentialManager();
 
-enum AuthenticationState { unknown, unauthenticated, authenticated }
-
-class AuthenticationProvider with ChangeNotifier {
-  User? get currentUser => _user;
-  User? _user;
-
-  Future<void> _future = Future.value();
-
-  Future<void> get future => _future;
+@riverpod
+class Authentication extends _$Authentication {
+  @override
+  User? build() {
+    return null;
+  }
 
   Future<void> logIn({
     required String username,
@@ -63,14 +62,12 @@ class AuthenticationProvider with ChangeNotifier {
     var creds = UserNewPasswordDTO(
         email: email, newPassword: newPassword, recoveryCode: recoveryCode);
 
-    _future = userService.newPassword(creds);
-    return _future;
+    await userService.newPassword(creds);
   }
 
   Future<void> signOut(BuildContext context) async {
     return credentialManager.signOut().then((value) {
-      _user = null;
-      notifyListeners();
+      state = null;
       Navigator.of(context).pushNamedAndRemoveUntil("/", (route) => false);
     });
   }
@@ -82,8 +79,7 @@ class AuthenticationProvider with ChangeNotifier {
     var creds = UserChangePasswordDTO(
         currentPassword: currentPassword, newPassword: newPassword);
 
-    _future = userService.changePassword(creds);
-    return _future;
+    await userService.changePassword(creds);
   }
 
   Future<void> changeEmail({
@@ -93,8 +89,7 @@ class AuthenticationProvider with ChangeNotifier {
     var creds =
         UserChangeEmailDTO(currentEmail: currentEmail, newEmail: newEmail);
 
-    _future = userService.changeEmail(creds);
-    return _future;
+    await userService.changeEmail(creds);
   }
 
   Future<bool> checkAuthStatus() async {
@@ -105,16 +100,15 @@ class AuthenticationProvider with ChangeNotifier {
       await credentialManager.updateJWT(JwtCredentials(access_token: idToken));
     }
 
-    return client.authStatus().then((user) {
-      _user = User(
+    try {
+      final user = await client.authStatus();
+      state = User(
           id: user.id,
           email: user.email,
           isLinkedToTakecare: user.isLinkedToTakecare);
-
-      notifyListeners();
       return true;
-    }).catchError((err) {
-      if (err is DioError) {
+    } catch (err) {
+      if (err is DioException) {
         if (err.response != null) {
           if (err.response!.statusCode == 401 ||
               err.response!.statusCode == 403) {
@@ -122,7 +116,7 @@ class AuthenticationProvider with ChangeNotifier {
           }
         }
       }
-      throw err;
-    });
+      rethrow;
+    }
   }
 }

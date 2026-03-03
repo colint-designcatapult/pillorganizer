@@ -1,114 +1,68 @@
+import 'package:app/main.dart';
+import 'package:app/provider/authentication_provider.dart';
+import 'package:app/provider/device_provider.dart';
+import 'package:app/provider/medication_provider.dart';
 import 'package:app/provider/new_medication_provider.dart';
-import 'package:app/provider/selected_device_provider.dart';
-import 'package:app/widgets/addNewPill/add_new_pills.dart';
+import 'package:app/provider/selected_device_provider.dart'; // Keep this import as it's used in IndexNewPills and MedicationModal's delete logic
+import 'package:app/widgets/addNewPill/add_new_pills.dart'; // Keep this import as it's used in IndexNewPills
 import 'package:app/widgets/addNewPill/medication_card_entry.dart';
-import 'package:app/widgets/button_icon_text.dart';
-import 'package:app/widgets/generic_yes_no_modal.dart';
+import 'package:app/widgets/button_icon_text.dart'; // Keep this import as it's used in IndexNewPills
+import 'package:app/widgets/generic_yes_no_modal.dart'; // Keep this import as it's used in IndexNewPills
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart'; // Keep this import as it's used in IndexNewPills
 
-class AddNewPillModal extends StatefulWidget {
-  const AddNewPillModal({super.key, required this.onAdd});
+class AddNewPillModal extends ConsumerStatefulWidget {
+  final int deviceID;
+  final Function() onComplete;
+  const AddNewPillModal(
+      {super.key, required this.deviceID, required this.onComplete});
 
-  final VoidCallback onAdd;
   @override
-  _AddNewPillModalState createState() => _AddNewPillModalState();
+  ConsumerState<AddNewPillModal> createState() => _AddNewPillModalState();
 }
 
-class _AddNewPillModalState extends State<AddNewPillModal> {
-  bool showNewMedications = false;
+class _AddNewPillModalState extends ConsumerState<AddNewPillModal> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(newMedicationProvider.notifier).initialize(
+        widget.deviceID,
+        onComplete: widget.onComplete,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final newMedicationProvider = NewMedicationProvider(
-        Provider.of<SelectedDeviceProvider>(context, listen: false)
-            .device!
-            .deviceID,
-        () => widget.onAdd());
-    return Center(
-        child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                minimumSize: Size(170.w, 72.h),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(40).r,
-                        bottomLeft: const Radius.circular(40).r))),
-            child: Row(
-              children: [
-                Icon(Icons.add, size: 24.h, color: Colors.white),
-                SizedBox(
-                  width: 8.w,
-                ),
-                Text(AppLocalizations.of(context)!.addNew,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(color: Colors.white))
-              ],
-            ),
-            onPressed: () => {
-                  showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: const Color(0xFFFBFCFF),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(
-                          top: const Radius.circular(16).r,
-                        ),
-                      ),
-                      constraints: BoxConstraints(
-                        maxWidth: MediaQuery.of(context).size.width,
-                      ),
-                      builder: (context) {
-                        return StatefulBuilder(builder:
-                            (BuildContext context, StateSetter setState) {
-                          return ChangeNotifierProvider<NewMedicationProvider>(
-                              create: (context) => newMedicationProvider,
-                              builder: (context, _) => MedicationModal(
-                                    onBack: () => {
-                                      if (showNewMedications)
-                                        {
-                                          setState(() {
-                                            showNewMedications = false;
-                                          })
-                                        }
-                                      else
-                                        {Navigator.of(context).pop()}
-                                    },
-                                    onNext: showNewMedications,
-                                    child: showNewMedications
-                                        ? const MedicationCardEntry()
-                                        : AddNewPills(
-                                            onAddMedicationClick: () =>
-                                                setState(() {
-                                              showNewMedications = true;
-                                            }),
-                                          ),
-                                  ));
-                        });
-                      }).whenComplete(() {
-                    setState(() {
-                      showNewMedications = false;
-                    });
-                  }),
-                }));
+    return MedicationModal(
+        onBack: () {
+          Navigator.of(context).pop();
+        },
+        onNext: true,
+        child: const MedicationCardEntry());
   }
 }
 
-class IndexNewPills extends StatelessWidget {
+class IndexNewPills extends ConsumerWidget {
   final VoidCallback onAdd;
   const IndexNewPills({super.key, required this.onAdd});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeDevice = ref.watch(activeDeviceProvider);
+    final deviceID = activeDevice?.deviceID ?? 0;
+
     return GestureDetector(
-      onTap: () => {
+      onTap: () {
+        ref.read(newMedicationProvider.notifier).initialize(
+          deviceID,
+          onComplete: onAdd,
+        );
         showModalBottomSheet(
             context: context,
             isScrollControlled: true,
@@ -123,21 +77,11 @@ class IndexNewPills extends StatelessWidget {
               maxWidth: MediaQuery.of(context).size.width,
             ),
             builder: (context) {
-              return StatefulBuilder(
-                  builder: (BuildContext context, StateSetter setState) {
-                return ChangeNotifierProvider<NewMedicationProvider>(
-                    create: (context) => NewMedicationProvider(
-                        Provider.of<SelectedDeviceProvider>(context,
-                                listen: false)
-                            .device!
-                            .deviceID,
-                        () => onAdd),
-                    builder: (context, _) => MedicationModal(
-                        onBack: () => Navigator.of(context).pop(),
-                        onNext: true,
-                        child: const MedicationCardEntry()));
-              });
-            })
+              return MedicationModal(
+                  onBack: () => Navigator.of(context).pop(),
+                  onNext: true,
+                  child: const MedicationCardEntry());
+            });
       },
       child: Container(
         width: double.infinity,
@@ -172,21 +116,26 @@ class IndexNewPills extends StatelessWidget {
   }
 }
 
-class MedicationModal extends StatelessWidget {
+class MedicationModal extends ConsumerWidget {
   final VoidCallback onBack;
   final bool? onNext;
   final int? medicationID;
   final Widget child;
+  final VoidCallback? onComplete;
 
   const MedicationModal(
       {super.key,
       required this.onBack,
       this.onNext,
       this.medicationID,
+      this.onComplete,
       required this.child});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(newMedicationProvider.notifier);
+    final canComplete = ref.watch(newMedicationProvider.select((s) => notifier.canComplete()));
+
     return SizedBox(
         height: MediaQuery.of(context).size.height * 0.9,
         child: Stack(children: [
@@ -205,7 +154,7 @@ class MedicationModal extends StatelessWidget {
                           child: ButtonIconText(
                               text: AppLocalizations.of(context)!.delete,
                               iconData: PhosphorIconsRegular.trashSimple,
-                              onPressed: () => deleteMedication(context))),
+                              onPressed: () => deleteMedication(context, ref))),
                     IconButton(
                       icon: Icon(
                         Icons.close,
@@ -252,60 +201,55 @@ class MedicationModal extends StatelessWidget {
                       ),
                     ),
                     if (onNext == true)
-                      Expanded(child: Consumer<NewMedicationProvider>(
-                          builder: (context, provider, child) {
-                        return GestureDetector(
-                            onTap: () {
-                              if (provider.canComplete()) {
-                                provider.complete(context);
-                              }
-                            },
-                            child: Container(
-                              height: 72.h,
-                              decoration: BoxDecoration(
-                                color: Provider.of<NewMedicationProvider>(
-                                            context,
-                                            listen: false)
-                                        .canComplete()
-                                    ? Theme.of(context).primaryColor
-                                    : const Color(0xFF7FA9BB),
-                                borderRadius: BorderRadius.only(
-                                  topLeft: const Radius.circular(32).r,
+                      Expanded(
+                          child: GestureDetector(
+                              onTap: () {
+                                if (notifier.canComplete()) {
+                                  notifier.complete(context, onComplete: onComplete);
+                                }
+                              },
+                              child: Container(
+                                height: 72.h,
+                                decoration: BoxDecoration(
+                                  color: canComplete
+                                      ? Theme.of(context).primaryColor
+                                      : const Color(0xFF7FA9BB),
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: const Radius.circular(32).r,
+                                  ),
                                 ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    medicationID != null
-                                        ? PhosphorIconsRegular.check
-                                        : PhosphorIconsRegular.plus,
-                                    size: 24.h,
-                                    color: Colors.white,
-                                  ),
-                                  SizedBox(
-                                    width: 8.w,
-                                  ),
-                                  Text(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
                                       medicationID != null
-                                          ? AppLocalizations.of(context)!.save
-                                          : AppLocalizations.of(context)!
-                                              .addToList,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.copyWith(color: Colors.white)),
-                                ],
-                              ),
-                            ));
-                      })),
+                                          ? PhosphorIconsRegular.check
+                                          : PhosphorIconsRegular.plus,
+                                      size: 24.h,
+                                      color: Colors.white,
+                                    ),
+                                    SizedBox(
+                                      width: 8.w,
+                                    ),
+                                    Text(
+                                        medicationID != null
+                                            ? AppLocalizations.of(context)!.save
+                                            : AppLocalizations.of(context)!
+                                                .addToList,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(color: Colors.white)),
+                                  ],
+                                ),
+                              ))),
                   ],
                 ),
               )),
         ]));
   }
 
-  void deleteMedication(BuildContext context) {
+  void deleteMedication(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (_) => GenericYesNoModal(
@@ -314,9 +258,9 @@ class MedicationModal extends StatelessWidget {
           subtitle: AppLocalizations.of(context)!.deleteMedicationConfirmation,
           saveWidgetText: AppLocalizations.of(context)!.delete,
           saveWidgetAction: () {
-            Provider.of<NewMedicationProvider>(context, listen: false)
-                .delete(context);
-            Navigator.of(context).pop();
+            ref.read(newMedicationProvider.notifier)
+                .delete(context, onComplete: onComplete);
+            // Navigator.of(context).pop(); // Handled in provider's delete if successful
           }),
     );
   }
