@@ -33,13 +33,13 @@
 #include "event.h"
 #include "esp_console.h"
 #include "wifi.h"
-#include "ble.h"
+#include "network.h"
 
 #include "iot_telemetry.h"
 #include "mqtt_handler.h"
+#include "device_provisioning.h"
 
 #include <time.h>
-#include "esp_sntp.h"
 
 #include "core_mqtt.h"
 #include "shadow.h"
@@ -47,6 +47,8 @@
 
 
 #define TAG "MAIN"
+
+
 
 const int OTA_START_EVENT = BIT0;
 
@@ -131,6 +133,14 @@ static int led_command(int argc, char **argv)
     return 0;
 }
 
+static int restart_command(int argc, char **argv)
+{
+    ESP_LOGI(TAG, "Restarting device...");
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    esp_restart();
+    return 0;
+}
+
 static int exit_command(int argc, char **argv)
 {    
     //read firmware version 
@@ -150,6 +160,82 @@ static int exit_command(int argc, char **argv)
 
     return 0;
 }
+
+static void fleet_provisioning_task(void* arg)
+{
+    ESP_LOGI(TAG, "Fleet Provisioning Task Started");
+
+    // Load permanent credentials once (if provisioned). These stay valid for
+    // the lifetime of the task so we can reconnect after any WiFi drop.
+    char* device_cert = NULL;
+    char* device_key = NULL;
+    char* root_ca = NULL;
+    char thing_name[128] = {0};
+
+    extern const uint8_t aws_root_ca_start[] asm("_binary_root_ca_pem_start");
+    extern const uint8_t aws_root_ca_end[]   asm("_binary_root_ca_pem_end");
+
+    if (device_provisioning_is_provisioned()) {
+        size_t cert_len = 0, key_len = 0;
+        size_t root_ca_len = aws_root_ca_end - aws_root_ca_start;
+
+        root_ca = (char*)malloc(root_ca_len + 1);
+        if (root_ca) {
+            memcpy(root_ca, aws_root_ca_start, root_ca_len);
+            root_ca[root_ca_len] = '\0';
+        }
+
+        if (network_load_thing_name(thing_name, sizeof(thing_name)) != ESP_OK ||
+            network_load_cert_from_nvs("DEVICE_CERT", &device_cert, &cert_len) != ESP_OK ||
+            network_load_cert_from_nvs("DEVICE_KEY", &device_key, &key_len) != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to load provisioned credentials from NVS");
+            if (root_ca) free(root_ca);
+            root_ca = NULL;
+        }
+    }
+
+    for (;;) {
+        // Wait for WiFi
+        if (!wifi_is_connected()) {
+            vTaskDelay(pdMS_TO_TICKS(1000));
+            continue;
+        }
+
+        // Already connected to MQTT - nothing to do
+        if (mqtt_is_connected()) {
+            vTaskDelay(pdMS_TO_TICKS(2000));
+            continue;
+        }
+
+        if (device_provisioning_is_provisioned()) {
+            if (root_ca && device_cert && device_key && thing_name[0] != '\0') {
+                ESP_LOGI(TAG, "Connecting as Thing: %s", thing_name);
+                esp_err_t ret = mqtt_connect_with_certs(thing_name, root_ca, device_cert, device_key);
+                if (ret == ESP_OK) {
+                    ESP_LOGI(TAG, "Successfully connected to AWS IoT");
+                } else {
+                    ESP_LOGE(TAG, "Failed to connect to AWS IoT, retrying in 5s");
+                    vTaskDelay(pdMS_TO_TICKS(5000));
+                }
+            } else {
+                ESP_LOGE(TAG, "Credentials not loaded, cannot connect");
+                vTaskDelay(pdMS_TO_TICKS(5000));
+            }
+        } else {
+            ESP_LOGI(TAG, "Device NOT provisioned. Starting Fleet Provisioning...");
+            esp_err_t ret = device_provisioning_start();
+            if (ret == ESP_OK) {
+                ESP_LOGI(TAG, "Fleet Provisioning completed. Rebooting...");
+                vTaskDelay(pdMS_TO_TICKS(2000));
+                esp_restart();
+            } else {
+                ESP_LOGE(TAG, "Fleet Provisioning failed: %d, retrying in 10s", ret);
+                vTaskDelay(pdMS_TO_TICKS(10000));
+            }
+        }
+    }
+}
+
 
 
 void app_main(void)
@@ -221,6 +307,12 @@ void app_main(void)
         .func = &exit_command,
     };
 
+    esp_console_cmd_t restart_cmd = {
+        .command = "restart",
+        .help = "Restart the device",
+        .func = &restart_command,
+    };
+
     esp_console_new_repl_uart(&uart_config, &rc, &o);
     esp_console_cmd_register(&read_cmd);
     esp_console_cmd_register(&logs_cmd);
@@ -228,13 +320,16 @@ void app_main(void)
     esp_console_cmd_register(&led_cmd);
     esp_console_cmd_register(&exit_cmd);
     esp_console_cmd_register(&enter_deep_sleep_cmd);
+    esp_console_cmd_register(&restart_cmd);
 
 
     //engineering_logs_off();
     esp_console_start_repl(o);
 
-    ble_init();
     wifi_init();
+
+    // Start fleet provisioning task
+    xTaskCreate(&fleet_provisioning_task, "Fleet Provisioning", 8192, NULL, 5, NULL);
 
     vTaskDelay(pdMS_TO_TICKS(2000));
 
@@ -243,7 +338,7 @@ void app_main(void)
     // START THE MQTT CLIENT HERE
     // mqtt_app_start();
 
-    // Start 10-second MQTT heartbeat
+    // Start MQTT event monitoring
     // iot_telemetry_start();
 
     // todo: remove this

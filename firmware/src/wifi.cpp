@@ -1,7 +1,6 @@
 extern "C" {
 #include "wifi.h"
 #include "network.h"
-#include "pill_gpio.h"
 #include "util.h"
 #include "rtc_sntp.h"
 #include "sdkconfig.h"
@@ -11,6 +10,10 @@ extern "C" {
 #include <esp_err.h>
 #include <esp_log.h>
 #include <esp_mac.h>
+#include <esp_timer.h>
+
+#include <wifi_provisioning/manager.h>
+#include <wifi_provisioning/scheme_ble.h>
 }
 
 #include "event.h"
@@ -169,24 +172,40 @@ public:
     }
 
     void init() override {
-        // Set WiFi mode and start
-        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-        ESP_ERROR_CHECK(esp_wifi_start());
-        
-        // Create WiFi reconnection task
+        // WiFi mode and start are managed by WifiStateSupervisor::init().
+        // Just launch the reconnect task.
         _task = create_task_with_watchdog(task_function, "WiFi", 4096, this, tskIDLE_PRIORITY);
     }
 
     virtual void wifi_event_start() override {
+        reset_reconnect_backoff();
         connect_to_wifi();
     }
 
 private:
+    // Exponential backoff for WiFi reconnection attempts
+    uint32_t _reconnect_attempt = 0;
+    uint32_t _last_disconnect_time = 0;
+
+    uint32_t get_reconnect_delay_ms() {
+        // Exponential backoff: 10s → 30s → 1m → 5m (repeat)
+        switch(_reconnect_attempt) {
+            case 0: return 10000;   // 10 seconds
+            case 1: return 30000;   // 30 seconds
+            case 2: return 60000;   // 1 minute
+            default: return 300000; // 5 minutes (max) - repeat indefinitely
+        }
+    }
+
+    void reset_reconnect_backoff() {
+        _reconnect_attempt = 0;
+    }
+
     void connect_to_wifi() {        
         wifi_config_t conf;
         esp_wifi_get_config(WIFI_IF_STA, &conf);
 
-        ESP_LOGI(TAG, "Connecting to %s", (const char*)conf.sta.ssid);
+        ESP_LOGI(TAG, "Connecting to %s (attempt %lu)", (const char*)conf.sta.ssid, _reconnect_attempt + 1);
         esp_err_t status = esp_wifi_connect();
         ESP_LOGI(TAG, "Connect result %d", status);
     }
@@ -194,11 +213,26 @@ private:
     void task() {
         while(true) {
             if(wifi_wait_for_disconnect(pdMS_TO_TICKS(5000))) {
-                vTaskDelay(pdMS_TO_TICKS(5000));
-                this->connect_to_wifi();
+                // WiFi disconnected - start exponential backoff reconnection attempts
+                _last_disconnect_time = esp_timer_get_time() / 1000000; // Current time in seconds
+                _reconnect_attempt = 0;
+                ESP_LOGI(TAG, "WiFi lost - will attempt periodic reconnection with exponential backoff");
             }
+
+            // If WiFi is disconnected, attempt reconnection with backoff
+            if(!WifiStateSupervisor::get().is_connected()) {
+                uint32_t delay_ms = get_reconnect_delay_ms();
+                if(wifi_wait_for_disconnect(pdMS_TO_TICKS(delay_ms))) {
+                    // Still disconnected after delay - try again
+                    _reconnect_attempt++;
+                    uint32_t time_since_disconnect = (esp_timer_get_time() / 1000000) - _last_disconnect_time;
+                    ESP_LOGI(TAG, "WiFi reconnect attempt #%lu after %lus", _reconnect_attempt, time_since_disconnect);
+                    this->connect_to_wifi();
+                }
+            }
+
             esp_task_wdt_reset();
-            vTaskDelay(pdMS_TO_TICKS(5000));
+            vTaskDelay(pdMS_TO_TICKS(1000));
         }
     }
 
@@ -259,57 +293,81 @@ extern "C" {
     }
 
     esp_err_t wifi_set_credentials(const char* ssid, const char* password) {
-        wifi_config_t wifi_config = {};
-        
-        if(strlen(ssid) > sizeof(wifi_config.sta.ssid) - 1) {
-            return ESP_ERR_INVALID_ARG;
-        }
-        if(strlen(password) > sizeof(wifi_config.sta.password) - 1) {
-            return ESP_ERR_INVALID_ARG;
-        }
-        
-        strncpy((char*)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid) - 1);
-        strncpy((char*)wifi_config.sta.password, password, sizeof(wifi_config.sta.password) - 1);
-        
-        ESP_LOGI(TAG, "Setting WiFi credentials for SSID: %s", ssid);
-        esp_err_t err = esp_wifi_set_config(WIFI_IF_STA, &wifi_config);
-        
-        if(err == ESP_OK) {
-            // Trigger reconnection with new credentials
-            ESP_LOGI(TAG, "Reconnecting to WiFi with new credentials");
-            esp_wifi_disconnect();
-            esp_wifi_connect();
-        }
-        
-        return err;
+        // Deprecated - credentials are set via wifi_provisioning BLE
+        return ESP_OK;
     }
 }
 
 WifiStateSupervisor WifiStateSupervisor::_instance;
 
 void WifiStateSupervisor::init() {
-    // Get MAC address and store it in wifi_info
     esp_efuse_mac_get_default(_wifi_info.sn.bytes.mac);
 
-    // Configure WiFi with hardcoded credentials
-    // TODO: Replace with BLE provisioning service to receive credentials
-    #ifdef CONFIG_DEV_WIFI_ENABLED
+    // Register WiFi and IP event handlers
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, event_dispatcher, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, event_dispatcher, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_LOST_IP, event_dispatcher, NULL));
+
+    // Initialize WiFi handler before any WiFi operations (needed for event callbacks)
+    _wifi_handler = new StandardWifiHandler();
+
+#ifdef CONFIG_DEV_WIFI_ENABLED
+    // Dev mode: skip BLE provisioning, use hardcoded credentials
+    ESP_LOGI(TAG, "Dev WiFi: connecting to '%s'", CONFIG_DEV_WIFI_SSID);
     wifi_config_t wifi_config = {};
     strcpy((char*)wifi_config.sta.ssid, CONFIG_DEV_WIFI_SSID);
     strcpy((char*)wifi_config.sta.password, CONFIG_DEV_WIFI_PASSWORD);
-    
-    ESP_LOGI(TAG, "Configuring WiFi with hardcoded credentials: %s", wifi_config.sta.ssid);
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
-    #else
-    ESP_LOGW(TAG, "No WiFi credentials configured - waiting for BLE provisioning");
-    #endif
+    ESP_ERROR_CHECK(esp_wifi_start());
+    // WIFI_EVENT_STA_START fires -> StandardWifiHandler::wifi_event_start() -> esp_wifi_connect()
+#else
+    // Production: use ESP unified provisioning over BLE
+    wifi_prov_mgr_config_t prov_config = {
+        .scheme = wifi_prov_scheme_ble,
+        .scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM,
+        .app_event_handler = NULL,
+    };
+    ESP_ERROR_CHECK(wifi_prov_mgr_init(prov_config));
 
-    // Create standard WiFi handler
-    _wifi_handler = new StandardWifiHandler();
+#if CONFIG_RESET_PROVISIONED_ON_BOOT
+    // Reset WiFi provisioning for testing BLE provisioning flow
+    ESP_LOGI(TAG, "Resetting WiFi provisioning (testing mode)");
+    wifi_prov_mgr_reset_provisioning();
+#endif
 
-    // Register event handlers
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, event_dispatcher, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, event_dispatcher, NULL));
+    bool provisioned = false;
+    ESP_ERROR_CHECK(wifi_prov_mgr_is_provisioned(&provisioned));
 
+    if (!provisioned) {
+        // Build BLE device name from last 3 bytes of MAC
+        char service_name[20];
+        snprintf(service_name, sizeof(service_name), "PILL-%02X%02X%02X",
+                 _wifi_info.sn.bytes.mac[3],
+                 _wifi_info.sn.bytes.mac[4],
+                 _wifi_info.sn.bytes.mac[5]);
+
+        ESP_LOGI(TAG, "WiFi not provisioned - starting BLE provisioning as: %s", service_name);
+
+        // Security 1 with no proof-of-possession (NULL)
+        ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(
+            WIFI_PROV_SECURITY_1, NULL, service_name, NULL));
+
+        // Block until provisioning completes and WiFi connects
+        wifi_prov_mgr_wait();
+        wifi_prov_mgr_deinit();
+        // WiFi is already running in STA mode and connected at this point
+        ESP_LOGI(TAG, "BLE provisioning complete");
+    } else {
+        // Already provisioned - deinit prov manager and start WiFi normally
+        wifi_prov_mgr_deinit();
+        ESP_LOGI(TAG, "WiFi already provisioned, starting STA");
+        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+        ESP_ERROR_CHECK(esp_wifi_start());
+        // WIFI_EVENT_STA_START fires -> StandardWifiHandler::wifi_event_start() -> esp_wifi_connect()
+    }
+#endif
+
+    // Start reconnect watchdog task
     _wifi_handler->init();
 }

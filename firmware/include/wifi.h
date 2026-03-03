@@ -25,9 +25,6 @@ bool wifi_is_connected();
 
 const wifi_info_t* wifi_get_info();
 
-// Provisioning helper - set WiFi credentials
-esp_err_t wifi_set_credentials(const char* ssid, const char* password);
-
 #ifdef __cplusplus
 }
 #endif
