@@ -6,34 +6,33 @@ import 'package:app/widgets/medication_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:app/l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:provider/provider.dart';
 
-class MedicationCardEntry extends StatefulWidget {
+class MedicationCardEntry extends ConsumerStatefulWidget {
   const MedicationCardEntry({
     super.key,
   });
 
   @override
-  _MedicationCardEntryState createState() => _MedicationCardEntryState();
+  ConsumerState<MedicationCardEntry> createState() => _MedicationCardEntryState();
 }
 
-class _MedicationCardEntryState extends State<MedicationCardEntry> {
+class _MedicationCardEntryState extends ConsumerState<MedicationCardEntry> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider =
-          Provider.of<NewMedicationProvider>(context, listen: false);
-      Provider.of<ScheduleProvider>(context, listen: false)
-          .load(provider.state.deviceID);
+      final state = ref.read(newMedicationProvider);
+      ref.read(scheduleProvider.notifier).load(state.deviceID);
     });
   }
 
-  Widget _buildDose(context, DispenseTime time, Set<int>? checked,
-      NewMedicationProvider provider, String imageUrl) {
+  Widget _buildDose(BuildContext context, WidgetRef ref, DispenseTime time, Set<int>? checked, String imageUrl) {
     bool selected = checked?.contains(time.id) ?? false;
+    final notifier = ref.read(newMedicationProvider.notifier);
+    
     return RawChip(
       selectedColor: const Color(0xFFF1F2F6),
       backgroundColor: const Color(0xFFF1F2F6),
@@ -54,13 +53,12 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
           ? BorderSide(color: Theme.of(context).primaryColor, width: 2.w)
           : BorderSide(color: const Color(0xFFF1F2F6), width: 2.w),
       onPressed: () {
-        provider.toggleDispenseTime(time.id!);
+        notifier.toggleDispenseTime(time.id!);
       },
     );
   }
 
-  Widget _buildForSchedule(context, SimpleSchedule sched, Set<int>? checked,
-      NewMedicationProvider provider) {
+  Widget _buildForSchedule(BuildContext context, WidgetRef ref, SimpleSchedule sched, Set<int>? checked) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -68,7 +66,7 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
           children: [
             if (sched.am != null)
               Expanded(
-                  child: _buildDose(context, sched.am!, checked, provider,
+                  child: _buildDose(context, ref, sched.am!, checked,
                       'lib/assets/SVG/sun.svg')),
             if (sched.am != null && sched.pm != null)
               SizedBox(
@@ -76,7 +74,7 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
               ),
             if (sched.pm != null)
               Expanded(
-                  child: _buildDose(context, sched.pm!, checked, provider,
+                  child: _buildDose(context, ref, sched.pm!, checked,
                       'lib/assets/SVG/moon.svg')),
           ],
         ),
@@ -95,115 +93,124 @@ class _MedicationCardEntryState extends State<MedicationCardEntry> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<NewMedicationProvider>(builder: (context, provider, child) {
-      final isEditing = provider.state.existing != null;
-      return SingleChildScrollView(
-          child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 32.w),
-        child: KeyboardDismissWrapper(
-            child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: <Widget>[
-            Center(
-              child: Text(
-                isEditing
-                    ? AppLocalizations.of(context)!.editMedication
-                    : AppLocalizations.of(context)!.newMedication,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge
-                    ?.copyWith(color: const Color(0xFF03012C)),
-              ),
-            ),
-            SizedBox(height: 8.h),
-            if (!isEditing)
-              Text(
-                AppLocalizations.of(context)!.newMedicationSubtitle,
-                textAlign: TextAlign.center,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: const Color(0xFF03012C)),
-              ),
-            SizedBox(height: 36.h),
-            Text(
-              AppLocalizations.of(context)!.name,
-              style: Theme.of(context)
-                  .textTheme
-                  .displayLarge
-                  ?.copyWith(fontSize: 28.h, color: const Color(0xFF03012C)),
-            ),
-            SizedBox(height: 8.h),
-            TextFormField(
-                initialValue: provider.state.name,
-                inputFormatters: [
-                  LengthLimitingTextInputFormatter(32),
-                ],
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: const Color(0xFFF1F3F6),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide:
-                        BorderSide(color: const Color(0xFFBFD2DB), width: 2.w),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                ),
-                onChanged: (val) {
-                  provider.updateName(val);
-                },
-                onFieldSubmitted: (val) {
-                  provider.updateName(val);
-                }),
-            SizedBox(height: 36.h),
-            Column(
-              children: [
-                MedicationColorSelector(
-                    selected: provider.state.color,
-                    onChange: (color) {
-                      provider.updateColor(color);
-                    }),
-                SizedBox(height: 36.h),
-                PillShapeSelector(
-                  key: ValueKey(provider.state.shape),
-                  color: provider.state.color,
-                  selected: provider.state.shape,
-                  onChange: (shape) {
-                    provider.updateShape(shape);
-                  },
-                )
-              ],
-            ),
-            SizedBox(height: 36.h),
-            Text(
-              AppLocalizations.of(context)!.time,
-              style: Theme.of(context)
-                  .textTheme
-                  .displayLarge
-                  ?.copyWith(fontSize: 28.h, color: const Color(0xFF03012C)),
-            ),
-            SizedBox(height: 12.h),
-            Consumer<ScheduleProvider>(
-                builder: (context, scheduleProv, snapshot) {
-              final deviceID = provider.state.deviceID;
-              final deviceSchedule =
-                  scheduleProv.getScheduleForDevice(deviceID);
+    final medicationState = ref.watch(newMedicationProvider);
+    final medicationNotifier = ref.read(newMedicationProvider.notifier);
+    final scheduleState = ref.watch(scheduleProvider);
 
-              if (deviceSchedule == null) {
-                return const Center(child: CircularProgressIndicator());
+    final isEditing = medicationState.existing != null;
+
+    return SingleChildScrollView(
+        child: Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 32.w),
+      child: KeyboardDismissWrapper(
+          child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: <Widget>[
+          Center(
+            child: Text(
+              isEditing
+                  ? AppLocalizations.of(context)!.editMedication
+                  : AppLocalizations.of(context)!.newMedication,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(color: const Color(0xFF03012C)),
+            ),
+          ),
+          SizedBox(height: 8.h),
+          if (!isEditing)
+            Text(
+              AppLocalizations.of(context)!.newMedicationSubtitle,
+              textAlign: TextAlign.center,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: const Color(0xFF03012C)),
+            ),
+          SizedBox(height: 36.h),
+          Text(
+            AppLocalizations.of(context)!.name,
+            style: Theme.of(context)
+                .textTheme
+                .displayLarge
+                ?.copyWith(fontSize: 28.h, color: const Color(0xFF03012C)),
+          ),
+          SizedBox(height: 8.h),
+          TextFormField(
+              initialValue: medicationState.name,
+              inputFormatters: [
+                LengthLimitingTextInputFormatter(32),
+              ],
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: const Color(0xFFF1F3F6),
+                enabledBorder: OutlineInputBorder(
+                  borderSide:
+                      BorderSide(color: const Color(0xFFBFD2DB), width: 2.w),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              ),
+              onChanged: (val) {
+                medicationNotifier.updateName(val);
+              },
+              onFieldSubmitted: (val) {
+                medicationNotifier.updateName(val);
+              }),
+          SizedBox(height: 36.h),
+          Column(
+            children: [
+              MedicationColorSelector(
+                  selected: medicationState.color,
+                  onChange: (color) {
+                    medicationNotifier.updateColor(color);
+                  }),
+              SizedBox(height: 36.h),
+              PillShapeSelector(
+                key: ValueKey(medicationState.shape),
+                color: medicationState.color,
+                selected: medicationState.shape,
+                onChange: (shape) {
+                  medicationNotifier.updateShape(shape);
+                },
+              )
+            ],
+          ),
+          SizedBox(height: 36.h),
+          Text(
+            AppLocalizations.of(context)!.time,
+            style: Theme.of(context)
+                .textTheme
+                .displayLarge
+                ?.copyWith(fontSize: 28.h, color: const Color(0xFF03012C)),
+          ),
+          SizedBox(height: 12.h),
+          Builder(
+            builder: (context) {
+              final deviceSchedule = scheduleState.asData?.value;
+
+              if (deviceSchedule == null || (deviceSchedule.amID == null && deviceSchedule.pmID == null)) {
+                return scheduleState.when(
+                  data: (_) => const SizedBox.shrink(),
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (err, stack) => Center(child: Text(err.toString())),
+                );
               } else {
-                return _buildForSchedule(context, deviceSchedule,
-                    provider.state.assignedDispenseTimes, provider);
+                // Map SimpleScheduleDTO to SimpleSchedule domain model if needed, 
+                // or update _buildForSchedule to accept DTO.
+                // Assuming SimpleSchedule.fromDTO exists or using DTO directly.
+                return _buildForSchedule(context, ref, SimpleSchedule.fromDTO(deviceSchedule),
+                    medicationState.assignedDispenseTimes);
               }
-            }),
-            SizedBox(height: 96.h),
-          ],
-        )),
-      ));
-    });
+            },
+          ),
+          SizedBox(height: 96.h),
+        ],
+      )),
+    ));
   }
 }

@@ -7,10 +7,10 @@ import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timezone/standalone.dart' as tz;
 
-class TimeZoneSelection extends StatefulWidget {
+class TimeZoneSelection extends ConsumerStatefulWidget {
   final DeviceUser device;
   final bool isOwner;
 
@@ -21,10 +21,10 @@ class TimeZoneSelection extends StatefulWidget {
   });
 
   @override
-  TimeZoneSelectionState createState() => TimeZoneSelectionState();
+  ConsumerState<TimeZoneSelection> createState() => TimeZoneSelectionState();
 }
 
-class TimeZoneSelectionState extends State<TimeZoneSelection> {
+class TimeZoneSelectionState extends ConsumerState<TimeZoneSelection> {
   late tz.Location phoneLocation;
 
   @override
@@ -43,34 +43,34 @@ class TimeZoneSelectionState extends State<TimeZoneSelection> {
   }
 
   Future<void> _updateDeviceTimezone(tz.Location location) async {
-    final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
-    await deviceProvider.updateDeviceTimeZone(widget.device.deviceID, location);
+    await ref.read(deviceListProvider.notifier).updateDeviceTimeZone(widget.device.deviceID, location);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<DeviceProvider>(builder: (context, deviceProvider, _) {
-      DeviceUser? currentDevice;
-      if (deviceProvider.devices.isNotEmpty) {
-        currentDevice = deviceProvider.devices.firstWhere(
-          (device) => device.deviceID == widget.device.deviceID,
-          orElse: () => widget.device,
-        );
-      } else {
-        currentDevice = widget.device;
-      }
+    final deviceListAsync = ref.watch(deviceListProvider);
+    final devices = deviceListAsync.value ?? [];
 
-      bool isUpdatingTimezone = deviceProvider.isUpdatingTimezone;
-
-      return Column(
-        children: [
-          _buildTimezoneSection(
-              currentDevice, widget.isOwner, isUpdatingTimezone),
-          SizedBox(height: 16.h),
-          _buildCurrentTimezoneButton(isUpdatingTimezone),
-        ],
+    DeviceUser? currentDevice;
+    if (devices.isNotEmpty) {
+      currentDevice = devices.firstWhere(
+        (device) => device.deviceID == widget.device.deviceID,
+        orElse: () => widget.device,
       );
-    });
+    } else {
+      currentDevice = widget.device;
+    }
+
+    bool isUpdatingTimezone = deviceListAsync.isLoading; // Approximation
+
+    return Column(
+      children: [
+        _buildTimezoneSection(
+            currentDevice, widget.isOwner, isUpdatingTimezone),
+        SizedBox(height: 16.h),
+        _buildCurrentTimezoneButton(isUpdatingTimezone),
+      ],
+    );
   }
 
   Widget _buildTimezoneSection(

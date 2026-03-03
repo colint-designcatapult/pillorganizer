@@ -1,37 +1,31 @@
-import 'package:flutter/material.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:timezone/standalone.dart' as tz;
 
-class FilterableTimeZoneProvider extends ChangeNotifier {
-  Map<String, tz.Location>? get zones => _zones;
-  Map<String, tz.Location>? _zones;
-  String? _filter;
-  String? get filterBy => _filter;
-  List<tz.Location> _filteredZones = List.empty(growable: false);
-  List<tz.Location> get filteredZones => _filteredZones;
+part 'filterable_timezone_provider.g.dart';
 
-  FilterableTimeZoneProvider() {
+@riverpod
+class FilterableTimeZone extends _$FilterableTimeZone {
+  Map<String, tz.Location> _zones = {};
+
+  @override
+  List<tz.Location> build() {
     _zones = tz.timeZoneDatabase.locations.map((key, value) {
       String index = value.name.replaceAll("/", " ").replaceAll("_", " ");
       index += " ${value.currentTimeZone.abbreviation}";
       return MapEntry(index.toLowerCase(), value);
     });
+    return [];
   }
 
-  Future<List<tz.Location>> filter(String? filterBy) {
-    String? fb = filterBy?.toLowerCase().replaceAll(RegExp("[^a-z0-9]"), "");
-    _filter = filterBy;
+  void filter(String? filterBy) {
     if (filterBy == null || filterBy.isEmpty) {
-      _filteredZones = List.empty(growable: false);
-      notifyListeners();
-      return Future.value(_filteredZones);
+      state = [];
     } else {
-      _filteredZones = _zones?.entries
-              .where((element) => element.key.contains(fb!))
-              .map((e) => e.value)
-              .toList(growable: false) ??
-          List.empty(growable: false);
-      notifyListeners();
-      return Future.value(_filteredZones);
+      final fb = filterBy.toLowerCase().replaceAll(RegExp("[^a-z0-9]"), "");
+      state = _zones.entries
+          .where((element) => element.key.contains(fb))
+          .map((e) => e.value)
+          .toList(growable: false);
     }
   }
 }

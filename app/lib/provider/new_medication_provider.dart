@@ -2,86 +2,89 @@ import 'package:app/api/api.dart';
 import 'package:app/api/medication.dart';
 import 'package:app/models/medication_entry_wizard.dart';
 import 'package:flutter/material.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-enum NewMedicationStage { name, appearance, schedule }
+part 'new_medication_provider.g.dart';
 
-class NewMedicationProvider with ChangeNotifier {
-  VoidCallback? _onComplete;
-  late NewMedicationState _state;
-  NewMedicationState get state => _state;
-  NewMedicationProvider(int deviceID, VoidCallback? onComplete) {
-    _state = NewMedicationState(deviceID: deviceID);
-    _onComplete = onComplete;
+@riverpod
+class NewMedicationNotifier extends _$NewMedicationNotifier {
+  @override
+  NewMedicationState build() {
+    // Initial dummy state, should be initialized via [initialize]
+    return NewMedicationState(deviceID: 0);
   }
 
-  NewMedicationProvider.fromExisting(
-      int deviceID, ScheduledMedication med, VoidCallback? onComplete) {
-    _onComplete = onComplete;
-    _state = NewMedicationState(
-        existing: med,
-        deviceID: deviceID,
-        name: med.name,
-        shape: med.shape,
-        color: med.color,
-        assignedDispenseTimes:
-            med.dispenseTimes.map((e) => e.dispenseTimeID).toSet());
+  void initialize(int deviceID, {ScheduledMedication? existing, VoidCallback? onComplete}) {
+    if (existing != null) {
+      state = NewMedicationState(
+          existing: existing,
+          deviceID: deviceID,
+          name: existing.name,
+          shape: existing.shape,
+          color: existing.color,
+          assignedDispenseTimes:
+              existing.dispenseTimes.map((e) => e.dispenseTimeID).toSet());
+    } else {
+      state = NewMedicationState(deviceID: deviceID);
+    }
   }
 
   void updateName(String? newName) {
-    _state = state.copyWith(name: newName);
-    notifyListeners();
+    state = state.copyWith(name: newName);
   }
 
   void updateColor(Color? newColor) {
-    _state = state.copyWith(color: newColor);
-    notifyListeners();
+    state = state.copyWith(color: newColor);
   }
 
   void updateShape(MedicationShape? newShape) {
-    _state = state.copyWith(shape: newShape);
-    notifyListeners();
+    state = state.copyWith(shape: newShape);
   }
 
-  void complete(context) {
-    client
-        .saveMedication(
-            _state.deviceID,
-            SaveMedicationDTO(
-                id: _state.existing?.id,
-                name: _state.name,
-                shape: _state.shape?.internalName,
-                color: _state.color?.value,
-                dispenseTimes: _state.assignedDispenseTimes))
-        .then((value) {
+  Future<void> complete(BuildContext context, {VoidCallback? onComplete}) async {
+    try {
+      await client.saveMedication(
+              state.deviceID,
+              SaveMedicationDTO(
+                  id: state.existing?.id,
+                  name: state.name,
+                  shape: state.shape?.internalName,
+                  color: state.color?.value,
+                  dispenseTimes: state.assignedDispenseTimes));
+      
       if (context.mounted) {
-        if (_onComplete != null) {
-          _onComplete!();
+        if (onComplete != null) {
+          onComplete();
         }
         Navigator.of(context).pop();
       }
-      notifyListeners();
-    });
+    } catch (e) {
+      // Handle error
+    }
   }
 
-  void delete(context) {
-    client
-        .deleteMedication(_state.deviceID, _state.existing!.id!)
-        .then((value) {
+  Future<void> delete(BuildContext context, {VoidCallback? onComplete}) async {
+    if (state.existing?.id == null) return;
+    
+    try {
+      await client.deleteMedication(state.deviceID, state.existing!.id!);
       if (context.mounted) {
-        if (_onComplete != null) {
-          _onComplete!();
+        if (onComplete != null) {
+          onComplete();
         }
         Navigator.of(context).pop();
       }
-    });
+    } catch (e) {
+      // Handle error
+    }
   }
 
   bool canComplete() {
-    return _state.assignedDispenseTimes?.isEmpty == false &&
-        _state.color != null &&
-        _state.name != null &&
-        _state.name!.isNotEmpty &&
-        _state.shape != null;
+    return state.assignedDispenseTimes?.isEmpty == false &&
+        state.color != null &&
+        state.name != null &&
+        state.name!.isNotEmpty &&
+        state.shape != null;
   }
 
   void toggleDispenseTime(int dispenseID) {
@@ -91,11 +94,6 @@ class NewMedicationProvider with ChangeNotifier {
     } else {
       newSet.add(dispenseID);
     }
-    _state = state.copyWith(assignedDispenseTimes: newSet);
-    notifyListeners();
+    state = state.copyWith(assignedDispenseTimes: newSet);
   }
-
-  final Key nameKey = UniqueKey();
-  final Key appearanceKey = UniqueKey();
-  final Key scheduleKey = UniqueKey();
 }

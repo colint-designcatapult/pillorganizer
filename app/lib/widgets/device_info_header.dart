@@ -6,9 +6,9 @@ import 'package:app/provider/device_state_provider.dart';
 import 'package:app/widgets/switch_device.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:provider/provider.dart';
 
 import '../provider/selected_device_provider.dart';
 
@@ -30,166 +30,164 @@ IconData batteryIcon(int level, bool? charging) {
 }
 
 
-class DeviceInfoHeader extends StatelessWidget {
+class DeviceInfoHeader extends ConsumerWidget {
   const DeviceInfoHeader({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer3<SelectedDeviceProvider,
-            DeviceStateProvider, DeviceProvider>(
-        builder: (_, selectedDeviceProvider, deviceStateProvider,
-            deviceProvider, __) {
-      int? batteryLevel;
-      bool? batteryCharging;
-      DeviceState? deviceState = deviceStateProvider.value;
-      int numberOfDevices = deviceProvider.devices.length;
-      bool isOwner = selectedDeviceProvider.device?.owner ?? false;
-      String deviceName = selectedDeviceProvider.device?.name ??
-          AppLocalizations.of(context)!.loadingState;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeDevice = ref.watch(activeDeviceProvider);
+    final deviceStateAsync = ref.watch(deviceStateProvider);
+    final deviceListAsync = ref.watch(deviceListProvider);
 
+    int? batteryLevel;
+    bool? batteryCharging;
+    DeviceState? deviceState = deviceStateAsync.value;
+    int numberOfDevices = deviceListAsync.value?.length ?? 0;
+    bool isOwner = activeDevice?.owner ?? false;
+    String deviceName = activeDevice?.name ??
+        AppLocalizations.of(context)!.loadingState;
 
-      if (deviceState != null) {
-        batteryLevel = deviceState.battery;
-        batteryCharging = deviceState.charging;
-      }
+    if (deviceState != null) {
+      batteryLevel = deviceState.battery;
+      batteryCharging = deviceState.charging;
+    }
 
-      if (deviceState == null) {
-        return Padding(
-            padding: const EdgeInsets.only(bottom: 20),
+    if (deviceState == null) {
+      return Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Row(
+            children: [
+              Text(AppLocalizations.of(context)!.welcome,
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 36.h,
+                      fontWeight: FontWeight.w700)),
+            ],
+          ));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        GestureDetector(
+            onTap: () => _showConnectionStatus(context),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(AppLocalizations.of(context)!.welcome,
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 36.h,
-                        fontWeight: FontWeight.w700)),
-              ],
-            ));
-      }
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          GestureDetector(
-              onTap: () => _showConnectionStatus(context),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Flexible(
-                          child: Text(deviceName,
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24.h,
-                                  fontWeight: FontWeight.w600),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1),
-                        ),
-                        SizedBox(width: 8.w),
-                        Container(
-                          decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                  width: 2.h,
-                                  color: true
-                                      ? Colors.red
-                                      : const Color.fromARGB(0, 0, 0, 0))),
-                          child:
-                              Icon(Icons.info, color: Colors.white, size: 16.h),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (!isOwner) ...[
-                    SizedBox(width: 8.w),
-                    Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8F9FC),
-                        borderRadius: BorderRadius.circular(12.r),
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(deviceName,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 24.h,
+                                fontWeight: FontWeight.w600),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1),
                       ),
-                      child: Text(
-                        AppLocalizations.of(context)!.viewOnly,
-                        style: TextStyle(
-                          color: const Color(0xFF363F72),
-                          fontSize: 12.h,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      SizedBox(width: 8.w),
+                      Container(
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                                width: 2.h,
+                                color: true
+                                    ? Colors.red
+                                    : const Color.fromARGB(0, 0, 0, 0))),
+                        child:
+                            Icon(Icons.info, color: Colors.white, size: 16.h),
+                      ),
+                    ],
+                  ),
+                ),
+                if (!isOwner) ...[
+                  SizedBox(width: 8.w),
+                  Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8F9FC),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Text(
+                      AppLocalizations.of(context)!.viewOnly,
+                      style: TextStyle(
+                        color: const Color(0xFF363F72),
+                        fontSize: 12.h,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                  ]
-                ],
-              )),
-          if (false)
-            Column(
-              children: [
-                SizedBox(height: 8.h),
-                Row(children: [
-                  SizedBox(
-                      height: 16.h,
-                      width: 16.w,
-                      child: const CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      )),
-                  SizedBox(width: 8.w),
-                  Text(AppLocalizations.of(context)!.bluetoothConnecting,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: Colors.white)),
-                  SizedBox(width: 8.w),
-                  Icon(
-                    PhosphorIconsRegular.bluetooth,
-                    size: 20.h,
-                    color: Colors.white,
                   ),
-                  SizedBox(width: 8.w),
-                ]),
+                ]
               ],
-            ),
-          if (numberOfDevices > 1)
-            Column(
-              children: [SizedBox(height: 8.h), const SwitchDevice()],
-            ),
-          if (batteryLevel != null)
-            Column(
-              children: [
-                SizedBox(height: 8.h),
-                Row(children: [
-                  Text(AppLocalizations.of(context)!.batteryLevel,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: Colors.white)),
-                  SizedBox(width: 8.w),
-                  Icon(
-                    batteryIcon(batteryLevel, batteryCharging),
-                    size: 20.h,
-                    color: Colors.white,
-                  ),
-                  SizedBox(width: 8.w),
-                  Text(
-                    "${batteryLevel.toString()} %",
+            )),
+        if (false)
+          Column(
+            children: [
+              SizedBox(height: 8.h),
+              Row(children: [
+                SizedBox(
+                    height: 16.h,
+                    width: 16.w,
+                    child: const CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    )),
+                SizedBox(width: 8.w),
+                Text(AppLocalizations.of(context)!.bluetoothConnecting,
                     style: Theme.of(context)
                         .textTheme
-                        .displaySmall
-                        ?.copyWith(fontSize: 14.h, color: Colors.white),
-                  )
-                ]),
-              ],
-            )
-          else
-            SizedBox(height: 12.h),
-        ],
-      );
-    });
+                        .bodySmall
+                        ?.copyWith(color: Colors.white)),
+                SizedBox(width: 8.w),
+                Icon(
+                  PhosphorIconsRegular.bluetooth,
+                  size: 20.h,
+                  color: Colors.white,
+                ),
+                SizedBox(width: 8.w),
+              ]),
+            ],
+          ),
+        if (numberOfDevices > 1)
+          Column(
+            children: [SizedBox(height: 8.h), const SwitchDevice()],
+          ),
+        if (batteryLevel != null)
+          Column(
+            children: [
+              SizedBox(height: 8.h),
+              Row(children: [
+                Text(AppLocalizations.of(context)!.batteryLevel,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: Colors.white)),
+                SizedBox(width: 8.w),
+                Icon(
+                  batteryIcon(batteryLevel, batteryCharging),
+                  size: 20.h,
+                  color: Colors.white,
+                ),
+                SizedBox(width: 8.w),
+                Text(
+                  "${batteryLevel.toString()} %",
+                  style: Theme.of(context)
+                      .textTheme
+                      .displaySmall
+                      ?.copyWith(fontSize: 14.h, color: Colors.white),
+                )
+              ]),
+            ],
+          )
+        else
+          SizedBox(height: 12.h),
+      ],
+    );
   }
 
   void _showConnectionStatus(

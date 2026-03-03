@@ -1,9 +1,5 @@
 import 'package:app/navigation/tab_navigator.dart';
-import 'package:app/provider/caregiver_provider.dart';
-import 'package:app/provider/device_provider.dart';
-import 'package:app/provider/medication_provider.dart';
-import 'package:app/provider/time_provider.dart';
-import 'package:app/provider/user_registration_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
 import 'package:app/screens/first_launch.dart';
 import 'package:app/screens/name_device_wizard.dart';
@@ -15,9 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
@@ -38,7 +32,7 @@ Future<void> main() async {
   tz.initializeTimeZones();
   DeepLinkService().initialize();
   await AmplifyService().configureAmplify();
-  runApp(ProviderScope(child: const MyApp()));
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -47,176 +41,138 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ScreenUtilWrapper(
-      child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider(
-            create: (context) => AuthenticationProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => DeepLinkProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => LanguageProvider(),
-          ),
-          ChangeNotifierProvider<UserRegistrationProvider>(
-              create: (_) => UserRegistrationProvider()),
-          ChangeNotifierProvider<DeviceProvider>(
-              create: (_) => DeviceProvider()),
-          ChangeNotifierProxyProvider<DeviceProvider, SelectedDeviceProvider>(
-            create: (context) => SelectedDeviceProvider(),
-            update: (context, deviceProv, selectedProv) =>
-                selectedProv!.update(deviceProv.devices),
-          ),
-          ChangeNotifierProxyProvider<SelectedDeviceProvider,
-                  MedicationsProvider>(
-              create: (context) => MedicationsProvider(
-                  null),
-              update: (context, device, old) => old!.update(device.device)),
-          ChangeNotifierProxyProvider<SelectedDeviceProvider, ScheduleProvider>(
-              create: (context) => ScheduleProvider(),
-              update: (context, selectedDevice, prov) =>
-                  prov!.update(selectedDevice.device)),
-          ChangeNotifierProvider<MinuteBasedTimeProvider>(
-            create: (context) => MinuteBasedTimeProvider(),
-          ),
-          ChangeNotifierProvider<CaregiverProvider>(
-              create: (_) => CaregiverProvider()),
-        ],
-        child: DeepLinkWrapper(
-          child: MediaQuery(
-              data: MediaQuery.of(context).copyWith(
-                textScaler: const TextScaler.linear(1.0),
-              ),
-              child: Builder(
-                builder: (context) =>
-                    Consumer2<DeepLinkProvider, LanguageProvider>(
-                  builder:
-                      (context, deepLinkProvider, languageProvider, child) {
-                    return Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        MaterialApp(
-                          title: 'Cabinet Pills',
-                          themeMode: ThemeMode.system,
-                          locale: languageProvider.locale,
-                          onGenerateRoute: (settings) {
-                            if (settings.name?.startsWith('/name_new_device') ==
-                                true) {
-                              final uri = Uri.parse(settings.name!);
-                              final deviceId = uri.queryParameters['id'] != null
-                                  ? int.parse(uri.queryParameters['id']!)
-                                  : null;
+      child: DeepLinkWrapper(
+        child: MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaler: const TextScaler.linear(1.0),
+            ),
+            child: Consumer(
+              builder: (context, ref, child) {
+                final languageLocale = ref.watch(languageProvider);
+                
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    MaterialApp(
+                      title: 'Cabinet Pills',
+                      themeMode: ThemeMode.system,
+                      locale: languageLocale,
+                      onGenerateRoute: (settings) {
+                        if (settings.name?.startsWith('/name_new_device') ==
+                            true) {
+                          final uri = Uri.parse(settings.name!);
+                          final deviceId = uri.queryParameters['id'] != null
+                              ? int.parse(uri.queryParameters['id']!)
+                              : null;
 
-                              return MaterialPageRoute(
-                                builder: (context) => NameDeviceWizard(deviceId: deviceId),
-                              );
-                            }
+                          return MaterialPageRoute(
+                            builder: (context) => NameDeviceWizard(deviceId: deviceId),
+                          );
+                        }
 
-                            // Handle other routes that might need query parameters here
-                            return null; // Let the routes table handle other routes
-                          },
-                          routes: {
-                            '/': (context) {
-                              return const AppInitializer();
-                            },
-                            '/index': (context) => const TabNavigator(),
-                            '/post_setup': (context) => const PostSetupWizard(),
-                            '/patient_confirmation': (context) =>
-                                const PatientConfirmationPage()
-                          },
-                          supportedLocales: const [Locale('en')],
-                          localizationsDelegates: const <LocalizationsDelegate<
-                              dynamic>>[
-                            AppLocalizations.delegate,
-                            GlobalMaterialLocalizations.delegate,
-                            GlobalWidgetsLocalizations.delegate,
-                            GlobalCupertinoLocalizations.delegate,
-                          ],
-                          debugShowCheckedModeBanner: false,
-                          theme: ThemeData(
-                            useMaterial3: true,
-                            colorScheme: ColorScheme.fromSeed(
-                                seedColor: const Color(0xff206b8b)),
-                            primaryColor: const Color(0xff206b8b),
-                            secondaryHeaderColor: const Color(0xFFBFD2DB),
-                            fontFamily: 'Poppins',
-                            textTheme: TextTheme(
-                              titleSmall: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16.h,
-                              ),
-                              titleMedium: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w700,
-                                fontSize: 20.h,
-                              ),
-                              titleLarge: TextStyle(
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w700,
-                                fontSize: 24.h,
-                              ),
-                              labelSmall: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 16.h,
-                                  fontWeight: FontWeight.w600),
-                              labelMedium: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 18.h,
-                                  fontWeight: FontWeight.w600),
-                              labelLarge: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 20.h,
-                                  fontWeight: FontWeight.w600),
-                              displaySmall: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 16.h,
-                                  fontWeight: FontWeight.w500),
-                              displayMedium: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 20.h,
-                                  fontWeight: FontWeight.w500),
-                              displayLarge: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 32.h,
-                                  fontWeight: FontWeight.w500),
-                              bodySmall: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 14.h,
-                                  fontWeight: FontWeight.w400),
-                              bodyMedium: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 16.h,
-                                  fontWeight: FontWeight.w400),
-                              bodyLarge: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 20.h,
-                                  fontWeight: FontWeight.w400),
-                            ),
-                          ),
-                          navigatorObservers: [routeObserver],
-                        ),
+                        // Handle other routes that might need query parameters here
+                        return null; // Let the routes table handle other routes
+                      },
+                      routes: {
+                        '/': (context) {
+                          return const AppInitializer();
+                        },
+                        '/index': (context) => const TabNavigator(),
+                        '/post_setup': (context) => const PostSetupWizard(),
+                        '/patient_confirmation': (context) =>
+                            const PatientConfirmationPage()
+                      },
+                      supportedLocales: const [Locale('en')],
+                      localizationsDelegates: const <LocalizationsDelegate<
+                          dynamic>>[
+                        AppLocalizations.delegate,
+                        GlobalMaterialLocalizations.delegate,
+                        GlobalWidgetsLocalizations.delegate,
+                        GlobalCupertinoLocalizations.delegate,
                       ],
-                    );
-                  },
-                ),
-              )),
-        ),
+                      debugShowCheckedModeBanner: false,
+                      theme: ThemeData(
+                        useMaterial3: true,
+                        colorScheme: ColorScheme.fromSeed(
+                            seedColor: const Color(0xff206b8b)),
+                        primaryColor: const Color(0xff206b8b),
+                        secondaryHeaderColor: const Color(0xFFBFD2DB),
+                        fontFamily: 'Poppins',
+                        textTheme: TextTheme(
+                          titleSmall: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16.h,
+                          ),
+                          titleMedium: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 20.h,
+                          ),
+                          titleLarge: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 24.h,
+                          ),
+                          labelSmall: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 16.h,
+                              fontWeight: FontWeight.w600),
+                          labelMedium: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 18.h,
+                              fontWeight: FontWeight.w600),
+                          labelLarge: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 20.h,
+                              fontWeight: FontWeight.w600),
+                          displaySmall: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 16.h,
+                              fontWeight: FontWeight.w500),
+                          displayMedium: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 20.h,
+                              fontWeight: FontWeight.w500),
+                          displayLarge: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 32.h,
+                              fontWeight: FontWeight.w500),
+                          bodySmall: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 14.h,
+                              fontWeight: FontWeight.w400),
+                          bodyMedium: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 16.h,
+                              fontWeight: FontWeight.w400),
+                          bodyLarge: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 20.h,
+                              fontWeight: FontWeight.w400),
+                        ),
+                      ),
+                      navigatorObservers: [routeObserver],
+                    ),
+                  ],
+                );
+              },
+            )),
       ),
     );
   }
 }
 
-class DeepLinkWrapper extends StatefulWidget {
+class DeepLinkWrapper extends ConsumerStatefulWidget {
   final Widget child;
 
-  const DeepLinkWrapper({Key? key, required this.child}) : super(key: key);
+  const DeepLinkWrapper({super.key, required this.child});
 
   @override
-  State<DeepLinkWrapper> createState() => _DeepLinkWrapperState();
+  ConsumerState<DeepLinkWrapper> createState() => _DeepLinkWrapperState();
 }
 
-class _DeepLinkWrapperState extends State<DeepLinkWrapper> {
+class _DeepLinkWrapperState extends ConsumerState<DeepLinkWrapper> {
   @override
   void initState() {
     super.initState();
@@ -246,11 +202,9 @@ class _DeepLinkWrapperState extends State<DeepLinkWrapper> {
   }
 
   void _handlePatientDeepLink(String patientId) {
-    /*final deepLinkProvider =
-        Provider.of<DeepLinkProvider>(context, listen: false);
-
-    deepLinkProvider.setPatientId(patientId, shouldAutoValidate: false);
-    deepLinkProvider.setPendingNavigation(true);*/
+    final notifier = ref.read(deepLinkProvider.notifier);
+    notifier.setPatientId(patientId);
+    notifier.setPendingNavigation(true);
   }
 
   @override

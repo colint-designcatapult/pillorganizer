@@ -2,18 +2,22 @@ import 'package:app/api/medication.dart';
 import 'package:app/widgets/medication_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:provider/provider.dart';
 
-import '../provider/medication_provider.dart';
 import '../provider/new_medication_provider.dart';
+import '../provider/medication_provider.dart';
 import '../provider/selected_device_provider.dart';
 import '../screens/modals/add_new_pills_modal.dart';
 import 'addNewPill/medication_card_entry.dart';
 
-class MedicationCard extends StatelessWidget {
+// Since NewMedicationProvider is likely still a ChangeNotifier, 
+// we'll need to handle it. However, I aim to migrate ALL to Riverpod.
+// For now, I'll leave the logic but use ref.watch for others.
+
+class MedicationCard extends ConsumerWidget {
   final ScheduledMedication med;
   final Color backgroundColor;
 
@@ -21,17 +25,21 @@ class MedicationCard extends StatelessWidget {
       {super.key, required this.med, this.backgroundColor = Colors.white});
 
   @override
-  Widget build(BuildContext context) {
-    final deviceID = Provider.of<SelectedDeviceProvider>(context, listen: false)
-        .device!
-        .deviceID;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeDevice = ref.watch(activeDeviceProvider);
+    final deviceID = activeDevice?.deviceID ?? 0;
 
     void onComplete() {
-      Provider.of<MedicationsProvider>(context, listen: false).refresh();
+      ref.invalidate(medicationsProvider);
     }
 
     return GestureDetector(
       onTap: () {
+        ref.read(newMedicationProvider.notifier).initialize(
+          deviceID,
+          existing: med,
+          onComplete: onComplete,
+        );
         showModalBottomSheet(
             context: context,
             isScrollControlled: true,
@@ -41,16 +49,14 @@ class MedicationCard extends StatelessWidget {
               maxWidth: MediaQuery.of(context).size.width,
             ),
             builder: (context) {
-              return ChangeNotifierProvider<NewMedicationProvider>(
-                  create: (context) => NewMedicationProvider.fromExisting(
-                      deviceID, med, onComplete),
-                  child: MedicationModal(
-                      medicationID: med.id,
-                      onBack: () {
-                        Navigator.of(context).pop();
-                      },
-                      onNext: true,
-                      child: const MedicationCardEntry()));
+              return MedicationModal(
+                  medicationID: med.id,
+                  onBack: () {
+                    Navigator.of(context).pop();
+                  },
+                  onNext: true,
+                  onComplete: onComplete,
+                  child: const MedicationCardEntry());
             });
       },
       child: Padding(
@@ -64,7 +70,7 @@ class MedicationCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  MedicationIcon.fromMed(med, 54.h),
+                   MedicationIcon.fromMed(med, 54.h),
                   SizedBox(
                     width: 18.w,
                   ),

@@ -1,22 +1,20 @@
 import 'package:app/api/api.dart';
-import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-class DeepLinkProvider extends ChangeNotifier {
-  String? _patientId;
-  bool _isValidating = false;
-  bool _pendingNavigation = false;
+part 'deep_link_provider.g.dart';
 
-  String? get patientId => _patientId;
-  bool get hasPatientId => _patientId != null && _patientId!.isNotEmpty;
-  bool get isValidating => _isValidating;
-  bool get hasPendingNavigation => _pendingNavigation;
+@riverpod
+class DeepLinkNotifier extends _$DeepLinkNotifier {
+  @override
+  DeepLinkState build() {
+    return const DeepLinkState();
+  }
 
-  void setPatientId(String? patientId, {bool shouldAutoValidate = false}) {
-    if (_patientId != patientId) {
-      _patientId = patientId;
-      _pendingNavigation = patientId != null && patientId.isNotEmpty;
-      notifyListeners();
-    }
+  void setPatientId(String? patientId) {
+    state = state.copyWith(
+      patientId: patientId,
+      pendingNavigation: patientId != null && patientId.isNotEmpty,
+    );
   }
 
   Future<void> validateAndLinkTakecarePatient({
@@ -25,8 +23,7 @@ class DeepLinkProvider extends ChangeNotifier {
     required String lastName,
     required String birthDate,
   }) async {
-    _isValidating = true;
-    notifyListeners();
+    state = state.copyWith(isValidating: true);
 
     try {
       final validationRequest = PatientValidationRequest(
@@ -37,35 +34,47 @@ class DeepLinkProvider extends ChangeNotifier {
 
       await client.validateAndLinkTakecarePatient(patientId, validationRequest);
 
-      _patientId = null;
-      _pendingNavigation = false;
-    } catch (e) {
-      rethrow;
+      state = state.copyWith(
+        patientId: null,
+        pendingNavigation: false,
+      );
     } finally {
-      _isValidating = false;
-      notifyListeners();
+      state = state.copyWith(isValidating: false);
     }
   }
 
   void clearPatientId() {
-    if (_patientId != null) {
-      _patientId = null;
-      _pendingNavigation = false;
-      notifyListeners();
-    }
-  }
-
-  void clearPendingNavigation() {
-    if (_pendingNavigation) {
-      _pendingNavigation = false;
-      notifyListeners();
-    }
+    state = state.copyWith(
+      patientId: null,
+      pendingNavigation: false,
+    );
   }
 
   void setPendingNavigation(bool pending) {
-    if (_pendingNavigation != pending) {
-      _pendingNavigation = pending;
-      notifyListeners();
-    }
+    state = state.copyWith(pendingNavigation: pending);
+  }
+}
+
+class DeepLinkState {
+  final String? patientId;
+  final bool isValidating;
+  final bool pendingNavigation;
+
+  const DeepLinkState({
+    this.patientId,
+    this.isValidating = false,
+    this.pendingNavigation = false,
+  });
+
+  DeepLinkState copyWith({
+    String? patientId,
+    bool? isValidating,
+    bool? pendingNavigation,
+  }) {
+    return DeepLinkState(
+      patientId: patientId ?? this.patientId,
+      isValidating: isValidating ?? this.isValidating,
+      pendingNavigation: pendingNavigation ?? this.pendingNavigation,
+    );
   }
 }

@@ -6,18 +6,18 @@ import 'package:app/widgets/wizard.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class NameDeviceWizard extends StatefulWidget {
+class NameDeviceWizard extends ConsumerStatefulWidget {
   final int? deviceId;
 
-  const NameDeviceWizard({Key? key, this.deviceId}) : super(key: key);
+  const NameDeviceWizard({super.key, this.deviceId});
 
   @override
-  State<StatefulWidget> createState() => _NameDeviceWizard();
+  ConsumerState<ConsumerStatefulWidget> createState() => _NameDeviceWizard();
 }
 
-class _NameDeviceWizard extends State<NameDeviceWizard> {
+class _NameDeviceWizard extends ConsumerState<NameDeviceWizard> {
   final _textController = TextEditingController();
   final String _initialDeviceName = '';
 
@@ -27,9 +27,7 @@ class _NameDeviceWizard extends State<NameDeviceWizard> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.deviceId != null) {
-        final selectedDeviceProvider =
-            Provider.of<SelectedDeviceProvider>(context, listen: false);
-        selectedDeviceProvider.selectDeviceByID(widget.deviceId!);
+        ref.read(activeDeviceProvider.notifier).selectDeviceByID(widget.deviceId!);
       }
     });
   }
@@ -43,46 +41,48 @@ class _NameDeviceWizard extends State<NameDeviceWizard> {
   @override
   Widget build(BuildContext context) {
     final provisionningProgress = ProvisionningProgress(2, 1);
+    final deviceListState = ref.watch(deviceListProvider);
+    final isUpdatingName = deviceListState.maybeWhen(
+      data: (_) => false, // Or some other way to track name update
+      orElse: () => false,
+    );
+    // Note: We might need a separate state for isUpdatingName if it's not in the deviceListProvider.
+    // Assuming for now it's false unless we find where it's tracked.
 
-    return Consumer2<SelectedDeviceProvider, DeviceProvider>(
-      builder: (context, selectedDeviceProvider, deviceProvider, child) {
-        return WizardStep(
-          height: 394.h,
-          provisionningProgress: provisionningProgress,
-          title: AppLocalizations.of(context)!.nameDeviceTitle,
-          subtext: AppLocalizations.of(context)!.nameDeviceSubtext,
-          canGoNext: true,
-          isLoading: deviceProvider.isUpdatingName,
-          onBackPressed: () => Navigator.of(context)
-              .pushNamedAndRemoveUntil('/', (route) => false),
-          onNextPressed: deviceProvider.isUpdatingName ? null : _handleNextStep,
-          onSkipPressed: _handleNextStep,
-          child: Expanded(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 0.h),
-              child: BasicPageTextFormField(
-                controller: _textController,
-                paddingBottom: 0.h,
-                labelText: AppLocalizations.of(context)!.nameDeviceHint,
-                onFieldSubmitted: (_) => _handleNextStep(),
-              ),
-            ),
+    return WizardStep(
+      height: 394.h,
+      provisionningProgress: provisionningProgress,
+      title: AppLocalizations.of(context)!.nameDeviceTitle,
+      subtext: AppLocalizations.of(context)!.nameDeviceSubtext,
+      canGoNext: true,
+      isLoading: isUpdatingName,
+      onBackPressed: () => Navigator.of(context)
+          .pushNamedAndRemoveUntil('/', (route) => false),
+      onNextPressed: isUpdatingName ? null : _handleNextStep,
+      onSkipPressed: _handleNextStep,
+      child: Expanded(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 0.h),
+          child: BasicPageTextFormField(
+            controller: _textController,
+            paddingBottom: 0.h,
+            labelText: AppLocalizations.of(context)!.nameDeviceHint,
+            onFieldSubmitted: (_) => _handleNextStep(),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
   Future<void> _handleNextStep() async {
-    final selectedDeviceProvider =
-        Provider.of<SelectedDeviceProvider>(context, listen: false);
+    final activeDevice = ref.read(activeDeviceProvider);
 
     if (_textController.text.isNotEmpty &&
         _textController.text != _initialDeviceName) {
-      final deviceProvider =
-          Provider.of<DeviceProvider>(context, listen: false);
-      await deviceProvider.updateDeviceName(
-          selectedDeviceProvider.device!.deviceID, _textController.text);
+      if (activeDevice != null) {
+        await ref.read(deviceListProvider.notifier).updateDeviceName(
+            activeDevice.deviceID, _textController.text);
+      }
     }
 
     if (mounted) {

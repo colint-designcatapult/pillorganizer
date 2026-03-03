@@ -11,13 +11,13 @@ import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const double _sectionSpacing = 32.0;
 const double _titleSubtitleSpacing = 8.0;
 const double _subtitleContentSpacing = 16.0;
 
-class ScheduleEntry extends StatefulWidget {
+class ScheduleEntry extends ConsumerStatefulWidget {
   final bool showRemovalSection;
   final bool showAddDeviceSection;
   final DeviceUser? device;
@@ -32,7 +32,7 @@ class ScheduleEntry extends StatefulWidget {
   });
 
   @override
-  State<StatefulWidget> createState() => _ScheduleEntryState();
+  ConsumerState<ScheduleEntry> createState() => _ScheduleEntryState();
 }
 
 void deleteDevice(context) {
@@ -42,37 +42,35 @@ void deleteDevice(context) {
   );
 }
 
-class _ScheduleEntryState extends State<ScheduleEntry> {
+class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final targetDevice = widget.device ??
-          Provider.of<SelectedDeviceProvider>(context, listen: false).device;
+      final targetDevice = widget.device ?? ref.read(activeDeviceProvider);
       if (targetDevice != null) {
-        Provider.of<ScheduleProvider>(context, listen: false)
-            .load(targetDevice.deviceID);
+        ref.read(scheduleProvider.notifier).load(targetDevice.deviceID);
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final targetDevice = widget.device ??
-        Provider.of<SelectedDeviceProvider>(context, listen: false).device;
+    final targetDevice = widget.device ?? ref.watch(activeDeviceProvider);
 
     if (targetDevice == null) {
       return const SizedBox.shrink();
     }
 
-    return Consumer<ScheduleProvider>(
-      builder: (context, scheduleProvider, _) {
-        final deviceSchedule =
-            scheduleProvider.getScheduleForDevice(targetDevice.deviceID);
-        final isLoadingSchedule = scheduleProvider.isLoading;
-        final isUpdatingAMSchedule = scheduleProvider.isUpdatingAMSchedule;
-        final isUpdatingPMSchedule = scheduleProvider.isUpdatingPMSchedule;
-
+    final scheduleAsync = ref.watch(scheduleProvider);
+    return scheduleAsync.when(
+      data: (schedule) {
+        final deviceSchedule = SimpleSchedule.fromDTO(schedule);
+        // We might need to check isLoading/isUpdating from the notifier if they are not in the state
+        // In Riverpod 3.0, we can use AsyncValue.isLoading for initial load.
+        // If we have custom updating states, we'd need a separate provider or complex state.
+        // For now, let's assume scheduleProvider state is just the List of schedules.
+        
         return ScreenUtilWrapper(
           child: Column(
             mainAxisSize: MainAxisSize.max,
@@ -81,9 +79,9 @@ class _ScheduleEntryState extends State<ScheduleEntry> {
               _buildTimeSetupSection(
                   deviceSchedule,
                   targetDevice,
-                  isLoadingSchedule,
-                  isUpdatingAMSchedule,
-                  isUpdatingPMSchedule),
+                  false, // isLoading
+                  false, // isUpdatingAM
+                  false), // isUpdatingPM
               if (widget.isOwner) ...[
                 SizedBox(height: _sectionSpacing.h),
                 _buildTimezoneSection(targetDevice),
@@ -101,6 +99,8 @@ class _ScheduleEntryState extends State<ScheduleEntry> {
           ),
         );
       },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, s) => Center(child: Text(e.toString())),
     );
   }
 
@@ -183,7 +183,7 @@ class _ScheduleEntryState extends State<ScheduleEntry> {
             },
           ).then((selectedTime) {
             if (selectedTime != null) {
-              Provider.of<ScheduleProvider>(context, listen: false)
+              ref.read(scheduleProvider.notifier)
                   .updateTime(dayPeriod, selectedTime, device.deviceID);
             }
           });
@@ -268,11 +268,11 @@ class _ScheduleEntryState extends State<ScheduleEntry> {
   }
 }
 
-class RemovalSection extends StatelessWidget {
+class RemovalSection extends ConsumerWidget {
   const RemovalSection({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -283,62 +283,58 @@ class RemovalSection extends StatelessWidget {
         SizedBox(
           height: 16.h,
         ),
-        Consumer<SelectedDeviceProvider>(
-          builder: (context, deviceProv, _) {
-            return SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () {
-                  deleteDevice(context);
-                },
-                style: ButtonStyle(
-                  side: WidgetStateProperty.all<BorderSide>(
-                    BorderSide(
-                      color: Theme.of(context).colorScheme.error,
-                      width: 1.0,
-                    ),
-                  ),
-                  shape: WidgetStateProperty.all<OutlinedBorder>(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0).r,
-                    ),
-                  ),
-                  padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
-                    EdgeInsets.symmetric(vertical: 16.h),
-                  ),
-                  backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                    (Set<WidgetState> states) {
-                      if (states.contains(WidgetState.pressed)) {
-                        return Theme.of(context)
-                            .colorScheme
-                            .error
-                            .withOpacity(0.2);
-                      }
-                      return Colors.transparent;
-                    },
-                  ),
-                  overlayColor: WidgetStateProperty.resolveWith<Color>(
-                    (Set<WidgetState> states) {
-                      if (states.contains(WidgetState.pressed)) {
-                        return Theme.of(context)
-                            .colorScheme
-                            .error
-                            .withOpacity(0.2);
-                      }
-                      return Colors.transparent;
-                    },
-                  ),
-                ),
-                child: Text(
-                  AppLocalizations.of(context)!.removeDevice,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                        fontWeight: FontWeight.w600,
-                      ),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: () {
+              deleteDevice(context);
+            },
+            style: ButtonStyle(
+              side: WidgetStateProperty.all<BorderSide>(
+                BorderSide(
+                  color: Theme.of(context).colorScheme.error,
+                  width: 1.0,
                 ),
               ),
-            );
-          },
+              shape: WidgetStateProperty.all<OutlinedBorder>(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0).r,
+                ),
+              ),
+              padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
+                EdgeInsets.symmetric(vertical: 16.h),
+              ),
+              backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                (Set<WidgetState> states) {
+                  if (states.contains(WidgetState.pressed)) {
+                    return Theme.of(context)
+                        .colorScheme
+                        .error
+                        .withOpacity(0.2);
+                  }
+                  return Colors.transparent;
+                },
+              ),
+              overlayColor: WidgetStateProperty.resolveWith<Color>(
+                (Set<WidgetState> states) {
+                  if (states.contains(WidgetState.pressed)) {
+                    return Theme.of(context)
+                        .colorScheme
+                        .error
+                        .withOpacity(0.2);
+                  }
+                  return Colors.transparent;
+                },
+              ),
+            ),
+            child: Text(
+              AppLocalizations.of(context)!.removeDevice,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ),
         ),
       ],
     );

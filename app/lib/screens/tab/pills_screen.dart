@@ -5,24 +5,27 @@ import 'package:app/screens/modals/add_new_pills_modal.dart';
 import 'package:app/widgets/medication_card.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
 
-class PillsScreen extends StatefulWidget {
+class PillsScreen extends ConsumerStatefulWidget {
   const PillsScreen({super.key});
 
   @override
-  State<PillsScreen> createState() => _PillsScreenState();
+  ConsumerState<PillsScreen> createState() => _PillsScreenState();
 }
 
-class _PillsScreenState extends State<PillsScreen> {
+class _PillsScreenState extends ConsumerState<PillsScreen> {
   void _addNewPillUpdate() {
-    Provider.of<MedicationsProvider>(context, listen: false).refresh();
-    Provider.of<DeviceStateProvider>(context, listen: false).refresh();
+    ref.invalidate(medicationsProvider);
+    ref.invalidate(deviceStateProvider);
   }
 
   @override
   Widget build(BuildContext context) {
+    final medications = ref.watch(medicationsProvider);
+    final activeDevice = ref.watch(activeDeviceProvider);
+
     return Scaffold(
         backgroundColor: const Color(0xFFBFD2DB),
         body: SafeArea(
@@ -41,11 +44,10 @@ class _PillsScreenState extends State<PillsScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           )),
-                      if (Provider.of<SelectedDeviceProvider>(context,
-                                  listen: false)
-                              .device !=
-                          null)
-                        AddNewPillModal(onAdd: () => _addNewPillUpdate()),
+                      if (activeDevice != null)
+                        AddNewPillModal(
+                            deviceID: activeDevice.deviceID,
+                            onComplete: () => _addNewPillUpdate()),
                     ]),
                 Expanded(
                   child: ShaderMask(
@@ -63,22 +65,30 @@ class _PillsScreenState extends State<PillsScreen> {
                       ).createShader(bounds);
                     },
                     blendMode: BlendMode.dstOut,
-                    child: Consumer<MedicationsProvider>(
-                      builder: (context, prov, _) {
-                        if (prov.value == null) {
-                          return const Center(
-                              child: CircularProgressIndicator());
+                    child: medications.when(
+                      data: (list) {
+                        if (list.isEmpty) {
+                          return Center(
+                            child: Text(
+                              AppLocalizations.of(context)!.noticeNoMeds,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          );
                         }
                         return ListView.builder(
                           padding: EdgeInsets.symmetric(
                               horizontal: 24.w, vertical: 40.h),
                           physics: const AlwaysScrollableScrollPhysics(),
-                          itemCount: prov.value!.length,
+                          itemCount: list.length,
                           itemBuilder: (context, index) {
-                            return MedicationCard(med: prov.value![index]);
+                            return MedicationCard(med: list[index]);
                           },
                         );
                       },
+                      loading: () => const Center(
+                          child: CircularProgressIndicator()),
+                      error: (err, stack) => Center(
+                          child: Text(err.toString())),
                     ),
                   ),
                 ),

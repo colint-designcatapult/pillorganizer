@@ -5,30 +5,33 @@ import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class JoinDevicePage extends StatefulWidget {
+class JoinDevicePage extends ConsumerStatefulWidget {
   const JoinDevicePage({super.key});
 
-  static Route<JoinDevicePage> route(BuildContext context) => MaterialPageRoute(
-      builder: (_) => const JoinDevicePage());
+  static Route<JoinDevicePage> route(context) {
+    return MaterialPageRoute(
+        builder: (_) {
+          return const JoinDevicePage();
+        });
+  }
 
   @override
-  _JoinDevicePageState createState() => _JoinDevicePageState();
+  ConsumerState<JoinDevicePage> createState() => _JoinDevicePageState();
 }
 
-class _JoinDevicePageState extends State<JoinDevicePage> {
+class _JoinDevicePageState extends ConsumerState<JoinDevicePage> {
   bool showCodeStep = true;
   bool codeInError = false;
   bool canProceed = false;
   String joinedDeviceName = '';
 
   void onValidateDigitCode(BuildContext context, String code) {
-    var caregiverProvider =
-    Provider.of<CaregiverProvider>(context, listen: false);
+    var caregiver = ref.read(caregiverProvider.notifier);
 
-    caregiverProvider.validateCaregiverCode(code: code).then((res) {
-      Provider.of<DeviceProvider>(context, listen: false).refresh();
+    caregiver.validateCaregiverCode(code: code).then((res) {
+      ref.read(deviceListProvider.notifier).refresh();
       setState(() {
         joinedDeviceName = res.name;
         showCodeStep = false;

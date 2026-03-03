@@ -1,26 +1,24 @@
 import 'package:app/api/user.dart';
-import 'package:flutter/material.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-class UserRegistrationProvider with ChangeNotifier {
-  UserRegistration _registration =
-      const UserRegistration(email: '', password: '');
-  UserRegistration get model => _registration;
-  Future<void> _future = Future.value();
-  Future<void> get future => _future;
+part 'user_registration_provider.g.dart';
+
+@riverpod
+class UserRegistrationNotifier extends _$UserRegistrationNotifier {
+  @override
+  UserRegistration build() {
+    return const UserRegistration(email: '', password: '');
+  }
 
   void updateEmail(String? email) {
-    _registration = _registration.copyWith(email: email ?? '');
-    notifyListeners();
+    state = state.copyWith(email: email ?? '');
   }
 
   void updatePassword(String? password) {
-    _registration = _registration.copyWith(password: password ?? '');
-    notifyListeners();
+    state = state.copyWith(password: password ?? '');
   }
 
-  Future<void> register() {
-    _future = userService.register(_registration);
-    notifyListeners();
-    return _future;
+  Future<void> register() async {
+    await userService.register(state);
   }
 }

@@ -1,48 +1,45 @@
 import 'package:app/api/api.dart';
 import 'package:app/api/device.dart';
 import 'package:app/api/medication.dart';
-import 'package:app/api/schedule.dart';
-import 'package:flutter/material.dart';
+import 'package:app/provider/selected_device_provider.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-class MedicationsProvider
-    extends RefreshableValueNotifier<List<ScheduledMedication>?> {
-  DeviceUser? _device;
-  Map<int, ScheduledMedication>? _idToMed;
-  bool isUpdateMedication = false;
+part 'medication_provider.g.dart';
 
-  MedicationsProvider(this._device)
-      : super(null, () {
-          return Future.value(null);
-        }) {
-    super.loadFunction = _load;
-    refresh();
+@riverpod
+class Medications extends _$Medications {
+  @override
+  FutureOr<List<ScheduledMedication>> build() async {
+    final device = ref.watch(activeDeviceProvider);
+    if (device == null) return [];
+
+    final dtos = await client.medications(device.deviceID);
+    return dtos.map((e) => ScheduledMedication.fromDTO(e)).toList();
   }
 
-  MedicationsProvider update(DeviceUser? newDevice) {
-    if (newDevice?.id != _device?.id) {
-      _device = newDevice;
-      super.loadFunction = _load;
-    }
-    refresh();
-    return this;
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final device = ref.read(activeDeviceProvider);
+      if (device == null) return [];
+      final dtos = await client.medications(device.deviceID);
+      return dtos.map((e) => ScheduledMedication.fromDTO(e)).toList();
+    });
   }
 
-  Future<List<ScheduledMedication>?> _load() {
-    if (_device != null) {
-      isUpdateMedication = true;
-      return Future.value(List.of([
-        ScheduledMedication(id: 1, name: "Test", dispenseTimes: [MedicationDispenseTime(dispenseTimeID: 1, quantity: 1, period: DayPeriod.am, timeOfDay: TimeOfDay.now())])
-      ]));
-      return medicationRepo.medications(_device!.deviceID).then((value) {
-        _idToMed = {for (var v in value) v.id ?? 0: v};
-        return value;
-      });
-    } else {
-      return Future.value(null);
-    }
+  Future<void> addMedication(ScheduledMedicationDTO medication) async {
+    final device = ref.read(activeDeviceProvider);
+    if (device == null) return;
+
+    await client.addMedication(device.deviceID, medication);
+    ref.invalidateSelf();
   }
 
-  ScheduledMedication? byID(int id) {
-    return _idToMed?[id];
+  Future<void> deleteMedication(int medId) async {
+    final device = ref.read(activeDeviceProvider);
+    if (device == null) return;
+
+    await client.deleteMedication(device.deviceID, medId);
+    ref.invalidateSelf();
   }
 }

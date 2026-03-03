@@ -6,18 +6,18 @@ import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class RemoveDeviceDialog extends StatefulWidget {
+class RemoveDeviceDialog extends ConsumerStatefulWidget {
   final DeviceUser? device;
 
   const RemoveDeviceDialog({super.key, this.device});
 
   @override
-  State<StatefulWidget> createState() => _RemoveDeviceDialog();
+  ConsumerState<ConsumerStatefulWidget> createState() => _RemoveDeviceDialog();
 }
 
-class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
+class _RemoveDeviceDialog extends ConsumerState<RemoveDeviceDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -137,12 +137,10 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
 
   void _onDelete() async {
     try {
-      final selectedDeviceProvider =
-          Provider.of<SelectedDeviceProvider>(context, listen: false);
-      final deviceProvider =
-          Provider.of<DeviceProvider>(context, listen: false);
+      final selectedDeviceNotifier = ref.read(activeDeviceProvider.notifier);
+      final deviceListNotifier = ref.read(deviceListProvider.notifier);
 
-      final currentSelectedDevice = selectedDeviceProvider.device;
+      final currentSelectedDevice = ref.read(activeDeviceProvider);
       final deviceToRemove = widget.device ?? currentSelectedDevice;
 
       if (deviceToRemove == null) return;
@@ -150,13 +148,12 @@ class _RemoveDeviceDialog extends State<RemoveDeviceDialog> {
       final isRemovingSelectedDevice =
           currentSelectedDevice?.deviceID == deviceToRemove.deviceID;
 
-      await deviceProvider.removeDevice(deviceToRemove.deviceID);
+      await deviceListNotifier.removeDevice(deviceToRemove.deviceID);
 
       if (isRemovingSelectedDevice) {
-        if (deviceProvider.devices.isNotEmpty) {
-          selectedDeviceProvider.selectDevice(deviceProvider.devices.first);
-        } else {
-          selectedDeviceProvider.update(null);
+        final devices = ref.read(deviceListProvider).asData?.value ?? [];
+        if (devices.isNotEmpty) {
+          selectedDeviceNotifier.selectDevice(devices.first);
         }
       }
 

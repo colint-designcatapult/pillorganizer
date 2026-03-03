@@ -8,18 +8,18 @@ import 'package:flutter/services.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ShareDevice extends StatefulWidget {
+class ShareDevice extends ConsumerStatefulWidget {
   final DeviceUser? device;
 
   const ShareDevice({super.key, this.device});
 
   @override
-  State<ShareDevice> createState() => _ShareDeviceState();
+  ConsumerState<ShareDevice> createState() => _ShareDeviceState();
 }
 
-class _ShareDeviceState extends State<ShareDevice> {
+class _ShareDeviceState extends ConsumerState<ShareDevice> {
   Timer? _countdownTimer;
   final ValueNotifier<int> _countdownNotifier = ValueNotifier<int>(0);
   String? _errorMessage;
@@ -39,9 +39,7 @@ class _ShareDeviceState extends State<ShareDevice> {
 
   void _fetchShareCodes() {
     if (widget.device != null) {
-      final caregiverProvider =
-          Provider.of<CaregiverProvider>(context, listen: false);
-      caregiverProvider.fetchShareCodesForDevices([widget.device!.deviceID]);
+      ref.read(caregiverProvider.notifier).fetchShareCodesForDevices([widget.device!.deviceID]);
     }
   }
 
@@ -49,19 +47,16 @@ class _ShareDeviceState extends State<ShareDevice> {
     _countdownTimer?.cancel();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
-        final caregiverProvider =
-            Provider.of<CaregiverProvider>(context, listen: false);
-        final selectedDeviceProvider =
-            Provider.of<SelectedDeviceProvider>(context, listen: false);
-        final targetDevice = widget.device ?? selectedDeviceProvider.device;
+        final caregiver = ref.read(caregiverProvider.notifier);
+        final targetDevice = widget.device ?? ref.read(activeDeviceProvider);
 
         if (targetDevice != null) {
           final shareCode =
-              caregiverProvider.getShareCodeForDevice(targetDevice.deviceID);
+              caregiver.getShareCodeForDevice(targetDevice.deviceID);
           if (shareCode == null || !shareCode.isValid) {
             timer.cancel();
             _countdownNotifier.value = 0;
-            caregiverProvider.clearExpiredCodes();
+            caregiver.clearExpiredCodes();
             return;
           }
 
@@ -75,11 +70,8 @@ class _ShareDeviceState extends State<ShareDevice> {
   }
 
   void _generateCode() async {
-    final caregiverProvider =
-        Provider.of<CaregiverProvider>(context, listen: false);
-    final selectedDeviceProvider =
-        Provider.of<SelectedDeviceProvider>(context, listen: false);
-    final targetDevice = widget.device ?? selectedDeviceProvider.device;
+    final caregiver = ref.read(caregiverProvider.notifier);
+    final targetDevice = widget.device ?? ref.read(activeDeviceProvider);
 
     if (targetDevice != null) {
       setState(() {
@@ -87,11 +79,11 @@ class _ShareDeviceState extends State<ShareDevice> {
       });
 
       try {
-        await caregiverProvider
+        await caregiver
             .generateCaregiverCodeForDevice(targetDevice.deviceID);
 
         final shareCode =
-            caregiverProvider.getShareCodeForDevice(targetDevice.deviceID);
+            caregiver.getShareCodeForDevice(targetDevice.deviceID);
         if (shareCode != null && shareCode.isValid) {
           _countdownNotifier.value = shareCode.remainingSeconds;
           _startCountdownTimer();
@@ -105,45 +97,30 @@ class _ShareDeviceState extends State<ShareDevice> {
   }
 
   void _copyCode() {
-    final caregiverProvider =
-        Provider.of<CaregiverProvider>(context, listen: false);
-    final selectedDeviceProvider =
-        Provider.of<SelectedDeviceProvider>(context, listen: false);
-
-    DeviceUser? targetDevice;
-    if (widget.device != null) {
-      targetDevice = widget.device;
-    } else {
-      targetDevice = selectedDeviceProvider.device;
-    }
+    final caregiver = ref.read(caregiverProvider.notifier);
+    final targetDevice = widget.device ?? ref.read(activeDeviceProvider);
 
     if (targetDevice != null) {
       final shareCode =
-          caregiverProvider.getShareCodeForDevice(targetDevice.deviceID);
+          caregiver.getShareCodeForDevice(targetDevice.deviceID);
       if (shareCode != null) {
-        Clipboard.setData(ClipboardData(text: shareCode.code));
+        Clipboard.setData(ClipboardData(text: shareCode.codeString));
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<SelectedDeviceProvider, CaregiverProvider>(
-      builder: (context, selectedDeviceProvider, caregiverProvider, _) {
-        DeviceUser? targetDevice;
-        if (widget.device != null) {
-          targetDevice = widget.device;
-        } else {
-          targetDevice = selectedDeviceProvider.device;
-        }
+    final targetDevice = widget.device ?? ref.watch(activeDeviceProvider);
+    final caregiver = ref.watch(caregiverProvider);
 
-        if (targetDevice == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    if (targetDevice == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
         final shareCode =
-            caregiverProvider.getShareCodeForDevice(targetDevice.deviceID);
-        final code = shareCode?.code;
+            ref.read(caregiverProvider.notifier).getShareCodeForDevice(targetDevice.deviceID);
+        final code = shareCode?.codeString;
         final isCodeValid = shareCode != null && shareCode.isValid;
 
         if (shareCode != null && shareCode.isValid && _countdownTimer == null) {
@@ -164,7 +141,7 @@ class _ShareDeviceState extends State<ShareDevice> {
             ),
             SizedBox(height: 8.h),
             if (!isCodeValid) ...[
-              if (caregiverProvider.isFetchingShareCodes) ...[
+            if (caregiver.isLoading) ...[
                 SizedBox(height: 40.h),
                 Center(
                   child: SizedBox(
@@ -188,7 +165,7 @@ class _ShareDeviceState extends State<ShareDevice> {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
-                    onPressed: caregiverProvider.isGeneratingCode
+                    onPressed: caregiver.isLoading
                         ? null
                         : _generateCode,
                     style: ButtonStyle(
@@ -199,7 +176,7 @@ class _ShareDeviceState extends State<ShareDevice> {
                       ),
                       side: WidgetStateProperty.resolveWith<BorderSide>(
                         (Set<WidgetState> states) {
-                          if (caregiverProvider.isGeneratingCode) {
+                          if (caregiver.isLoading) {
                             return const BorderSide(
                               color: Color(0xFFCCCCCC),
                               width: 1.0,
@@ -221,7 +198,7 @@ class _ShareDeviceState extends State<ShareDevice> {
                         EdgeInsets.symmetric(vertical: 16.h, horizontal: 12.w),
                       ),
                     ),
-                    child: caregiverProvider.isGeneratingCode
+                    child: caregiver.isLoading
                         ? SizedBox(
                             height: 24.h,
                             width: 24.w,
@@ -316,13 +293,13 @@ class _ShareDeviceState extends State<ShareDevice> {
                 alignment: MainAxisAlignment.spaceBetween,
                 children: [
                   TextButton.icon(
-                    onPressed: caregiverProvider.isGeneratingCode
+                    onPressed: caregiver.isLoading
                         ? null
                         : _generateCode,
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.symmetric(horizontal: 8.w),
                     ),
-                    icon: caregiverProvider.isGeneratingCode
+                    icon: caregiver.isLoading
                         ? SizedBox(
                             height: 16.h,
                             width: 16.w,
@@ -347,12 +324,12 @@ class _ShareDeviceState extends State<ShareDevice> {
                       style: TextStyle(
                         fontSize: 14.h,
                         fontWeight: FontWeight.w600,
-                        color: caregiverProvider.isGeneratingCode
+                        color: caregiver.isLoading
                             ? const Color(0xFFCCCCCC)
                             : _errorMessage != null
                                 ? Theme.of(context).colorScheme.error
                                 : const Color(0xFF206B8B),
-                        decoration: caregiverProvider.isGeneratingCode
+                        decoration: caregiver.isLoading
                             ? TextDecoration.none
                             : TextDecoration.underline,
                         decorationColor: _errorMessage != null
@@ -397,7 +374,5 @@ class _ShareDeviceState extends State<ShareDevice> {
             ],
           ],
         );
-      },
-    );
   }
 }

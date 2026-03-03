@@ -5,10 +5,10 @@ import 'package:app/utils/takecare_link_util.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
 
-class LaunchPageLogin extends StatefulWidget {
+class LaunchPageLogin extends ConsumerStatefulWidget {
   const LaunchPageLogin({Key? key}) : super(key: key);
 
   static Route<LaunchPageLogin> route(context) {
@@ -19,10 +19,10 @@ class LaunchPageLogin extends StatefulWidget {
   }
 
   @override
-  State<LaunchPageLogin> createState() => _LaunchPageLoginState();
+  ConsumerState<LaunchPageLogin> createState() => _LaunchPageLoginState();
 }
 
-class _LaunchPageLoginState extends State<LaunchPageLogin> {
+class _LaunchPageLoginState extends ConsumerState<LaunchPageLogin> {
   Future<bool>? _checkAuthFuture;
   Future<void>? _loginFuture;
   final AmplifyService _amplifyService = AmplifyService();
@@ -139,7 +139,7 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
   void _checkAuthStatus() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       try {
-        var future = Provider.of<AuthenticationProvider>(context, listen: false)
+        var future = ref.read(authenticationProvider.notifier)
             .checkAuthStatus()
             .then((value) => _handleAuthSuccess(value))
             .catchError((err) => _handleAuthFailure(err));
@@ -167,7 +167,7 @@ class _LaunchPageLoginState extends State<LaunchPageLogin> {
   }
 
   void _handleSuccessfulLogin() async {
-    final route = await TakecareLinkUtil.handlePostAuthNavigation(context);
+    final route = await TakecareLinkUtil.handlePostAuthNavigation(context, ref);
     Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => false);
   }
 

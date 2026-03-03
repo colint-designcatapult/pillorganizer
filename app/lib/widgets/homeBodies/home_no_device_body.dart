@@ -1,15 +1,15 @@
 import 'package:app/screens/provisioning/join_device_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 
-class HomeNoDeviceBody extends StatelessWidget {
+class HomeNoDeviceBody extends ConsumerWidget {
   const HomeNoDeviceBody({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     var date = DateTime.now();
 
     void handleConnectNewDevice() {

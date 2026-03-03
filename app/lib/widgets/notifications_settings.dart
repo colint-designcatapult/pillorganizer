@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class NotificationsSettings extends StatefulWidget {
+class NotificationsSettings extends ConsumerStatefulWidget {
   final DeviceUser? device;
 
   const NotificationsSettings({
@@ -16,17 +16,16 @@ class NotificationsSettings extends StatefulWidget {
   });
 
   @override
-  _NotificationsSettingsState createState() => _NotificationsSettingsState();
+  ConsumerState<NotificationsSettings> createState() => _NotificationsSettingsState();
 }
 
-class _NotificationsSettingsState extends State<NotificationsSettings>
+class _NotificationsSettingsState extends ConsumerState<NotificationsSettings>
     with WidgetsBindingObserver {
   late Future<bool> _notificationPreference;
 
   @override
   Widget build(BuildContext context) {
-    final targetDevice = widget.device ??
-        Provider.of<SelectedDeviceProvider>(context, listen: false).device;
+    final targetDevice = widget.device ?? ref.read(activeDeviceProvider);
 
     if (targetDevice == null) {
       return const SizedBox.shrink();
@@ -112,8 +111,7 @@ class _NotificationsSettingsState extends State<NotificationsSettings>
   }
 
   void updateNotification(bool value, DeviceUser targetDevice) {
-    final deviceProvider = Provider.of<DeviceProvider>(context, listen: false);
-    deviceProvider.updateDeviceNotifications(targetDevice.deviceID, value);
+    ref.read(deviceListProvider.notifier).updateDeviceNotifications(targetDevice.deviceID, value);
 
     setState(() {
       _notificationPreference = Future.value(value);
@@ -121,8 +119,7 @@ class _NotificationsSettingsState extends State<NotificationsSettings>
   }
 
   Future<void> checkPermission() async {
-    final targetDevice = widget.device ??
-        Provider.of<SelectedDeviceProvider>(context, listen: false).device;
+    final targetDevice = widget.device ?? ref.read(activeDeviceProvider);
 
     if (targetDevice == null) return;
 
@@ -135,8 +132,7 @@ class _NotificationsSettingsState extends State<NotificationsSettings>
   }
 
   Future<void> initPermission() async {
-    final targetDevice = widget.device ??
-        Provider.of<SelectedDeviceProvider>(context, listen: false).device;
+    final targetDevice = widget.device ?? ref.read(activeDeviceProvider);
 
     if (targetDevice == null) return;
 
