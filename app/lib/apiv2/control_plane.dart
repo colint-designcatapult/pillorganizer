@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:app/api/intreceptors/auth-interceptors.dart';
-import 'package:json_annotation/json_annotation.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:retrofit/retrofit.dart';
+import 'package:app/apiv2/models/device_access_dto.dart';
+import 'package:app/apiv2/models/provisioning_claim_dto.dart';
 
 part 'control_plane.g.dart';
 
@@ -20,10 +20,14 @@ final controlPlaneDioProvider = Provider<Dio>((ref) {
   return dio;
 });
 
+
 @RestApi()
 abstract class ControlPlaneApiClient {
   factory ControlPlaneApiClient(Dio dio) = _ControlPlaneApiClient;
 
-  //@GET("/user/devices")
-  //Future<Person> get();
+  @GET("/user/devices")
+  Future<List<DeviceAccessDto>> getDevices();
+
+  @GET("/device/claim/{serialNo}")
+  Future<ProvisioningClaimDto> getProvisioningClaim(@Path("serialNo") String serialNo);
 }
