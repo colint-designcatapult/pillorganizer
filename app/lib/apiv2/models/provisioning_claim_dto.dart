@@ -8,9 +8,6 @@ abstract class ProvisioningClaimDto with _$ProvisioningClaimDto {
   const ProvisioningClaimDto._();
 
   const factory ProvisioningClaimDto({
-    required String certificatePem,
-    required String privateKey,
-    required String expiration,
     required String claimId,
     required String tenantId,
     required String tenantApiBase,
