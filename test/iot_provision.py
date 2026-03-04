@@ -1,10 +1,9 @@
 import sys
-import time
 import json
 import urllib.request
 import os
 from concurrent.futures import Future
-from awscrt import io, mqtt, auth, http
+from awscrt import io, mqtt
 from awsiot import mqtt_connection_builder
 from awsiot.iotidentity import IotIdentityClient, CreateKeysAndCertificateRequest, RegisterThingRequest
 from cognito_helper import get_jwt_token
@@ -54,15 +53,17 @@ def main():
     host_resolver = io.DefaultHostResolver(event_loop_group)
     client_bootstrap = io.ClientBootstrap(event_loop_group, host_resolver)
 
-    # --- Fetch Claim Credentials from API ---
+    # --- Fetch Claim Token from API ---
+    print(f"Fetching claim token for {SERIAL_NUMBER}...")
+    api_url = f"https://control-plane.app.healthesolutions.ca/device/claim/{SERIAL_NUMBER}"
+    
+    # --- Fetch JWT token ---
     print("Authenticating with Cognito...")
     jwt_token = get_jwt_token(COGNITO_CLIENT_ID, COGNITO_USERNAME, COGNITO_PASSWORD)
     if not jwt_token:
         print("❌ Failed to obtain JWT token. Exiting.")
         sys.exit(1)
 
-    print(f"Fetching claim credentials for {SERIAL_NUMBER}...")
-    api_url = f"https://control-plane.app.healthesolutions.ca/device/claim/{SERIAL_NUMBER}"
     req = urllib.request.Request(api_url, method='POST')
     req.add_header("Authorization", f"Bearer {jwt_token}")
     
@@ -71,13 +72,36 @@ def main():
             if response.status != 200:
                 raise Exception(f"API returned status {response.status}")
             data = json.loads(response.read().decode())
-            print(data)
+            print(f"API Response: {data}")
             
             # Extract data
-            claim_cert_pem = data['certificatePem']
-            claim_private_key = data['privateKey']
             tenant_id = data['tenantId']
             claim_token = data['claimId']
+            
+            print(f"✅ Claim token obtained: {claim_token} for Tenant: {tenant_id}")
+
+    except Exception as e:
+        print(f"❌ Failed to fetch claim token: {e}")
+        sys.exit(1)
+
+    # --- Fetch Claim Credentials from API using Token ---
+    print(f"Fetching claim credentials for {SERIAL_NUMBER} using token...")
+    cert_api_url = f"https://control-plane.app.healthesolutions.ca/device/claim_cert/{SERIAL_NUMBER}"
+    cert_req_data = json.dumps({"claimId": claim_token}).encode('utf-8')
+    cert_req = urllib.request.Request(cert_api_url, data=cert_req_data, method='POST')
+    cert_req.add_header("Content-Type", "application/json")
+    # Note: No Authorization header needed for this endpoint as per requirement
+    
+    try:
+        with urllib.request.urlopen(cert_req) as response:
+            if response.status != 200:
+                raise Exception(f"API returned status {response.status}")
+            cert_data = json.loads(response.read().decode())
+            print(f"Cert API Response: {cert_data}")
+            
+            # Extract data
+            claim_cert_pem = cert_data['certificatePem']
+            claim_private_key = cert_data['privateKey']
             
             # Save to files expected by mqtt_connection_builder
             with open(CLAIM_CERT, 'w') as f:
@@ -85,7 +109,7 @@ def main():
             with open(CLAIM_KEY, 'w') as f:
                 f.write(claim_private_key)
                 
-            print(f"✅ Claim credentials obtained for Tenant: {tenant_id}, Claim ID: {claim_token}")
+            print(f"✅ Claim credentials obtained and saved.")
 
     except Exception as e:
         print(f"❌ Failed to fetch claim credentials: {e}")
