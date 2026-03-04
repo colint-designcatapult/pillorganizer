@@ -10,6 +10,7 @@ import jct.pillorganizer.core.message.GrantUserMessage;
 import jct.pillorganizer.core.service.SecureRandomService;
 import jct.pillorganizer.core.service.TenantService;
 import jct.pillorganizer.core.uid.KsuidService;
+import jct.pillorganizer.global.dto.DeviceClaimCertDto;
 import jct.pillorganizer.global.dto.ProvisioningClaimDto;
 import jct.pillorganizer.global.model.DeviceClaimEntity;
 import jct.pillorganizer.global.model.DeviceEntity;
@@ -24,6 +25,7 @@ import software.amazon.awssdk.services.iot.model.CreateProvisioningClaimResponse
 
 import java.io.IOException;
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.Optional;
 
 @Flogger
@@ -78,23 +80,46 @@ public class DeviceProvisionService {
 
 
     public ProvisioningClaimDto generateProvisioningClaim(String serialNumber, String userId) {
-        // Create claim in IoT Core using provisioning template
+        // Lookup which tenant this device belongs to
+        String tenantId = deviceService.lookupTenant(serialNumber);
+        TenantDetails tenantDetails = tenantService.getTenantDetails(tenantId)
+                .orElseThrow(() -> new TenantNotFoundException("Device assigned to unregistered tenant: " + tenantId));
+
+        // Create a claim token and store record
+        String claimToken = createClaimRecord(serialNumber, userId, tenantId);
+
+        return new ProvisioningClaimDto(claimToken, tenantId, tenantDetails.getApiBase());
+    }
+
+    public Optional<DeviceClaimCertDto> getClaimCertificate(String serialNumber, String claimId) {
+        Optional<DeviceClaimEntity> claimOpt = deviceClaimRepo.findBySerialNumberAndClaimToken(serialNumber, claimId);
+
+        if (claimOpt.isEmpty()) {
+            log.atInfo().log("No claim found for serial number %s and claim token", serialNumber);
+            return Optional.empty();
+        }
+
+        DeviceClaimEntity claim = claimOpt.get();
+
+        // Ensure the token was issued within the last 10 minutes
+        Instant tenMinutesAgo = Instant.now().minus(java.time.Duration.ofMinutes(10));
+        if (claim.getBase().getCreatedAt().isBefore(tenMinutesAgo)) {
+            log.atInfo().log("Claim token expired for serial number %s", serialNumber);
+            return Optional.empty();
+        }
+
+        // Generate claim credentials in IoT Core on demand
         CreateProvisioningClaimResponse response = iotClient.createProvisioningClaim(
                 CreateProvisioningClaimRequest.builder()
                         .templateName("TenantDeviceProvisioningTemplate")
                         .build()
         );
 
-        // Lookup which tenant this device belongs to
-        String tenantId = deviceService.lookupTenant(serialNumber);
-        TenantDetails tenantDetails = tenantService.getTenantDetails(tenantId)
-                .orElseThrow(() -> new TenantNotFoundException("Device assigned to unregistered tenant: " + tenantId));
-
-        // Create a claim token
-        String claimToken = createClaimRecord(serialNumber, userId, tenantId);
-
-        return new ProvisioningClaimDto(response.certificatePem(), response.keyPair().privateKey(),
-                response.expiration().toString(), claimToken, tenantId, tenantDetails.getApiBase());
+        return Optional.of(new DeviceClaimCertDto(
+                response.certificatePem(),
+                response.keyPair().privateKey(),
+                response.expiration()
+        ));
     }
 
     public Optional<DeviceEntity> provisionDevice(String serialNumber, String claimToken) {
