@@ -36,8 +36,8 @@ class UserDeviceAccessControllerSpec extends BaseIntegrationSpec {
     // @relation(CTRL-REQ-15, scope=range_start)
     void "test getUserDeviceAccess returns aggregated results"() {
         given:
-        def device1 = new DeviceAccessDto("d1", "dev1", "nickname1", "sn1", "model1", "tenant1", "apiBase1", true)
-        def device2 = new DeviceAccessDto("d2", "dev2", "nickname2", "sn2", "model2", "tenant2", "apiBase2", false)
+        def device1 = new DeviceAccessDto("d1", "dev1", "nickname1", "sn1", "model1", "tenant1", "apiBase1", true, "tenant1-sn1")
+        def device2 = new DeviceAccessDto("d2", "dev2", "nickname2", "sn2", "model2", "tenant2", "apiBase2", false, "tenant2-sn2")
         
         when:
         def request = HttpRequest.GET("/user/devices")

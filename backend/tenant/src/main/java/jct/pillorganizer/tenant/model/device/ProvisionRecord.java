@@ -24,6 +24,8 @@ public class ProvisionRecord {
 
     private String claimToken;
 
+    private String thingName;
+
     private DeviceClass deviceClass = DeviceClass.v1_7x2;
 
     @Relation(value = Relation.Kind.MANY_TO_ONE)

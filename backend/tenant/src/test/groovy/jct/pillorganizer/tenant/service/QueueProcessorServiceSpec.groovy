@@ -48,6 +48,7 @@ class QueueProcessorServiceSpec extends BaseIntegrationSpec {
                 .userId(user.id)
                 .serialNo("serial-123")
                 .claimToken("claim-456")
+                .thingName("test-thing-name")
                 .build()
 
         when:

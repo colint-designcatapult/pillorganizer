@@ -138,6 +138,10 @@ public class DeviceService {
         return deviceUserRepository.findByUserAndDevice(user, device);
     }
 
+    public Optional<DeviceUser> getUserAccessByPhysicalDeviceThingName(User user, String thingName) {
+        return deviceUserRepository.findByUserAndDevicePhysicalDeviceThingName(user, thingName);
+    }
+
     public Optional<LogicalDevice> get(UUID id) {
         return logicalDeviceRepository.findById(id);
     }

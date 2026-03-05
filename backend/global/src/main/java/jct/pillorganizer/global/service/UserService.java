@@ -1,13 +1,15 @@
 package jct.pillorganizer.global.service;
 
-import com.github.ksuid.Ksuid;
+import io.micronaut.security.authentication.AuthenticationException;
+import io.micronaut.security.token.validator.TokenValidator;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import jct.pillorganizer.core.service.GlobalAuthService;
 import jct.pillorganizer.core.uid.KsuidService;
+import jct.pillorganizer.global.exception.UserEntityNotFoundException;
 import jct.pillorganizer.global.model.UserEntity;
 import jct.pillorganizer.global.repo.UserRepo;
 import lombok.extern.flogger.Flogger;
+import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
 import java.util.Optional;
@@ -17,11 +19,13 @@ import java.util.Optional;
 public class UserService {
     private final KsuidService ksuidService;
     private final UserRepo userRepo;
+    private final TokenValidator<?> tokenValidator;
 
     @Inject
-    public UserService(UserRepo userRepo, KsuidService ksuidService) {
+    public UserService(UserRepo userRepo, KsuidService ksuidService, TokenValidator<?> tokenValidator) {
         this.userRepo = userRepo;
         this.ksuidService = ksuidService;
+        this.tokenValidator = tokenValidator;
     }
 
     public UserEntity createUser(String sub, String email) {
@@ -63,5 +67,24 @@ public class UserService {
 
     public Optional<UserEntity> get(String userId) {
         return userRepo.findAllByUserId(userId).stream().findFirst();
+    }
+
+    public Optional<UserEntity> getBySubject(String sub) {
+        return userRepo.findBySub(sub).stream().findFirst();
+    }
+
+    public Mono<UserEntity> authenticateJwt(String jwtToken) {
+        return Mono.from(this.tokenValidator.validateToken(jwtToken, null))
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.atWarning().log("JWT token validation failed");
+                    return Mono.error(new AuthenticationException("Invalid JWT token"));
+                }))
+                .map((auth) -> {
+                    String sub = (String) auth.getAttributes().get("sub");
+                    return getBySubject(sub).orElseThrow(() -> {
+                        log.atWarning().log("Verified JWT token for subject `%s` but no user entity found", sub);
+                        return new UserEntityNotFoundException("Subject " + sub);
+                    });
+                });
     }
 }

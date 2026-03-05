@@ -28,7 +28,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         def user = userService.ensureExists("user-1")
 
         when:
-        def record = deviceProvisionService.provision(user, "device-1", "serial-1", "token-1")
+        def record = deviceProvisionService.provision(user, "device-1", "serial-1", "token-1", "thing-1")
 
         then:
         record != null
@@ -43,7 +43,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         given:
         def claimToken = "test-token-1"
         def user = userService.ensureExists("user-2")
-        deviceProvisionService.provision(user, "device-2", "serial-2", claimToken)
+        deviceProvisionService.provision(user, "device-2", "serial-2", claimToken, "thing-2")
 
         when:
         def record = deviceProvisionService.findByClaimToken(user, claimToken)
@@ -61,7 +61,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
     def "should not find unassigned provision record if already assigned"() {
         given:
         def user = userService.ensureExists("user-3")
-        def record = deviceProvisionService.provision(user, "device-3", "serial-3", "token-3")
+        def record = deviceProvisionService.provision(user, "device-3", "serial-3", "token-3", "thing-3")
         deviceService.create(user, record)
 
         when:
@@ -74,7 +74,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
     def "should get provision records for logical device"() {
         given:
         def user = userService.ensureExists("user-4")
-        def record = deviceProvisionService.provision(user, "device-4", "serial-4", "token-4")
+        def record = deviceProvisionService.provision(user, "device-4", "serial-4", "token-4", "thing-4")
         def logicalDevice = deviceService.create(user, record)
 
         when:
@@ -88,7 +88,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
     def "should assign to logical device"() {
         given:
         def user = userService.ensureExists("user-5")
-        def record = deviceProvisionService.provision(user, "device-5", "serial-5", "token-5")
+        def record = deviceProvisionService.provision(user, "device-5", "serial-5", "token-5", "thing-5")
         def logicalDevice = deviceService.create(user, record) // This already calls assignActiveLogicalDevice
 
         when:
@@ -101,10 +101,10 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
     def "should assign active logical device and disable others"() {
         given:
         def user = userService.ensureExists("user-6")
-        def record1 = deviceProvisionService.provision(user, "device-6-1", "serial-6-1", "token-6-1")
+        def record1 = deviceProvisionService.provision(user, "device-6-1", "serial-6-1", "token-6-1", "thing-6-1")
         def logicalDevice = deviceService.create(user, record1)
 
-        def record2 = deviceProvisionService.provision(user, "device-6-2", "serial-6-2", "token-6-2")
+        def record2 = deviceProvisionService.provision(user, "device-6-2", "serial-6-2", "token-6-2", "thing-6-2")
 
         when:
         deviceProvisionService.assignActiveLogicalDevice(record2, logicalDevice)

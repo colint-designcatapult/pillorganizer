@@ -6,7 +6,7 @@ import lombok.Builder;
 @Builder
 @Serdeable
 public record DeviceProvisionMessage(String deviceId, String userId, String serialNo, String claimToken,
-                                     String tenantId) implements BaseMessage {
+                                     String tenantId, String thingName) implements BaseMessage {
     @Override
     public String getType() {
         return "deviceProvision";

@@ -20,6 +20,10 @@ public interface DeviceUserRepository extends CrudRepository<DeviceUser, UUID> {
 
     @Join(value = "device", type = Join.Type.LEFT_FETCH)
     @Join(value = "device.physicalDevice", type = Join.Type.LEFT_FETCH)
+    Optional<DeviceUser> findByUserAndDevicePhysicalDeviceThingName(User user, String thingName);
+
+    @Join(value = "device", type = Join.Type.LEFT_FETCH)
+    @Join(value = "device.physicalDevice", type = Join.Type.LEFT_FETCH)
     @Join(value = "user", type = Join.Type.LEFT_FETCH)
     List<DeviceUser> findByUserId(String userId);
 

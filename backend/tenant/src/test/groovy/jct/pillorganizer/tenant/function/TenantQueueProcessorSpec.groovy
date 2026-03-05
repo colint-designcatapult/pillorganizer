@@ -41,6 +41,7 @@ class TenantQueueProcessorSpec extends BaseIntegrationSpec {
                 .serialNo("serial-1")
                 .claimToken("claim-1")
                 .tenantId("tenant-1")
+                .thingName("tenant-1-serial-1")
                 .build()
         
         def sqsEvent = new SQSEvent()

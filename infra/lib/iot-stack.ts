@@ -6,9 +6,14 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 
 import { createGlobalLambda } from './lambda-utils';
+import { Condition } from 'aws-cdk-lib/aws-stepfunctions';
 
 interface IotStackProps extends cdk.StackProps {
   controlPlaneTable: dynamodb.ITableV2;
+  mqttDomain: string;
+  mqttWsDomain: string;
+  mqttCertificateArn: string;
+  mqttWsCertificateArn: string;
 }
 
 export class IotStack extends cdk.Stack {
@@ -16,6 +21,15 @@ export class IotStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: IotStackProps) {
     super(scope, id, props);
 
+    const domainConfig = new iot.CfnDomainConfiguration(this, 'MqttDomainConfig', {
+      domainName: props.mqttDomain,
+      serverCertificateArns: [props.mqttCertificateArn],
+      serviceType: 'DATA',
+      domainConfigurationStatus: 'ENABLED',
+      applicationProtocol: "SECURE_MQTT",
+      authenticationType: "AWS_X509"
+    });
+    domainConfig.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
 
     // -- Tenant Isolation Policy --
 
@@ -27,25 +41,70 @@ export class IotStack extends cdk.Stack {
           {
             Effect: 'Allow',
             Action: 'iot:Connect',
-            Resource: `arn:aws:iot:${this.region}:${this.account}:client/\${iot:Connection.Thing.ThingName}`
+            Resource: `arn:aws:iot:${this.region}:${this.account}:client/\${iot:Connection.Thing.ThingName}`,
+            Condition: {
+              StringEquals: {
+                "iot:DomainName": props.mqttDomain
+              }
+            }
           },
           {
             Effect: 'Allow',
             Action: ['iot:Publish', 'iot:Receive'],
             Resource: [
-              `arn:aws:iot:${this.region}:${this.account}:topic/tenant/\${iot:Connection.Thing.Attributes[tenantId]}/\${iot:Connection.Thing.Attributes[deviceId]}/*`
+              `arn:aws:iot:${this.region}:${this.account}:topic/healthe/things/\${iot:Connection.Thing.ThingName}/*`,
+              `arn:aws:iot:${this.region}:${this.account}:topic/$aws/things/\${iot:Connection.Thing.ThingName}/shadow/*`
             ]
           },
           {
             Effect: 'Allow',
             Action: 'iot:Subscribe',
             Resource: [
-              `arn:aws:iot:${this.region}:${this.account}:topicfilter/tenant/\${iot:Connection.Thing.Attributes[tenantId]}/\${iot:Connection.Thing.Attributes[deviceId]}/*`
+              `arn:aws:iot:${this.region}:${this.account}:topic/healthe/things/\${iot:Connection.Thing.ThingName}/*`,
+              `arn:aws:iot:${this.region}:${this.account}:topic/$aws/things/\${iot:Connection.Thing.ThingName}/shadow/*`
             ]
           }
         ]
       }
     });
+
+    // --- WebSocket Domain & Custom Authorizer ---
+    const iotAuthorizerFunction = createGlobalLambda(this, 'IotCustomAuthorizer',
+          'jct.pillorganizer.global.function.IotCustomAuthorizer', props.controlPlaneTable);
+
+    const authorizerVersion = iotAuthorizerFunction.currentVersion;
+    const iotAuthorizer = authorizerVersion;
+
+    iotAuthorizer.addPermission('IotAuthorizerInvocation', {
+      principal: new iam.ServicePrincipal('iot.amazonaws.com'),
+      sourceAccount: this.account,
+    });
+
+    const mobileAuthorizer = new iot.CfnAuthorizer(this, 'MobileJwtAuthorizer', {
+      authorizerName: 'MobileAppJwtAuthorizer',
+      authorizerFunctionArn: iotAuthorizer.functionArn,
+      status: 'ACTIVE',
+      signingDisabled: true, 
+    });
+
+    // Ensure the permission is created before the authorizer tries to use the Lambda
+    mobileAuthorizer.node.addDependency(iotAuthorizer);
+
+    const wsDomainConfig = new iot.CfnDomainConfiguration(this, 'MqttWsDomainConfig', {
+      domainName: props.mqttWsDomain,
+      serverCertificateArns: [props.mqttWsCertificateArn],
+      serviceType: 'DATA',
+      domainConfigurationStatus: 'ENABLED',
+      applicationProtocol: "MQTT_WSS",
+      authenticationType: "CUSTOM_AUTH",
+      authorizerConfig: {
+        allowAuthorizerOverride: false,
+        defaultAuthorizerName: "MobileAppJwtAuthorizer"
+      }
+    });
+    wsDomainConfig.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
+
+    wsDomainConfig.addDependency(mobileAuthorizer);
 
     // --- Fleet Provisioning ---
 
@@ -107,7 +166,15 @@ export class IotStack extends cdk.Stack {
               AttributePayload: "MERGE" 
             },
             Properties: {
-              ThingName: { "Ref": "SerialNumber" },
+              ThingName: {
+                "Fn::Join": [
+                  "-",
+                  [
+                    { "Ref": "TenantId" },
+                    { "Ref": "SerialNumber" }
+                  ]
+                ]
+              },
               AttributePayload: {
                 "tenantId": { "Ref": "TenantId" },
                 "deviceId": { "Ref": "DeviceId" }
