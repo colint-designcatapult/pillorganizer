@@ -47,9 +47,9 @@ class UserDeviceAccessControllerSpec extends BaseIntegrationSpec {
         1 * userDeviceAccessService.getUserDeviceAccess() >> Flux.just(device1, device2)
         response.devices().size() == 2
         
-        with(response.devices().find { it.id() == "d1" }) {
-            id() == "d1"
-            deviceId() == "dev1"
+        with(response.devices().find { it.deviceId() == "d1" }) {
+            deviceId() == "d1"
+            claimId() == "dev1"
             nickname() == "nickname1"
             serialNo() == "sn1"
             modelId() == "model1"
@@ -58,9 +58,9 @@ class UserDeviceAccessControllerSpec extends BaseIntegrationSpec {
             primaryUser() == true
         }
 
-        with(response.devices().find { it.id() == "d2" }) {
-            id() == "d2"
-            deviceId() == "dev2"
+        with(response.devices().find { it.deviceId() == "d2" }) {
+            deviceId() == "d2"
+            claimId() == "dev2"
             nickname() == "nickname2"
             serialNo() == "sn2"
             modelId() == "model2"

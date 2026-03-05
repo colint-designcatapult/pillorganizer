@@ -73,17 +73,19 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         iotClient.createProvisioningClaim(_) >> mockResponse
         deviceService.lookupTenant(serialNumber) >> tenantId
         tenantService.getTenantDetails(tenantId) >> Optional.of(new TenantDetails(tenantId, true, "Tenant 1", apiBase))
+        messageService.getDeviceClaimEligibility(tenantId, _, serialNumber) >> reactor.core.publisher.Mono.just(new jct.pillorganizer.core.dto.DeviceClaimEligibilityDto(true, false))
 
         when:
-        def result = deviceProvisionService.generateProvisioningClaim(serialNumber, userId)
+        def result = deviceProvisionService.generateProvisioningClaim(serialNumber, userId, null)
 
         then:
         result.tenantId() == tenantId
         result.tenantApiBase() == apiBase
+        result.deviceId() != null
         result.claimId() != null
 
         and:
-        def savedClaim = deviceClaimRepo.findBySerialNumberAndClaimToken(serialNumber, result.claimId())
+        def savedClaim = deviceClaimRepo.findBySerialNumberAndClaimId(serialNumber, result.claimId())
         savedClaim.isPresent()
         savedClaim.get().userId == userId
         savedClaim.get().tenantId == tenantId
@@ -93,17 +95,22 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         given:
         def serialNumber = "SN-456"
         def claimToken = "token-456"
+        def claimId = ksuidService.generateKsuid()
         def userId = "user-456"
         def tenantId = "tenant-456"
         def userName = "Test User"
         def email = "test@example.com"
+        def deviceId = ksuidService.generateKsuid()
 
         def claim = DeviceClaimEntity.builder()
-                .base(DeviceClaimEntity.buildBase(serialNumber, claimToken, userId))
+                .base(DeviceClaimEntity.buildBase(serialNumber, claimId, claimToken, userId, deviceId))
                 .serialNumber(serialNumber)
+                .claimId(claimId)
                 .claimToken(claimToken)
                 .userId(userId)
                 .tenantId(tenantId)
+                .deviceId(deviceId)
+                .thingName(tenantId + "-" + serialNumber + "-" + deviceId)
                 .build()
         deviceClaimRepo.save(claim)
 
@@ -113,15 +120,16 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
                 .userName(userName)
                 .email(email)
                 .build())
+        deviceService.lookupTenant(serialNumber) >> tenantId
 
         when:
-        def result = deviceProvisionService.provisionDevice(serialNumber, claimToken)
+        def result = deviceProvisionService.provisionDevice(serialNumber, claimId, claimToken)
 
         then:
-        result.isPresent()
-        result.get().serialNumber == serialNumber
-        result.get().tenantId == tenantId
-        def deviceId = result.get().deviceId
+        result != null
+        result.serialNumber == serialNumber
+        result.tenantId == tenantId
+        result.deviceId == deviceId
 
         and:
         def savedDevice = deviceRepo.findBySerialNumber(serialNumber)
@@ -129,7 +137,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         savedDevice.get().deviceId == deviceId
 
         and:
-        def updatedClaim = deviceClaimRepo.findBySerialNumberAndClaimToken(serialNumber, claimToken)
+        def updatedClaim = deviceClaimRepo.findBySerialNumberAndClaimId(serialNumber, claimId)
         updatedClaim.isPresent()
         updatedClaim.get().deviceId == deviceId
 
@@ -142,12 +150,14 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         given:
         def serialNumber = "SN-UNKNOWN"
         def claimToken = "invalid-token"
+        def claimId = "invalid-id"
 
         when:
-        def result = deviceProvisionService.provisionDevice(serialNumber, claimToken)
+        def result = deviceProvisionService.provisionDevice(serialNumber, claimId, claimToken)
 
         then:
-        !result.isPresent()
+        def e = thrown(jct.pillorganizer.global.exception.DeviceAccessException)
+        e.message == "Claim not found"
         0 * messageService._
     }
 
@@ -155,15 +165,19 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         given:
         def serialNumber = "SN-CERT-1"
         def claimToken = "token-cert-1"
+        def claimId = "claim-cert-1"
         def userId = "user-cert-1"
         def tenantId = "tenant-cert-1"
+        def deviceId = "device-cert-1"
 
         def claim = DeviceClaimEntity.builder()
-                .base(DeviceClaimEntity.buildBase(serialNumber, claimToken, userId))
+                .base(DeviceClaimEntity.buildBase(serialNumber, claimId, claimToken, userId, deviceId))
                 .serialNumber(serialNumber)
+                .claimId(claimId)
                 .claimToken(claimToken)
                 .userId(userId)
                 .tenantId(tenantId)
+                .deviceId(deviceId)
                 .build()
         deviceClaimRepo.save(claim)
 
@@ -176,39 +190,43 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         iotClient.createProvisioningClaim(_) >> mockResponse
 
         when:
-        def result = deviceProvisionService.getClaimCertificate(serialNumber, claimToken)
+        def result = deviceProvisionService.getClaimCertificate(serialNumber, claimId, claimToken)
 
         then:
-        result.isPresent()
-        result.get().certificatePem() == "cert-pem"
-        result.get().privateKey() == "private-key"
+        result != null
+        result.certificatePem() == "cert-pem"
+        result.privateKey() == "private-key"
     }
 
     def "should return empty when claim not found for certificate"() {
         given:
         def serialNumber = "SN-UNKNOWN"
         def claimToken = "invalid-token"
+        def claimId = "invalid-id"
 
         when:
-        def result = deviceProvisionService.getClaimCertificate(serialNumber, claimToken)
+        def result = deviceProvisionService.getClaimCertificate(serialNumber, claimId, claimToken)
 
         then:
-        !result.isPresent()
+        def e = thrown(jct.pillorganizer.global.exception.DeviceAccessException)
+        e.message == "No claim found"
     }
 
     def "should return empty when claim is expired"() {
         given:
         def serialNumber = "SN-EXPIRED"
         def claimToken = "token-expired"
+        def claimId = "claim-expired"
         def userId = "user-expired"
         def tenantId = "tenant-expired"
+        def deviceId = "device-expired"
 
         def base = BaseControlPlaneEntity.builder()
                 .pk(DeviceClaimEntity.pk(serialNumber))
-                .sk(DeviceClaimEntity.sk(claimToken))
+                .sk(DeviceClaimEntity.sk(claimId))
                 .entityType(DeviceControlPlaneEntityType.DEVICE_CLAIM)
                 .gsi1Pk(DeviceClaimEntity.gsi1Pk(userId))
-                .gsi1Sk(DeviceClaimEntity.gsi1Sk(claimToken))
+                .gsi1Sk(DeviceClaimEntity.gsi1Sk(claimId))
                 .createdAt(Instant.now().minus(java.time.Duration.ofMinutes(11)))
                 .lastModified(Instant.now())
                 .build()
@@ -216,16 +234,19 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         def claim = DeviceClaimEntity.builder()
                 .base(base)
                 .serialNumber(serialNumber)
+                .claimId(claimId)
                 .claimToken(claimToken)
                 .userId(userId)
                 .tenantId(tenantId)
+                .deviceId(deviceId)
                 .build()
         deviceClaimRepo.save(claim)
 
         when:
-        def result = deviceProvisionService.getClaimCertificate(serialNumber, claimToken)
+        def result = deviceProvisionService.getClaimCertificate(serialNumber, claimId, claimToken)
 
         then:
-        !result.isPresent()
+        def e = thrown(jct.pillorganizer.global.exception.ClaimTokenExpiredException)
+        e.message == "Claim token expired"
     }
 }

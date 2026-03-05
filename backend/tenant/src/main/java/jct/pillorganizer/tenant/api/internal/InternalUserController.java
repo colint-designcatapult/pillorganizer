@@ -27,9 +27,6 @@ public class InternalUserController {
     @Inject
     DeviceIotService deviceIotService;
 
-    @Inject
-    DeviceProvisionService deviceProvisionService;
-
 
     @Get("/devices")
     @Secured(SecurityRule.IS_AUTHENTICATED)
@@ -47,7 +44,7 @@ public class InternalUserController {
     @Post("/device_claim_eligibility")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public DeviceClaimEligibilityDto getDeviceClaimEligibility(User user, @Body DeviceEligibilityCheckDto checkDto) {
-        DeviceProvisionService.ClaimEligibility eligibility = deviceProvisionService.getDeviceClaimEligibility(user,
+        DeviceService.ClaimEligibility eligibility = deviceService.getDeviceClaimEligibility(user,
                 checkDto.serialNo(), checkDto.deviceId());
         return new DeviceClaimEligibilityDto(eligibility.isEligible(), eligibility.device().isPresent());
     }

@@ -39,7 +39,7 @@ class TenantQueueProcessorSpec extends BaseIntegrationSpec {
                 .deviceId("device-1")
                 .userId("user-1")
                 .serialNo("serial-1")
-                .claimToken("claim-1")
+                .claimId("claim-1")
                 .tenantId("tenant-1")
                 .thingName("tenant-1-serial-1")
                 .build()
@@ -61,7 +61,7 @@ class TenantQueueProcessorSpec extends BaseIntegrationSpec {
         then:
         response.batchItemFailures.isEmpty()
         userService.get("user-1").isPresent()
-        provisionRecordRepository.findById("device-1").isPresent()
+        provisionRecordRepository.findById("claim-1").isPresent()
     }
 
     def "should handle processing failures"() {

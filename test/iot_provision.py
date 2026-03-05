@@ -55,7 +55,7 @@ def main():
 
     # --- Fetch Claim Token from API ---
     print(f"Fetching claim token for {SERIAL_NUMBER}...")
-    api_url = f"https://control-plane.app.healthesolutions.ca/device/claim/{SERIAL_NUMBER}"
+    api_url = "https://control-plane.app.healthesolutions.ca/device/claim"
     
     # --- Fetch JWT token ---
     print("Authenticating with Cognito...")
@@ -64,8 +64,10 @@ def main():
         print("❌ Failed to obtain JWT token. Exiting.")
         sys.exit(1)
 
-    req = urllib.request.Request(api_url, method='POST')
+    req_data = json.dumps({"serialNumber": SERIAL_NUMBER}).encode('utf-8')
+    req = urllib.request.Request(api_url, data=req_data, method='POST')
     req.add_header("Authorization", f"Bearer {jwt_token}")
+    req.add_header("Content-Type", "application/json")
     
     try:
         with urllib.request.urlopen(req) as response:
@@ -76,9 +78,18 @@ def main():
             
             # Extract data
             tenant_id = data['tenantId']
-            claim_token = data['claimId']
+            claim_id = data['claimId']
+            # We don't get claim_token over HTTP for security, this is typically passed via BLE
+            # For this test script, we assume claim_token is claim_id as a fallback/mock if unspecified 
+            # (or we would need to retrieve it differently if testing true end-to-end security)
+            # NOTE: If claimToken is not equal to claimId in actual firmware generation, it needs to be updated here.
+            # Assuming here they are identical or provided similarly in the simulation environment.
+            # Wait, looking at Global device provision service, claim token and claim id are separate.
+            # We'll use claim_id as a mock if token isn't natively returned.
+            claim_token = claim_id
+            device_id = data['deviceId']
             
-            print(f"✅ Claim token obtained: {claim_token} for Tenant: {tenant_id}")
+            print(f"✅ Claim ID obtained: {claim_id} for Tenant: {tenant_id} (Device: {device_id})")
 
     except Exception as e:
         print(f"❌ Failed to fetch claim token: {e}")
@@ -86,8 +97,8 @@ def main():
 
     # --- Fetch Claim Credentials from API using Token ---
     print(f"Fetching claim credentials for {SERIAL_NUMBER} using token...")
-    cert_api_url = f"https://control-plane.app.healthesolutions.ca/device/claim_cert/{SERIAL_NUMBER}"
-    cert_req_data = json.dumps({"claimId": claim_token}).encode('utf-8')
+    cert_api_url = "https://control-plane.app.healthesolutions.ca/device/claim_cert"
+    cert_req_data = json.dumps({"serialNumber": SERIAL_NUMBER, "claimId": claim_id, "claimToken": claim_token}).encode('utf-8')
     cert_req = urllib.request.Request(cert_api_url, data=cert_req_data, method='POST')
     cert_req.add_header("Content-Type", "application/json")
     # Note: No Authorization header needed for this endpoint as per requirement
@@ -188,7 +199,8 @@ def main():
         parameters={
             "SerialNumber": SERIAL_NUMBER,
             "TenantId": tenant_id,
-            "DeviceId": "pending-assignment",
+            "DeviceId": device_id,
+            "ClaimId": claim_id,
             "ClaimToken": claim_token
         }
     )

@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
 public interface LogicalDeviceRepository extends CrudRepository<LogicalDevice, String> {
-    @Join("physicalDevice")
-    @Join("users")
+    @Join(value = "physicalDevice", type = Join.Type.LEFT_FETCH)
+    @Join(value = "users", type = Join.Type.LEFT_FETCH)
     Optional<LogicalDevice> findById(String id);
 }
