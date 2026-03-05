@@ -1,10 +1,10 @@
-# ADR-010 Use ESP-AWS-IoT Library for Device-to-Cloud Communication
+# ADR-013 Use ESP-AWS-IoT Library for Device-to-Cloud Communication
 
-**Status:** Proposed
+**Status:** Accepted
 
 **Date:** 2026-03-02
 
-**Authors:** Colin Tran
+**Authors:** Colin Tran, Brendan Heinonen
 
 ## Context and Problem Statement
 We need a reliable, secure device-to-cloud communication solution for the ESP32 microcontroller to send telemetry data and handle Over-The-Air (OTA) updates.
