@@ -14,11 +14,68 @@ extern "C" {
 
 #include <wifi_provisioning/manager.h>
 #include <wifi_provisioning/scheme_ble.h>
+#include <cJSON.h>
 }
 
 #include "event.h"
 
 #define TAG "Newifi"
+
+// Handler for device_serial custom provisioning endpoint
+// Returns JSON with device serial number in format: ESP32-{MAC address}
+static esp_err_t device_serial_handler(uint32_t session_id,
+                                       const uint8_t *inbuf, ssize_t inlen,
+                                       uint8_t **outbuf, ssize_t *outlen,
+                                       void *priv_data)
+{
+    // Get the MAC address from wifi info
+    const wifi_info_t* wifi_info = wifi_get_info();
+    
+    // Build full serial number: ESP32-{MAC in uppercase hex}
+    char serial_number[32];
+    snprintf(serial_number, sizeof(serial_number), "ESP32-%02X%02X%02X%02X%02X%02X",
+             wifi_info->sn.bytes.mac[0],
+             wifi_info->sn.bytes.mac[1],
+             wifi_info->sn.bytes.mac[2],
+             wifi_info->sn.bytes.mac[3],
+             wifi_info->sn.bytes.mac[4],
+             wifi_info->sn.bytes.mac[5]);
+    
+    // Create JSON response
+    cJSON *response = cJSON_CreateObject();
+    if (!response) {
+        ESP_LOGE(TAG, "Failed to create JSON response for device_serial");
+        return ESP_FAIL;
+    }
+    
+    cJSON_AddStringToObject(response, "serialNumber", serial_number);
+    
+    // Serialize JSON to string
+    char *json_string = cJSON_PrintUnformatted(response);
+    cJSON_Delete(response);
+    
+    if (!json_string) {
+        ESP_LOGE(TAG, "Failed to serialize device_serial JSON");
+        return ESP_FAIL;
+    }
+    
+    // Allocate output buffer and copy response
+    size_t response_len = strlen(json_string);
+    *outbuf = (uint8_t *)malloc(response_len);
+    if (!*outbuf) {
+        ESP_LOGE(TAG, "Failed to allocate memory for device_serial response");
+        free(json_string);
+        return ESP_ERR_NO_MEM;
+    }
+    
+    memcpy(*outbuf, json_string, response_len);
+    *outlen = response_len;
+    
+    ESP_LOGI(TAG, "device_serial endpoint: %s", serial_number);
+    
+    free(json_string);
+    return ESP_OK;
+}
 
 class WifiEventListener {
 public:
@@ -329,6 +386,9 @@ void WifiStateSupervisor::init() {
         .app_event_handler = NULL,
     };
     ESP_ERROR_CHECK(wifi_prov_mgr_init(prov_config));
+    
+    // Create custom endpoint for device serial number (must be created before start_provisioning)
+    ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("device_serial"));
 
 #if CONFIG_RESET_PROVISIONED_ON_BOOT
     // Reset WiFi provisioning for testing BLE provisioning flow
@@ -352,6 +412,10 @@ void WifiStateSupervisor::init() {
         // Security 1 with no proof-of-possession (NULL)
         ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(
             WIFI_PROV_SECURITY_1, NULL, service_name, NULL));
+        
+        // Register handler for device_serial endpoint (must be registered after start_provisioning)
+        ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_register(
+            "device_serial", device_serial_handler, NULL));
 
         // Block until provisioning completes and WiFi connects
         wifi_prov_mgr_wait();
