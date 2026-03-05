@@ -20,6 +20,11 @@ esp_err_t device_provisioning_start(void);
  */
 bool device_provisioning_is_provisioned(void);
 
+/**
+ * @brief Clear all provisioning credentials from NVS, forcing re-provisioning on next boot
+ */
+void device_provisioning_clear(void);
+
 #ifdef __cplusplus
 }
 #endif

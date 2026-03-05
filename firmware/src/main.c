@@ -141,6 +141,15 @@ static int restart_command(int argc, char **argv)
     return 0;
 }
 
+static int reprovision_command(int argc, char **argv)
+{
+    ESP_LOGI(TAG, "Clearing provisioning credentials and triggering fleet provisioning on reboot...");
+    device_provisioning_clear();
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    esp_restart();
+    return 0;
+}
+
 static int exit_command(int argc, char **argv)
 {    
     //read firmware version 
@@ -313,6 +322,12 @@ void app_main(void)
         .func = &restart_command,
     };
 
+    esp_console_cmd_t reprovision_cmd = {
+        .command = "reprovision",
+        .help = "Clear stored AWS credentials and re-run fleet provisioning on reboot",
+        .func = &reprovision_command,
+    };
+
     esp_console_new_repl_uart(&uart_config, &rc, &o);
     esp_console_cmd_register(&read_cmd);
     esp_console_cmd_register(&logs_cmd);
@@ -321,6 +336,7 @@ void app_main(void)
     esp_console_cmd_register(&exit_cmd);
     esp_console_cmd_register(&enter_deep_sleep_cmd);
     esp_console_cmd_register(&restart_cmd);
+    esp_console_cmd_register(&reprovision_cmd);
 
 
     //engineering_logs_off();

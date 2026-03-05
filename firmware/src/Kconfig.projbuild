@@ -46,3 +46,15 @@ config RESET_PROVISIONED_ON_BOOT
         AWS IoT certificates are preserved. Disable this after testing.
 
 endmenu
+
+menu "Watchdog Configuration"
+
+config ESP_TASK_WDT_TIMEOUT_S
+    int "Task Watchdog Timeout (seconds)"
+    default 60
+    range 1 3600
+    help
+        The Task Watchdog Timer timeout in seconds. Set to 120 to accommodate
+        expensive TLS operations like ECDH key exchange during AWS IoT connections.
+
+endmenu

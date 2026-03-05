@@ -9,6 +9,7 @@
 #include "freertos/event_groups.h"
 #include "fleet_provisioning.h"  // AWS IoT Fleet Provisioning library
 #include <string.h>
+#include <nvs.h>
 
 #define TAG "DeviceProvisioning"
 #define TEMPLATE_NAME "TenantDeviceProvisioningTemplate"
@@ -135,12 +136,27 @@ bool device_provisioning_is_provisioned(void) {
     return (cert_err == ESP_OK && key_err == ESP_OK && name_err == ESP_OK);
 }
 
+void device_provisioning_clear(void) {
+    nvs_handle_t h;
+    esp_err_t err = nvs_open("storage", NVS_READWRITE, &h);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to open NVS for clearing provisioning: %d", err);
+        return;
+    }
+    nvs_erase_key(h, "DEVICE_CERT");
+    nvs_erase_key(h, "DEVICE_KEY");
+    nvs_erase_key(h, "THING_NAME");
+    nvs_commit(h);
+    nvs_close(h);
+    ESP_LOGI(TAG, "Provisioning credentials cleared from NVS");
+}
+
 esp_err_t device_provisioning_start(void) {
     esp_err_t ret = ESP_FAIL;
     char* claim_cert = NULL;
     char* claim_key = NULL;
     char serial_number[32];
-    char client_id[64];
+    char client_id[128];
     char* root_ca = NULL;
     size_t root_ca_len = 0;
     
@@ -166,9 +182,6 @@ esp_err_t device_provisioning_start(void) {
     snprintf(serial_number, sizeof(serial_number), "ESP32-%02X%02X%02X%02X%02X%02X",
              mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     ESP_LOGI(TAG, "Device Serial Number: %s", serial_number);
-    
-    // Client ID for provisioning = serial number
-    strncpy(client_id, serial_number, sizeof(client_id) - 1);
     
     // Phase 3: Load claim credentials from embedded files and Kconfig
     ESP_LOGI(TAG, "Phase 1: Loading embedded claim credentials...");
@@ -198,6 +211,9 @@ esp_err_t device_provisioning_start(void) {
     ESP_LOGI(TAG, "✅ Claim credentials loaded from embedded files");
     ESP_LOGI(TAG, "   Tenant ID: %s", tenant_id);
     ESP_LOGI(TAG, "   Claim Token: %s", claim_token);
+
+    // Client ID for provisioning = {tenantId}-{serialNumber}
+    snprintf(client_id, sizeof(client_id), "%s-%s", tenant_id, serial_number);
     
     // Phase 4: Load root CA
     extern const uint8_t aws_root_ca_start[] asm("_binary_root_ca_pem_start");
