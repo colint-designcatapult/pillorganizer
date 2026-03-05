@@ -77,12 +77,11 @@ def main():
             print(f"API Response: {data}")
             
             # Extract data
-            tenant_id = data['tenantId']
             claim_id = data['claimId']
             claim_token = data['claimToken']
             device_id = data['deviceId']
             
-            print(f"✅ Claim ID obtained: {claim_id} for Tenant: {tenant_id} (Device: {device_id})")
+            print(f"✅ Claim ID obtained: {claim_id}  (Device: {device_id})")
 
     except Exception as e:
         print(f"❌ Failed to fetch claim token: {e}")
@@ -191,8 +190,6 @@ def main():
         certificate_ownership_token=keys_response.certificate_ownership_token,
         parameters={
             "SerialNumber": SERIAL_NUMBER,
-            "TenantId": tenant_id,
-            "DeviceId": device_id,
             "ClaimId": claim_id,
             "ClaimToken": claim_token
         }

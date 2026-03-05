@@ -93,8 +93,6 @@ The device finalizes provisioning by registering the "Thing" in the AWS IoT Regi
       "certificateOwnershipToken": "{token_from_step_3}",
       "parameters": {
         "SerialNumber": "{SerialNumber}",
-        "TenantId": "{tenantId_from_step_1}",
-        "DeviceId": "{deviceId_from_step_1}",
         "ClaimId": "{claimId_from_step_1}",
         "ClaimToken": "{claimToken_from_step_1}"
       }
@@ -118,7 +116,7 @@ sequenceDiagram
     Note over Device: Has SerialNumber & JWT
 
     Device->>API: POST /device/claim {SerialNumber} (Auth: Bearer JWT)
-    API-->>Device: 200 OK {ClaimId, TenantId, ApiBase, DeviceId}
+    API-->>Device: 200 OK {ClaimId, ClaimToken, TenantId, ApiBase, DeviceId}
 
     Note over Device: Device Connects to WiFi
 
@@ -135,7 +133,7 @@ sequenceDiagram
 
     Device->>Device: Save Permanent Certs
 
-    Device->>IoT: Pub RegisterThing (Token, Params: {TenantId, ClaimToken...})
+    Device->>IoT: Pub RegisterThing (Token, Params: {SerialNumber,ClaimId,ClaimToken...})
     IoT->>Lambda: Invoke Pre-Provisioning Hook
     Lambda->>Lambda: Validate ClaimToken & Tenant
     Lambda-->>IoT: Allow & Return Policy
