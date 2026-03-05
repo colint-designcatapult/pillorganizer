@@ -368,18 +368,7 @@ void WifiStateSupervisor::init() {
     // Initialize WiFi handler before any WiFi operations (needed for event callbacks)
     _wifi_handler = new StandardWifiHandler();
 
-#ifdef CONFIG_DEV_WIFI_ENABLED
-    // Dev mode: skip BLE provisioning, use hardcoded credentials
-    ESP_LOGI(TAG, "Dev WiFi: connecting to '%s'", CONFIG_DEV_WIFI_SSID);
-    wifi_config_t wifi_config = {};
-    strcpy((char*)wifi_config.sta.ssid, CONFIG_DEV_WIFI_SSID);
-    strcpy((char*)wifi_config.sta.password, CONFIG_DEV_WIFI_PASSWORD);
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
-    ESP_ERROR_CHECK(esp_wifi_start());
-    // WIFI_EVENT_STA_START fires -> StandardWifiHandler::wifi_event_start() -> esp_wifi_connect()
-#else
-    // Production: use ESP unified provisioning over BLE
+    // ESP unified provisioning over BLE
     wifi_prov_mgr_config_t prov_config = {
         .scheme = wifi_prov_scheme_ble,
         .scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM,
@@ -389,12 +378,6 @@ void WifiStateSupervisor::init() {
     
     // Create custom endpoint for device serial number (must be created before start_provisioning)
     ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("device_serial"));
-
-#if CONFIG_RESET_PROVISIONED_ON_BOOT
-    // Reset WiFi provisioning for testing BLE provisioning flow
-    ESP_LOGI(TAG, "Resetting WiFi provisioning (testing mode)");
-    wifi_prov_mgr_reset_provisioning();
-#endif
 
     bool provisioned = false;
     ESP_ERROR_CHECK(wifi_prov_mgr_is_provisioned(&provisioned));
@@ -430,7 +413,6 @@ void WifiStateSupervisor::init() {
         ESP_ERROR_CHECK(esp_wifi_start());
         // WIFI_EVENT_STA_START fires -> StandardWifiHandler::wifi_event_start() -> esp_wifi_connect()
     }
-#endif
 
     // Start reconnect watchdog task
     _wifi_handler->init();
