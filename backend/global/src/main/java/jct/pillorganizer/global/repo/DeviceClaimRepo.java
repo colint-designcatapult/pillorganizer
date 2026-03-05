@@ -18,10 +18,10 @@ public class DeviceClaimRepo extends BaseControlPlaneRepo<DeviceClaimEntity> {
         super(standardClient, DeviceClaimEntity.class);
     }
 
-    public Optional<DeviceClaimEntity> findBySerialNumberAndClaimToken(String serialNumber, String claimToken) {
+    public Optional<DeviceClaimEntity> findBySerialNumberAndClaimId(String serialNumber, String claimId) {
         Key key = Key.builder()
                 .partitionValue(DeviceClaimEntity.pk(serialNumber))
-                .sortValue(DeviceClaimEntity.sk(claimToken))
+                .sortValue(DeviceClaimEntity.sk(claimId))
                 .build();
         return Optional.ofNullable(this.table.getItem(key));
     }

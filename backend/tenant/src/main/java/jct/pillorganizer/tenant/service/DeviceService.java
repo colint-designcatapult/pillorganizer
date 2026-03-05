@@ -1,10 +1,13 @@
 package jct.pillorganizer.tenant.service;
 
+import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
 import jct.pillorganizer.core.TenantDetails;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
+import jct.pillorganizer.core.dto.DeviceClaimEligibilityDto;
+import jct.pillorganizer.core.dto.DeviceEligibilityCheckDto;
 import jct.pillorganizer.core.service.TenantService;
 import jct.pillorganizer.core.uid.UuidService;
 import jct.pillorganizer.tenant.exceptions.DeviceAccessException;
@@ -43,24 +46,17 @@ public class DeviceService {
     TenantService tenantService;
 
     @Transactional
-    public LogicalDevice create(User user, ProvisionRecord physicalDevice) {
-        if(physicalDevice.getLogicalDevice() != null)
-            throw new IllegalStateException("Device already assigned");
+    public LogicalDevice create(User user, String deviceId) {
+        log.atInfo().log("Creating LogicalDevice for device %s user %s", deviceId, user.getId());
 
-        log.atInfo().log("Creating LogicalDevice for device %s, user %s", physicalDevice.getDeviceId(), user.getId());
-        if(!user.getId().equals(physicalDevice.getProvisionedBy().getId())) {
-            log.atWarning().log("Attempted to create a device for user %s for device provisioned by %s",
-                    user.getId(), physicalDevice.getProvisionedBy().getId());
-            throw new DeviceAccessException("Provision record doesn't match user");
-        }
-
+        // Create entity
         LogicalDevice device = new LogicalDevice();
-        device.setId(uuidService.generateUuid());
-        device.setPhysicalDevice(physicalDevice);
+        device.setId(deviceId);
         LogicalDevice persisted = logicalDeviceRepository.save(device);
-        deviceProvisionService.assignActiveLogicalDevice(physicalDevice, persisted);
 
-        setPrimaryUser(persisted, physicalDevice.getProvisionedBy());
+        // Set primary user
+        setPrimaryUser(persisted, user);
+
         return persisted;
     }
 
@@ -69,7 +65,7 @@ public class DeviceService {
         if(record.getLogicalDevice() != null)
             throw new IllegalStateException("Device already assigned");
 
-        LogicalDevice logicalDevice = this.get(UUID.fromString(existingDeviceId))
+        LogicalDevice logicalDevice = this.get(existingDeviceId)
                 .orElseThrow(() -> new DeviceAccessException("Device not found"));
         DeviceUser access = this.getUserAccess(user, logicalDevice)
                 .orElseThrow(() -> new DeviceAccessException("User has no access to device"));
@@ -109,7 +105,7 @@ public class DeviceService {
 
     @Transactional
     public void setPrimaryUser(LogicalDevice device, User user) {
-        List<DeviceUser> deviceUsers = deviceUserRepository.findByDeviceId(device.getId());
+        List<DeviceUser> deviceUsers = deviceUserRepository.findByUserId(device.getId());
         for (DeviceUser du : deviceUsers) {
             boolean isTargetUser = du.getUser().getId().equals(user.getId());
             if (du.isPrimaryUser() != isTargetUser) {
@@ -138,12 +134,14 @@ public class DeviceService {
         return deviceUserRepository.findByUserAndDevice(user, device);
     }
 
-    public Optional<DeviceUser> getUserAccessByPhysicalDeviceThingName(User user, String thingName) {
-        return deviceUserRepository.findByUserAndDevicePhysicalDeviceThingName(user, thingName);
+    public Optional<DeviceUser> getUserAccess(User user, String deviceId) {
+        return deviceUserRepository.findByUserAndDeviceId(user, deviceId);
     }
 
-    public Optional<LogicalDevice> get(UUID id) {
+
+    public Optional<LogicalDevice> get(String id) {
         return logicalDeviceRepository.findById(id);
     }
+
 
 }

@@ -10,7 +10,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
-public interface LogicalDeviceRepository extends CrudRepository<LogicalDevice, UUID> {
+public interface LogicalDeviceRepository extends CrudRepository<LogicalDevice, String> {
     @Join("physicalDevice")
-    Optional<LogicalDevice> findById(UUID id);
+    @Join("users")
+    Optional<LogicalDevice> findById(String id);
 }

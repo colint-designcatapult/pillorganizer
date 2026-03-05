@@ -1,10 +1,10 @@
 package jct.pillorganizer.global.service;
 
-import com.github.ksuid.Ksuid;
-import io.micronaut.multitenancy.exceptions.TenantNotFoundException;
+import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.core.TenantDetails;
+import jct.pillorganizer.core.dto.DeviceClaimEligibilityDto;
 import jct.pillorganizer.core.message.DeviceProvisionMessage;
 import jct.pillorganizer.core.message.GrantUserMessage;
 import jct.pillorganizer.core.service.SecureRandomService;
@@ -12,19 +12,20 @@ import jct.pillorganizer.core.service.TenantService;
 import jct.pillorganizer.core.uid.KsuidService;
 import jct.pillorganizer.global.dto.DeviceClaimCertDto;
 import jct.pillorganizer.global.dto.ProvisioningClaimDto;
+import jct.pillorganizer.global.exception.ClaimTokenExpiredException;
+import jct.pillorganizer.global.exception.DeviceAccessException;
 import jct.pillorganizer.global.model.DeviceClaimEntity;
 import jct.pillorganizer.global.model.DeviceEntity;
 import jct.pillorganizer.global.model.UserEntity;
 import jct.pillorganizer.global.repo.DeviceClaimRepo;
 import jct.pillorganizer.global.repo.DeviceRepo;
 import lombok.extern.flogger.Flogger;
-import software.amazon.awssdk.enhanced.dynamodb.model.TransactPutItemEnhancedRequest;
 import software.amazon.awssdk.services.iot.IotClient;
 import software.amazon.awssdk.services.iot.model.CreateProvisioningClaimRequest;
 import software.amazon.awssdk.services.iot.model.CreateProvisioningClaimResponse;
 
 import java.io.IOException;
-import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -62,50 +63,92 @@ public class DeviceProvisionService {
         return secureRandomService.generateRandomToken();
     }
 
-    private String createClaimRecord(String serialNumber, String userId, String tenant) {
+    public String generateThingName(String tenantId, String serialNumber, String deviceId) {
+        return tenantId + "-" + serialNumber + "-" + deviceId;
+    }
+
+    private DeviceClaimEntity createClaimRecord(String serialNumber, String userId, String tenant, String deviceId) {
         String claimToken = generateClaimToken();
+        String claimId = ksuidService.generateKsuid();
+        String thingName = generateThingName(tenant, serialNumber, deviceId);
 
-        deviceClaimRepo.save(
-                DeviceClaimEntity.builder()
-                        .base(DeviceClaimEntity.buildBase(serialNumber, claimToken, userId))
-                        .serialNumber(serialNumber)
-                        .claimToken(claimToken)
-                        .userId(userId)
-                        .tenantId(tenant)
-                        .build()
-        );
+        DeviceClaimEntity entity = DeviceClaimEntity.builder()
+                .base(DeviceClaimEntity.buildBase(serialNumber, claimId, claimToken, userId, deviceId))
+                .serialNumber(serialNumber)
+                .claimId(claimId)
+                .claimToken(claimToken)
+                .userId(userId)
+                .tenantId(tenant)
+                .deviceId(deviceId)
+                .thingName(thingName)
+                .build();
 
-        return claimToken;
+        deviceClaimRepo.save(entity);
+
+        return entity;
     }
 
 
-    public ProvisioningClaimDto generateProvisioningClaim(String serialNumber, String userId) {
+    public ProvisioningClaimDto generateProvisioningClaim(String serialNumber, String userId,
+                                                          @Nullable String requestedDeviceId) {
         // Lookup which tenant this device belongs to
         String tenantId = deviceService.lookupTenant(serialNumber);
         TenantDetails tenantDetails = tenantService.getTenantDetails(tenantId)
-                .orElseThrow(() -> new TenantNotFoundException("Device assigned to unregistered tenant: " + tenantId));
+                .orElseThrow(() -> new IllegalStateException("Device assigned to unregistered tenant: " + tenantId));
 
-        // Create a claim token and store record
-        String claimToken = createClaimRecord(serialNumber, userId, tenantId);
-
-        return new ProvisioningClaimDto(claimToken, tenantId, tenantDetails.getApiBase());
-    }
-
-    public Optional<DeviceClaimCertDto> getClaimCertificate(String serialNumber, String claimId) {
-        Optional<DeviceClaimEntity> claimOpt = deviceClaimRepo.findBySerialNumberAndClaimToken(serialNumber, claimId);
-
-        if (claimOpt.isEmpty()) {
-            log.atInfo().log("No claim found for serial number %s and claim token", serialNumber);
-            return Optional.empty();
+        String deviceId;
+        if(requestedDeviceId == null) {
+            deviceId = ksuidService.generateKsuid();
+        } else {
+            deviceId = requestedDeviceId;
         }
 
-        DeviceClaimEntity claim = claimOpt.get();
+        // Check to see if the user can claim the request ID
+        DeviceClaimEligibilityDto claimEligibility = messageService.getDeviceClaimEligibility(tenantId,
+                        deviceId, serialNumber)
+                .blockOptional(Duration.ofSeconds(5))
+                .orElseThrow(() -> {
+                    log.atWarning().log("Could not determine claim eligibility for user %s device %s", userId, deviceId);
+                    return new DeviceAccessException("Could not determine claim eligibility");
+                });
+
+        // Ensure the user is eligible to claim the device
+        if(!claimEligibility.isEligible()) {
+            log.atWarning().log("Claim not eligible user %s device %s", userId, deviceId);
+            throw new DeviceAccessException("Not eligible to claim device");
+        }
+
+        // If the user is requesting a specific device ID, it must exist
+        if(requestedDeviceId != null && !claimEligibility.deviceExists()) {
+            log.atWarning().log("User %s attempted to claim non-existent device %s", userId, deviceId);
+            throw new DeviceAccessException("Not eligible to claim device");
+        }
+
+        // Create a claim token and store record
+        DeviceClaimEntity claim = createClaimRecord(serialNumber, userId, tenantId, deviceId);
+
+        return new ProvisioningClaimDto(claim.getClaimId(), tenantId, tenantDetails.getApiBase(), deviceId);
+    }
+
+    public DeviceClaimCertDto getClaimCertificate(String serialNumber, String claimId, String claimToken) {
+        DeviceClaimEntity claim = deviceClaimRepo.findBySerialNumberAndClaimId(serialNumber, claimId)
+                .orElseThrow(() -> {
+                    log.atInfo().log("No claim found for serial number %s and claim id %s", serialNumber, claimId);
+                    return new DeviceAccessException("No claim found");
+                });
+
+        // Ensure the presented claim token matches
+        if (!claimToken.equals(claim.getClaimToken())) {
+            log.atWarning().log("Invalid claim token presented for serial number %s (got %s received %s)", serialNumber,
+                    claimToken, claim.getClaimToken());
+            throw new DeviceAccessException("Invalid claim token");
+        }
 
         // Ensure the token was issued within the last 10 minutes
         Instant tenMinutesAgo = Instant.now().minus(java.time.Duration.ofMinutes(10));
         if (claim.getBase().getCreatedAt().isBefore(tenMinutesAgo)) {
             log.atInfo().log("Claim token expired for serial number %s", serialNumber);
-            return Optional.empty();
+            throw new ClaimTokenExpiredException("Claim token expired");
         }
 
         // Generate claim credentials in IoT Core on demand
@@ -115,29 +158,41 @@ public class DeviceProvisionService {
                         .build()
         );
 
-        return Optional.of(new DeviceClaimCertDto(
+        return new DeviceClaimCertDto(
                 response.certificatePem(),
                 response.keyPair().privateKey(),
                 response.expiration()
-        ));
+        );
     }
 
-    public String getThingName(String tenantId, String serialNumber) {
-        return tenantId + "-" + serialNumber;
-    }
-
-    public Optional<DeviceEntity> provisionDevice(String serialNumber, String claimToken) {
-        Optional<DeviceClaimEntity> claimOpt = deviceClaimRepo.findBySerialNumberAndClaimToken(serialNumber, claimToken);
+    public DeviceEntity provisionDevice(String serialNumber, String claimId, String claimToken) {
+        Optional<DeviceClaimEntity> claimOpt = deviceClaimRepo.findBySerialNumberAndClaimId(serialNumber, claimId);
 
         if (claimOpt.isEmpty()) {
-            log.atInfo().log("No claim found for serial number %s and claim token", serialNumber);
-            return Optional.empty();
+            log.atInfo().log("No claim found for serial number %s and claim ID %s", serialNumber, claimId);
+            throw new DeviceAccessException("Claim not found");
         }
 
         DeviceClaimEntity claim = claimOpt.get();
-        String deviceId = ksuidService.generateKsuid();
+
+        if(!claim.getClaimToken().equals(claimToken)) {
+            log.atWarning().log("Invalid claim token presented for serial number %s (got %s received %s)", serialNumber,
+                    claimToken, claim.getClaimToken());
+            throw new DeviceAccessException("Invalid claim token");
+        }
+
+        String deviceId = claim.getDeviceId();
         String tenantId = claim.getTenantId();
         String userId = claim.getUserId();
+        String thingName = claim.getThingName();
+
+        // Sanity check: tenant ID should match what we expect
+        String assignedTenant = deviceService.lookupTenant(serialNumber);
+        if(!assignedTenant.equals(tenantId)) {
+            log.atWarning().log("Attempted to provision serial number %s to tenant %s, but it is assigned to %s",
+                    serialNumber, tenantId, assignedTenant);
+            throw new IllegalStateException("Invalid claim token");
+        }
 
         // Check if device already exists to handle potential retries or concurrent provisioning
         Optional<DeviceEntity> existingDeviceOpt = deviceRepo.findBySerialNumber(serialNumber);
@@ -147,6 +202,8 @@ public class DeviceProvisionService {
             device = existingDeviceOpt.get().toBuilder()
                     .deviceId(deviceId)
                     .tenantId(tenantId)
+                    .claimId(claimId)
+                    .thingName(thingName)
                     .build();
         } else {
             device = DeviceEntity.builder()
@@ -154,27 +211,19 @@ public class DeviceProvisionService {
                     .serialNumber(serialNumber)
                     .deviceId(deviceId)
                     .tenantId(tenantId)
+                    .claimId(claimId)
+                    .thingName(thingName)
                     .build();
         }
+
+        // Persist updated/new device entity
+        deviceRepo.save(device);
 
         // Lookup the current user
         UserEntity userEntity = userService.get(claim.getUserId())
                 .orElseThrow(() -> new IllegalStateException("User not found: %s" + userId));
 
-        DeviceClaimEntity updatedClaim = claim.toBuilder()
-                .deviceId(deviceId)
-                .build();
-
-        // Perform transactional write to ensure both entities are updated together
-        deviceRepo.getEnhancedClient().transactWriteItems(r -> r
-                .addPutItem(deviceRepo.getTable(), TransactPutItemEnhancedRequest.builder(DeviceEntity.class)
-                        .item(device)
-                        .build())
-                .addPutItem(deviceClaimRepo.getTable(), TransactPutItemEnhancedRequest.builder(DeviceClaimEntity.class)
-                        .item(updatedClaim)
-                        .build())
-        );
-        // Let the tenant know they should have a user record
+        // Let the tenant know they should have a user
         try {
             GrantUserMessage grantUserMessage = GrantUserMessage.builder()
                     .userId(userId)
@@ -185,7 +234,7 @@ public class DeviceProvisionService {
             messageService.grantUser(grantUserMessage);
         } catch (IOException ex) {
             log.atWarning().withCause(ex).log("Failed to notify tenant of user");
-            return Optional.empty();
+            throw new RuntimeException(ex);
         }
 
         // Let tenant know the device is provisioned
@@ -195,15 +244,15 @@ public class DeviceProvisionService {
                     .tenantId(tenantId)
                     .serialNo(serialNumber)
                     .userId(userId)
-                    .claimToken(claimToken)
-                    .thingName(getThingName(tenantId, serialNumber))
+                    .claimId(claimId)
+                    .thingName(thingName)
                     .build();
             messageService.provisionDevice(message);
         } catch (IOException ex) {
             log.atWarning().withCause(ex).log("Failed to notify tenant of provisioning");
-            return Optional.empty();
+            throw new RuntimeException(ex);
         }
 
-        return Optional.of(device);
+        return device;
     }
 }

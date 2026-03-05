@@ -71,7 +71,7 @@ public class AuthService {
      * @throws AuthenticationException if the user doesn't have access to the
      *                                 specified device
      */
-    public LogicalDevice accessDevice(UUID deviceID) {
+    public LogicalDevice accessDevice(String deviceID) {
         log.atSevere().log("Using legacy access control: allowing");
         return deviceRepository.findById(deviceID).get();
     }

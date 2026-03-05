@@ -1,6 +1,7 @@
 package jct.pillorganizer.global.client;
 
 import io.micronaut.context.annotation.EachBean;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.annotation.Header;
@@ -9,6 +10,8 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.uri.UriBuilder;
 import jct.pillorganizer.core.TenantDetails;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
+import jct.pillorganizer.core.dto.DeviceClaimEligibilityDto;
+import jct.pillorganizer.core.dto.DeviceEligibilityCheckDto;
 import lombok.Getter;
 import reactor.core.publisher.Mono;
 
@@ -51,4 +54,10 @@ public class TenantClient {
                 HttpRequest.GET(uri).bearerAuth(authorization)
         ));
     }
+
+    public Mono<DeviceClaimEligibilityDto> getDeviceClaimEligibility(String deviceId, String serialNumber) {
+        return Mono.from(httpClient.retrieve(HttpRequest.POST(makeUri("/internal/user/device_claim_eligibility"),
+                new DeviceEligibilityCheckDto(deviceId, serialNumber)), Argument.of(DeviceClaimEligibilityDto.class)));
+    }
+
 }

@@ -150,34 +150,32 @@ export class IotStack extends cdk.Stack {
       // The Template Body: Maps Hook parameters to IoT Registry Resources
       templateBody: JSON.stringify({
         Parameters: {
+          // Sent by device
           "SerialNumber": { "Type": "String" }, 
+          "ClaimId": { "Type": "String" },
+          "ClaimToken": { "Type": "String" },
+
+          // Returned by provision hook
           "TenantId": { "Type": "String" },
-          "DeviceId": { "Type": "String", "Default": "pending-assignment" },
-          "ClaimToken": { "Type": "String" }
+          "DeviceId": { "Type": "String" },
+          "ThingName": { "Type": "String" }
         },
         DeviceConfiguration: {
-          "TenantId": { "Ref": "TenantId" },
-          "DeviceId": { "Ref": "DeviceId" }
+          "ThingName": { "Ref": "ThingName" }
         },
         Resources: {
           thing: {
             Type: "AWS::IoT::Thing",
             OverrideSettings: {
-              AttributePayload: "MERGE" 
+              AttributePayload: "MERGE",
+              ThingName: "REPLACE"
             },
             Properties: {
-              ThingName: {
-                "Fn::Join": [
-                  "-",
-                  [
-                    { "Ref": "TenantId" },
-                    { "Ref": "SerialNumber" }
-                  ]
-                ]
-              },
+              ThingName: { "Ref": "ThingName" },
               AttributePayload: {
                 "tenantId": { "Ref": "TenantId" },
-                "deviceId": { "Ref": "DeviceId" }
+                "deviceId": { "Ref": "DeviceId" },
+                "serialNumber": { "Ref": "SerialNumber" }
               }
             }
           },
