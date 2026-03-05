@@ -8,6 +8,7 @@ CONFIG_RESET_PROVISIONED_ON_BOOT=n
 # Watchdog Configuration
 #
 CONFIG_ESP_TASK_WDT_TIMEOUT_S=120
+CONFIG_ESP_TASK_WDT_PANIC=y
 # end of Watchdog Configuration
 
 #

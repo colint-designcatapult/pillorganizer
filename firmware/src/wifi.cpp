@@ -245,11 +245,12 @@ private:
     uint32_t _last_disconnect_time = 0;
 
     uint32_t get_reconnect_delay_ms() {
-        // Exponential backoff: 10s → 30s → 1m → 5m (repeat)
+        // Exponential backoff: 5s → 10s → 30s → 1m → 5m (repeat)
         switch(_reconnect_attempt) {
-            case 0: return 10000;   // 10 seconds
-            case 1: return 30000;   // 30 seconds
-            case 2: return 60000;   // 1 minute
+            case 0: return 5000;   // 10 seconds
+            case 1: return 10000;   // 30 seconds
+            case 3: return 30000;   // 1 minute
+            case 4: return 60000;   // 1 minute
             default: return 300000; // 5 minutes (max) - repeat indefinitely
         }
     }
@@ -279,8 +280,9 @@ private:
             // If WiFi is disconnected, attempt reconnection with backoff
             if(!WifiStateSupervisor::get().is_connected()) {
                 uint32_t delay_ms = get_reconnect_delay_ms();
-                if(wifi_wait_for_disconnect(pdMS_TO_TICKS(delay_ms))) {
-                    // Still disconnected after delay - try again
+                // Wait for either connection or timeout
+                if(!wifi_wait_for_connection(pdMS_TO_TICKS(delay_ms))) {
+                    // Still not connected after delay - increment attempts and retry
                     _reconnect_attempt++;
                     uint32_t time_since_disconnect = (esp_timer_get_time() / 1000000) - _last_disconnect_time;
                     ESP_LOGI(TAG, "WiFi reconnect attempt #%lu after %lus", _reconnect_attempt, time_since_disconnect);
@@ -369,11 +371,11 @@ void WifiStateSupervisor::init() {
     _wifi_handler = new StandardWifiHandler();
 
     // ESP unified provisioning over BLE
-    wifi_prov_mgr_config_t prov_config = {
-        .scheme = wifi_prov_scheme_ble,
-        .scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM,
-        .app_event_handler = NULL,
-    };
+    wifi_prov_mgr_config_t prov_config;
+    memset(&prov_config, 0, sizeof(prov_config));
+    prov_config.scheme = wifi_prov_scheme_ble;
+    prov_config.scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM;
+    
     ESP_ERROR_CHECK(wifi_prov_mgr_init(prov_config));
     
     // Create custom endpoint for device serial number (must be created before start_provisioning)

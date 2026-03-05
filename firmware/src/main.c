@@ -136,6 +136,7 @@ static int led_command(int argc, char **argv)
 static int restart_command(int argc, char **argv)
 {
     ESP_LOGI(TAG, "Restarting device...");
+    mqtt_disconnect();
     vTaskDelay(pdMS_TO_TICKS(1000));
     esp_restart();
     return 0;

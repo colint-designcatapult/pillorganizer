@@ -144,10 +144,10 @@ static esp_err_t mqtt_connect(void) {
         return ESP_FAIL;
     }
 
-    // Set timeouts
+    // Set timeouts (shorter recv timeout prevents blocking MQTT_ProcessLoop)
     vTlsSetConnectTimeout(10000);
     vTlsSetSendTimeout(5000);
-    vTlsSetRecvTimeout(5000);
+    vTlsSetRecvTimeout(2000);  // 2s recv timeout
 
     // Connect using library function
     TlsTransportStatus_t tlsStatus = xTlsConnect(&networkContext);
@@ -277,7 +277,7 @@ void mqtt_app_start(void) {
     mqttMutex = xSemaphoreCreateMutex();
     
     if (mqtt_connect() == ESP_OK) {
-        xTaskCreate(mqtt_task, "mqtt_task", 8192, NULL, 5, &mqttTaskHandle);
+        xTaskCreate(mqtt_task, "mqtt_task", 8192, NULL, 7, &mqttTaskHandle);
         ESP_LOGI(TAG, "AWS IoT MQTT started");
     } else {
         ESP_LOGE(TAG, "Failed to start AWS IoT MQTT");
@@ -333,10 +333,10 @@ esp_err_t mqtt_connect_with_certs(const char* client_id, const char* root_ca,
         return ESP_FAIL;
     }
     
-    // Set timeouts
+    // Set timeouts (shorter recv timeout prevents blocking MQTT_ProcessLoop)
     vTlsSetConnectTimeout(10000);
     vTlsSetSendTimeout(5000);
-    vTlsSetRecvTimeout(5000);
+    vTlsSetRecvTimeout(1000);  // 1s recv timeout
     
     // Connect TLS (expensive ECDH operations, timeout is 60 seconds which is sufficient)
     TlsTransportStatus_t tlsStatus = xTlsConnect(&networkContext);
@@ -353,11 +353,20 @@ esp_err_t mqtt_connect_with_certs(const char* client_id, const char* root_ca,
     transport.send = espTlsTransportSend;
     transport.recv = espTlsTransportRecv;
     
+    // Create mutex if not already exists (needed before context reinitialization)
+    if (mqttMutex == NULL) {
+        mqttMutex = xSemaphoreCreateMutex();
+    }
+    
+    // Hold mutex while reinitializing context to prevent mqtt_task from using corrupted state
+    xSemaphoreTake(mqttMutex, portMAX_DELAY);
+    
     // Initialize MQTT
     MQTTStatus_t mqttStatus = MQTT_Init(&mqttContext, &transport,
                                         getTime, mqtt_event_callback, &mqttFixedBuffer);
     if (mqttStatus != MQTTSuccess) {
         ESP_LOGE(TAG, "MQTT_Init failed: %d", mqttStatus);
+        xSemaphoreGive(mqttMutex);
         xTlsDisconnect(&networkContext);
         vSemaphoreDelete(networkContext.xTlsContextSemaphore);
         return ESP_FAIL;
@@ -369,6 +378,7 @@ esp_err_t mqtt_connect_with_certs(const char* client_id, const char* root_ca,
                                        incomingPublishRecords, OUTGOING_PUBLISH_RECORD_COUNT);
     if (mqttStatus != MQTTSuccess) {
         ESP_LOGE(TAG, "MQTT_InitStatefulQoS failed: %d", mqttStatus);
+        xSemaphoreGive(mqttMutex);
         xTlsDisconnect(&networkContext);
         vSemaphoreDelete(networkContext.xTlsContextSemaphore);
         return ESP_FAIL;
@@ -386,20 +396,20 @@ esp_err_t mqtt_connect_with_certs(const char* client_id, const char* root_ca,
     mqttStatus = MQTT_Connect(&mqttContext, &connectInfo, NULL, 5000, &sessionPresent);
     if (mqttStatus != MQTTSuccess) {
         ESP_LOGE(TAG, "MQTT_Connect failed: %d", mqttStatus);
+        xSemaphoreGive(mqttMutex);
         xTlsDisconnect(&networkContext);
         vSemaphoreDelete(networkContext.xTlsContextSemaphore);
         return ESP_FAIL;
     }
     
     isConnected = true;
+    xSemaphoreGive(mqttMutex);  // Release mutex after context is stable
+    
     ESP_LOGI(TAG, "MQTT connected successfully as '%s' (session: %d)", dynamic_client_id, sessionPresent);
     
     // Start MQTT task if not already running
     if (mqttTaskHandle == NULL) {
-        if (mqttMutex == NULL) {
-            mqttMutex = xSemaphoreCreateMutex();
-        }
-        xTaskCreate(mqtt_task, "mqtt_task", 8192, NULL, 5, &mqttTaskHandle);
+        xTaskCreate(mqtt_task, "mqtt_task", 8192, NULL, 7, &mqttTaskHandle);
     }
     
     return ESP_OK;
