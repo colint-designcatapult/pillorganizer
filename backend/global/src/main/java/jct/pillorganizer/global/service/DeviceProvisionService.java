@@ -122,6 +122,10 @@ public class DeviceProvisionService {
         ));
     }
 
+    public String getThingName(String tenantId, String serialNumber) {
+        return tenantId + "-" + serialNumber;
+    }
+
     public Optional<DeviceEntity> provisionDevice(String serialNumber, String claimToken) {
         Optional<DeviceClaimEntity> claimOpt = deviceClaimRepo.findBySerialNumberAndClaimToken(serialNumber, claimToken);
 
@@ -192,6 +196,7 @@ public class DeviceProvisionService {
                     .serialNo(serialNumber)
                     .userId(userId)
                     .claimToken(claimToken)
+                    .thingName(getThingName(tenantId, serialNumber))
                     .build();
             messageService.provisionDevice(message);
         } catch (IOException ex) {

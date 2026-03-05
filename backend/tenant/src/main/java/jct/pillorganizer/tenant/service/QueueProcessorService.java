@@ -26,7 +26,7 @@ public class QueueProcessorService {
 
         // Create the provisioning record
         ProvisionRecord provisionRecord = provisionService.provision(user, message.deviceId(), message.serialNo(),
-                message.claimToken());
+                message.claimToken(), message.thingName());
 
         log.atInfo().log("Provisioning record saved, device %s user %s claim %s", provisionRecord.getDeviceId(),
                 provisionRecord.getProvisionedBy().getId(), provisionRecord.getClaimToken());

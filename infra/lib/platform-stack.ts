@@ -20,6 +20,12 @@ export class PlatformStack extends cdk.Stack {
   public readonly zone: route53.IHostedZone;
   public readonly controlPlaneDomainName: apigwv2.IDomainName;
 
+  public readonly mqttDomain: string;
+  public readonly mqttCertificateArn: string;
+
+  public readonly mqttWsDomain: string;
+  public readonly mqttWsCertificateArn: string;
+
 
   constructor(scope: Construct, id: string, props: PlatformStackProps) {
     super(scope, id, props);
@@ -50,19 +56,14 @@ export class PlatformStack extends cdk.Stack {
 
     const mqttSubdomain = props.mqttSubdomain || 'mqtt';
     const fullMqttDomainName = `${mqttSubdomain}.${props.baseDomain}`;
+    this.mqttDomain = fullMqttDomainName;
 
     const mqttCertificate = new acm.Certificate(this, 'MqttCertificate', {
       domainName: fullMqttDomainName,
       validation: acm.CertificateValidation.fromDns(this.zone),
       allowExport: false
     });
-
-    new iot.CfnDomainConfiguration(this, 'MqttDomainConfig', {
-      domainName: fullMqttDomainName,
-      serverCertificateArns: [mqttCertificate.certificateArn],
-      serviceType: 'DATA',
-      domainConfigurationStatus: 'ENABLED'
-    });
+    this.mqttCertificateArn = mqttCertificate.certificateArn;
 
     const endpoint = new cr.AwsCustomResource(this, 'IotEndpoint', {
       onCreate: {
@@ -83,6 +84,26 @@ export class PlatformStack extends cdk.Stack {
     new route53.CnameRecord(this, 'MqttCname', {
       zone: this.zone,
       recordName: mqttSubdomain,
+      domainName: iotEndpointAddress,
+      ttl: cdk.Duration.minutes(5),
+    });
+
+    // -- MQTT over Websocket --
+
+    const mqttWsSubdomain = `ws-${mqttSubdomain}`;
+    const fullMqttWsDomainName = `${mqttWsSubdomain}.${props.baseDomain}`;
+    this.mqttWsDomain = fullMqttWsDomainName;
+
+    const mqttWsCertificate = new acm.Certificate(this, 'MqttWsCertificate', {
+      domainName: fullMqttWsDomainName,
+      validation: acm.CertificateValidation.fromDns(this.zone),
+      allowExport: false
+    });
+    this.mqttWsCertificateArn = mqttWsCertificate.certificateArn;
+
+    new route53.CnameRecord(this, 'MqttWsCname', {
+      zone: this.zone,
+      recordName: mqttWsSubdomain,
       domainName: iotEndpointAddress,
       ttl: cdk.Duration.minutes(5),
     });

@@ -20,7 +20,7 @@ public class DeviceProvisionService {
     @Inject
     ProvisionRecordRepository provisionRecordRepository;
 
-    public ProvisionRecord provision(User user, String deviceID, String serialNo, String claimToken) {
+    public ProvisionRecord provision(User user, String deviceID, String serialNo, String claimToken, String thingName) {
         // Create provisioning record
         ProvisionRecord record = new ProvisionRecord();
         record.setDeviceId(deviceID);
@@ -28,6 +28,7 @@ public class DeviceProvisionService {
         record.setClaimToken(claimToken);
         record.setDeviceClass(DeviceClass.v1_7x2);
         record.setProvisionedBy(user);
+        record.setThingName(thingName);
         return provisionRecordRepository.save(record);
     }
 

@@ -12,6 +12,7 @@ class DeviceAccessDto {
   final String tenantId;
   final String apiBase;
   final bool primaryUser;
+  final String thingName;
 
   DeviceAccessDto({
     required this.id,
@@ -22,6 +23,7 @@ class DeviceAccessDto {
     required this.tenantId,
     required this.apiBase,
     required this.primaryUser,
+    required this.thingName
   });
 
   factory DeviceAccessDto.fromJson(Map<String, dynamic> json) =>

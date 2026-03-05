@@ -1,5 +1,6 @@
 package jct.pillorganizer.tenant.repo;
 
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -24,4 +25,6 @@ public interface ProvisionRecordRepository extends CrudRepository<ProvisionRecor
     @ParameterExpression(name = "logicalDeviceId", expression = "#{activeRecord.logicalDevice.id}")
     @ParameterExpression(name = "recordId", expression = "#{activeRecord.deviceId}")
     void disableAllForDeviceExcept(ProvisionRecord activeRecord);
+
+
 }
