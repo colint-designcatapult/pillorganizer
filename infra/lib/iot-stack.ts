@@ -167,8 +167,7 @@ export class IotStack extends cdk.Stack {
           thing: {
             Type: "AWS::IoT::Thing",
             OverrideSettings: {
-              AttributePayload: "MERGE",
-              ThingName: "REPLACE"
+              AttributePayload: "MERGE"
             },
             Properties: {
               ThingName: { "Ref": "ThingName" },

@@ -7,6 +7,7 @@ import jct.pillorganizer.core.TenantDetails
 import jct.pillorganizer.core.service.TenantService
 import jct.pillorganizer.tenant.BaseIntegrationSpec
 import jct.pillorganizer.tenant.exceptions.DeviceAccessException
+import jct.pillorganizer.tenant.model.device.ProvisionRecord
 import spock.lang.Subject
 
 @MicronautTest
@@ -120,7 +121,7 @@ class DeviceServiceSpec extends BaseIntegrationSpec {
         def record1 = deviceService.provision(user, "device-3-3-1", "serial-3-3-1", "claim-3-3-1", "thing-3-3-1")
         def logicalDevice = record1.logicalDevice
 
-        def record2 = new jct.pillorganizer.tenant.model.device.ProvisionRecord(claimId: "claim-3-3-2", serialNo: "serial-3-3-2", thingName: "thing-3-3-2", provisionedBy: user)
+        def record2 = new ProvisionRecord(claimId: "claim-3-3-2", serialNo: "serial-3-3-2", thingName: "thing-3-3-2", provisionedBy: user)
         provisionRecordRepository.save(record2)
 
         when:
@@ -153,7 +154,7 @@ class DeviceServiceSpec extends BaseIntegrationSpec {
         def record1 = deviceService.provision(user1, "device-3-5-1", "serial-3-5-1", "claim-3-5-1", "thing-3-5-1")
         def logicalDevice = record1.logicalDevice
 
-        def record2 = new jct.pillorganizer.tenant.model.device.ProvisionRecord(claimId: "claim-3-5-2", serialNo: "serial-3-5-2", thingName: "thing-3-5-2", provisionedBy: user2)
+        def record2 = new ProvisionRecord(claimId: "claim-3-5-2", serialNo: "serial-3-5-2", thingName: "thing-3-5-2", provisionedBy: user2)
         provisionRecordRepository.save(record2)
 
         when:
@@ -172,7 +173,7 @@ class DeviceServiceSpec extends BaseIntegrationSpec {
         def logicalDevice = record1.logicalDevice
 
         deviceService.addUserAccess(user2, logicalDevice)
-        def record2 = new jct.pillorganizer.tenant.model.device.ProvisionRecord(claimId: "claim-3-6-2", serialNo: "serial-3-6-2", thingName: "thing-3-6-2", provisionedBy: user2)
+        def record2 = new ProvisionRecord(claimId: "claim-3-6-2", serialNo: "serial-3-6-2", thingName: "thing-3-6-2", provisionedBy: user2)
         provisionRecordRepository.save(record2)
 
         when:
@@ -269,5 +270,52 @@ class DeviceServiceSpec extends BaseIntegrationSpec {
         devices2.size() == 1
         devices2.find { it.deviceId() == ld1.id.toString() } != null
         !devices2.find { it.deviceId() == ld1.id.toString() }.primaryUser()
+    }
+
+    def "should return eligible when device does not exist for claim eligibility"() {
+        given:
+        def user = userService.ensureExists("user-claim-1")
+        def deviceId = "non-existent-device-123"
+
+        when:
+        def eligibility = deviceService.getDeviceClaimEligibility(user, "serial-123", deviceId)
+
+        then:
+        eligibility.isEligible()
+        eligibility.device().isEmpty()
+    }
+
+    def "should return eligible when user is primary for claim eligibility"() {
+        given:
+        def user = userService.ensureExists("user-claim-2")
+        def deviceId = "device-claim-2"
+        def record = deviceService.provision(user, deviceId, "serial-claim-2", "claim-token-2", "thing-2")
+
+        when:
+        def eligibility = deviceService.getDeviceClaimEligibility(user, "serial-claim-2", record.logicalDevice.id)
+
+        then:
+        eligibility.isEligible()
+        eligibility.device().isPresent()
+        eligibility.device().get().id == record.logicalDevice.id
+    }
+
+    def "should return not eligible when user is not primary for claim eligibility"() {
+        given:
+        def user1 = userService.ensureExists("user-claim-3")
+        def user2 = userService.ensureExists("user-claim-4")
+        def deviceId = "device-claim-3"
+        def record = deviceService.provision(user1, deviceId, "serial-claim-3", "claim-token-3", "thing-3")
+
+        and: "grant user2 access"
+        deviceService.addUserAccess(user2, record.logicalDevice)
+
+        when:
+        def eligibility = deviceService.getDeviceClaimEligibility(user2, "serial-claim-3", record.logicalDevice.id)
+
+        then:
+        !eligibility.isEligible()
+        eligibility.device().isPresent()
+        eligibility.device().get().id == record.logicalDevice.id
     }
 }

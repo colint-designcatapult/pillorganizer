@@ -1,5 +1,6 @@
 package jct.pillorganizer.global.controller;
 
+import io.micronaut.core.annotation.Blocking;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.security.annotation.Secured;
@@ -14,6 +15,7 @@ import jct.pillorganizer.global.service.DeviceProvisionService;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.annotation.Body;
+import reactor.core.publisher.Mono;
 
 
 @Controller("/device")
@@ -27,13 +29,14 @@ public class DeviceController {
 
     @Post("/claim")
     @Secured(SecurityRule.IS_AUTHENTICATED)
-    public ProvisioningClaimDto getProvisioningClaim(@Body ProvisioningClaimRequestDto requestDto) {
+    public Mono<ProvisioningClaimDto> getProvisioningClaim(@Body ProvisioningClaimRequestDto requestDto) {
         return provisionService.generateProvisioningClaim(requestDto.serialNumber(), authService.getUserID(),
                 requestDto.deviceId());
     }
 
     @Post("/claim_cert")
     @Secured(SecurityRule.IS_ANONYMOUS)
+    @Blocking
     public DeviceClaimCertDto getClaimCertificate(@Body ClaimCertRequestDto request) {
         return provisionService.getClaimCertificate(request.serialNumber(), request.claimId(), request.claimToken());
     }

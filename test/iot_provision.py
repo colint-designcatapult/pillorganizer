@@ -79,14 +79,7 @@ def main():
             # Extract data
             tenant_id = data['tenantId']
             claim_id = data['claimId']
-            # We don't get claim_token over HTTP for security, this is typically passed via BLE
-            # For this test script, we assume claim_token is claim_id as a fallback/mock if unspecified 
-            # (or we would need to retrieve it differently if testing true end-to-end security)
-            # NOTE: If claimToken is not equal to claimId in actual firmware generation, it needs to be updated here.
-            # Assuming here they are identical or provided similarly in the simulation environment.
-            # Wait, looking at Global device provision service, claim token and claim id are separate.
-            # We'll use claim_id as a mock if token isn't natively returned.
-            claim_token = claim_id
+            claim_token = data['claimToken']
             device_id = data['deviceId']
             
             print(f"✅ Claim ID obtained: {claim_id} for Tenant: {tenant_id} (Device: {device_id})")

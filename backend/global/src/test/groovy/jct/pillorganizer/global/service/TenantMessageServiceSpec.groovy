@@ -28,7 +28,7 @@ class TenantMessageServiceSpec extends BaseIntegrationSpec {
         def result = tenantMessageService.getQueueUrl(tenantId)
 
         then:
-        result.contains("tenant-test-tenant")
+        result.endsWith("tenant-test-tenant")
     }
 
     def "should provision device"() {

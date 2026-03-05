@@ -20,6 +20,7 @@ import jct.pillorganizer.global.model.UserEntity;
 import jct.pillorganizer.global.repo.DeviceClaimRepo;
 import jct.pillorganizer.global.repo.DeviceRepo;
 import lombok.extern.flogger.Flogger;
+import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.iot.IotClient;
 import software.amazon.awssdk.services.iot.model.CreateProvisioningClaimRequest;
 import software.amazon.awssdk.services.iot.model.CreateProvisioningClaimResponse;
@@ -89,8 +90,8 @@ public class DeviceProvisionService {
     }
 
 
-    public ProvisioningClaimDto generateProvisioningClaim(String serialNumber, String userId,
-                                                          @Nullable String requestedDeviceId) {
+    public Mono<ProvisioningClaimDto> generateProvisioningClaim(String serialNumber, String userId,
+                                                                @Nullable String requestedDeviceId) {
         // Lookup which tenant this device belongs to
         String tenantId = deviceService.lookupTenant(serialNumber);
         TenantDetails tenantDetails = tenantService.getTenantDetails(tenantId)
@@ -104,30 +105,26 @@ public class DeviceProvisionService {
         }
 
         // Check to see if the user can claim the request ID
-        DeviceClaimEligibilityDto claimEligibility = messageService.getDeviceClaimEligibility(tenantId,
-                        deviceId, serialNumber)
-                .blockOptional(Duration.ofSeconds(5))
-                .orElseThrow(() -> {
-                    log.atWarning().log("Could not determine claim eligibility for user %s device %s", userId, deviceId);
-                    return new DeviceAccessException("Could not determine claim eligibility");
+        return messageService.getDeviceClaimEligibility(tenantId, deviceId, serialNumber)
+                .map(claimEligibility -> {
+                    // Ensure the user is eligible to claim the device
+                    if(!claimEligibility.isEligible()) {
+                        log.atWarning().log("Claim not eligible user %s device %s", userId, deviceId);
+                        throw new DeviceAccessException("Not eligible to claim device");
+                    }
+
+                    // If the user is requesting a specific device ID, it must exist
+                    if(requestedDeviceId != null && !claimEligibility.deviceExists()) {
+                        log.atWarning().log("User %s attempted to claim non-existent device %s", userId, deviceId);
+                        throw new DeviceAccessException("Not eligible to claim device");
+                    }
+
+                    // Create a claim token and store record
+                    DeviceClaimEntity claim = createClaimRecord(serialNumber, userId, tenantId, deviceId);
+
+                    return new ProvisioningClaimDto(claim.getClaimId(), tenantId, tenantDetails.getApiBase(), deviceId,
+                            claim.getClaimToken());
                 });
-
-        // Ensure the user is eligible to claim the device
-        if(!claimEligibility.isEligible()) {
-            log.atWarning().log("Claim not eligible user %s device %s", userId, deviceId);
-            throw new DeviceAccessException("Not eligible to claim device");
-        }
-
-        // If the user is requesting a specific device ID, it must exist
-        if(requestedDeviceId != null && !claimEligibility.deviceExists()) {
-            log.atWarning().log("User %s attempted to claim non-existent device %s", userId, deviceId);
-            throw new DeviceAccessException("Not eligible to claim device");
-        }
-
-        // Create a claim token and store record
-        DeviceClaimEntity claim = createClaimRecord(serialNumber, userId, tenantId, deviceId);
-
-        return new ProvisioningClaimDto(claim.getClaimId(), tenantId, tenantDetails.getApiBase(), deviceId);
     }
 
     public DeviceClaimCertDto getClaimCertificate(String serialNumber, String claimId, String claimToken) {

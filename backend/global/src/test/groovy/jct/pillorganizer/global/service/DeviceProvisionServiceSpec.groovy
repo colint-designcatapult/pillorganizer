@@ -4,6 +4,7 @@ import jct.pillorganizer.core.TenantDetails
 import jct.pillorganizer.core.service.SecureRandomService
 import jct.pillorganizer.core.service.TenantService
 import jct.pillorganizer.core.uid.KsuidService
+import jct.pillorganizer.core.dto.DeviceClaimEligibilityDto
 import jct.pillorganizer.global.BaseIntegrationSpec
 import jct.pillorganizer.global.model.BaseControlPlaneEntity
 import jct.pillorganizer.global.model.DeviceClaimEntity
@@ -17,6 +18,11 @@ import software.amazon.awssdk.services.iot.model.KeyPair
 import spock.lang.Subject
 
 import jakarta.inject.Inject
+
+import jct.pillorganizer.global.exception.DeviceAccessException
+import reactor.core.publisher.Mono
+
+import java.time.Duration
 import java.time.Instant
 
 class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
@@ -73,22 +79,96 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         iotClient.createProvisioningClaim(_) >> mockResponse
         deviceService.lookupTenant(serialNumber) >> tenantId
         tenantService.getTenantDetails(tenantId) >> Optional.of(new TenantDetails(tenantId, true, "Tenant 1", apiBase))
-        messageService.getDeviceClaimEligibility(tenantId, _, serialNumber) >> reactor.core.publisher.Mono.just(new jct.pillorganizer.core.dto.DeviceClaimEligibilityDto(true, false))
+        messageService.getDeviceClaimEligibility(tenantId, _, serialNumber) >> Mono.just(new DeviceClaimEligibilityDto(true, false))
 
         when:
         def result = deviceProvisionService.generateProvisioningClaim(serialNumber, userId, null)
+                .block(Duration.ofSeconds(10))
 
         then:
         result.tenantId() == tenantId
         result.tenantApiBase() == apiBase
         result.deviceId() != null
         result.claimId() != null
+        result.claimToken() != null
 
         and:
         def savedClaim = deviceClaimRepo.findBySerialNumberAndClaimId(serialNumber, result.claimId())
         savedClaim.isPresent()
         savedClaim.get().userId == userId
         savedClaim.get().tenantId == tenantId
+    }
+
+    def "should fail to generate provisioning claim with a non-existent requested device ID"() {
+        given:
+        def serialNumber = "SN-REQ-123"
+        def userId = "user-123"
+        def tenantId = "tenant-1"
+        def requestedDeviceId = "invalid-device-123"
+
+        and:
+        deviceService.lookupTenant(serialNumber) >> tenantId
+        tenantService.getTenantDetails(tenantId) >> Optional.of(new TenantDetails(tenantId, true, "Tenant 1", "http://api"))
+        messageService.getDeviceClaimEligibility(tenantId, requestedDeviceId, serialNumber) >> Mono.just(new DeviceClaimEligibilityDto(true, false))
+
+        when:
+        deviceProvisionService.generateProvisioningClaim(serialNumber, userId, requestedDeviceId)
+                .block(Duration.ofSeconds(10))
+
+        then:
+        def e = thrown(DeviceAccessException)
+        e.message == "Not eligible to claim device"
+    }
+
+    def "should generate provisioning claim with an existing requested device ID"() {
+        given:
+        def serialNumber = "SN-REQ-456"
+        def userId = "user-123"
+        def tenantId = "tenant-1"
+        def apiBase = "http://tenant1.api"
+        def requestedDeviceId = "valid-device-123"
+
+        def mockResponse = CreateProvisioningClaimResponse.builder()
+                .certificatePem("cert-pem")
+                .keyPair(KeyPair.builder().privateKey("private-key").build())
+                .expiration(Instant.now().plusSeconds(3600))
+                .build()
+
+        and:
+        iotClient.createProvisioningClaim(_) >> mockResponse
+        deviceService.lookupTenant(serialNumber) >> tenantId
+        tenantService.getTenantDetails(tenantId) >> Optional.of(new TenantDetails(tenantId, true, "Tenant 1", apiBase))
+        messageService.getDeviceClaimEligibility(tenantId, requestedDeviceId, serialNumber) >> Mono.just(new DeviceClaimEligibilityDto(true, true))
+
+        when:
+        def result = deviceProvisionService.generateProvisioningClaim(serialNumber, userId, requestedDeviceId)
+                .block(Duration.ofSeconds(10))
+
+        then:
+        result.tenantId() == tenantId
+        result.tenantApiBase() == apiBase
+        result.deviceId() == requestedDeviceId
+        result.claimId() != null
+    }
+
+    def "should fail to generate provisioning claim if user is not eligible"() {
+        given:
+        def serialNumber = "SN-REQ-789"
+        def userId = "user-123"
+        def tenantId = "tenant-1"
+
+        and:
+        deviceService.lookupTenant(serialNumber) >> tenantId
+        tenantService.getTenantDetails(tenantId) >> Optional.of(new TenantDetails(tenantId, true, "Tenant 1", "http://api"))
+        messageService.getDeviceClaimEligibility(tenantId, _, serialNumber) >> Mono.just(new DeviceClaimEligibilityDto(false, false))
+
+        when:
+        deviceProvisionService.generateProvisioningClaim(serialNumber, userId, null)
+                .block(Duration.ofSeconds(10))
+
+        then:
+        def e = thrown(DeviceAccessException)
+        e.message == "Not eligible to claim device"
     }
 
     def "should provision device successfully"() {
@@ -156,7 +236,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         def result = deviceProvisionService.provisionDevice(serialNumber, claimId, claimToken)
 
         then:
-        def e = thrown(jct.pillorganizer.global.exception.DeviceAccessException)
+        def e = thrown(DeviceAccessException)
         e.message == "Claim not found"
         0 * messageService._
     }
@@ -208,7 +288,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         def result = deviceProvisionService.getClaimCertificate(serialNumber, claimId, claimToken)
 
         then:
-        def e = thrown(jct.pillorganizer.global.exception.DeviceAccessException)
+        def e = thrown(DeviceAccessException)
         e.message == "No claim found"
     }
 

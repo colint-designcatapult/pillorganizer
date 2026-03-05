@@ -48,6 +48,8 @@ class BaseIntegrationSpec extends Specification implements TestPropertyProvider 
         if (!postgres.isRunning()) postgres.start()
         if (!localstack.isRunning()) localstack.start()
 
+        def sqsEndpoint = localstack.getEndpointOverride(LocalStackContainer.Service.SQS).toString()
+
         return [
                 // Postgres Config
                 "datasources.default.url": postgres.getJdbcUrl(),
@@ -64,8 +66,6 @@ class BaseIntegrationSpec extends Specification implements TestPropertyProvider 
 
                 // Endpoint Overrides
                 "aws.services.sqs.endpoint-override": localstack.getEndpointOverride(LocalStackContainer.Service.SQS).toString(),
-                "aws.services.secretsmanager.endpoint-override": localstack.getEndpointOverride(LocalStackContainer.Service.SECRETSMANAGER).toString(),
-                // Todo: add IoT Core endpoint override
         ]
     }
 }

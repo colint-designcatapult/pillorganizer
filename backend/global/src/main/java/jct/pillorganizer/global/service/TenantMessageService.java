@@ -1,6 +1,6 @@
 package jct.pillorganizer.global.service;
 
-import io.micronaut.core.annotation.Nullable;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.serde.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -31,11 +31,12 @@ public class TenantMessageService {
     Collection<TenantClient> clients;
 
     public String getQueueUrl(String tenantId) {
-        GetQueueUrlRequest getQueueUrlRequest = GetQueueUrlRequest.builder()
+        GetQueueUrlRequest request = GetQueueUrlRequest.builder()
+                // No need for queueOwnerAWSAccountId!
                 .queueName("tenant-" + tenantId)
                 .build();
-        return client.getQueueUrl(getQueueUrlRequest).queueUrl();
-    }
+
+        return client.getQueueUrl(request).queueUrl();    }
 
     public void provisionDevice(DeviceProvisionMessage message)
             throws IOException {
