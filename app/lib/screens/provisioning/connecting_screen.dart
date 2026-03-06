@@ -18,26 +18,25 @@ class ProvisionConnectingPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(provisionStateProvider);
+    final state = ref.watch(provisionProvider);
     ProvisionningProgress provisionningProgress = ProvisionningProgress(1, 3);
 
     void initConnection() {
-      ref.read(provisionStateProvider.notifier)
-          .finalize(context)
-          .then((value) {
-        if (value.stage == ProvisionStage.complete) {
-          // Assuming these providers are also refactored to Riverpod or accessible via ref
-          // ref.read(deviceProvider.notifier).refresh();
-          // ref.read(selectedDeviceProvider.notifier).selectDeviceByID(value.deviceID!);
-          
-          Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-              '/name_new_device?id=${value.deviceID}', (route) => false);
-        }
-      });
+      if (state.ssid != null && state.wifiPassword != null) {
+        ref.read(provisionProvider.notifier)
+            .provisionWifi(ssid: state.ssid!, password: state.wifiPassword!)
+            .then((_) {
+          final newState = ref.read(provisionProvider);
+          if (newState.stage == ProvisionStage.complete) {
+            Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+                '/name_new_device?id=${newState.deviceID}', (route) => false);
+          }
+        });
+      }
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (state.stage == ProvisionStage.finalizing) {
+      if (state.stage == ProvisionStage.select_wifi) {
          initConnection();
       }
     });
@@ -120,7 +119,7 @@ class ProvisionConnectingPage extends ConsumerWidget {
             child: Builder(builder: (context) {
               if (state.stage == ProvisionStage.complete) {
                 return const SizedBox.shrink();
-              } else if (state.stage == ProvisionStage.finalizing) {
+              } else if (state.stage == ProvisionStage.provisioning_wifi) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -150,7 +149,7 @@ class ProvisionConnectingPage extends ConsumerWidget {
       return AppLocalizations.of(context)!.provMissingPermission;
     } else if (state.error != null) {
       return AppLocalizations.of(context)!.connectionProblem;
-    } else if (state.stage == ProvisionStage.finalizing) {
+    } else if (state.stage == ProvisionStage.provisioning_wifi) {
       return AppLocalizations.of(context)!.finishingSetup;
     } else if (state.stage == ProvisionStage.complete) {
       return AppLocalizations.of(context)!.setupComplete;
@@ -164,7 +163,7 @@ class ProvisionConnectingPage extends ConsumerWidget {
       return null;
     } else if (state.error != null) {
       return AppLocalizations.of(context)!.connectionProblemSubtitle;
-    } else if (state.stage == ProvisionStage.finalizing) {
+    } else if (state.stage == ProvisionStage.provisioning_wifi) {
       return AppLocalizations.of(context)!.finishingSetupSubtitle;
     } else if (state.stage == ProvisionStage.complete) {
       return AppLocalizations.of(context)!.setupCompleteSubtitle;
