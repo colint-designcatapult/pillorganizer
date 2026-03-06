@@ -336,7 +336,7 @@ esp_err_t mqtt_connect_with_certs(const char* client_id, const char* root_ca,
     // Set timeouts (shorter recv timeout prevents blocking MQTT_ProcessLoop)
     vTlsSetConnectTimeout(10000);
     vTlsSetSendTimeout(5000);
-    vTlsSetRecvTimeout(1000);  // 1s recv timeout
+    vTlsSetRecvTimeout(2000);  // 2s recv timeout
     
     // Connect TLS (expensive ECDH operations, timeout is 60 seconds which is sufficient)
     TlsTransportStatus_t tlsStatus = xTlsConnect(&networkContext);
