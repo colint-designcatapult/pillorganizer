@@ -14,11 +14,68 @@ extern "C" {
 
 #include <wifi_provisioning/manager.h>
 #include <wifi_provisioning/scheme_ble.h>
+#include <cJSON.h>
 }
 
 #include "event.h"
 
 #define TAG "Newifi"
+
+// Handler for device_serial custom provisioning endpoint
+// Returns JSON with device serial number in format: ESP32-{MAC address}
+static esp_err_t device_serial_handler(uint32_t session_id,
+                                       const uint8_t *inbuf, ssize_t inlen,
+                                       uint8_t **outbuf, ssize_t *outlen,
+                                       void *priv_data)
+{
+    // Get the MAC address from wifi info
+    const wifi_info_t* wifi_info = wifi_get_info();
+    
+    // Build full serial number: ESP32-{MAC in uppercase hex}
+    char serial_number[32];
+    snprintf(serial_number, sizeof(serial_number), "ESP32-%02X%02X%02X%02X%02X%02X",
+             wifi_info->sn.bytes.mac[0],
+             wifi_info->sn.bytes.mac[1],
+             wifi_info->sn.bytes.mac[2],
+             wifi_info->sn.bytes.mac[3],
+             wifi_info->sn.bytes.mac[4],
+             wifi_info->sn.bytes.mac[5]);
+    
+    // Create JSON response
+    cJSON *response = cJSON_CreateObject();
+    if (!response) {
+        ESP_LOGE(TAG, "Failed to create JSON response for device_serial");
+        return ESP_FAIL;
+    }
+    
+    cJSON_AddStringToObject(response, "serialNumber", serial_number);
+    
+    // Serialize JSON to string
+    char *json_string = cJSON_PrintUnformatted(response);
+    cJSON_Delete(response);
+    
+    if (!json_string) {
+        ESP_LOGE(TAG, "Failed to serialize device_serial JSON");
+        return ESP_FAIL;
+    }
+    
+    // Allocate output buffer and copy response
+    size_t response_len = strlen(json_string);
+    *outbuf = (uint8_t *)malloc(response_len);
+    if (!*outbuf) {
+        ESP_LOGE(TAG, "Failed to allocate memory for device_serial response");
+        free(json_string);
+        return ESP_ERR_NO_MEM;
+    }
+    
+    memcpy(*outbuf, json_string, response_len);
+    *outlen = response_len;
+    
+    ESP_LOGI(TAG, "device_serial endpoint: %s", serial_number);
+    
+    free(json_string);
+    return ESP_OK;
+}
 
 class WifiEventListener {
 public:
@@ -188,11 +245,12 @@ private:
     uint32_t _last_disconnect_time = 0;
 
     uint32_t get_reconnect_delay_ms() {
-        // Exponential backoff: 10s → 30s → 1m → 5m (repeat)
+        // Exponential backoff: 5s → 10s → 30s → 1m → 5m (repeat)
         switch(_reconnect_attempt) {
-            case 0: return 10000;   // 10 seconds
-            case 1: return 30000;   // 30 seconds
-            case 2: return 60000;   // 1 minute
+            case 0: return 5000;   // 10 seconds
+            case 1: return 10000;   // 30 seconds
+            case 3: return 30000;   // 1 minute
+            case 4: return 60000;   // 1 minute
             default: return 300000; // 5 minutes (max) - repeat indefinitely
         }
     }
@@ -222,8 +280,9 @@ private:
             // If WiFi is disconnected, attempt reconnection with backoff
             if(!WifiStateSupervisor::get().is_connected()) {
                 uint32_t delay_ms = get_reconnect_delay_ms();
-                if(wifi_wait_for_disconnect(pdMS_TO_TICKS(delay_ms))) {
-                    // Still disconnected after delay - try again
+                // Wait for either connection or timeout
+                if(!wifi_wait_for_connection(pdMS_TO_TICKS(delay_ms))) {
+                    // Still not connected after delay - increment attempts and retry
                     _reconnect_attempt++;
                     uint32_t time_since_disconnect = (esp_timer_get_time() / 1000000) - _last_disconnect_time;
                     ESP_LOGI(TAG, "WiFi reconnect attempt #%lu after %lus", _reconnect_attempt, time_since_disconnect);
@@ -311,30 +370,16 @@ void WifiStateSupervisor::init() {
     // Initialize WiFi handler before any WiFi operations (needed for event callbacks)
     _wifi_handler = new StandardWifiHandler();
 
-#ifdef CONFIG_DEV_WIFI_ENABLED
-    // Dev mode: skip BLE provisioning, use hardcoded credentials
-    ESP_LOGI(TAG, "Dev WiFi: connecting to '%s'", CONFIG_DEV_WIFI_SSID);
-    wifi_config_t wifi_config = {};
-    strcpy((char*)wifi_config.sta.ssid, CONFIG_DEV_WIFI_SSID);
-    strcpy((char*)wifi_config.sta.password, CONFIG_DEV_WIFI_PASSWORD);
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
-    ESP_ERROR_CHECK(esp_wifi_start());
-    // WIFI_EVENT_STA_START fires -> StandardWifiHandler::wifi_event_start() -> esp_wifi_connect()
-#else
-    // Production: use ESP unified provisioning over BLE
-    wifi_prov_mgr_config_t prov_config = {
-        .scheme = wifi_prov_scheme_ble,
-        .scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM,
-        .app_event_handler = NULL,
-    };
+    // ESP unified provisioning over BLE
+    wifi_prov_mgr_config_t prov_config;
+    memset(&prov_config, 0, sizeof(prov_config));
+    prov_config.scheme = wifi_prov_scheme_ble;
+    prov_config.scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM;
+    
     ESP_ERROR_CHECK(wifi_prov_mgr_init(prov_config));
-
-#if CONFIG_RESET_PROVISIONED_ON_BOOT
-    // Reset WiFi provisioning for testing BLE provisioning flow
-    ESP_LOGI(TAG, "Resetting WiFi provisioning (testing mode)");
-    wifi_prov_mgr_reset_provisioning();
-#endif
+    
+    // Create custom endpoint for device serial number (must be created before start_provisioning)
+    ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("device_serial"));
 
     bool provisioned = false;
     ESP_ERROR_CHECK(wifi_prov_mgr_is_provisioned(&provisioned));
@@ -352,6 +397,10 @@ void WifiStateSupervisor::init() {
         // Security 1 with no proof-of-possession (NULL)
         ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(
             WIFI_PROV_SECURITY_1, NULL, service_name, NULL));
+        
+        // Register handler for device_serial endpoint (must be registered after start_provisioning)
+        ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_register(
+            "device_serial", device_serial_handler, NULL));
 
         // Block until provisioning completes and WiFi connects
         wifi_prov_mgr_wait();
@@ -366,7 +415,6 @@ void WifiStateSupervisor::init() {
         ESP_ERROR_CHECK(esp_wifi_start());
         // WIFI_EVENT_STA_START fires -> StandardWifiHandler::wifi_event_start() -> esp_wifi_connect()
     }
-#endif
 
     // Start reconnect watchdog task
     _wifi_handler->init();

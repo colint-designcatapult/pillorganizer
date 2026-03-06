@@ -1,7 +1,28 @@
 # Safe defaults - no secrets
 CONFIG_DEV_WIFI_ENABLED=n
-CONFIG_AWS_IOT_ENDPOINT="mqtt.healthesolutions.ca"
+CONFIG_AWS_IOT_ENDPOINT="mqtt.app.healthesolutions.ca"
 CONFIG_AWS_IOT_THING_NAME="PillOrganizer_Test_001"
+CONFIG_RESET_PROVISIONED_ON_BOOT=n
+
+#
+# Watchdog Configuration
+#
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=120
+CONFIG_ESP_TASK_WDT_PANIC=y
+# end of Watchdog Configuration
+
+#
+# Compiler options
+#
+# CONFIG_COMPILER_OPTIMIZATION_DEBUG is not set
+CONFIG_COMPILER_OPTIMIZATION_SIZE=y
+#
+
+#
+# Flash Size
+#
+
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
 
 #
 # Bluetooth

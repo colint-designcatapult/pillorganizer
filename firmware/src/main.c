@@ -136,6 +136,25 @@ static int led_command(int argc, char **argv)
 static int restart_command(int argc, char **argv)
 {
     ESP_LOGI(TAG, "Restarting device...");
+    mqtt_disconnect();
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    esp_restart();
+    return 0;
+}
+
+static int resetiot_command(int argc, char **argv)
+{
+    ESP_LOGI(TAG, "Clearing AWS IoT provisioning credentials and triggering fleet provisioning on reboot...");
+    device_provisioning_clear();
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    esp_restart();
+    return 0;
+}
+
+static int resetwifi_command(int argc, char **argv)
+{
+    ESP_LOGI(TAG, "Clearing WiFi credentials and triggering BLE provisioning on reboot...");
+    esp_wifi_restore();
     vTaskDelay(pdMS_TO_TICKS(1000));
     esp_restart();
     return 0;
@@ -313,6 +332,18 @@ void app_main(void)
         .func = &restart_command,
     };
 
+    esp_console_cmd_t resetiot_cmd = {
+        .command = "resetiot",
+        .help = "Clear stored AWS IoT credentials and re-run fleet provisioning on reboot",
+        .func = &resetiot_command,
+    };
+
+    esp_console_cmd_t resetwifi_cmd = {
+        .command = "resetwifi",
+        .help = "Clear WiFi credentials and trigger BLE provisioning on reboot",
+        .func = &resetwifi_command,
+    };
+
     esp_console_new_repl_uart(&uart_config, &rc, &o);
     esp_console_cmd_register(&read_cmd);
     esp_console_cmd_register(&logs_cmd);
@@ -321,6 +352,8 @@ void app_main(void)
     esp_console_cmd_register(&exit_cmd);
     esp_console_cmd_register(&enter_deep_sleep_cmd);
     esp_console_cmd_register(&restart_cmd);
+    esp_console_cmd_register(&resetiot_cmd);
+    esp_console_cmd_register(&resetwifi_cmd);
 
 
     //engineering_logs_off();
