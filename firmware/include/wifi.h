@@ -25,6 +25,22 @@ bool wifi_is_connected();
 
 const wifi_info_t* wifi_get_info();
 
+/* Check if app acknowledged receipt of device serial number */
+bool wifi_device_serial_acknowledged();
+
+/* Reset the serial acknowledgement flag */
+void wifi_reset_serial_acknowledgement();
+
+/* Check if app has sent claim credentials (claimId and claimToken) */
+bool wifi_claim_credentials_received();
+
+/* Retrieve claim credentials sent by app */
+void wifi_get_claim_credentials(char *claim_id_out, size_t claim_id_len,
+                                 char *claim_token_out, size_t claim_token_len);
+
+/* Reset claim credentials (for next provisioning cycle) */
+void wifi_reset_claim_credentials();
+
 #ifdef __cplusplus
 }
 #endif
