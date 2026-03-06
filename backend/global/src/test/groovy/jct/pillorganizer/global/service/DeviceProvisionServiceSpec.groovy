@@ -8,6 +8,7 @@ import jct.pillorganizer.core.dto.DeviceClaimEligibilityDto
 import jct.pillorganizer.global.BaseIntegrationSpec
 import jct.pillorganizer.global.model.BaseControlPlaneEntity
 import jct.pillorganizer.global.model.DeviceClaimEntity
+import jct.pillorganizer.global.model.DeviceEntity
 import jct.pillorganizer.global.model.DeviceControlPlaneEntityType
 import jct.pillorganizer.global.model.UserEntity
 import jct.pillorganizer.global.repo.DeviceClaimRepo
@@ -171,6 +172,25 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         e.message == "Not eligible to claim device"
     }
 
+    def "should throw IllegalStateException when generating claim for unregistered tenant"() {
+        given:
+        def serialNumber = "SN-UNREG"
+        def userId = "user-123"
+        def tenantId = "tenant-unregistered"
+
+        and:
+        deviceService.lookupTenant(serialNumber) >> tenantId
+        tenantService.getTenantDetails(tenantId) >> Optional.empty()
+
+        when:
+        deviceProvisionService.generateProvisioningClaim(serialNumber, userId, null)
+                .block(Duration.ofSeconds(10))
+
+        then:
+        def e = thrown(IllegalStateException)
+        e.message == "Device assigned to unregistered tenant: " + tenantId
+    }
+
     def "should provision device successfully"() {
         given:
         def serialNumber = "SN-456"
@@ -226,6 +246,218 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         1 * messageService.provisionDevice({ it.deviceId != null && it.serialNo == serialNumber })
     }
 
+    def "should provision device successfully when updating existing device"() {
+        given:
+        def serialNumber = "SN-UPDATE-456-3"
+        def claimToken = "token-update-456-3"
+        def claimId = ksuidService.generateKsuid()
+        def userId = "user-update-456-3"
+        def tenantId = "tenant-update-456-3"
+        def userName = "Test User Update 3"
+        def email = "test-update3@example.com"
+        def newDeviceId = ksuidService.generateKsuid()
+
+        def oldDeviceId = "old-device-id"
+        def oldTenantId = "tenant-000"
+
+        // Insert existing device
+        def existingDevice = DeviceEntity.builder()
+                .base(DeviceEntity.buildBase(serialNumber, oldTenantId, oldDeviceId))
+                .serialNumber(serialNumber)
+                .deviceId(oldDeviceId)
+                .tenantId(oldTenantId)
+                .claimId("old-claim")
+                .thingName("old-thing")
+                .build()
+        deviceRepo.save(existingDevice)
+
+        // Insert new claim
+        def claim = DeviceClaimEntity.builder()
+                .base(DeviceClaimEntity.buildBase(serialNumber, claimId, claimToken, userId, newDeviceId))
+                .serialNumber(serialNumber)
+                .claimId(claimId)
+                .claimToken(claimToken)
+                .userId(userId)
+                .tenantId(tenantId)
+                .deviceId(newDeviceId)
+                .thingName(tenantId + "-" + serialNumber + "-" + newDeviceId)
+                .build()
+        deviceClaimRepo.save(claim)
+
+        and:
+        userService.get(userId) >> Optional.of(UserEntity.builder()
+                .userId(userId)
+                .userName(userName)
+                .email(email)
+                .build())
+        deviceService.lookupTenant(serialNumber) >> tenantId
+
+        when:
+        def result = deviceProvisionService.provisionDevice(serialNumber, claimId, claimToken)
+
+        then:
+        result != null
+        result.serialNumber == serialNumber
+        result.tenantId == tenantId
+        result.deviceId == newDeviceId
+
+        and:
+        def savedDevice = deviceRepo.findBySerialNumber(serialNumber)
+        savedDevice.isPresent()
+        savedDevice.get().deviceId == newDeviceId
+        savedDevice.get().tenantId == tenantId
+
+        // Ensure GSI keys are properly updated
+        savedDevice.get().base.gsi1Pk == DeviceEntity.gsi1Pk(tenantId)
+        savedDevice.get().base.gsi2Pk == DeviceEntity.gsi2Pk(newDeviceId)
+
+        and:
+        1 * messageService.grantUser({ it.userId == userId && it.userName == userName })
+        1 * messageService.provisionDevice({ it.deviceId == newDeviceId && it.serialNo == serialNumber })
+    }
+
+    def "should fail to provision when claimed tenant does not match assigned tenant"() {
+        given:
+        def serialNumber = "SN-TENANT-MISMATCH"
+        def claimToken = "token-tenant-mismatch"
+        def claimId = ksuidService.generateKsuid()
+        def userId = "user-mismatch"
+        def originalTenantId = "tenant-mismatch-old"
+        def newTenantId = "tenant-mismatch-new"
+        def deviceId = ksuidService.generateKsuid()
+
+        def claim = DeviceClaimEntity.builder()
+                .base(DeviceClaimEntity.buildBase(serialNumber, claimId, claimToken, userId, deviceId))
+                .serialNumber(serialNumber)
+                .claimId(claimId)
+                .claimToken(claimToken)
+                .userId(userId)
+                .tenantId(originalTenantId) // Claim created for original tenant
+                .deviceId(deviceId)
+                .thingName(originalTenantId + "-" + serialNumber + "-" + deviceId)
+                .build()
+        deviceClaimRepo.save(claim)
+
+        and:
+        // By the time provisioning happens, lookup says it belongs to a new tenant
+        deviceService.lookupTenant(serialNumber) >> newTenantId
+
+        when:
+        deviceProvisionService.provisionDevice(serialNumber, claimId, claimToken)
+
+        then:
+        def e = thrown(IllegalStateException)
+        e.message == "Invalid claim token"
+    }
+
+    def "should fail to provision when user entity no longer exists"() {
+        given:
+        def serialNumber = "SN-USER-MISSING"
+        def claimToken = "token-user-missing"
+        def claimId = ksuidService.generateKsuid()
+        def userId = "user-deleted"
+        def tenantId = "tenant-user-missing"
+        def deviceId = ksuidService.generateKsuid()
+
+        def claim = DeviceClaimEntity.builder()
+                .base(DeviceClaimEntity.buildBase(serialNumber, claimId, claimToken, userId, deviceId))
+                .serialNumber(serialNumber)
+                .claimId(claimId)
+                .claimToken(claimToken)
+                .userId(userId)
+                .tenantId(tenantId)
+                .deviceId(deviceId)
+                .build()
+        deviceClaimRepo.save(claim)
+
+        and:
+        deviceService.lookupTenant(serialNumber) >> tenantId
+        // User lookup returns empty
+        userService.get(userId) >> Optional.empty()
+
+        when:
+        deviceProvisionService.provisionDevice(serialNumber, claimId, claimToken)
+
+        then:
+        def e = thrown(IllegalStateException)
+        e.message == "User not found: %s" + userId
+    }
+
+    def "should throw RuntimeException if messageService.grantUser throws IOException"() {
+        given:
+        def serialNumber = "SN-FAIL-GRANT"
+        def claimToken = "token-fail-grant"
+        def claimId = ksuidService.generateKsuid()
+        def userId = "user-fail-grant"
+        def tenantId = "tenant-fail-grant"
+        def deviceId = ksuidService.generateKsuid()
+
+        def claim = DeviceClaimEntity.builder()
+                .base(DeviceClaimEntity.buildBase(serialNumber, claimId, claimToken, userId, deviceId))
+                .serialNumber(serialNumber)
+                .claimId(claimId)
+                .claimToken(claimToken)
+                .userId(userId)
+                .tenantId(tenantId)
+                .deviceId(deviceId)
+                .build()
+        deviceClaimRepo.save(claim)
+
+        and:
+        deviceService.lookupTenant(serialNumber) >> tenantId
+        userService.get(userId) >> Optional.of(UserEntity.builder()
+                .userId(userId)
+                .userName("Test User")
+                .email("test@example.com")
+                .build())
+        messageService.grantUser(_) >> { throw new IOException("Network failure") }
+
+        when:
+        deviceProvisionService.provisionDevice(serialNumber, claimId, claimToken)
+
+        then:
+        def e = thrown(RuntimeException)
+        e.cause instanceof IOException
+    }
+
+    def "should throw RuntimeException if messageService.provisionDevice throws IOException"() {
+        given:
+        def serialNumber = "SN-FAIL-PROVISION"
+        def claimToken = "token-fail-provision"
+        def claimId = ksuidService.generateKsuid()
+        def userId = "user-fail-provision"
+        def tenantId = "tenant-fail-provision"
+        def deviceId = ksuidService.generateKsuid()
+
+        def claim = DeviceClaimEntity.builder()
+                .base(DeviceClaimEntity.buildBase(serialNumber, claimId, claimToken, userId, deviceId))
+                .serialNumber(serialNumber)
+                .claimId(claimId)
+                .claimToken(claimToken)
+                .userId(userId)
+                .tenantId(tenantId)
+                .deviceId(deviceId)
+                .build()
+        deviceClaimRepo.save(claim)
+
+        and:
+        deviceService.lookupTenant(serialNumber) >> tenantId
+        userService.get(userId) >> Optional.of(UserEntity.builder()
+                .userId(userId)
+                .userName("Test User")
+                .email("test@example.com")
+                .build())
+        messageService.grantUser(_) >> { /* Success */ }
+        messageService.provisionDevice(_) >> { throw new IOException("Network failure") }
+
+        when:
+        deviceProvisionService.provisionDevice(serialNumber, claimId, claimToken)
+
+        then:
+        def e = thrown(RuntimeException)
+        e.cause instanceof IOException
+    }
+
     def "should return empty when claim not found"() {
         given:
         def serialNumber = "SN-UNKNOWN"
@@ -243,12 +475,12 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
 
     def "should return certificate when claim is valid"() {
         given:
-        def serialNumber = "SN-CERT-1"
-        def claimToken = "token-cert-1"
-        def claimId = "claim-cert-1"
-        def userId = "user-cert-1"
-        def tenantId = "tenant-cert-1"
-        def deviceId = "device-cert-1"
+        def serialNumber = "SN-CERT-3"
+        def claimToken = "token-cert-3"
+        def claimId = "claim-cert-3"
+        def userId = "user-cert-3"
+        def tenantId = "tenant-cert-3"
+        def deviceId = "device-cert-3"
 
         def claim = DeviceClaimEntity.builder()
                 .base(DeviceClaimEntity.buildBase(serialNumber, claimId, claimToken, userId, deviceId))
@@ -294,12 +526,12 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
 
     def "should return empty when claim is expired"() {
         given:
-        def serialNumber = "SN-EXPIRED"
-        def claimToken = "token-expired"
-        def claimId = "claim-expired"
-        def userId = "user-expired"
-        def tenantId = "tenant-expired"
-        def deviceId = "device-expired"
+        def serialNumber = "SN-EXPIRED-3"
+        def claimToken = "token-expired-3"
+        def claimId = "claim-expired-3"
+        def userId = "user-expired-3"
+        def tenantId = "tenant-expired-3"
+        def deviceId = "device-expired-3"
 
         def base = BaseControlPlaneEntity.builder()
                 .pk(DeviceClaimEntity.pk(serialNumber))

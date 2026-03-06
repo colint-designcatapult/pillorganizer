@@ -34,12 +34,12 @@ public class UserDeviceAccessService {
     }
 
 
-    public Mono<String> getUserDeviceAccessPolicyDocument(String jwt, String tenantId, String thingName) {
+    public Mono<String> getUserDeviceAccessPolicyDocument(String jwt, String tenantId, String deviceId) {
         TenantClient client = tenants.stream().filter(c -> tenantId.equals(c.getTenantDetails().getId()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Tenant not found: " + tenantId));
 
-        return client.getDeviceAccessPolicyDocument(jwt, thingName);
+        return client.getDeviceAccessPolicyDocument(jwt, deviceId);
     }
 
 }
