@@ -29,7 +29,7 @@ public class IotCustomAuthorizer extends MicronautRequestHandler<IotCoreCustomAu
 
     private static final String HEADER_JWT = "x-jwt";
     private static final String HEADER_TENANT = "x-tenant-id";
-    private static final String HEADER_THING = "x-thing-name";
+    private static final String HEADER_DEVICE = "x-device-id";
     private static final IotCoreCustomAuthorizerResponse DENY_RESPONSE = new IotCoreCustomAuthorizerResponse(
             false, null, null, null, null);
 
@@ -38,9 +38,11 @@ public class IotCustomAuthorizer extends MicronautRequestHandler<IotCoreCustomAu
     }
 
     @Inject
-    public IotCustomAuthorizer(ApplicationContext context, IotAuthorizerService authorizerService) {
+    public IotCustomAuthorizer(ApplicationContext context, IotAuthorizerService authorizerService,
+                               ObjectMapper objectMapper) {
         super(context);
         this.authorizerService = authorizerService;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -64,24 +66,24 @@ public class IotCustomAuthorizer extends MicronautRequestHandler<IotCoreCustomAu
             return DENY_RESPONSE;
         }
 
-        String thingName = httpData.headers().get(HEADER_THING);
-        if(thingName == null) {
-            log.atInfo().log("Missing HTTP `%s` header", HEADER_THING);
+        String deviceId = httpData.headers().get(HEADER_DEVICE);
+        if(deviceId == null) {
+            log.atInfo().log("Missing HTTP `%s` header", HEADER_DEVICE);
             return DENY_RESPONSE;
         }
 
         String tenantId = httpData.headers().get(HEADER_TENANT);
         if(tenantId == null) {
-            log.atInfo().log("Missing HTTP `%s` header", HEADER_THING);
+            log.atInfo().log("Missing HTTP `%s` header", HEADER_TENANT);
             return DENY_RESPONSE;
         }
 
         Optional<IotAuthorizerService.IotAuthorization> authorization =
-                this.authorizerService.authorizeIot(jwt, tenantId, thingName).blockOptional(Duration.ofSeconds(5));
+                this.authorizerService.authorizeIot(jwt, tenantId, deviceId).blockOptional(Duration.ofSeconds(5));
 
         return authorization.map(docs -> {
             IotCoreCustomAuthorizerResponse resp = new IotCoreCustomAuthorizerResponse(true, docs.principalId(),
-                    List.of(docs.policyDocument()), 3600, 300);
+                    docs.policyDocument(), 3600, 300);
             try {
                 log.atInfo().log("Custom authorizer returning %s", objectMapper.writeValueAsString(resp));
             } catch (IOException e) {

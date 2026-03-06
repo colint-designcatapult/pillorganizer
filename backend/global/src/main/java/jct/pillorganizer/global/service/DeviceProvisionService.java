@@ -201,6 +201,7 @@ public class DeviceProvisionService {
                     .tenantId(tenantId)
                     .claimId(claimId)
                     .thingName(thingName)
+                    .base(DeviceEntity.updateBase(existingDeviceOpt.get().getBase(), serialNumber, tenantId, deviceId))
                     .build();
         } else {
             device = DeviceEntity.builder()

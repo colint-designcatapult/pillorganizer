@@ -7,7 +7,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 import java.time.Instant;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 @DynamoDbImmutable(builder = BaseControlPlaneEntity.BaseControlPlaneEntityBuilder.class)
 public class BaseControlPlaneEntity {
     @Getter(onMethod_ = {@DynamoDbPartitionKey, @DynamoDbAttribute("PK")})
