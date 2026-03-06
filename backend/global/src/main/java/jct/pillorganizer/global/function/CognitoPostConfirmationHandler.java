@@ -6,7 +6,8 @@ import io.micronaut.function.aws.MicronautRequestHandler;
 import jakarta.inject.Inject;
 import jct.pillorganizer.global.service.UserService;
 
-public class CognitoPostConfirmationHandler extends MicronautRequestHandler<CognitoUserPoolPostConfirmationEvent, CognitoUserPoolPostConfirmationEvent> {
+public class CognitoPostConfirmationHandler extends MicronautRequestHandler<CognitoUserPoolPostConfirmationEvent,
+        CognitoUserPoolPostConfirmationEvent> {
 
     @Inject
     UserService userService;
