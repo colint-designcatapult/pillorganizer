@@ -46,9 +46,9 @@ public class TenantClient {
                 Argument.of(Boolean.class)));
     }
 
-    public Mono<String> getDeviceAccessPolicyDocument(String authorization, String thingName) {
+    public Mono<String> getDeviceAccessPolicyDocument(String authorization, String deviceId) {
         URI uri = UriBuilder.of(makeUri("/internal/user/device_access_policy"))
-                .queryParam("thingName", thingName)
+                .queryParam("deviceId", deviceId)
                 .build();
         return Mono.from(httpClient.retrieve(
                 HttpRequest.GET(uri).bearerAuth(authorization)

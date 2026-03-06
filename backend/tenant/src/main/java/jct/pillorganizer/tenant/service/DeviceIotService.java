@@ -38,7 +38,7 @@ public class DeviceIotService {
                 .build();
 
         return policy.toJson(IamPolicyWriter.builder()
-                .prettyPrint(true)
+                .prettyPrint(false)
                 .build());
     }
 

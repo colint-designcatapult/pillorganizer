@@ -1,5 +1,6 @@
 package jct.pillorganizer.tenant;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.server.util.HttpHostResolver;
 import io.micronaut.multitenancy.exceptions.TenantNotFoundException;
@@ -12,6 +13,7 @@ import jct.pillorganizer.core.service.TenantService;
 
 import java.io.Serializable;
 
+@Requires(notEnv = "test")
 @Singleton
 public class DomainTenantResolver extends AbstractSubdomainTenantResolver implements TenantResolver {
     TenantService service;
