@@ -1,1 +1,0 @@
-ALTER TABLE provision_record ADD COLUMN thing_name text;

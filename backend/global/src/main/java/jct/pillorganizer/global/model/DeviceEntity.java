@@ -24,6 +24,12 @@ public class DeviceEntity {
     @Getter(onMethod_ = @DynamoDbAttribute("TenantId"))
     String tenantId;
 
+    @Getter(onMethod_ = @DynamoDbAttribute("ClaimId"))
+    String claimId;
+
+    @Getter(onMethod_ = @DynamoDbAttribute("ThingName"))
+    String thingName;
+
     public static String pk(String serialNumber) {
         return "SN#" + serialNumber;
     }

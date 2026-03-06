@@ -55,7 +55,7 @@ def main():
 
     # --- Fetch Claim Token from API ---
     print(f"Fetching claim token for {SERIAL_NUMBER}...")
-    api_url = f"https://control-plane.app.healthesolutions.ca/device/claim/{SERIAL_NUMBER}"
+    api_url = "https://control-plane.app.healthesolutions.ca/device/claim"
     
     # --- Fetch JWT token ---
     print("Authenticating with Cognito...")
@@ -64,8 +64,10 @@ def main():
         print("❌ Failed to obtain JWT token. Exiting.")
         sys.exit(1)
 
-    req = urllib.request.Request(api_url, method='POST')
+    req_data = json.dumps({"serialNumber": SERIAL_NUMBER}).encode('utf-8')
+    req = urllib.request.Request(api_url, data=req_data, method='POST')
     req.add_header("Authorization", f"Bearer {jwt_token}")
+    req.add_header("Content-Type", "application/json")
     
     try:
         with urllib.request.urlopen(req) as response:
@@ -75,10 +77,11 @@ def main():
             print(f"API Response: {data}")
             
             # Extract data
-            tenant_id = data['tenantId']
-            claim_token = data['claimId']
+            claim_id = data['claimId']
+            claim_token = data['claimToken']
+            device_id = data['deviceId']
             
-            print(f"✅ Claim token obtained: {claim_token} for Tenant: {tenant_id}")
+            print(f"✅ Claim ID obtained: {claim_id}  (Device: {device_id})")
 
     except Exception as e:
         print(f"❌ Failed to fetch claim token: {e}")
@@ -86,8 +89,8 @@ def main():
 
     # --- Fetch Claim Credentials from API using Token ---
     print(f"Fetching claim credentials for {SERIAL_NUMBER} using token...")
-    cert_api_url = f"https://control-plane.app.healthesolutions.ca/device/claim_cert/{SERIAL_NUMBER}"
-    cert_req_data = json.dumps({"claimId": claim_token}).encode('utf-8')
+    cert_api_url = "https://control-plane.app.healthesolutions.ca/device/claim_cert"
+    cert_req_data = json.dumps({"serialNumber": SERIAL_NUMBER, "claimId": claim_id, "claimToken": claim_token}).encode('utf-8')
     cert_req = urllib.request.Request(cert_api_url, data=cert_req_data, method='POST')
     cert_req.add_header("Content-Type", "application/json")
     # Note: No Authorization header needed for this endpoint as per requirement
@@ -187,8 +190,7 @@ def main():
         certificate_ownership_token=keys_response.certificate_ownership_token,
         parameters={
             "SerialNumber": SERIAL_NUMBER,
-            "TenantId": tenant_id,
-            "DeviceId": "pending-assignment",
+            "ClaimId": claim_id,
             "ClaimToken": claim_token
         }
     )

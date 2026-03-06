@@ -1,7 +1,7 @@
 package jct.pillorganizer.global.controller;
 
+import io.micronaut.core.annotation.Blocking;
 import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
@@ -10,12 +10,13 @@ import jct.pillorganizer.core.service.GlobalAuthService;
 import jct.pillorganizer.global.dto.ClaimCertRequestDto;
 import jct.pillorganizer.global.dto.DeviceClaimCertDto;
 import jct.pillorganizer.global.dto.ProvisioningClaimDto;
+import jct.pillorganizer.global.dto.ProvisioningClaimRequestDto;
 import jct.pillorganizer.global.service.DeviceProvisionService;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.annotation.Body;
+import reactor.core.publisher.Mono;
 
-import java.util.Optional;
 
 @Controller("/device")
 public class DeviceController {
@@ -26,17 +27,18 @@ public class DeviceController {
     @Inject
     GlobalAuthService authService;
 
-    @Post("/claim/{serialNumber}")
+    @Post("/claim")
     @Secured(SecurityRule.IS_AUTHENTICATED)
-    public ProvisioningClaimDto getProvisioningClaim(@PathVariable String serialNumber) {
-        return provisionService.generateProvisioningClaim(serialNumber, authService.getUserID());
+    public Mono<ProvisioningClaimDto> getProvisioningClaim(@Body ProvisioningClaimRequestDto requestDto) {
+        return provisionService.generateProvisioningClaim(requestDto.serialNumber(), authService.getUserID(),
+                requestDto.deviceId());
     }
 
-    @Post("/claim_cert/{serialNumber}")
+    @Post("/claim_cert")
     @Secured(SecurityRule.IS_ANONYMOUS)
-    public DeviceClaimCertDto getClaimCertificate(@PathVariable String serialNumber, @Body ClaimCertRequestDto request) {
-        return provisionService.getClaimCertificate(serialNumber, request.claimId())
-                .orElseThrow(() -> new HttpStatusException(HttpStatus.NOT_FOUND, "Claim not found or expired"));
+    @Blocking
+    public DeviceClaimCertDto getClaimCertificate(@Body ClaimCertRequestDto request) {
+        return provisionService.getClaimCertificate(request.serialNumber(), request.claimId(), request.claimToken());
     }
 
 }

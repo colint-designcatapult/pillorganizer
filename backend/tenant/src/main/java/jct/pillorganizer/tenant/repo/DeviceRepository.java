@@ -12,11 +12,11 @@ import io.micronaut.data.repository.CrudRepository;
 import jct.pillorganizer.tenant.model.device.LogicalDevice;
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
-public interface DeviceRepository extends CrudRepository<LogicalDevice, UUID> {
+public interface DeviceRepository extends CrudRepository<LogicalDevice, String> {
 
     List<LogicalDevice> findAll();
 
     @Query("UPDATE logical_device SET nickname = :nickname WHERE id = :id")
-    void update(@Id UUID id, String nickname);
+    void update(@Id String id, String nickname);
 
 }

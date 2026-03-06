@@ -35,7 +35,7 @@ export class AppStack extends cdk.Stack {
     tenantQueue.addToResourcePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       principals: [new iam.AnyPrincipal()],
-      actions: ['sqs:SendMessage'],
+      actions: ['sqs:SendMessage', 'sqs:GetQueueUrl'],
       resources: [tenantQueue.queueArn],
       conditions: { StringEquals: { 'aws:PrincipalAccount': this.account } }
     }));
@@ -88,6 +88,7 @@ export class AppStack extends cdk.Stack {
 
     // Wire up SQS trigger (using currentVersion to support SnapStart)
     queueProcessor.currentVersion.addEventSource(new lambdaEventSources.SqsEventSource(tenantQueue));
+
 
     // -- API Gateway --
 

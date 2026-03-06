@@ -28,71 +28,70 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         def user = userService.ensureExists("user-1")
 
         when:
-        def record = deviceProvisionService.provision(user, "device-1", "serial-1", "token-1", "thing-1")
+        def record = deviceService.provision(user, "device-1", "serial-1", "claim-1", "thing-1")
 
         then:
         record != null
-        record.deviceId == "device-1"
+        record.logicalDevice.id == "device-1"
         record.serialNo == "serial-1"
-        record.claimToken == "token-1"
+        record.claimId == "claim-1"
         record.deviceClass == DeviceClass.v1_7x2
         record.provisionedBy.id == user.id
     }
 
-    def "should find provision record by claim token"() {
+    def "should find provision record by claim id"() {
         given:
-        def claimToken = "test-token-1"
+        def claimId = "test-claim-1"
         def user = userService.ensureExists("user-2")
-        deviceProvisionService.provision(user, "device-2", "serial-2", claimToken, "thing-2")
+        deviceService.provision(user, "device-2", "serial-2", claimId, "thing-2")
 
         when:
-        def record = deviceProvisionService.findByClaimToken(user, claimToken)
-        def unassigned = deviceProvisionService.findUnassignedProvisionRecord(user)
+        def record = deviceService.findByClaimId(claimId)
 
         then:
         record.isPresent()
-        record.get().deviceId == "device-2"
-        record.get().claimToken == claimToken
-        record.get().logicalDevice == null
-        unassigned.size() == 1
-        unassigned[0].deviceId == "device-2"
+        record.get().logicalDevice.id == "device-2"
+        record.get().claimId == claimId
     }
 
-    def "should not find unassigned provision record if already assigned"() {
+    def "should return false claim eligibility if not primary user"() {
         given:
-        def user = userService.ensureExists("user-3")
-        def record = deviceProvisionService.provision(user, "device-3", "serial-3", "token-3", "thing-3")
-        deviceService.create(user, record)
+        def user1 = userService.ensureExists("user-3")
+        def user2 = userService.ensureExists("user-4")
+        def record = deviceService.provision(user1, "device-3", "serial-3", "claim-3", "thing-3")
+        
+        and: "add user2 as non-primary access"
+        deviceService.addUserAccess(user2, record.logicalDevice)
 
         when:
-        def foundRecord = deviceProvisionService.findUnassignedProvisionRecord(user)
+        def eligibility = deviceService.getDeviceClaimEligibility(user2, "serial-3", "device-3")
 
         then:
-        foundRecord.isEmpty()
+        !eligibility.isEligible()
     }
 
     def "should get provision records for logical device"() {
         given:
         def user = userService.ensureExists("user-4")
-        def record = deviceProvisionService.provision(user, "device-4", "serial-4", "token-4", "thing-4")
-        def logicalDevice = deviceService.create(user, record)
+        def record = deviceService.provision(user, "device-4", "serial-4", "claim-4", "thing-4")
+        def logicalDevice = record.logicalDevice
 
         when:
-        def records = deviceProvisionService.getProvisionRecords(logicalDevice)
+        def records = deviceService.getProvisionRecords(logicalDevice)
 
         then:
         records.size() == 1
-        records[0].deviceId == "device-4"
+        records[0].logicalDevice.id == "device-4"
     }
 
     def "should assign to logical device"() {
         given:
         def user = userService.ensureExists("user-5")
-        def record = deviceProvisionService.provision(user, "device-5", "serial-5", "token-5", "thing-5")
-        def logicalDevice = deviceService.create(user, record) // This already calls assignActiveLogicalDevice
+        def record = deviceService.provision(user, "device-5", "serial-5", "claim-5", "thing-5")
+        def logicalDevice = record.logicalDevice
 
         when:
-        deviceProvisionService.assignToLogicalDevice(record, logicalDevice)
+        deviceService.assignToLogicalDevice(record, logicalDevice)
 
         then:
         record.logicalDevice.id == logicalDevice.id
@@ -101,21 +100,21 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
     def "should assign active logical device and disable others"() {
         given:
         def user = userService.ensureExists("user-6")
-        def record1 = deviceProvisionService.provision(user, "device-6-1", "serial-6-1", "token-6-1", "thing-6-1")
-        def logicalDevice = deviceService.create(user, record1)
+        def record1 = deviceService.provision(user, "device-6-1", "serial-6-1", "claim-6-1", "thing-6-1")
+        def logicalDevice = record1.logicalDevice
 
-        def record2 = deviceProvisionService.provision(user, "device-6-2", "serial-6-2", "token-6-2", "thing-6-2")
+        def record2 = deviceService.provision(user, "device-6-1", "serial-6-2", "claim-6-2", "thing-6-2")
 
         when:
-        deviceProvisionService.assignActiveLogicalDevice(record2, logicalDevice)
+        deviceService.assignActiveLogicalDevice(record2, logicalDevice)
 
         then:
         record2.logicalDevice.id == logicalDevice.id
         record2.disabledAt == null
 
         and: "the first record should be disabled"
-        def records = deviceProvisionService.getProvisionRecords(logicalDevice)
-        def r1 = records.find { it.deviceId == "device-6-1" }
+        def records = deviceService.getProvisionRecords(logicalDevice)
+        def r1 = records.find { it.claimId == "claim-6-1" }
         r1.disabledAt != null
     }
 }

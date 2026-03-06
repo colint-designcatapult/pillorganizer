@@ -4,8 +4,8 @@ import io.micronaut.serde.annotation.Serdeable;
 
 @Serdeable
 public record DeviceAccessDto(
-        String id,
         String deviceId,
+        String claimId,
         String nickname,
         String serialNo,
         String modelId,

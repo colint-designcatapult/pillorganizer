@@ -29,21 +29,17 @@ public class IotProvisioningHook extends MicronautRequestHandler<Map<String, Obj
             }
 
             String serialNumber = parameters.get("SerialNumber");
+            String claimId = parameters.get("ClaimId");
             String claimToken = parameters.get("ClaimToken");
 
-            Optional<DeviceEntity> deviceOpt = deviceProvisionService.provisionDevice(serialNumber, claimToken);
+            DeviceEntity device = deviceProvisionService.provisionDevice(serialNumber, claimId, claimToken);
 
-            if (deviceOpt.isEmpty()) {
-                log.atInfo().log("Provisioning failed: SerialNumber %s and ClaimToken validation failed", serialNumber);
-                return generateDenyResponse();
-            }
-
-            DeviceEntity device = deviceOpt.get();
+            String thingName = device.getThingName();
             String tenantId = device.getTenantId();
             String deviceId = device.getDeviceId();
 
             log.atInfo().log("Device %s validated and provisioned for tenant %s. Assigned DeviceId: %s", serialNumber, tenantId, deviceId);
-            return generateAllowResponse(tenantId, deviceId);
+            return generateAllowResponse(tenantId, deviceId, thingName);
 
         } catch (Exception e) {
             log.atInfo().withCause(e).log("Error processing Pre-Provisioning Hook request");
@@ -54,7 +50,7 @@ public class IotProvisioningHook extends MicronautRequestHandler<Map<String, Obj
     /**
      * Generates the successful response expected by AWS IoT Fleet Provisioning.
      */
-    private Map<String, Object> generateAllowResponse(String tenantId, String deviceId) {
+    private Map<String, Object> generateAllowResponse(String tenantId, String deviceId, String thingName) {
         Map<String, Object> response = new HashMap<>();
 
         // Tell AWS IoT to proceed with creating the certificate and Thing
@@ -63,6 +59,7 @@ public class IotProvisioningHook extends MicronautRequestHandler<Map<String, Obj
         Map<String, String> parameterOverrides = new HashMap<>();
         parameterOverrides.put("TenantId", tenantId);
         parameterOverrides.put("DeviceId", deviceId);
+        parameterOverrides.put("ThingName", thingName);
 
         response.put("parameterOverrides", parameterOverrides);
 

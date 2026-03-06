@@ -18,18 +18,19 @@ public class QueueProcessorService {
     UserService userService;
 
     @Inject
-    DeviceProvisionService provisionService;
+    DeviceService deviceService;
 
     private void deviceProvision(DeviceProvisionMessage message) {
         // Ensure the user exists
         User user = userService.ensureExists(message.userId());
 
         // Create the provisioning record
-        ProvisionRecord provisionRecord = provisionService.provision(user, message.deviceId(), message.serialNo(),
-                message.claimToken(), message.thingName());
+        ProvisionRecord provisionRecord = deviceService.provision(user, message.deviceId(), message.serialNo(),
+                message.claimId(), message.thingName());
 
-        log.atInfo().log("Provisioning record saved, device %s user %s claim %s", provisionRecord.getDeviceId(),
-                provisionRecord.getProvisionedBy().getId(), provisionRecord.getClaimToken());
+        log.atInfo().log("Provisioning record saved, device %s user %s claim %s",
+                provisionRecord.getLogicalDevice().getId(), provisionRecord.getProvisionedBy().getId(),
+                provisionRecord.getClaimId());
     }
 
     private void grantUser(GrantUserMessage message) {

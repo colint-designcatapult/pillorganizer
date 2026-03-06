@@ -19,7 +19,7 @@ import java.util.UUID;
 @Serdeable
 public class LogicalDevice {
     @Id
-    private UUID id;
+    private String id;
 
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "logicalDevice")
     @JsonIgnore

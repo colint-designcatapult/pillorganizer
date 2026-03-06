@@ -56,38 +56,6 @@ public class AppDeviceAPIController {
         return deviceService.getUserDevices(user);
     }
 
-    @Operation(summary = "Checks if the user has access to a device with the given claim token")
-    @Post("/check")
-    @Secured(SecurityRule.IS_AUTHENTICATED)
-    public Optional<ProvisionRecord> checkDeviceAccess(@QueryValue("claimToken") String claimToken) {
-        return deviceProvisionService.findByClaimToken(authService.getUser(), claimToken);
-    }
-
-    @Operation(summary = "Creates a new or assigns an existing logical device from an unassigned provisioning record.")
-    @Post("/assign")
-    @Secured(SecurityRule.IS_AUTHENTICATED)
-    public LogicalDevice assignDevice(@Valid @Body AssignDeviceDTO assignRequest, User user) {
-        ProvisionRecord record = deviceProvisionService.findById(assignRequest.deviceId())
-                .orElseThrow(() -> new DeviceProvisionNotFoundException("Could not find provisioning record: " +
-                        assignRequest.deviceId()));
-
-        if(assignRequest.logicalId() == null) {
-            // Creating a new logical device
-            return deviceService.create(user, record);
-        } else {
-            // Assign to existing logical device
-            return deviceService.assignExisting(user, record, assignRequest.logicalId());
-        }
-    }
-
-
-    @Operation(summary = "Lists devices the user provisioned but hasn't assigned to a device yet.")
-    @Get("/unassigned")
-    @Secured(SecurityRule.IS_AUTHENTICATED)
-    public List<ProvisionRecord> listUnassignedDevices(User user) {
-        return deviceProvisionService.findUnassignedProvisionRecord(user);
-    }
-
     @Operation(summary = "Soft deletes the device user link")
     @Delete("/{id}")
     @Secured(SecurityRule.IS_AUTHENTICATED)
