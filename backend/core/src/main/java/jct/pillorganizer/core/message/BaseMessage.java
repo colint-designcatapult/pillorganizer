@@ -10,6 +10,7 @@ import io.micronaut.serde.annotation.Serdeable;
         property = "type"
 )
 @JsonSubTypes({
+        @JsonSubTypes.Type(value = NoOpMessage.class, name = "noop"),
         @JsonSubTypes.Type(value = GrantUserMessage.class, name = "grantUser"),
         @JsonSubTypes.Type(value = DeviceProvisionMessage.class, name = "deviceProvision")
 })

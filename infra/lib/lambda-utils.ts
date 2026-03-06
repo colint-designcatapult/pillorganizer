@@ -8,7 +8,7 @@ export function createGlobalLambda(scope: Construct, id: string, handler: string
     runtime: lambda.Runtime.JAVA_21,
     handler: handler,
     code: lambda.Code.fromAsset("../backend/global/target/global-0.1.jar"),
-    memorySize: 1024,
+    memorySize: 2048,
     timeout: cdk.Duration.seconds(30),
     snapStart: lambda.SnapStartConf.ON_PUBLISHED_VERSIONS,
     environment: {

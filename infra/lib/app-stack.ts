@@ -47,7 +47,7 @@ export class AppStack extends cdk.Stack {
         runtime: lambda.Runtime.JAVA_21,
         handler: handler,
         code: lambda.Code.fromAsset("../backend/tenant/target/tenant-0.1.jar"),
-        memorySize: 1024,
+        memorySize: 2048,
         timeout: cdk.Duration.seconds(30),
         snapStart: lambda.SnapStartConf.ON_PUBLISHED_VERSIONS,
         tracing: lambda.Tracing.ACTIVE,

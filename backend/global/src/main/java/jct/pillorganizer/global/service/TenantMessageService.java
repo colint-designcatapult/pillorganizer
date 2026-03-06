@@ -7,6 +7,7 @@ import jakarta.inject.Singleton;
 import jct.pillorganizer.core.dto.DeviceClaimEligibilityDto;
 import jct.pillorganizer.core.message.DeviceProvisionMessage;
 import jct.pillorganizer.core.message.GrantUserMessage;
+import jct.pillorganizer.core.message.NoOpMessage;
 import jct.pillorganizer.global.client.TenantClient;
 import lombok.extern.flogger.Flogger;
 import reactor.core.publisher.Mono;
@@ -14,6 +15,7 @@ import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -66,6 +68,24 @@ public class TenantMessageService {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Primes the resources this service uses for cold starts/CRaC.
+     */
+    public void primeService(String tenantId) throws IOException {
+        // Prime object mapper
+        String body = mapper.writeValueAsString(new NoOpMessage());
+
+        // Prime SQS
+        String queueUrl = getQueueUrl(tenantId);
+        client.sendMessage(b -> b.messageBody(body).queueUrl(queueUrl));
+
+        // Prime health checks
+        for(TenantClient tenant : this.clients) {
+            tenant.healthCheck()
+                    .blockOptional(Duration.ofSeconds(1));
+        }
     }
 
 }

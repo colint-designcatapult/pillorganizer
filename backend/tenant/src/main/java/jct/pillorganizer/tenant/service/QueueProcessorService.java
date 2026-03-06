@@ -6,6 +6,7 @@ import jakarta.transaction.Transactional;
 import jct.pillorganizer.core.message.BaseMessage;
 import jct.pillorganizer.core.message.DeviceProvisionMessage;
 import jct.pillorganizer.core.message.GrantUserMessage;
+import jct.pillorganizer.core.message.NoOpMessage;
 import jct.pillorganizer.tenant.model.device.ProvisionRecord;
 import jct.pillorganizer.tenant.model.user.User;
 import lombok.extern.flogger.Flogger;
@@ -44,6 +45,9 @@ public class QueueProcessorService {
             grantUser((GrantUserMessage) message);
         } else if (message instanceof DeviceProvisionMessage) {
             deviceProvision((DeviceProvisionMessage) message);
+        } else if(message instanceof NoOpMessage) {
+            // do nothing
+            log.atInfo().log("Processing noop queue message");
         } else {
             throw new IllegalStateException("Invalid message: " + message.getType());
         }
