@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../api/device.dart';
+import '../apiv2/models/device.dart';
 
 class StateLed extends StatefulWidget {
   const StateLed({super.key, required this.binStatus, required this.ledWidth});
@@ -25,12 +25,12 @@ class _StateLed extends State<StateLed> {
     Image? image;
     bool shouldBlink = false;
     BinStatus? status = widget.binStatus;
-    if (status == BinStatus.TAKE_NOW) {
+    if (status == BinStatus.takeNow) {
       image = imageGreen;
       shouldBlink = true;
-    } else if (status == BinStatus.TAKEN) {
+    } else if (status == BinStatus.taken) {
       image = imageGreen;
-    } else if (status == BinStatus.MISSED) {
+    } else if (status == BinStatus.missed) {
       image = imageRed;
     } else {
       image = null;

@@ -46,7 +46,7 @@ class _PillsScreenState extends ConsumerState<PillsScreen> {
                           )),
                       if (activeDevice != null)
                         AddNewPillModal(
-                            deviceID: activeDevice.deviceID,
+                            deviceID: activeDevice.id,
                             onComplete: () => _addNewPillUpdate()),
                     ]),
                 Expanded(

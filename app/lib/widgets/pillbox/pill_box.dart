@@ -1,4 +1,4 @@
-import 'package:app/api/device.dart';
+import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/device_notice_provider.dart';
 import 'package:app/provider/device_state_provider.dart';
 import 'package:app/provider/time_provider.dart';
@@ -64,10 +64,10 @@ class Pillbox extends ConsumerWidget {
                               currentDayOfWeek.toUpperCase(),
                           dayStatus: deviceState != null
                               ? deviceState.bins[dayIndex]
-                              : BinStatus.DISABLED,
+                              : BinStatus.disabled,
                           nightStatus: deviceState != null
                               ? deviceState.bins[nightIndex]
-                              : BinStatus.DISABLED),
+                              : BinStatus.disabled),
                     ],
                   );
                 }).toList(),

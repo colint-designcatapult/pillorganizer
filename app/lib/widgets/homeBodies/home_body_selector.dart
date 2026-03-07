@@ -2,7 +2,8 @@ import 'package:app/provider/device_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../api/device.dart';
+
+import 'package:app/apiv2/models/device.dart';
 import '../../provider/device_notice_provider.dart';
 import '../../provider/device_state_provider.dart';
 import '../../provider/selected_device_provider.dart';
@@ -34,7 +35,7 @@ class HomeBodySelector extends ConsumerWidget {
     final dosePeriods = deviceStateAsync.value?.dosePeriods ?? [];
     final bool isEmpty =
         !dosePeriods.any((element) => element.medicationIDs.isNotEmpty);
-    final bool isOwner = activeDevice?.owner ?? false;
+    final bool isOwner = activeDevice?.primaryUser ?? false;
 
     if (isLoadingDevices) {
       return const HomeLoadingBody();

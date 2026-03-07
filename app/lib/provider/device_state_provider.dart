@@ -1,5 +1,5 @@
 import 'package:app/api/api.dart';
-import 'package:app/api/device.dart';
+import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/time_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -21,15 +21,15 @@ class DeviceStateNotifier extends _$DeviceStateNotifier {
     return _load(activeDevice.id);
   }
 
-  Future<DeviceState?> _load(int deviceId) async {
+  Future<DeviceState?> _load(String deviceId) async {
     // Mocking the original _load logic
     return DeviceState(
         id: deviceId,
         battery: 100,
         charging: false,
         lastSync: DateTime.now(),
-        bins: List.generate(14, (index) => index == 1 ? BinStatus.TAKEN : BinStatus.DISABLED),
-        dosePeriods: List.generate(2, (index) => DosePeriod(binID: index, scheduledTime: DateTime.now(), status: BinStatus.TAKEN, medicationIDs: [1]))
+        bins: List.generate(14, (index) => index == 1 ? BinStatus.taken : BinStatus.disabled),
+        dosePeriods: List.generate(2, (index) => DosePeriod(binID: index, scheduledTime: DateTime.now(), status: BinStatus.taken, medicationIDs: const [1]))
     );
   }
 }

@@ -1,5 +1,5 @@
 import 'package:app/api/api.dart';
-import 'package:app/api/device.dart';
+import 'package:app/apiv2/models/device.dart';
 import 'package:app/api/medication.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -13,7 +13,7 @@ class Medications extends _$Medications {
     final device = ref.watch(activeDeviceProvider);
     if (device == null) return [];
 
-    final dtos = await client.medications(device.deviceID);
+    final dtos = await client.medications(device!.id);
     return dtos.map((e) => ScheduledMedication.fromDTO(e)).toList();
   }
 
@@ -22,7 +22,7 @@ class Medications extends _$Medications {
     state = await AsyncValue.guard(() async {
       final device = ref.read(activeDeviceProvider);
       if (device == null) return [];
-      final dtos = await client.medications(device.deviceID);
+      final dtos = await client.medications(device.id);
       return dtos.map((e) => ScheduledMedication.fromDTO(e)).toList();
     });
   }
@@ -31,7 +31,7 @@ class Medications extends _$Medications {
     final device = ref.read(activeDeviceProvider);
     if (device == null) return;
 
-    await client.addMedication(device.deviceID, medication);
+    await client.addMedication(device.id, medication);
     ref.invalidateSelf();
   }
 
@@ -39,7 +39,7 @@ class Medications extends _$Medications {
     final device = ref.read(activeDeviceProvider);
     if (device == null) return;
 
-    await client.deleteMedication(device.deviceID, medId);
+    await client.deleteMedication(device.id, medId);
     ref.invalidateSelf();
   }
 }

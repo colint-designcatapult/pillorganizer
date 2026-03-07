@@ -1,9 +1,14 @@
 import 'dart:async';
-import 'package:app/api/device.dart';
+import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/device_state_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'device_connection_status_provider.g.dart';
+
+bool isOnlineFromLastSeen(DateTime? lastSeen) {
+  if (lastSeen == null) return false;
+  return DateTime.now().difference(lastSeen).inMinutes < 5;
+}
 
 @riverpod
 class DeviceConnectionStatusNotifier extends _$DeviceConnectionStatusNotifier {

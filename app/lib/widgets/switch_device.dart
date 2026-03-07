@@ -1,4 +1,4 @@
-import 'package:app/api/device.dart';
+import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/provisioning/join_device_screen.dart';
@@ -131,12 +131,12 @@ class SwitchDevice extends ConsumerWidget {
     );
   }
 
-  void _handleSelectDevice(BuildContext context, WidgetRef ref, DeviceUser device) {
+  void _handleSelectDevice(BuildContext context, WidgetRef ref, DeviceMetadata device) {
     ref.read(activeDeviceProvider.notifier).selectDevice(device);
     Navigator.of(context).pop();
   }
 
-  Widget _deviceSelectButton(BuildContext context, WidgetRef ref, DeviceUser device) {
+  Widget _deviceSelectButton(BuildContext context, WidgetRef ref, DeviceMetadata device) {
     return GestureDetector(
         child: Container(
       padding: EdgeInsets.symmetric(horizontal: 0, vertical: 0.h),
@@ -166,7 +166,7 @@ class SwitchDevice extends ConsumerWidget {
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Poppins')),
           ),
-          if (!device.owner)
+          if (!device.primaryUser)
             Container(
                 decoration: BoxDecoration(
                   color: const Color(0xffF8F9FC),

@@ -87,7 +87,7 @@ class _TabNavigatorState extends ConsumerState<TabNavigator> {
   @override
   Widget build(BuildContext context) {
     final device = ref.watch(activeDeviceProvider);
-    final bool isOwner = device?.owner ?? false;
+    final bool isOwner = device?.primaryUser ?? false;
     final bool hasDevice = device != null;
     final availableTabTypes = _getAvailableTabs(isOwner, hasDevice);
 

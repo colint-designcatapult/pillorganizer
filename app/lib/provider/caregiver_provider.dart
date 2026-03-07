@@ -10,14 +10,14 @@ class Caregiver extends _$Caregiver {
     return [];
   }
 
-  Future<void> fetchShareCodesForDevices(List<int> deviceIDs) async {
+  Future<void> fetchShareCodesForDevices(List<String> deviceIDs) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final List<DeviceCaregiverCodeDTO> codes = [];
       for (var id in deviceIDs) {
         // Mocking getCaregiverCode as requested
-        final code = id == 30 
-            ? DeviceCaregiverCodeDTO(id: 1, deviceID: 30, code: 123456, expiresAt: DateTime.now().add(const Duration(hours: 1)).millisecondsSinceEpoch, deleted: false)
+        final code = id == "30" 
+            ? DeviceCaregiverCodeDTO(id: 1, deviceID: "30", code: 123456, expiresAt: DateTime.now().add(const Duration(hours: 1)).millisecondsSinceEpoch, deleted: false)
             : null;
         if (code != null) codes.add(code);
       }
@@ -25,7 +25,7 @@ class Caregiver extends _$Caregiver {
     });
   }
 
-  DeviceCaregiverCodeDTO? getShareCodeForDevice(int deviceID) {
+  DeviceCaregiverCodeDTO? getShareCodeForDevice(String deviceID) {
     final list = state.asData?.value;
     if (list == null) return null;
     for (var c in list) {
@@ -42,7 +42,7 @@ class Caregiver extends _$Caregiver {
     }
   }
 
-  Future<void> generateCaregiverCodeForDevice(int deviceID) async {
+  Future<void> generateCaregiverCodeForDevice(String deviceID) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       await client.generateCaregiverCode(deviceID);

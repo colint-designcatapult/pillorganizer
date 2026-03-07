@@ -364,7 +364,7 @@ class WizardStep extends StatelessWidget {
                           color: (canGoNext &&
                                   onNextPressed == null &&
                                   isLoading)
-                              ? Theme.of(context).primaryColor.withOpacity(0.7)
+                              ? Theme.of(context).primaryColor.withValues(alpha: 0.7)
                               : Theme.of(context).primaryColor,
                           borderRadius: BorderRadius.only(
                             topLeft: const Radius.circular(32).r,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../api/device.dart';
+import 'package:app/apiv2/models/device.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class BinContainer extends StatelessWidget {
@@ -67,13 +67,13 @@ class BinContainer extends StatelessWidget {
   String getBinStatusIcon(BinStatus status, bool isActive) {
     if (isActive) {
       switch (status) {
-        case BinStatus.MISSED:
+        case BinStatus.missed:
           return 'lib/assets/SVG/redlight.svg';
-        case BinStatus.TAKEN:
-        case BinStatus.TAKE_NOW:
+        case BinStatus.taken:
+        case BinStatus.takeNow:
           return 'lib/assets/SVG/greenlight.svg';
-        case BinStatus.DISABLED:
-        case BinStatus.PENDING:
+        case BinStatus.disabled:
+        case BinStatus.pending:
           return 'lib/assets/SVG/offlight.svg';
         default:
           return 'lib/assets/SVG/redlight.svg';
