@@ -226,7 +226,9 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
       return AppLocalizations.of(context)!.provErrConGeneric;
     } else if (state.stage == ProvisionStage.scanning_ble) {
       return AppLocalizations.of(context)!.provConSearching;
-    } else if (state.stage == ProvisionStage.scanning_wifi || scanningWifi) {
+    } else if (state.stage == ProvisionStage.scanning_wifi ||
+        state.stage == ProvisionStage.fetchingSerial ||
+        scanningWifi) {
       return AppLocalizations.of(context)!.provConConnecting;
     } else if (state.stage == ProvisionStage.select_ble) {
       return AppLocalizations.of(context)!.provConConnecting;
@@ -242,7 +244,9 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
       return AppLocalizations.of(context)!.provErrConGenericSubtitle;
     } else if (state.stage == ProvisionStage.scanning_ble) {
       return AppLocalizations.of(context)!.provConSearchingSubtitle;
-    } else if (state.stage == ProvisionStage.scanning_wifi || scanningWifi) {
+    } else if (state.stage == ProvisionStage.scanning_wifi ||
+        state.stage == ProvisionStage.fetchingSerial ||
+        scanningWifi) {
       return AppLocalizations.of(context)!.provConConnectingSubtitle;
     } else if (state.stage == ProvisionStage.select_ble) {
       return AppLocalizations.of(context)!.provConSelectingSubtitle;

@@ -65,4 +65,15 @@ class AmplifyService {
       return null;
     }
   }
+
+  Future<String?> getAccessToken() async {
+    try {
+      final result = await Amplify.Auth.fetchAuthSession();
+      final cognitoSession = result as CognitoAuthSession;
+      return cognitoSession.userPoolTokensResult.value.accessToken.raw;
+    } on AuthException catch (e) {
+      safePrint('Error retrieving auth session: ${e.message}');
+      return null;
+    }
+  }
 }
