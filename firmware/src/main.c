@@ -318,6 +318,16 @@ static void fleet_provisioning_task(void* arg)
     extern const uint8_t aws_root_ca_end[]   asm("_binary_root_ca_pem_end");
 
     if (device_provisioning_is_provisioned()) {
+        // Guard: if certs exist but success flag doesn't, they are orphaned (crash during provisioning)
+        if (!device_provisioning_is_complete()) {
+            ESP_LOGW(TAG, "✗ Certs found but provisioning not marked complete");
+            ESP_LOGW(TAG, "✗ Likely crashed during fleet provisioning - clearing orphaned credentials");
+            wifi_reset_claim_credentials();  // Clear any stale claim credentials from the crash
+            device_provisioning_clear();
+            vTaskDelay(pdMS_TO_TICKS(1000));
+            esp_restart();
+        }
+        
         size_t cert_len = 0, key_len = 0;
         size_t root_ca_len = aws_root_ca_end - aws_root_ca_start;
 
@@ -414,6 +424,8 @@ static void fleet_provisioning_task(void* arg)
 
             if (prov_ret == ESP_OK) {
                 ESP_LOGI(TAG, "✓ Fleet Provisioning SUCCEEDED - device now registered with AWS IoT");
+                // Mark provisioning as complete - proves we made it through reconnection with permanent certs
+                device_provisioning_mark_success();
                 ESP_LOGI(TAG, "✓ Notifying app via BLE status endpoint...");
                 wifi_set_fleet_provisioning_status(FLEET_PROV_STATUS_SUCCESS);
                 // Allow app time to poll the success status before BLE shuts down

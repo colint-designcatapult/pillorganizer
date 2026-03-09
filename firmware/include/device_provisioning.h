@@ -30,6 +30,20 @@ bool device_provisioning_is_provisioned(void);
  */
 void device_provisioning_clear(void);
 
+/**
+ * @brief Mark provisioning as complete/successful by setting a flag in NVS.
+ *        This proves the entire flow (CreateKeys + RegisterThing + reconnection) completed.
+ *        Only call this after successful reconnection with permanent credentials.
+ */
+void device_provisioning_mark_success(void);
+
+/**
+ * @brief Check if provisioning was previously marked successful.
+ *        If certs exist but this flag doesn't, they are orphaned/invalid.
+ * @return true if success flag exists, false otherwise
+ */
+bool device_provisioning_is_complete(void);
+
 #ifdef __cplusplus
 }
 #endif

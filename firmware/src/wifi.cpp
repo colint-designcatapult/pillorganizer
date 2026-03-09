@@ -22,7 +22,9 @@ extern "C" {
 #define TAG "Newifi"
 
 // Timeout for waiting on claim credentials (in seconds)
-#define CLAIM_CREDENTIALS_TIMEOUT_SEC 60
+// 2 minutes gives app time to claim device on control plane
+// Watchdog (120s) provides absolute safety limit for any blocked operation
+#define CLAIM_CREDENTIALS_TIMEOUT_SEC 120
 
 // Global flags and storage for provisioning flow
 static bool device_serial_acknowledged = false;
@@ -740,8 +742,8 @@ void WifiStateSupervisor::init() {
             vTaskDelay(pdMS_TO_TICKS(1000));
             credentials_wait_sec++;
             
-            if (credentials_wait_sec % 10 == 0) {
-                ESP_LOGI(TAG, "Waiting for claim credentials from app... (%d/%d sec)", 
+            if (credentials_wait_sec % 15 == 0) {
+                ESP_LOGW(TAG, "⏳ Still waiting for claim credentials from app... (%d/%d sec)", 
                          credentials_wait_sec, CLAIM_CREDENTIALS_TIMEOUT_SEC);
             }
             esp_task_wdt_reset();

@@ -4,6 +4,7 @@
 #include "network.h"
 #include "wifi.h"
 #include "esp_log.h"
+#include "esp_wifi.h"
 #include "cJSON.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
@@ -146,9 +147,43 @@ void device_provisioning_clear(void) {
     nvs_erase_key(h, "DEVICE_CERT");
     nvs_erase_key(h, "DEVICE_KEY");
     nvs_erase_key(h, "THING_NAME");
+    nvs_erase_key(h, "PROV_SUCCESS");
     nvs_commit(h);
     nvs_close(h);
     ESP_LOGI(TAG, "Provisioning credentials cleared from NVS");
+    
+    // Also clear WiFi provisioning credentials so device re-provisions from scratch
+    esp_wifi_restore();
+    ESP_LOGI(TAG, "WiFi credentials cleared");
+}
+
+void device_provisioning_mark_success(void) {
+    nvs_handle_t h;
+    esp_err_t err = nvs_open("storage", NVS_READWRITE, &h);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to open NVS for marking success: %d", err);
+        return;
+    }
+    uint8_t flag = 1;
+    err = nvs_set_u8(h, "PROV_SUCCESS", flag);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to write PROV_SUCCESS flag: %d", err);
+    }
+    nvs_commit(h);
+    nvs_close(h);
+    ESP_LOGI(TAG, "✓ Provisioning marked as complete in NVS");
+}
+
+bool device_provisioning_is_complete(void) {
+    nvs_handle_t h;
+    esp_err_t err = nvs_open("storage", NVS_READONLY, &h);
+    if (err != ESP_OK) {
+        return false;
+    }
+    uint8_t flag = 0;
+    err = nvs_get_u8(h, "PROV_SUCCESS", &flag);
+    nvs_close(h);
+    return (err == ESP_OK && flag == 1);
 }
 
 esp_err_t device_provisioning_start(const char* claim_cert_pem, const char* claim_key_pem,
