@@ -119,24 +119,53 @@ class Provision extends _$Provision {
       developer.log('Session established. Found ${networks.length} networks', name: 'ProvisionNotifier');
       print('DEBUG: WiFi scan completed and session established. Found ${networks.length} networks');
 
-      // Step 2: Claim device from backend (only thing the app does)
-      // NOTE: Using dummy serial for now — will use real hardware serial later
-      const dummySerial = "ESP32-SIMULATION-001";
-      
+      // Step 2: Fetch hardware serial number from device
       state = state.copyWith(
         stage: ProvisionStage.fetchingSerial,
-        progress: 0.5,
+        progress: 0.4,
       );
-      developer.log('Claiming device from backend for $dummySerial...', name: 'ProvisionNotifier');
-      print('DEBUG: Claiming device from backend for $dummySerial...');
+      developer.log('Fetching serial number from hardware...', name: 'ProvisionNotifier');
+      print('DEBUG: Fetching serial number from hardware...');
 
-      final claimResult = await _backendService.claimDevice(dummySerial);
+      final serialData = await _bleProv
+          .sendCustomData(name, '', 'device_serial', Uint8List(0))
+          .timeout(const Duration(seconds: 10));
+
+      if (serialData == null || serialData.isEmpty) {
+        print('\n' + '!' * 50);
+        print('SERIAL NUMBER RETRIEVAL FAILED (NULL OR EMPTY)');
+        print('!' * 50 + '\n');
+        throw Exception('Failed to retrieve serial number from hardware');
+      }
+
+      // Parse JSON response: {"serialNumber": "ESP32-XXXXXXXXXXXX"}
+      final rawString = String.fromCharCodes(serialData);
+      String serial;
+      try {
+        final Map<String, dynamic> parsed = jsonDecode(rawString);
+        serial = parsed['serialNumber'] as String;
+      } catch (_) {
+        serial = rawString.trim(); // fallback: treat as plain string
+      }
+
+      print('\n' + '*' * 50);
+      print('SERIAL NUMBER RETRIEVED: $serial');
+      print('*' * 50 + '\n');
+      developer.log('Serial number retrieved: $serial', name: 'ProvisionNotifier');
+
+      state = state.copyWith(serialNumber: serial, progress: 0.55);
+
+      // Step 3: Claim device from backend using real hardware serial
+      developer.log('Claiming device from backend for $serial...', name: 'ProvisionNotifier');
+      print('DEBUG: Claiming device from backend for $serial...');
+
+      final claimResult = await _backendService.claimDevice(serial);
       if (claimResult == null) {
         throw Exception('Failed to claim device from backend');
       }
-      
+
       developer.log('Claim successful. DeviceID: ${claimResult.deviceId}', name: 'ProvisionNotifier');
-      
+
       print('\n' + '=' * 60);
       print('🚀 DEVICE CLAIMED SUCCESSFULLY:');
       print('   DEVICE ID:   ${claimResult.deviceId}');
@@ -148,9 +177,10 @@ class Provision extends _$Provision {
         deviceID: claimResult.deviceId,
         claimId: claimResult.claimId,
         claimToken: claimResult.claimToken,
+        progress: 0.75,
       );
 
-      // Step 3: Send Claim ID and Token to device
+      // Step 4: Send Claim ID and Token to device
       developer.log('Sending claim ID and token to device...', name: 'ProvisionNotifier');
       print('DEBUG: Sending claim ID and token to device...');
 
@@ -161,78 +191,19 @@ class Provision extends _$Provision {
 
       await _bleProv
           .sendCustomData(
-            name,
-            '',
-            'device_claim_token_set',
+            name, '', 'device_claim_token_set',
             Uint8List.fromList(utf8.encode(claimPayload)),
           )
           .timeout(const Duration(seconds: 10));
 
-      developer.log('Claim token set successfully', name: 'ProvisionNotifier');
-      
+      developer.log('Claim token set on device successfully', name: 'ProvisionNotifier');
+
       print('\n' + '🛰️ ' * 20);
       print('SUCCESS: CLAIM ID & TOKEN SET ON HARDWARE');
       print('🛰️ ' * 20 + '\n');
 
-      /* 
-      // Step 4: Fetch serial number from device (still doing this to maintain parity with firmware)
-      developer.log('Fetching official serial number from hardware...', name: 'ProvisionNotifier');
-
-      final serialData = await _bleProv
-          .sendCustomData(
-            name,
-            '',
-            'device_serial',
-            Uint8List(0),
-          )
-          .timeout(const Duration(seconds: 10));
-
-      String? serial;
-      if (serialData != null && serialData.isNotEmpty) {
-        // Log raw bytes for debugging
-        print('DEBUG: Raw serial bytes: ${serialData.map((b) => '0x${b.toRadixString(16).padLeft(2, '0')}').join(", ")}');
-
-        // Check if it's a JSON/String or raw bytes
-        if (serialData.length == 6) {
-          serial = serialData.map((e) => e.toRadixString(16).padLeft(2, '0')).join(':').toUpperCase();
-        } else {
-          serial = String.fromCharCodes(serialData);
-        }
-
-        print('\n' + '*' * 50);
-        print('SERIAL NUMBER RETRIEVED: $serial');
-        print('*' * 50 + '\n');
-
-        developer.log('Serial number retrieved: $serial', name: 'ProvisionNotifier');
-
-        // Step 5: Send acknowledgement - tells device we got the serial
-        developer.log('Sending acknowledgement to device...', name: 'ProvisionNotifier');
-        print('DEBUG: Sending acknowledgement to device...');
-
-        await _bleProv
-            .sendCustomData(
-              name,
-              '',
-              'device_serial_ack',
-              Uint8List(0),
-            )
-            .timeout(const Duration(seconds: 10));
-
-        developer.log('Acknowledgement sent successfully', name: 'ProvisionNotifier');
-        print('DEBUG: Acknowledgement sent - device knows we have serial\n');
-      } else {
-        print('\n' + '!' * 50);
-        print('SERIAL NUMBER RETRIEVAL FAILED (NULL OR EMPTY)');
-        print('!' * 50 + '\n');
-
-        developer.log('Serial retrieval failed', name: 'ProvisionNotifier');
-        throw Exception('Failed to retrieve serial number');
-      }
-      */
-
-      // Update UI with complete data (using dummy serial for now)
+      // Step 5: Move to WiFi selection
       state = state.copyWith(
-        serialNumber: dummySerial,
         stage: ProvisionStage.select_wifi,
         wifiNetworks: networks.map((n) => WifiEntry(name: n)).toList(),
         progress: 1.0,
