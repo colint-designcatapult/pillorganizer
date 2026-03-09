@@ -399,7 +399,7 @@ static void fleet_provisioning_task(void* arg)
             if (http_ret != ESP_OK) {
                 ESP_LOGE(TAG, "✗ Failed to fetch temp certs (error: 0x%X) - clearing WiFi and restarting", http_ret);
                 wifi_set_fleet_provisioning_status(FLEET_PROV_STATUS_FAILED);
-                vTaskDelay(pdMS_TO_TICKS(3000));  // Give app time to poll failure status
+                vTaskDelay(pdMS_TO_TICKS(5000));  // Give app time to poll failure status
                 wifi_reset_claim_credentials();
                 wifi_deinit_provisioning();
                 esp_wifi_restore();
@@ -429,6 +429,7 @@ static void fleet_provisioning_task(void* arg)
                 vTaskDelay(pdMS_TO_TICKS(5000));  // Give app time to poll failure status
                 wifi_reset_claim_credentials();
                 wifi_deinit_provisioning();
+                device_provisioning_clear();  // Remove any partial cert/key/thing-name written before the failure
                 esp_wifi_restore();
                 esp_restart();
             }
