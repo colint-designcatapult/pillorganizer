@@ -364,10 +364,25 @@ static void fleet_provisioning_task(void* arg)
                 ESP_LOGI(TAG, "Connecting as Thing: %s", thing_name);
                 esp_err_t ret = mqtt_connect_with_certs(thing_name, root_ca, device_cert, device_key);
                 if (ret == ESP_OK) {
-                    ESP_LOGI(TAG, "Successfully connected to AWS IoT");
+                    ESP_LOGI(TAG, "✓ Successfully connected to AWS IoT");
+                    mqtt_clear_auth_failure_record();  // Clear failure tracking on success
                 } else {
-                    ESP_LOGE(TAG, "Failed to connect to AWS IoT, retrying in 5s");
-                    vTaskDelay(pdMS_TO_TICKS(5000));
+                    ESP_LOGE(TAG, "✗ Failed to connect to AWS IoT");
+                    mqtt_record_auth_failure_start();  // Record first failure time
+                    
+                    // Check if auth failures have persisted for 48 hours
+                    if (mqtt_check_auth_failure_timeout(48)) {
+                        ESP_LOGE(TAG, "✗ MQTT auth failures for 48+ hours - cert likely revoked");
+                        ESP_LOGE(TAG, "✗ Clearing credentials and restarting provisioning...");
+                        wifi_reset_claim_credentials();
+                        wifi_deinit_provisioning();
+                        device_provisioning_clear();  // Clears certs, thing name, and WiFi credentials
+                        vTaskDelay(pdMS_TO_TICKS(1000));
+                        esp_restart();
+                    } else {
+                        ESP_LOGD(TAG, "Retrying in 5s (auth failures may be transient)...");
+                        vTaskDelay(pdMS_TO_TICKS(5000));
+                    }
                 }
             } else {
                 ESP_LOGE(TAG, "Credentials not loaded, cannot connect");

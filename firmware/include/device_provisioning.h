@@ -44,6 +44,25 @@ void device_provisioning_mark_success(void);
  */
 bool device_provisioning_is_complete(void);
 
+/**
+ * @brief Record MQTT auth failure start time (first failure detected).
+ *        Call this when MQTT connection first fails.
+ *        Only records timestamp if not already set (idempotent).
+ */
+void mqtt_record_auth_failure_start(void);
+
+/**
+ * @brief Check if MQTT auth failure has persisted for more than X hours.
+ * @param hours Number of hours to check against
+ * @return true if failure started AND more than 'hours' have elapsed
+ */
+bool mqtt_check_auth_failure_timeout(uint32_t hours);
+
+/**
+ * @brief Clear MQTT auth failure timestamp (call after successful connection).
+ */
+void mqtt_clear_auth_failure_record(void);
+
 #ifdef __cplusplus
 }
 #endif

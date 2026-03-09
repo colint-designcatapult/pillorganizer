@@ -11,6 +11,7 @@
 #include "fleet_provisioning.h"  // AWS IoT Fleet Provisioning library
 #include <string.h>
 #include <nvs.h>
+#include <time.h>
 
 #define TAG "DeviceProvisioning"
 #define TEMPLATE_NAME "TenantDeviceProvisioningTemplate"
@@ -184,6 +185,72 @@ bool device_provisioning_is_complete(void) {
     err = nvs_get_u8(h, "PROV_SUCCESS", &flag);
     nvs_close(h);
     return (err == ESP_OK && flag == 1);
+}
+
+void mqtt_record_auth_failure_start(void) {
+    nvs_handle_t h;
+    esp_err_t err = nvs_open("storage", NVS_READWRITE, &h);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to open NVS for MQTT failure tracking: %d", err);
+        return;
+    }
+    
+    // Only record if not already set (don't overwrite on subsequent failures)
+    uint64_t existing_timestamp = 0;
+    err = nvs_get_u64(h, "MQTT_AUTH_FAIL_START", &existing_timestamp);
+    if (err == ESP_OK) {
+        // Already recorded, don't overwrite
+        nvs_close(h);
+        return;
+    }
+    
+    // Record current time as failure start
+    time_t current_time = time(NULL);
+    err = nvs_set_u64(h, "MQTT_AUTH_FAIL_START", (uint64_t)current_time);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to write MQTT auth failure timestamp: %d", err);
+    } else {
+        ESP_LOGW(TAG, "MQTT auth failure recorded - 48h timeout started");
+    }
+    nvs_commit(h);
+    nvs_close(h);
+}
+
+bool mqtt_check_auth_failure_timeout(uint32_t hours) {
+    nvs_handle_t h;
+    esp_err_t err = nvs_open("storage", NVS_READONLY, &h);
+    if (err != ESP_OK) {
+        return false;
+    }
+    
+    uint64_t failure_start_time = 0;
+    err = nvs_get_u64(h, "MQTT_AUTH_FAIL_START", &failure_start_time);
+    nvs_close(h);
+    
+    if (err != ESP_OK) {
+        // No failure record, so no timeout
+        return false;
+    }
+    
+    time_t current_time = time(NULL);
+    uint64_t elapsed_seconds = (uint64_t)current_time - failure_start_time;
+    uint64_t timeout_seconds = (uint64_t)hours * 3600;
+    
+    return (elapsed_seconds >= timeout_seconds);
+}
+
+void mqtt_clear_auth_failure_record(void) {
+    nvs_handle_t h;
+    esp_err_t err = nvs_open("storage", NVS_READWRITE, &h);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to open NVS for clearing MQTT failure record: %d", err);
+        return;
+    }
+    
+    nvs_erase_key(h, "MQTT_AUTH_FAIL_START");
+    nvs_commit(h);
+    nvs_close(h);
+    ESP_LOGI(TAG, "✓ MQTT auth failure record cleared");
 }
 
 esp_err_t device_provisioning_start(const char* claim_cert_pem, const char* claim_key_pem,
