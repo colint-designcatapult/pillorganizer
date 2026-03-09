@@ -19,7 +19,7 @@ enum ProvisionStage {
   scanning_wifi,
   select_wifi,
   provisioning_wifi,
-  finalizing,
+  fleet_provisioning,
   complete,
   failed,
   missingPermissions
@@ -252,15 +252,17 @@ class Provision extends _$Provision {
       print('DEBUG: Provisioning result: $success');
 
       if (success == true) {
+        // WiFi handed off — now wait for fleet provisioning to complete on device
         state = state.copyWith(
-          stage: ProvisionStage.complete,
-          progress: 1.0,
-          deviceID: 'ESP-${state.deviceName}', // Example ID format
+          stage: ProvisionStage.fleet_provisioning,
+          progress: 0.5,
         );
+        print('DEBUG: WiFi provisioned. Polling for fleet provisioning status...');
+        await _pollFleetProvisioningStatus(state.deviceName!);
       } else {
         state = state.copyWith(
           stage: ProvisionStage.failed,
-          error: 'Provisioning returned false',
+          error: 'WiFi provisioning returned false',
         );
       }
     } catch (e, stack) {
@@ -268,5 +270,91 @@ class Provision extends _$Provision {
       print('DEBUG: Provisioning error: $e');
       state = state.copyWith(stage: ProvisionStage.failed, error: 'Provisioning Error: ${e.toString()}');
     }
+  }
+
+  /// Polls the fleet_provisioning_status BLE endpoint every 3s for up to 60s.
+  /// - "success" → stage = complete ✅
+  /// - "failed" or timeout → stage = scanning_ble (device restarts, user re-pairs) ❌
+  Future<void> _pollFleetProvisioningStatus(String deviceName) async {
+    const pollInterval = Duration(seconds: 3);
+    const maxDuration = Duration(seconds: 60);
+    final deadline = DateTime.now().add(maxDuration);
+
+    print('DEBUG: [FLEET] Starting fleet provisioning status poll (max 60s)...');
+
+    while (DateTime.now().isBefore(deadline)) {
+      await Future.delayed(pollInterval);
+
+      try {
+        final responseData = await _bleProv
+            .sendCustomData(deviceName, '', 'fleet_provisioning_status', Uint8List(0))
+            .timeout(const Duration(seconds: 5));
+
+        if (responseData == null || responseData.isEmpty) {
+          print('DEBUG: [FLEET] Empty response, continuing poll...');
+          continue;
+        }
+
+        final rawString = String.fromCharCodes(responseData);
+        print('DEBUG: [FLEET] Status response: $rawString');
+
+        String status;
+        try {
+          final parsed = jsonDecode(rawString) as Map<String, dynamic>;
+          status = parsed['status'] as String? ?? 'unknown';
+        } catch (_) {
+          status = rawString.trim();
+        }
+
+        developer.log('Fleet provisioning status: $status', name: 'ProvisionNotifier');
+
+        switch (status) {
+          case 'success':
+            print('\n' + '✅ ' * 20);
+            print('FLEET PROVISIONING COMPLETE — DEVICE IS REGISTERED!');
+            print('✅ ' * 20 + '\n');
+            await _bleProv.disconnectDevice(deviceName);
+            state = state.copyWith(
+              stage: ProvisionStage.complete,
+              progress: 1.0,
+            );
+            return;
+
+          case 'failed':
+            print('\n' + '❌ ' * 20);
+            print('FLEET PROVISIONING FAILED — DEVICE RESTARTING, RESCAN BLE');
+            print('❌ ' * 20 + '\n');
+            await _bleProv.disconnectDevice(deviceName);
+            state = state.copyWith(
+              stage: ProvisionStage.scanning_ble,
+              progress: 0.0,
+              error: 'Fleet provisioning failed. Device is restarting — please re-scan.',
+            );
+            return;
+
+          default: // 'idle', 'pending', or unknown
+            final remainingSeconds = deadline.difference(DateTime.now()).inSeconds;
+            print('DEBUG: [FLEET] Status "$status", ${remainingSeconds}s remaining...');
+            state = state.copyWith(
+              progress: 0.5 + (0.4 * (1 - remainingSeconds / maxDuration.inSeconds)),
+            );
+            break;
+        }
+      } catch (e) {
+        // BLE timeout/error mid-poll — keep trying until deadline
+        print('DEBUG: [FLEET] Poll error (retrying): $e');
+      }
+    }
+
+    // 60s elapsed with no success
+    print('\n' + '⏰ ' * 20);
+    print('FLEET PROVISIONING TIMED OUT — DEVICE RESTARTING, RESCAN BLE');
+    print('⏰ ' * 20 + '\n');
+    await _bleProv.disconnectDevice(deviceName);
+    state = state.copyWith(
+      stage: ProvisionStage.scanning_ble,
+      progress: 0.0,
+      error: 'Fleet provisioning timed out. Device is restarting — please re-scan.',
+    );
   }
 }

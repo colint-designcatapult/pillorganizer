@@ -68,4 +68,11 @@ class MethodChannelFlutterEspBleProv extends FlutterEspBleProvPlatform {
     };
     return await methodChannel.invokeMethod<Uint8List?>('sendCustomData', args);
   }
+
+  @override
+  Future<void> disconnectDevice(String deviceName) async {
+    await methodChannel.invokeMethod<void>('disconnectDevice', {
+      'deviceName': deviceName,
+    });
+  }
 }

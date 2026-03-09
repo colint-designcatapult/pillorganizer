@@ -151,6 +151,7 @@ class Boss {
   private val scanWifiMethod = "scanWifiNetworks"
   private val provisionWifiMethod = "provisionWifi"
   private val sendCustomDataMethod = "sendCustomData"
+  private val disconnectDeviceMethod = "disconnectDevice"
   private val platformVersionMethod = "getPlatformVersion"
 
   /**
@@ -169,6 +170,7 @@ class Boss {
   private val wifiScanner: WifiScanManager = WifiScanManager(this)
   private val wifiProvisioner: WifiProvisionManager = WifiProvisionManager(this)
   private val customDataManager: CustomDataManager = CustomDataManager(this)
+  private val disconnectManager: DisconnectDeviceManager = DisconnectDeviceManager(this)
 
   private var activeDevice: ESPDevice? = null
   private var connectedDeviceName: String? = null
@@ -246,6 +248,21 @@ class Boss {
     esp.connectBLEDevice(conn.device, conn.primaryServiceUuid)
   }
 
+  /** Clears the cached BLE connection so next connect() establishes a fresh GATT link. */
+  fun clearActiveDevice() {
+    d("clearActiveDevice: resetting cached connection state")
+    activeDevice = null
+    connectedDeviceName = null
+  }
+
+  /** Explicitly disconnects the active device and clears cached state. */
+  fun disconnectActiveDevice() {
+    d("disconnectActiveDevice: disconnecting and clearing cached state")
+    activeDevice?.disconnectDevice()
+    activeDevice = null
+    connectedDeviceName = null
+  }
+
   fun macToBytes(mac: String): ByteArray {
     val hex = mac.replace(":", "")
     val bytes = ByteArray(6)
@@ -264,6 +281,7 @@ class Boss {
         scanWifiMethod -> wifiScanner.call(ctx)
         provisionWifiMethod -> wifiProvisioner.call(ctx)
         sendCustomDataMethod -> customDataManager.call(ctx)
+        disconnectDeviceMethod -> disconnectManager.call(ctx)
         else -> result.notImplemented()
       }
     })
@@ -392,9 +410,11 @@ class WifiProvisionManager(boss: Boss) : ActionManager(boss) {
         }
 
         override fun deviceProvisioningSuccess() {
-          boss.d("deviceProvisioningSuccess")
+          boss.d("deviceProvisioningSuccess - keeping BLE alive for fleet provisioning status poll")
           ctx.result.success(true)
-          esp.disconnectDevice()
+          // Option A: Do NOT disconnect here. The app keeps the Security 1 session
+          // alive so it can poll the fleet_provisioning_status endpoint.
+          // Dart will call disconnectDevice() explicitly after polling is done.
         }
 
         override fun onProvisioningFailed(e: java.lang.Exception?) {
@@ -458,6 +478,16 @@ class CustomDataManager(boss: Boss) : ActionManager(boss) {
         })
       }, 200)
     }
+  }
+}
+
+
+/** Allows Dart to explicitly disconnect the BLE device after fleet provisioning polling. */
+class DisconnectDeviceManager(boss: Boss) : ActionManager(boss) {
+  override fun call(ctx: CallContext) {
+    boss.d("disconnectDevice: explicitly disconnecting active device")
+    boss.disconnectActiveDevice()
+    ctx.result.success(null)
   }
 }
 

@@ -38,6 +38,12 @@ class FlutterEspBleProv {
         .sendCustomData(deviceName, proofOfPossession, path, data);
   }
 
+  /// Explicitly disconnects the named device, clearing the cached BLE session.
+  /// Call this after fleet provisioning polling completes (success/failure/timeout).
+  Future<void> disconnectDevice(String deviceName) {
+    return FlutterEspBleProvPlatform.instance.disconnectDevice(deviceName);
+  }
+
   /// Returns the native platform version
   Future<String?> getPlatformVersion() {
     return FlutterEspBleProvPlatform.instance.getPlatformVersion();

@@ -119,21 +119,26 @@ class ProvisionConnectingPage extends ConsumerWidget {
             child: Builder(builder: (context) {
               if (state.stage == ProvisionStage.complete) {
                 return const SizedBox.shrink();
-              } else if (state.stage == ProvisionStage.provisioning_wifi) {
+              } else if (state.stage == ProvisionStage.provisioning_wifi ||
+                  state.stage == ProvisionStage.fleet_provisioning) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ClipRRect(
                         borderRadius: BorderRadius.all(Radius.circular(32.r)),
                         child: LinearProgressIndicator(
-                          value: state.progress,
+                          value: state.stage == ProvisionStage.fleet_provisioning
+                              ? state.progress
+                              : null,
                           semanticsLabel:
                               AppLocalizations.of(context)!.progress,
                           minHeight: 12.h,
                         )),
-                    SizedBox(height: 14.h),
-                    Text(
-                        '${AppLocalizations.of(context)!.estimatedTime} ${(state.completionETA?.inMinutes ?? 0) + 1} min.')
+                    if (state.stage == ProvisionStage.provisioning_wifi) ...[  
+                      SizedBox(height: 14.h),
+                      Text(
+                          '${AppLocalizations.of(context)!.estimatedTime} ${(state.completionETA?.inMinutes ?? 0) + 1} min.')
+                    ],
                   ],
                 );
               } else {
@@ -151,6 +156,8 @@ class ProvisionConnectingPage extends ConsumerWidget {
       return AppLocalizations.of(context)!.connectionProblem;
     } else if (state.stage == ProvisionStage.provisioning_wifi) {
       return AppLocalizations.of(context)!.finishingSetup;
+    } else if (state.stage == ProvisionStage.fleet_provisioning) {
+      return 'Registering device...';
     } else if (state.stage == ProvisionStage.complete) {
       return AppLocalizations.of(context)!.setupComplete;
     } else {
@@ -165,6 +172,8 @@ class ProvisionConnectingPage extends ConsumerWidget {
       return AppLocalizations.of(context)!.connectionProblemSubtitle;
     } else if (state.stage == ProvisionStage.provisioning_wifi) {
       return AppLocalizations.of(context)!.finishingSetupSubtitle;
+    } else if (state.stage == ProvisionStage.fleet_provisioning) {
+      return 'Connecting to cloud and setting up your device. This may take a moment.';
     } else if (state.stage == ProvisionStage.complete) {
       return AppLocalizations.of(context)!.setupCompleteSubtitle;
     } else {

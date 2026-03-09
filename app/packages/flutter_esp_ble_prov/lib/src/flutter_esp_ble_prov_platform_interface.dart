@@ -46,4 +46,8 @@ abstract class FlutterEspBleProvPlatform extends PlatformInterface {
       String path, Uint8List data) {
     throw UnimplementedError('sendCustomData has not been implemented');
   }
+
+  Future<void> disconnectDevice(String deviceName) {
+    throw UnimplementedError('disconnectDevice has not been implemented');
+  }
 }

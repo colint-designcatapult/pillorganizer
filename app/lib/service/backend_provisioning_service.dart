@@ -11,45 +11,60 @@ class BackendProvisioningService {
       : _api = BackendProvisioningApi(dio);
 
   /// Calls /device/claim to get claimId and claimToken for the device.
-  /// The app's only backend responsibility — everything else is firmware.
+  /// Retries up to 3 times on transient 5xx errors (e.g. Lambda cold starts).
   Future<ClaimResult?> claimDevice(String serialNumber) async {
-    try {
-      debugPrint('BackendProvisioningService: Starting claim for $serialNumber');
+    const maxAttempts = 3;
+    const retryDelays = [Duration(seconds: 1), Duration(seconds: 2)];
 
-      // 1. Get ID Token from Amplify (matches Python script's IdToken usage)
-      final idToken = await _amplifyService.getIdToken();
-      if (idToken == null) {
-        debugPrint('BackendProvisioningService: Failed to get ID token');
+    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        debugPrint('BackendProvisioningService: Claim attempt $attempt/$maxAttempts for $serialNumber');
+
+        // Get ID Token from Amplify (matches Python script's IdToken usage)
+        final idToken = await _amplifyService.getIdToken();
+        if (idToken == null) {
+          debugPrint('BackendProvisioningService: Failed to get ID token');
+          return null;
+        }
+
+        print('DEBUG: [BACKEND] Calling /device/claim for $serialNumber (attempt $attempt)...');
+        final claimResponse = await _api.claimDevice(
+          ClaimRequest(serialNumber: serialNumber),
+          'Bearer $idToken',
+        );
+
+        print('DEBUG: [BACKEND] Claim successful!');
+        print('DEBUG: [BACKEND]   DeviceId:   ${claimResponse.deviceId}');
+        print('DEBUG: [BACKEND]   ClaimId:    ${claimResponse.claimId}');
+        print('DEBUG: [BACKEND]   ClaimToken: ${claimResponse.claimToken}');
+
+        return ClaimResult(
+          deviceId: claimResponse.deviceId,
+          claimId: claimResponse.claimId,
+          claimToken: claimResponse.claimToken,
+        );
+      } on DioException catch (e) {
+        final status = e.response?.statusCode;
+        debugPrint('BackendProvisioningService: Attempt $attempt failed. Status: $status, Data: ${e.response?.data}');
+        print('DEBUG: [BACKEND] Error Response: ${e.response?.data}');
+
+        // Only retry on 5xx (transient server errors), not 4xx (client errors)
+        final isServerError = status != null && status >= 500;
+        if (isServerError && attempt < maxAttempts) {
+          final delay = retryDelays[attempt - 1];
+          debugPrint('BackendProvisioningService: Retrying in ${delay.inSeconds}s...');
+          await Future.delayed(delay);
+          continue;
+        }
+
+        debugPrint('BackendProvisioningService: Giving up after $attempt attempt(s).');
+        return null;
+      } catch (e) {
+        debugPrint('BackendProvisioningService: Unexpected error during claim: $e');
         return null;
       }
-      debugPrint('BackendProvisioningService: ID token obtained');
-
-      // 2. Call /device/claim
-      print('DEBUG: [BACKEND] Calling /device/claim for $serialNumber...');
-      final claimResponse = await _api.claimDevice(
-        ClaimRequest(serialNumber: serialNumber),
-        'Bearer $idToken',
-      );
-
-      print('DEBUG: [BACKEND] Claim successful!');
-      print('DEBUG: [BACKEND]   DeviceId:   ${claimResponse.deviceId}');
-      print('DEBUG: [BACKEND]   ClaimId:    ${claimResponse.claimId}');
-      print('DEBUG: [BACKEND]   ClaimToken: ${claimResponse.claimToken}');
-
-      return ClaimResult(
-        deviceId: claimResponse.deviceId,
-        claimId: claimResponse.claimId,
-        claimToken: claimResponse.claimToken,
-      );
-    } catch (e) {
-      if (e is DioException) {
-        debugPrint('BackendProvisioningService: Dio error status: ${e.response?.statusCode}');
-        debugPrint('BackendProvisioningService: Dio error data: ${e.response?.data}');
-        print('DEBUG: [BACKEND] Error Response: ${e.response?.data}');
-      }
-      debugPrint('BackendProvisioningService: Error during claim: $e');
-      return null;
     }
+    return null;
   }
 }
 
