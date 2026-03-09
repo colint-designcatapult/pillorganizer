@@ -1,5 +1,5 @@
 import 'package:app/apiv2/models/device.dart';
-import 'package:app/apiv2/mqtt.dart';
+import 'package:app/provider/mqtt_provider.dart';
 import 'package:app/widgets/device_rename_modal.dart';
 import 'package:app/widgets/notifications_settings.dart';
 import 'package:app/widgets/schedule_entry.dart';
@@ -18,45 +18,6 @@ void changeName(context, {DeviceMetadata? device}) {
   );
 }
 
-class MqttListenerScreen extends ConsumerWidget {
-  const MqttListenerScreen({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Watch the stream provider
-    final mqttStream = ref.watch(mqttTopicStreamProvider);
-
-    return Center(
-        child: mqttStream.when(
-          // Triggers when a new message arrives on the topic
-          data: (message) => Text(
-            'Latest Message:\n$message',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-
-          // Triggers if the connection fails or throws an error
-          error: (err, stack) => Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Error: $err',
-              style: const TextStyle(color: Colors.red),
-            ),
-          ),
-
-          // Triggers while connecting to the broker
-          loading: () => const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Connecting to MQTT over WebSocket...'),
-            ],
-          ),
-        )
-    );
-  }
-}
 
 class SingleDevice extends StatefulWidget {
   final DeviceMetadata? device;
@@ -197,7 +158,6 @@ class _SingleDeviceState extends State<SingleDevice> {
               ],
             ),
           ),
-          MqttListenerScreen(),
           if (isOwner)
             Container(
               padding: EdgeInsets.only(

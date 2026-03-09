@@ -13,7 +13,7 @@ class DeviceAccessDto with DeviceAccessDtoMappable {
   final String apiBase;
   final bool primaryUser;
   final String? thingName;
-  final bool? showTenant;
+  final String? tenantName;
 
   DeviceAccessDto({
     required this.deviceId,
@@ -25,7 +25,7 @@ class DeviceAccessDto with DeviceAccessDtoMappable {
     required this.tenantId,
     required this.primaryUser,
     this.thingName,
-    this.showTenant
+    this.tenantName
   });
 }
 

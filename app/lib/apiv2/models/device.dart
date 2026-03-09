@@ -207,6 +207,7 @@ class DeviceMetadata with DeviceMetadataMappable {
   final String apiBase;
   final bool primaryUser;
   final String? thingName;
+  final bool showTenant;
 
   const DeviceMetadata({
     required this.id,
@@ -218,6 +219,7 @@ class DeviceMetadata with DeviceMetadataMappable {
     required this.apiBase,
     required this.primaryUser,
     required this.thingName,
+    required this.showTenant
   });
 
   String get name => nickname ?? 'Device #$id';
@@ -238,10 +240,11 @@ extension DeviceDtoMapper on DeviceAccessDto {
       serialNo: serialNo,
       model: DeviceModel.fromString(modelId),
       tenantId: tenantId,
-      tenantName: "Tenant Name TBD",
+      tenantName: tenantName,
       apiBase: apiBase,
       primaryUser: primaryUser,
       thingName: thingName,
+      showTenant: tenantName != null
     );
   }
 }

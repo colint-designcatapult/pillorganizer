@@ -251,7 +251,7 @@ class DeviceServiceSpec extends BaseIntegrationSpec {
         deviceService.addUserAccess(user2, ld1)
 
         and:
-        def tenant = new TenantDetails("test-tenant", true, "localhost", "http://localhost")
+        def tenant = TenantDetails.TEST_TENANT
 
         when: "getting devices for user1"
         def devices1 = deviceService.getUserDevices(user1)

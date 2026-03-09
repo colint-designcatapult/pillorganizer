@@ -61,8 +61,7 @@ class InternalUserControllerSpec extends BaseIntegrationSpec {
     }
 
     def setup() {
-        _ * tenantService.getCurrentTenant() >>
-                Optional.of(new TenantDetails("test-tenant", true, "localhost", "http://localhost"))
+        _ * tenantService.getCurrentTenant() >> Optional.of(TenantDetails.TEST_TENANT)
     }
 
     def teardown() {
@@ -86,8 +85,15 @@ class InternalUserControllerSpec extends BaseIntegrationSpec {
 
         then:
         _ * securityService.getAuthentication() >> Optional.of(auth)
+
         response.size() == 1
-        response[0].deviceId() == deviceId
+        with(response[0]) {
+            // Required for app
+            it.deviceId() == deviceId
+            it.apiBase() != null
+            it.tenantId() == TenantDetails.TEST_TENANT.id
+            it.primaryUser()
+        }
     }
 
     void "test getDevicePolicyDocument returns policy for authorized user"() {

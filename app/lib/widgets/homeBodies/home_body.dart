@@ -1,3 +1,4 @@
+import 'package:app/provider/device_state_provider.dart';
 import 'package:app/provider/time_provider.dart';
 import 'package:app/widgets/dose_period_area.dart';
 import 'package:app/widgets/pillbox/pill_box.dart';
