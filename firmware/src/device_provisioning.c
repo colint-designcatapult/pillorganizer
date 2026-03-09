@@ -28,8 +28,8 @@ static char* certificate_ownership_token = NULL;
 static char* thing_name_response = NULL;
 static EventGroupHandle_t provisioning_event_group = NULL;
 
-// Tenant/claim context
-static char* tenant_id = NULL;
+// Claim credentials (provided by app via BLE)
+static char* claim_id_stored = NULL;
 static char* claim_token = NULL;
 
 // MQTT callback for CreateKeys accepted
@@ -151,7 +151,8 @@ void device_provisioning_clear(void) {
     ESP_LOGI(TAG, "Provisioning credentials cleared from NVS");
 }
 
-esp_err_t device_provisioning_start(void) {
+esp_err_t device_provisioning_start(const char* claim_cert_pem, const char* claim_key_pem,
+                                     const char* claim_id_param, const char* claim_token_param) {
     esp_err_t ret = ESP_FAIL;
     char* claim_cert = NULL;
     char* claim_key = NULL;
@@ -183,37 +184,23 @@ esp_err_t device_provisioning_start(void) {
              mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     ESP_LOGI(TAG, "Device Serial Number: %s", serial_number);
     
-    // Phase 3: Load claim credentials from embedded files and Kconfig
-    ESP_LOGI(TAG, "Phase 1: Loading embedded claim credentials...");
-    extern const uint8_t claim_cert_pem_start[] asm("_binary_claim_cert_pem_start");
-    extern const uint8_t claim_cert_pem_end[]   asm("_binary_claim_cert_pem_end");
-    extern const uint8_t claim_key_pem_start[]  asm("_binary_claim_key_pem_start");
-    extern const uint8_t claim_key_pem_end[]    asm("_binary_claim_key_pem_end");
-
-    size_t cert_len = claim_cert_pem_end - claim_cert_pem_start;
-    size_t key_len  = claim_key_pem_end  - claim_key_pem_start;
-
-    claim_cert = (char*)malloc(cert_len + 1);
-    claim_key  = (char*)malloc(key_len  + 1);
+    // Phase 3: Use provided temp certs (RAM only - never written to NVS)
+    ESP_LOGI(TAG, "Phase 1: Using provided temp cert credentials (RAM only)...");
+    claim_cert = strdup(claim_cert_pem);
+    claim_key  = strdup(claim_key_pem);
     if (!claim_cert || !claim_key) {
-        ESP_LOGE(TAG, "Failed to allocate memory for claim credentials");
+        ESP_LOGE(TAG, "Failed to duplicate temp cert credentials");
         ret = ESP_ERR_NO_MEM;
         goto cleanup;
     }
-    memcpy(claim_cert, claim_cert_pem_start, cert_len);
-    claim_cert[cert_len] = '\0';
-    memcpy(claim_key, claim_key_pem_start, key_len);
-    claim_key[key_len] = '\0';
 
-    tenant_id   = strdup(CONFIG_DEV_CLAIM_TENANT_ID);
-    claim_token = strdup(CONFIG_DEV_CLAIM_TOKEN);
+    claim_id_stored = strdup(claim_id_param);  // Provided by app via BLE endpoint
+    claim_token = strdup(claim_token_param);   // Provided by app via BLE endpoint
 
-    ESP_LOGI(TAG, "✅ Claim credentials loaded from embedded files");
-    ESP_LOGI(TAG, "   Tenant ID: %s", tenant_id);
-    ESP_LOGI(TAG, "   Claim Token: %s", claim_token);
+    ESP_LOGI(TAG, "✅ Temp cert credentials ready");
 
-    // Client ID for provisioning = {tenantId}-{serialNumber}
-    snprintf(client_id, sizeof(client_id), "%s-%s", tenant_id, serial_number);
+    // Client ID for provisioning = serial number only
+    snprintf(client_id, sizeof(client_id), "%s", serial_number);
     
     // Phase 4: Load root CA
     extern const uint8_t aws_root_ca_start[] asm("_binary_root_ca_pem_start");
@@ -375,9 +362,9 @@ esp_err_t device_provisioning_start(void) {
     // Use AWS Fleet Provisioning library constant for parameters key
     cJSON *parameters = cJSON_CreateObject();
     cJSON_AddStringToObject(parameters, "SerialNumber", serial_number);
-    cJSON_AddStringToObject(parameters, "TenantId", tenant_id);
-    cJSON_AddStringToObject(parameters, "DeviceId", "pending-assignment");
+    cJSON_AddStringToObject(parameters, "ClaimId", claim_id_stored);
     cJSON_AddStringToObject(parameters, "ClaimToken", claim_token);
+    ESP_LOGI(TAG, "RegisterThing parameters: SerialNumber=%s, ClaimId=%s", serial_number, claim_id_stored);
     cJSON_AddItemToObject(register_request, FP_API_PARAMETERS_KEY, parameters);
     
     char* register_payload = cJSON_PrintUnformatted(register_request);
@@ -477,7 +464,6 @@ cleanup:
     // Free allocated memory
     if (claim_cert) free(claim_cert);
     if (claim_key) free(claim_key);
-    if (tenant_id) free(tenant_id);
     if (claim_token) free(claim_token);
     if (root_ca) free(root_ca);
     if (permanent_cert_pem) free(permanent_cert_pem);
@@ -490,7 +476,6 @@ cleanup:
     permanent_key_pem = NULL;
     certificate_ownership_token = NULL;
     thing_name_response = NULL;
-    tenant_id = NULL;
     claim_token = NULL;
     
     if (provisioning_event_group) {

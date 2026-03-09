@@ -41,6 +41,18 @@ void wifi_get_claim_credentials(char *claim_id_out, size_t claim_id_len,
 /* Reset claim credentials (for next provisioning cycle) */
 void wifi_reset_claim_credentials();
 
+/* Fleet provisioning status - updated by fleet_provisioning_task, polled by app via BLE endpoint */
+typedef enum {
+    FLEET_PROV_STATUS_IDLE = 0,    // BLE provisioning not yet complete
+    FLEET_PROV_STATUS_PENDING,     // Claim credentials received, fleet provisioning in progress
+    FLEET_PROV_STATUS_SUCCESS,     // Successfully registered with AWS IoT Core
+    FLEET_PROV_STATUS_FAILED       // Failed - device will clear WiFi and restart
+} fleet_prov_status_t;
+
+fleet_prov_status_t wifi_get_fleet_provisioning_status(void);
+void wifi_set_fleet_provisioning_status(fleet_prov_status_t status);
+void wifi_deinit_provisioning(void);
+
 #ifdef __cplusplus
 }
 #endif

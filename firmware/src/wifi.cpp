@@ -29,6 +29,7 @@ static bool device_serial_acknowledged = false;
 static char claim_id[128] = {0};
 static char claim_token[256] = {0};
 static bool claim_credentials_received = false;
+static fleet_prov_status_t fleet_prov_status = FLEET_PROV_STATUS_IDLE;
 
 // Handler for device_serial custom provisioning endpoint
 // Returns JSON with device serial number in format: ESP32-{MAC address}
@@ -246,6 +247,42 @@ static esp_err_t device_claim_token_set_handler(uint32_t session_id,
     
     ESP_LOGI(TAG, "=== device_claim_token_set_handler SUCCESS ===");
     
+    free(json_string);
+    return ESP_OK;
+}
+
+// Handler for fleet_provisioning_status custom endpoint
+// App polls this every few seconds to check if device completed Fleet Provisioning
+static esp_err_t fleet_provisioning_status_handler(uint32_t session_id,
+                                                    const uint8_t *inbuf, ssize_t inlen,
+                                                    uint8_t **outbuf, ssize_t *outlen,
+                                                    void *priv_data)
+{
+    const char* status_str;
+    switch (fleet_prov_status) {
+        case FLEET_PROV_STATUS_PENDING: status_str = "pending"; break;
+        case FLEET_PROV_STATUS_SUCCESS: status_str = "success"; break;
+        case FLEET_PROV_STATUS_FAILED:  status_str = "failed";  break;
+        default:                        status_str = "idle";    break;
+    }
+    ESP_LOGI(TAG, "=== fleet_provisioning_status_handler: %s ===", status_str);
+
+    cJSON *response = cJSON_CreateObject();
+    if (!response) return ESP_FAIL;
+    cJSON_AddStringToObject(response, "status", status_str);
+
+    char *json_string = cJSON_PrintUnformatted(response);
+    cJSON_Delete(response);
+    if (!json_string) return ESP_FAIL;
+
+    size_t response_len = strlen(json_string);
+    *outbuf = (uint8_t *)malloc(response_len);
+    if (!*outbuf) {
+        free(json_string);
+        return ESP_ERR_NO_MEM;
+    }
+    memcpy(*outbuf, json_string, response_len);
+    *outlen = response_len;
     free(json_string);
     return ESP_OK;
 }
@@ -560,6 +597,28 @@ extern "C" {
         claim_credentials_received = false;
         ESP_LOGI(TAG, "Claim credentials reset");
     }
+
+    fleet_prov_status_t wifi_get_fleet_provisioning_status() {
+        return fleet_prov_status;
+    }
+
+    void wifi_set_fleet_provisioning_status(fleet_prov_status_t status) {
+        fleet_prov_status = status;
+        const char* str;
+        switch (status) {
+            case FLEET_PROV_STATUS_PENDING: str = "PENDING"; break;
+            case FLEET_PROV_STATUS_SUCCESS: str = "SUCCESS"; break;
+            case FLEET_PROV_STATUS_FAILED:  str = "FAILED";  break;
+            default:                        str = "IDLE";    break;
+        }
+        ESP_LOGI(TAG, "Fleet provisioning status: %s", str);
+    }
+
+    void wifi_deinit_provisioning() {
+        ESP_LOGI(TAG, "Shutting down BLE provisioning manager...");
+        wifi_prov_mgr_deinit();
+        ESP_LOGI(TAG, "BLE provisioning manager deinitialized");
+    }
 }
 
 WifiStateSupervisor WifiStateSupervisor::_instance;
@@ -596,6 +655,10 @@ void WifiStateSupervisor::init() {
     ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("device_claim_token_set"));
     ESP_LOGI(TAG, "device_claim_token_set endpoint created successfully");
 
+    ESP_LOGI(TAG, "Creating fleet_provisioning_status endpoint...");
+    ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("fleet_provisioning_status"));
+    ESP_LOGI(TAG, "fleet_provisioning_status endpoint created successfully");
+
     bool provisioned = false;
     ESP_ERROR_CHECK(wifi_prov_mgr_is_provisioned(&provisioned));
 
@@ -629,6 +692,11 @@ void WifiStateSupervisor::init() {
             "device_claim_token_set", device_claim_token_set_handler, NULL));
         ESP_LOGI(TAG, "device_claim_token_set endpoint handler registered successfully");
 
+        ESP_LOGI(TAG, "Registering fleet_provisioning_status endpoint handler...");
+        ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_register(
+            "fleet_provisioning_status", fleet_provisioning_status_handler, NULL));
+        ESP_LOGI(TAG, "fleet_provisioning_status endpoint handler registered successfully");
+
         // Block until provisioning completes and WiFi connects
         wifi_prov_mgr_wait();
         // Keep provisioning manager active - don't deinit
@@ -649,13 +717,29 @@ void WifiStateSupervisor::init() {
             esp_task_wdt_reset();
         }
         
+        // Check if credentials were received successfully
         if (wifi_claim_credentials_received()) {
-            ESP_LOGI(TAG, "Claim credentials received after %d sec - proceeding with Fleet Provisioning", 
-                     credentials_wait_sec);
+            ESP_LOGI(TAG, "Claim credentials received after %d sec", credentials_wait_sec);
+            ESP_LOGI(TAG, "WiFi provisioning COMPLETE and claim credentials RECEIVED");
+            ESP_LOGI(TAG, "BLE staying open - fleet_provisioning_task will handle provisioning");
+            
+            // Mark as pending - BLE remains open so app can poll fleet_provisioning_status
+            fleet_prov_status = FLEET_PROV_STATUS_PENDING;
+            // Do NOT deinit BLE here - wifi_deinit_provisioning() called by fleet_provisioning_task
         } else {
-            ESP_LOGE(TAG, "TIMEOUT: Claim credentials not received within %d sec - Fleet Provisioning will not proceed",
-                     CLAIM_CREDENTIALS_TIMEOUT_SEC);
-            ESP_LOGE(TAG, "App may not have completed the claim request on the control plane");
+            // Timeout occurred - claim credentials never received
+            // Reset everything and restart device to start over
+            ESP_LOGE(TAG, "TIMEOUT: Claim credentials not received within %d sec", CLAIM_CREDENTIALS_TIMEOUT_SEC);
+            ESP_LOGE(TAG, "App did not complete the claim request on the control plane");
+            ESP_LOGE(TAG, "Clearing WiFi credentials and restarting device...");
+            
+            // Clear all provisioning state
+            wifi_reset_claim_credentials();
+            wifi_prov_mgr_deinit();
+            esp_wifi_restore();  // Clear stored WiFi credentials
+            
+            vTaskDelay(pdMS_TO_TICKS(1000));
+            esp_restart();  // Restart and let device go through provisioning again on next boot
         }
     } else {
         // Already provisioned - deinit prov manager and start WiFi normally
