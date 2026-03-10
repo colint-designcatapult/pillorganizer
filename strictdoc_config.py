@@ -5,7 +5,9 @@ def create_config() -> ProjectConfig:
     global_exclude = [
         "/.venv",
         "/backend/.mvn",
-        "/infra/node_modules"
+        "/infra/node_modules",
+        "/firmware/.pio",
+        "/firmware/components"
     ]
 
     config = ProjectConfig(
