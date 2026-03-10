@@ -4,6 +4,7 @@ extern "C" {
 #include "util.h"
 #include "rtc_sntp.h"
 #include "sdkconfig.h"
+#include "device_provisioning.h"
 
 #include <esp_wifi.h>
 #include <esp_event.h>
@@ -24,7 +25,7 @@ extern "C" {
 // Timeout for waiting on claim credentials (in seconds)
 // 2 minutes gives app time to claim device on control plane
 // Watchdog (120s) provides absolute safety limit for any blocked operation
-#define CLAIM_CREDENTIALS_TIMEOUT_SEC 120
+#define CLAIM_CREDENTIALS_TIMEOUT_SEC 300
 
 // Global flags and storage for provisioning flow
 static bool device_serial_acknowledged = false;
@@ -32,6 +33,10 @@ static char claim_id[128] = {0};
 static char claim_token[256] = {0};
 static bool claim_credentials_received = false;
 static fleet_prov_status_t fleet_prov_status = FLEET_PROV_STATUS_IDLE;
+
+// WiFi re-provisioning monitor state
+static bool provisioning_manager_running = false;
+static TaskHandle_t provisioning_monitor_task_handle = NULL;
 
 // Handler for device_serial custom provisioning endpoint
 // Returns JSON with device serial number in format: ESP32-{MAC address}
@@ -288,6 +293,111 @@ static esp_err_t fleet_provisioning_status_handler(uint32_t session_id,
     free(json_string);
     return ESP_OK;
 }
+
+// WiFi provisioning manager event handler callback
+// Called by the provisioning manager for provisioning state changes
+static void wifi_prov_event_handler(void *user_data, wifi_prov_cb_event_t event, void *event_data) {
+    switch (event) {
+        case WIFI_PROV_CRED_RECV:
+            ESP_LOGI(TAG, "Provisioning event: WIFI_PROV_CRED_RECV - WiFi credentials received from app");
+            break;
+        case WIFI_PROV_CRED_SUCCESS:
+            ESP_LOGI(TAG, "Provisioning event: WIFI_PROV_CRED_SUCCESS - Device successfully connected to WiFi");
+            // At this point, WiFi is connected and provisioning manager stays active (auto-stop disabled)
+            ESP_LOGI(TAG, "✓ WiFi connected - BLE staying open for claim credentials and fleet provisioning");
+            break;
+        case WIFI_PROV_CRED_FAIL:
+            ESP_LOGI(TAG, "Provisioning event: WIFI_PROV_CRED_FAIL - Failed to connect to WiFi");
+            break;
+        case WIFI_PROV_START:
+            ESP_LOGI(TAG, "Provisioning event: WIFI_PROV_START");
+            break;
+        case WIFI_PROV_END:
+            ESP_LOGI(TAG, "Provisioning event: WIFI_PROV_END");
+            break;
+        default:
+            break;
+    }
+}
+
+// Provisioning state monitor task
+// If device is provisioned but WiFi is disconnected, keep BLE advertising for WiFi updates
+// If device is provisioned and WiFi is connected, stop BLE advertising
+static void provisioning_monitor_task_function(void* arg)
+{
+    ESP_LOGI(TAG, "Provisioning monitor task started");
+    
+    // Wait for initial WiFi to stabilize before monitoring
+    vTaskDelay(pdMS_TO_TICKS(10000));
+    
+    // Cache provisioning state - it doesn't change during normal operation
+    bool is_provisioned = device_provisioning_is_provisioned();
+    bool last_wifi_state = wifi_is_connected();
+    
+    ESP_LOGI(TAG, "Provisioning monitor: device %s, WiFi %s", 
+             is_provisioned ? "provisioned" : "not provisioned",
+             last_wifi_state ? "connected" : "disconnected");
+    
+    while (true) {
+        // Only monitor WiFi state changes (provisioning state is static during normal operation)
+        bool is_connected = wifi_is_connected();
+        
+        // Only act on WiFi state changes, not on every poll
+        if (is_provisioned && (is_connected != last_wifi_state)) {
+            last_wifi_state = is_connected;
+            
+            if (!is_connected && !provisioning_manager_running) {
+                // Provisioned but WiFi down - start BLE for WiFi re-provisioning
+                ESP_LOGI(TAG, "WiFi disconnected (provisioned device) - starting BLE for WiFi change...");
+                
+                wifi_prov_mgr_config_t prov_config = {};
+                prov_config.scheme = wifi_prov_scheme_ble;
+                prov_config.scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM;
+                prov_config.app_event_handler.event_cb = wifi_prov_event_handler;
+                prov_config.app_event_handler.user_data = NULL;
+                
+                if (wifi_prov_mgr_init(prov_config) == ESP_OK) {
+                    if (wifi_prov_mgr_disable_auto_stop(1000) == ESP_OK) {
+                        // Build service name with -WIFI suffix to indicate WiFi-only mode
+                        const wifi_info_t* wifi_info = wifi_get_info();
+                        char service_name[24];
+                        snprintf(service_name, sizeof(service_name), "PILL-%02X%02X%02X-WIFI",
+                                 wifi_info->sn.bytes.mac[3],
+                                 wifi_info->sn.bytes.mac[4],
+                                 wifi_info->sn.bytes.mac[5]);
+                        
+                        if (wifi_prov_mgr_start_provisioning(
+                                WIFI_PROV_SECURITY_1, NULL, service_name, NULL) == ESP_OK) {
+                            provisioning_manager_running = true;
+                            ESP_LOGI(TAG, "✓ BLE re-advertised as %s for WiFi change", service_name);
+                        } else {
+                            ESP_LOGE(TAG, "Failed to start provisioning");
+                            wifi_prov_mgr_deinit();
+                        }
+                    } else {
+                        ESP_LOGE(TAG, "Failed to disable auto-stop");
+                        wifi_prov_mgr_deinit();
+                    }
+                } else {
+                    ESP_LOGE(TAG, "Failed to init provisioning manager");
+                }
+            }
+            else if (is_connected && provisioning_manager_running) {
+                // Provisioned and WiFi connected - stop BLE
+                ESP_LOGI(TAG, "WiFi connected - stopping BLE advertising");
+                wifi_prov_mgr_deinit();
+                provisioning_manager_running = false;
+                ESP_LOGI(TAG, "✓ BLE stopped");
+            }
+        }
+        
+        // Check WiFi state less frequently (provisioning state is cached, doesn't change)
+        // WiFi disconnect events are already handled by WiFi event callbacks
+        vTaskDelay(pdMS_TO_TICKS(30000));
+        esp_task_wdt_reset();
+    }
+}
+
 
 class WifiEventListener {
 public:
@@ -621,32 +731,6 @@ extern "C" {
         wifi_prov_mgr_deinit();
         ESP_LOGI(TAG, "BLE provisioning manager deinitialized");
     }
-
-    // WiFi provisioning manager event handler callback
-    // Called by the provisioning manager for provisioning state changes
-    static void wifi_prov_event_handler(void *user_data, wifi_prov_cb_event_t event, void *event_data) {
-        switch (event) {
-            case WIFI_PROV_CRED_RECV:
-                ESP_LOGI(TAG, "Provisioning event: WIFI_PROV_CRED_RECV - WiFi credentials received from app");
-                break;
-            case WIFI_PROV_CRED_SUCCESS:
-                ESP_LOGI(TAG, "Provisioning event: WIFI_PROV_CRED_SUCCESS - Device successfully connected to WiFi");
-                // At this point, WiFi is connected and provisioning manager stays active (auto-stop disabled)
-                ESP_LOGI(TAG, "✓ WiFi connected - BLE staying open for claim credentials and fleet provisioning");
-                break;
-            case WIFI_PROV_CRED_FAIL:
-                ESP_LOGI(TAG, "Provisioning event: WIFI_PROV_CRED_FAIL - Failed to connect to WiFi");
-                break;
-            case WIFI_PROV_START:
-                ESP_LOGI(TAG, "Provisioning event: WIFI_PROV_START");
-                break;
-            case WIFI_PROV_END:
-                ESP_LOGI(TAG, "Provisioning event: WIFI_PROV_END");
-                break;
-            default:
-                break;
-        }
-    }
 }
 
 WifiStateSupervisor WifiStateSupervisor::_instance;
@@ -662,44 +746,42 @@ void WifiStateSupervisor::init() {
     // Initialize WiFi handler before any WiFi operations (needed for event callbacks)
     _wifi_handler = new StandardWifiHandler();
 
-    // ESP unified provisioning over BLE
-    wifi_prov_mgr_config_t prov_config;
-    memset(&prov_config, 0, sizeof(prov_config));
-    prov_config.scheme = wifi_prov_scheme_ble;
-    prov_config.scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM;
-    prov_config.app_event_handler = {
-        .event_cb = wifi_prov_event_handler,
-        .user_data = NULL
-    };
-    
-    ESP_ERROR_CHECK(wifi_prov_mgr_init(prov_config));
-    
-    // Disable auto-stop so BLE stays alive during fleet provisioning
-    // We'll manually call wifi_prov_mgr_stop_provisioning() when fleet provisioning completes
-    ESP_ERROR_CHECK(wifi_prov_mgr_disable_auto_stop(1000));
-    ESP_LOGI(TAG, "Auto-stop disabled - BLE will remain active for fleet provisioning");
-    
-    // Create custom endpoints for device serial number (must be created before start_provisioning)
-    ESP_LOGI(TAG, "Creating device_serial endpoint...");
-    ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("device_serial"));
-    ESP_LOGI(TAG, "device_serial endpoint created successfully");
-    
-    ESP_LOGI(TAG, "Creating device_serial_ack endpoint...");
-    ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("device_serial_ack"));
-    ESP_LOGI(TAG, "device_serial_ack endpoint created successfully");
-    
-    ESP_LOGI(TAG, "Creating device_claim_token_set endpoint...");
-    ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("device_claim_token_set"));
-    ESP_LOGI(TAG, "device_claim_token_set endpoint created successfully");
-
-    ESP_LOGI(TAG, "Creating fleet_provisioning_status endpoint...");
-    ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("fleet_provisioning_status"));
-    ESP_LOGI(TAG, "fleet_provisioning_status endpoint created successfully");
-
     bool provisioned = false;
     ESP_ERROR_CHECK(wifi_prov_mgr_is_provisioned(&provisioned));
 
     if (!provisioned) {
+        // Full provisioning flow: device serial + WiFi + claim token + fleet provisioning status
+        
+        // ESP unified provisioning over BLE
+        wifi_prov_mgr_config_t prov_config = {};
+        prov_config.scheme = wifi_prov_scheme_ble;
+        prov_config.scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM;
+        prov_config.app_event_handler.event_cb = wifi_prov_event_handler;
+        prov_config.app_event_handler.user_data = NULL;
+        
+        ESP_ERROR_CHECK(wifi_prov_mgr_init(prov_config));
+        
+        // Disable auto-stop so BLE stays alive during fleet provisioning
+        ESP_ERROR_CHECK(wifi_prov_mgr_disable_auto_stop(1000));
+        ESP_LOGI(TAG, "Auto-stop disabled - BLE will remain active for fleet provisioning");
+        
+        // Create custom endpoints for device serial number (must be created before start_provisioning)
+        ESP_LOGI(TAG, "Creating device_serial endpoint...");
+        ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("device_serial"));
+        ESP_LOGI(TAG, "device_serial endpoint created successfully");
+        
+        ESP_LOGI(TAG, "Creating device_serial_ack endpoint...");
+        ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("device_serial_ack"));
+        ESP_LOGI(TAG, "device_serial_ack endpoint created successfully");
+        
+        ESP_LOGI(TAG, "Creating device_claim_token_set endpoint...");
+        ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("device_claim_token_set"));
+        ESP_LOGI(TAG, "device_claim_token_set endpoint created successfully");
+
+        ESP_LOGI(TAG, "Creating fleet_provisioning_status endpoint...");
+        ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("fleet_provisioning_status"));
+        ESP_LOGI(TAG, "fleet_provisioning_status endpoint created successfully");
+        
         // Build BLE device name from last 3 bytes of MAC
         char service_name[20];
         snprintf(service_name, sizeof(service_name), "PILL-%02X%02X%02X",
@@ -742,7 +824,7 @@ void WifiStateSupervisor::init() {
             vTaskDelay(pdMS_TO_TICKS(1000));
             credentials_wait_sec++;
             
-            if (credentials_wait_sec % 15 == 0) {
+            if (credentials_wait_sec % 30 == 0) {
                 ESP_LOGW(TAG, "⏳ Still waiting for claim credentials from app... (%d/%d sec)", 
                          credentials_wait_sec, CLAIM_CREDENTIALS_TIMEOUT_SEC);
             }
@@ -772,8 +854,8 @@ void WifiStateSupervisor::init() {
             esp_restart();
         }
     } else {
-        // Already provisioned - deinit prov manager and start WiFi normally
-        wifi_prov_mgr_deinit();
+        // Already provisioned - start WiFi in STA mode
+        // Provisioning manager will be managed by the monitoring task based on WiFi connectivity
         ESP_LOGI(TAG, "WiFi already provisioned, starting STA");
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
         ESP_ERROR_CHECK(esp_wifi_start());
@@ -782,4 +864,13 @@ void WifiStateSupervisor::init() {
 
     // Start reconnect watchdog task
     _wifi_handler->init();
+    
+    // Start provisioning monitor task (manages BLE for WiFi re-provisioning if needed)
+    provisioning_monitor_task_handle = create_task_with_watchdog(
+        provisioning_monitor_task_function, "Prov Monitor", 4096, NULL, tskIDLE_PRIORITY);
+    if (provisioning_monitor_task_handle) {
+        ESP_LOGI(TAG, "Provisioning monitor task started");
+    } else {
+        ESP_LOGE(TAG, "Failed to start provisioning monitor task");
+    }
 }
