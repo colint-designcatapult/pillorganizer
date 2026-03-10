@@ -28,258 +28,12 @@ extern "C" {
 // Watchdog (120s) provides absolute safety limit for any blocked operation
 #define CLAIM_CREDENTIALS_TIMEOUT_SEC 300
 
-// Global flags and storage for provisioning flow
-static char claim_id[128] = {0};
-static char claim_token[256] = {0};
-static bool claim_credentials_received = false;
 static bool wifi_connection_failed = false;
 static time_t wifi_failure_time = 0;  // Timestamp when WiFi CRED_FAIL occurs
-static fleet_prov_status_t fleet_prov_status = FLEET_PROV_STATUS_IDLE;
 
 // WiFi re-provisioning monitor state
 static bool provisioning_manager_running = false;
 static TaskHandle_t provisioning_monitor_task_handle = NULL;
-
-// Handler for device_serial custom provisioning endpoint
-// Returns JSON with device serial number in format: ESP32-{MAC address}
-static esp_err_t device_serial_handler(uint32_t session_id,
-                                       const uint8_t *inbuf, ssize_t inlen,
-                                       uint8_t **outbuf, ssize_t *outlen,
-                                       void *priv_data)
-{
-    ESP_LOGI(TAG, "=== device_serial_handler CALLED ===");
-    ESP_LOGI(TAG, "Session ID: %lu, Input length: %zd", session_id, inlen);
-    
-    // Get the MAC address from wifi info
-    const wifi_info_t* wifi_info = wifi_get_info();
-    if (!wifi_info) {
-        ESP_LOGE(TAG, "Failed to get wifi_info");
-        return ESP_FAIL;
-    }
-    ESP_LOGI(TAG, "Got wifi_info, MAC: %02X:%02X:%02X:%02X:%02X:%02X",
-             wifi_info->sn.bytes.mac[0],
-             wifi_info->sn.bytes.mac[1],
-             wifi_info->sn.bytes.mac[2],
-             wifi_info->sn.bytes.mac[3],
-             wifi_info->sn.bytes.mac[4],
-             wifi_info->sn.bytes.mac[5]);
-    
-    // Build full serial number: ESP32-{MAC in uppercase hex}
-    char serial_number[32];
-    snprintf(serial_number, sizeof(serial_number), "ESP32-%02X%02X%02X%02X%02X%02X",
-             wifi_info->sn.bytes.mac[0],
-             wifi_info->sn.bytes.mac[1],
-             wifi_info->sn.bytes.mac[2],
-             wifi_info->sn.bytes.mac[3],
-             wifi_info->sn.bytes.mac[4],
-             wifi_info->sn.bytes.mac[5]);
-    ESP_LOGI(TAG, "Built serial number: %s", serial_number);
-    
-    // Create JSON response
-    cJSON *response = cJSON_CreateObject();
-    if (!response) {
-        ESP_LOGE(TAG, "Failed to create JSON response for device_serial");
-        return ESP_FAIL;
-    }
-    ESP_LOGI(TAG, "JSON object created successfully");
-    
-    cJSON_AddStringToObject(response, "serialNumber", serial_number);
-    ESP_LOGI(TAG, "Added serialNumber to JSON");
-    
-    // Serialize JSON to string
-    char *json_string = cJSON_PrintUnformatted(response);
-    cJSON_Delete(response);
-    
-    if (!json_string) {
-        ESP_LOGE(TAG, "Failed to serialize device_serial JSON");
-        return ESP_FAIL;
-    }
-    ESP_LOGI(TAG, "Serialized JSON: %s", json_string);
-    
-    // Allocate output buffer and copy response
-    size_t response_len = strlen(json_string);
-    ESP_LOGI(TAG, "Response length: %zu bytes", response_len);
-    
-    *outbuf = (uint8_t *)malloc(response_len);
-    if (!*outbuf) {
-        ESP_LOGE(TAG, "Failed to allocate memory for device_serial response (%zu bytes)", response_len);
-        free(json_string);
-        return ESP_ERR_NO_MEM;
-    }
-    ESP_LOGI(TAG, "Output buffer allocated");
-    
-    memcpy(*outbuf, json_string, response_len);
-    *outlen = response_len;
-    ESP_LOGI(TAG, "Response copied to output buffer, outlen set to %zd", *outlen);
-    
-    ESP_LOGI(TAG, "=== device_serial_handler SUCCESS: %s ===", serial_number);
-    
-    free(json_string);
-    return ESP_OK;
-}
-
-// Handler for wifi_connection_status custom provisioning endpoint
-// App polls this after sending WiFi credentials to check if connection succeeded
-static esp_err_t wifi_connection_status_handler(uint32_t session_id,
-                                                 const uint8_t *inbuf, ssize_t inlen,
-                                                 uint8_t **outbuf, ssize_t *outlen,
-                                                 void *priv_data)
-{
-    ESP_LOGI(TAG, "=== wifi_connection_status_handler: connected=%s, failed=%s ===",
-             wifi_is_connected() ? "true" : "false",
-             wifi_connection_failed ? "true" : "false");
-
-    cJSON *response = cJSON_CreateObject();
-    if (!response) return ESP_FAIL;
-    
-    cJSON_AddBoolToObject(response, "connected", wifi_is_connected());
-    cJSON_AddBoolToObject(response, "failed", wifi_connection_failed);
-
-    char *json_string = cJSON_PrintUnformatted(response);
-    cJSON_Delete(response);
-    if (!json_string) return ESP_FAIL;
-
-    size_t response_len = strlen(json_string);
-    *outbuf = (uint8_t *)malloc(response_len);
-    if (!*outbuf) {
-        free(json_string);
-        return ESP_ERR_NO_MEM;
-    }
-    memcpy(*outbuf, json_string, response_len);
-    *outlen = response_len;
-    free(json_string);
-    return ESP_OK;
-}
-
-// Handler for device_claim_token_set custom provisioning endpoint
-// Called by app to provide claimId and claimToken after claim is made on control plane
-static esp_err_t device_claim_token_set_handler(uint32_t session_id,
-                                                const uint8_t *inbuf, ssize_t inlen,
-                                                uint8_t **outbuf, ssize_t *outlen,
-                                                void *priv_data)
-{
-    ESP_LOGI(TAG, "=== device_claim_token_set_handler CALLED ===");
-    ESP_LOGI(TAG, "Session ID: %lu, Input length: %zd", session_id, inlen);
-    
-    if (!inbuf || inlen <= 0) {
-        ESP_LOGE(TAG, "Invalid input buffer for claim token");
-        return ESP_FAIL;
-    }
-    
-    // Parse incoming JSON: {"claimId":"<value>","claimToken":"<value>"}
-    // Create a null-terminated string from the input buffer
-    char json_buffer[512];
-    if (inlen >= sizeof(json_buffer)) {
-        ESP_LOGE(TAG, "Input buffer too large: %zd", inlen);
-        return ESP_FAIL;
-    }
-    memcpy(json_buffer, inbuf, inlen);
-    json_buffer[inlen] = '\0';
-    
-    ESP_LOGI(TAG, "Received JSON: %s", json_buffer);
-    
-    cJSON *received = cJSON_Parse(json_buffer);
-    if (!received) {
-        ESP_LOGE(TAG, "Failed to parse claim token JSON");
-        return ESP_FAIL;
-    }
-    
-    // Extract claimId
-    cJSON *claim_id_item = cJSON_GetObjectItem(received, "claimId");
-    if (!claim_id_item || !claim_id_item->valuestring) {
-        ESP_LOGE(TAG, "Missing claimId in request");
-        cJSON_Delete(received);
-        return ESP_FAIL;
-    }
-    
-    // Extract claimToken
-    cJSON *claim_token_item = cJSON_GetObjectItem(received, "claimToken");
-    if (!claim_token_item || !claim_token_item->valuestring) {
-        ESP_LOGE(TAG, "Missing claimToken in request");
-        cJSON_Delete(received);
-        return ESP_FAIL;
-    }
-    
-    // Store credentials
-    strncpy(claim_id, claim_id_item->valuestring, sizeof(claim_id) - 1);
-    strncpy(claim_token, claim_token_item->valuestring, sizeof(claim_token) - 1);
-    claim_credentials_received = true;
-    
-    ESP_LOGI(TAG, "=== CLAIM CREDENTIALS RECEIVED ===");
-    ESP_LOGI(TAG, "claimId:    %s", claim_id);
-    ESP_LOGI(TAG, "claimToken: %s", claim_token);
-    ESP_LOGI(TAG, "==============================");
-    cJSON_Delete(received);
-    
-    // Create response
-    cJSON *response = cJSON_CreateObject();
-    if (!response) {
-        ESP_LOGE(TAG, "Failed to create JSON response for claim token");
-        return ESP_FAIL;
-    }
-    
-    cJSON_AddBoolToObject(response, "received", true);
-    
-    char *json_string = cJSON_PrintUnformatted(response);
-    cJSON_Delete(response);
-    
-    if (!json_string) {
-        ESP_LOGE(TAG, "Failed to serialize claim token response JSON");
-        return ESP_FAIL;
-    }
-    
-    size_t response_len = strlen(json_string);
-    *outbuf = (uint8_t *)malloc(response_len);
-    if (!*outbuf) {
-        ESP_LOGE(TAG, "Failed to allocate memory for claim token response");
-        free(json_string);
-        return ESP_ERR_NO_MEM;
-    }
-    
-    memcpy(*outbuf, json_string, response_len);
-    *outlen = response_len;
-    
-    ESP_LOGI(TAG, "=== device_claim_token_set_handler SUCCESS ===");
-    
-    free(json_string);
-    return ESP_OK;
-}
-
-// Handler for fleet_provisioning_status custom endpoint
-// App polls this every few seconds to check if device completed Fleet Provisioning
-static esp_err_t fleet_provisioning_status_handler(uint32_t session_id,
-                                                    const uint8_t *inbuf, ssize_t inlen,
-                                                    uint8_t **outbuf, ssize_t *outlen,
-                                                    void *priv_data)
-{
-    const char* status_str;
-    switch (fleet_prov_status) {
-        case FLEET_PROV_STATUS_PENDING: status_str = "pending"; break;
-        case FLEET_PROV_STATUS_SUCCESS: status_str = "success"; break;
-        case FLEET_PROV_STATUS_FAILED:  status_str = "failed";  break;
-        default:                        status_str = "idle";    break;
-    }
-    ESP_LOGI(TAG, "=== fleet_provisioning_status_handler: %s ===", status_str);
-
-    cJSON *response = cJSON_CreateObject();
-    if (!response) return ESP_FAIL;
-    cJSON_AddStringToObject(response, "status", status_str);
-
-    char *json_string = cJSON_PrintUnformatted(response);
-    cJSON_Delete(response);
-    if (!json_string) return ESP_FAIL;
-
-    size_t response_len = strlen(json_string);
-    *outbuf = (uint8_t *)malloc(response_len);
-    if (!*outbuf) {
-        free(json_string);
-        return ESP_ERR_NO_MEM;
-    }
-    memcpy(*outbuf, json_string, response_len);
-    *outlen = response_len;
-    free(json_string);
-    return ESP_OK;
-}
 
 // WiFi provisioning manager event handler callback
 // Called by the provisioning manager for provisioning state changes
@@ -681,45 +435,8 @@ extern "C" {
         return ESP_OK;
     }
 
-
-
-    bool wifi_claim_credentials_received() {
-        return claim_credentials_received;
-    }
-
-    void wifi_get_claim_credentials(char *claim_id_out, size_t claim_id_len,
-                                     char *claim_token_out, size_t claim_token_len) {
-        if (claim_id_out && claim_id_len > 0) {
-            strncpy(claim_id_out, claim_id, claim_id_len - 1);
-            claim_id_out[claim_id_len - 1] = '\0';
-        }
-        if (claim_token_out && claim_token_len > 0) {
-            strncpy(claim_token_out, claim_token, claim_token_len - 1);
-            claim_token_out[claim_token_len - 1] = '\0';
-        }
-    }
-
-    void wifi_reset_claim_credentials() {
-        memset(claim_id, 0, sizeof(claim_id));
-        memset(claim_token, 0, sizeof(claim_token));
-        claim_credentials_received = false;
-        ESP_LOGI(TAG, "Claim credentials reset");
-    }
-
-    fleet_prov_status_t wifi_get_fleet_provisioning_status() {
-        return fleet_prov_status;
-    }
-
-    void wifi_set_fleet_provisioning_status(fleet_prov_status_t status) {
-        fleet_prov_status = status;
-        const char* str;
-        switch (status) {
-            case FLEET_PROV_STATUS_PENDING: str = "PENDING"; break;
-            case FLEET_PROV_STATUS_SUCCESS: str = "SUCCESS"; break;
-            case FLEET_PROV_STATUS_FAILED:  str = "FAILED";  break;
-            default:                        str = "IDLE";    break;
-        }
-        ESP_LOGI(TAG, "Fleet provisioning status: %s", str);
+    bool wifi_is_credential_failed() {
+        return wifi_connection_failed;
     }
 
     void wifi_deinit_provisioning() {
@@ -794,22 +511,22 @@ void WifiStateSupervisor::init() {
         // Register handlers for custom endpoints (must be registered after start_provisioning)
         ESP_LOGI(TAG, "Registering device_serial endpoint handler...");
         ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_register(
-            "device_serial", device_serial_handler, NULL));
+            "device_serial", ble_endpoint_device_serial, NULL));
         ESP_LOGI(TAG, "device_serial endpoint handler registered successfully");
         
         ESP_LOGI(TAG, "Registering device_claim_token_set endpoint handler...");
         ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_register(
-            "device_claim_token_set", device_claim_token_set_handler, NULL));
+            "device_claim_token_set", ble_endpoint_device_claim_token_set, NULL));
         ESP_LOGI(TAG, "device_claim_token_set endpoint handler registered successfully");
         
         ESP_LOGI(TAG, "Registering wifi_connection_status endpoint handler...");
         ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_register(
-            "wifi_connection_status", wifi_connection_status_handler, NULL));
+            "wifi_connection_status", ble_endpoint_wifi_connection_status, NULL));
         ESP_LOGI(TAG, "wifi_connection_status endpoint handler registered successfully");
 
         ESP_LOGI(TAG, "Registering fleet_provisioning_status endpoint handler...");
         ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_register(
-            "fleet_provisioning_status", fleet_provisioning_status_handler, NULL));
+            "fleet_provisioning_status", ble_endpoint_fleet_provisioning_status, NULL));
         ESP_LOGI(TAG, "fleet_provisioning_status endpoint handler registered successfully");
 
         // Wait for app to send claim credentials (claimId and claimToken) via BLE endpoint
@@ -895,7 +612,7 @@ void WifiStateSupervisor::init() {
             ESP_LOGI(TAG, "✓ BLE open for fleet provisioning status polling");
 
             // Mark as pending - BLE remains open so app can poll fleet_provisioning_status
-            fleet_prov_status = FLEET_PROV_STATUS_PENDING;
+            wifi_set_fleet_provisioning_status(FLEET_PROV_STATUS_PENDING);
             // Do NOT deinit BLE here - wifi_deinit_provisioning() called by fleet_provisioning_task
         } else {
             // Timeout occurred - claim credentials never received
