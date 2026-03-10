@@ -12,15 +12,9 @@
 #include "core_mqtt.h"
 #include "shadow.h"
 
-// --- Binary Embedded Certificate Symbols ---
+// Binary root CA embedded in firmware
 extern const uint8_t aws_root_ca_start[] asm("_binary_root_ca_pem_start");
 extern const uint8_t aws_root_ca_end[]   asm("_binary_root_ca_pem_end");
-
-extern const uint8_t aws_device_cert_start[] asm("_binary_device_cert_crt_start");
-extern const uint8_t aws_device_cert_end[]   asm("_binary_device_cert_crt_end");
-
-extern const uint8_t aws_device_key_start[] asm("_binary_device_key_key_start");
-extern const uint8_t aws_device_key_end[]   asm("_binary_device_key_key_end");
 
 #define TAG "MQTT_AWS"
 #define MQTT_BUFFER_SIZE 6144
@@ -104,21 +98,7 @@ static void mqtt_event_callback(MQTTContext_t *pMqttContext,
 static esp_err_t mqtt_connect(void) {
     ESP_LOGI(TAG, "Connecting to AWS IoT: %s:8883", AWS_IOT_ENDPOINT);
 
-     // DEBUG: Check certificate sizes
-    // size_t root_ca_size = aws_root_ca_end - aws_root_ca_start;
-    // size_t cert_size = aws_device_cert_end - aws_device_cert_start;
-    // size_t key_size = aws_device_key_end - aws_device_key_start;
-    
-    // ESP_LOGI(TAG, "Root CA size: %d bytes", root_ca_size);
-    // ESP_LOGI(TAG, "Device cert size: %d bytes", cert_size);
-    // ESP_LOGI(TAG, "Device key size: %d bytes", key_size);
-    
-    // // Print first 50 chars of each to verify format
-    // ESP_LOGI(TAG, "Root CA starts with: %.100s", (char*)aws_root_ca_start);
-    // ESP_LOGI(TAG, "Device cert starts with: %.100s", (char*)aws_device_cert_start);
-    // ESP_LOGI(TAG, "Device key starts with: %.100s", (char*)aws_device_key_start);
-    
-    // Initialize network context
+     // Initialize network context
     memset(&networkContext, 0, sizeof(networkContext));
     networkContext.pcHostname = AWS_IOT_ENDPOINT;
     networkContext.xPort = 8883;
@@ -126,11 +106,12 @@ static esp_err_t mqtt_connect(void) {
     networkContext.pcServerRootCA = (const char *)aws_root_ca_start;
     networkContext.pcServerRootCASize = (aws_root_ca_end - aws_root_ca_start);
 
-    networkContext.pcClientCert = (const char *)aws_device_cert_start;
-    networkContext.pcClientCertSize = (aws_device_cert_end - aws_device_cert_start);
+    // Device certs come from dynamic provisioning, not embedded files
+    networkContext.pcClientCert = NULL;
+    networkContext.pcClientCertSize = 0;
 
-    networkContext.pcClientKey = (const char *)aws_device_key_start;
-    networkContext.pcClientKeySize = (aws_device_key_end - aws_device_key_start);
+    networkContext.pcClientKey = NULL;
+    networkContext.pcClientKeySize = 0;
 
     networkContext.pAlpnProtos = NULL;
     networkContext.disableSni = pdFALSE;

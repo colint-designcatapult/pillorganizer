@@ -23,7 +23,9 @@ extern "C" {
 
 #define TAG "Newifi"
 
-// Timeout for waiting on claim credentials (5 min - high safety margin for control plane)
+// Timeout for waiting on claim credentials (in seconds)
+// 2 minutes gives app time to claim device on control plane
+// Watchdog (120s) provides absolute safety limit for any blocked operation
 #define CLAIM_CREDENTIALS_TIMEOUT_SEC 300
 
 // Global flags and storage for provisioning flow
@@ -45,11 +47,24 @@ static esp_err_t device_serial_handler(uint32_t session_id,
                                        uint8_t **outbuf, ssize_t *outlen,
                                        void *priv_data)
 {
+    ESP_LOGI(TAG, "=== device_serial_handler CALLED ===");
+    ESP_LOGI(TAG, "Session ID: %lu, Input length: %zd", session_id, inlen);
+    
+    // Get the MAC address from wifi info
     const wifi_info_t* wifi_info = wifi_get_info();
     if (!wifi_info) {
         ESP_LOGE(TAG, "Failed to get wifi_info");
         return ESP_FAIL;
     }
+    ESP_LOGI(TAG, "Got wifi_info, MAC: %02X:%02X:%02X:%02X:%02X:%02X",
+             wifi_info->sn.bytes.mac[0],
+             wifi_info->sn.bytes.mac[1],
+             wifi_info->sn.bytes.mac[2],
+             wifi_info->sn.bytes.mac[3],
+             wifi_info->sn.bytes.mac[4],
+             wifi_info->sn.bytes.mac[5]);
+    
+    // Build full serial number: ESP32-{MAC in uppercase hex}
     char serial_number[32];
     snprintf(serial_number, sizeof(serial_number), "ESP32-%02X%02X%02X%02X%02X%02X",
              wifi_info->sn.bytes.mac[0],
@@ -58,12 +73,20 @@ static esp_err_t device_serial_handler(uint32_t session_id,
              wifi_info->sn.bytes.mac[3],
              wifi_info->sn.bytes.mac[4],
              wifi_info->sn.bytes.mac[5]);
+    ESP_LOGI(TAG, "Built serial number: %s", serial_number);
+    
+    // Create JSON response
     cJSON *response = cJSON_CreateObject();
     if (!response) {
         ESP_LOGE(TAG, "Failed to create JSON response for device_serial");
         return ESP_FAIL;
     }
+    ESP_LOGI(TAG, "JSON object created successfully");
+    
     cJSON_AddStringToObject(response, "serialNumber", serial_number);
+    ESP_LOGI(TAG, "Added serialNumber to JSON");
+    
+    // Serialize JSON to string
     char *json_string = cJSON_PrintUnformatted(response);
     cJSON_Delete(response);
     
@@ -71,7 +94,11 @@ static esp_err_t device_serial_handler(uint32_t session_id,
         ESP_LOGE(TAG, "Failed to serialize device_serial JSON");
         return ESP_FAIL;
     }
+    ESP_LOGI(TAG, "Serialized JSON: %s", json_string);
+    
+    // Allocate output buffer and copy response
     size_t response_len = strlen(json_string);
+    ESP_LOGI(TAG, "Response length: %zu bytes", response_len);
     
     *outbuf = (uint8_t *)malloc(response_len);
     if (!*outbuf) {
@@ -79,8 +106,13 @@ static esp_err_t device_serial_handler(uint32_t session_id,
         free(json_string);
         return ESP_ERR_NO_MEM;
     }
+    ESP_LOGI(TAG, "Output buffer allocated");
+    
     memcpy(*outbuf, json_string, response_len);
     *outlen = response_len;
+    ESP_LOGI(TAG, "Response copied to output buffer, outlen set to %zd", *outlen);
+    
+    ESP_LOGI(TAG, "=== device_serial_handler SUCCESS: %s ===", serial_number);
     
     free(json_string);
     return ESP_OK;
@@ -249,13 +281,16 @@ static esp_err_t fleet_provisioning_status_handler(uint32_t session_id,
     return ESP_OK;
 }
 
-// Event handler for WiFi provisioning state changes
+// WiFi provisioning manager event handler callback
+// Called by the provisioning manager for provisioning state changes
 static void wifi_prov_event_handler(void *user_data, wifi_prov_cb_event_t event, void *event_data) {
     switch (event) {
         case WIFI_PROV_CRED_RECV:
             ESP_LOGI(TAG, "Provisioning event: WIFI_PROV_CRED_RECV - WiFi credentials received from app");
             break;
         case WIFI_PROV_CRED_SUCCESS:
+            ESP_LOGI(TAG, "Provisioning event: WIFI_PROV_CRED_SUCCESS - Device successfully connected to WiFi");
+            // At this point, WiFi is connected and provisioning manager stays active (auto-stop disabled)
             ESP_LOGI(TAG, "✓ WiFi connected - BLE staying open for claim credentials and fleet provisioning");
             wifi_connection_failed = false;
             wifi_failure_time = 0;  // Clear failure timestamp
@@ -276,10 +311,17 @@ static void wifi_prov_event_handler(void *user_data, wifi_prov_cb_event_t event,
     }
 }
 
-// Monitor and manage BLE advertising based on provisioning/WiFi state
+// Provisioning state monitor task
+// If device is provisioned but WiFi is disconnected, keep BLE advertising for WiFi updates
+// If device is provisioned and WiFi is connected, stop BLE advertising
 static void provisioning_monitor_task_function(void* arg)
 {
-    vTaskDelay(pdMS_TO_TICKS(10000));  // Wait for WiFi to stabilize
+    ESP_LOGI(TAG, "Provisioning monitor task started");
+    
+    // Wait for initial WiFi to stabilize before monitoring
+    vTaskDelay(pdMS_TO_TICKS(10000));
+    
+    // Cache provisioning state - it doesn't change during normal operation
     bool is_provisioned = device_provisioning_is_provisioned();
     bool last_wifi_state = wifi_is_connected();
     
@@ -288,12 +330,16 @@ static void provisioning_monitor_task_function(void* arg)
              last_wifi_state ? "connected" : "disconnected");
     
     while (true) {
+        // Only monitor WiFi state changes (provisioning state is static during normal operation)
         bool is_connected = wifi_is_connected();
+        
+        // Only act on WiFi state changes, not on every poll
         if (is_provisioned && (is_connected != last_wifi_state)) {
             last_wifi_state = is_connected;
             
             if (!is_connected && !provisioning_manager_running) {
-                ESP_LOGI(TAG, "WiFi disconnected - starting BLE for re-provisioning...");
+                // Provisioned but WiFi down - start BLE for WiFi re-provisioning
+                ESP_LOGI(TAG, "WiFi disconnected (provisioned device) - starting BLE for WiFi change...");
                 
                 wifi_prov_mgr_config_t prov_config = {};
                 prov_config.scheme = wifi_prov_scheme_ble;
@@ -336,6 +382,8 @@ static void provisioning_monitor_task_function(void* arg)
             }
         }
         
+        // Check WiFi state less frequently (provisioning state is cached, doesn't change)
+        // WiFi disconnect events are already handled by WiFi event callbacks
         vTaskDelay(pdMS_TO_TICKS(30000));
         esp_task_wdt_reset();
     }
@@ -698,6 +746,9 @@ void WifiStateSupervisor::init() {
     ESP_ERROR_CHECK(wifi_prov_mgr_is_provisioned(&provisioned));
 
     if (!provisioned) {
+        // Full provisioning flow: device serial + WiFi + claim token + fleet provisioning status
+        
+        // ESP unified provisioning over BLE
         wifi_prov_mgr_config_t prov_config = {};
         prov_config.scheme = wifi_prov_scheme_ble;
         prov_config.scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM;
@@ -708,39 +759,77 @@ void WifiStateSupervisor::init() {
         
         // Disable auto-stop so BLE stays alive during fleet provisioning
         ESP_ERROR_CHECK(wifi_prov_mgr_disable_auto_stop(1000));
+        ESP_LOGI(TAG, "Auto-stop disabled - BLE will remain active for fleet provisioning");
+        
+        // Create custom endpoints for device serial number (must be created before start_provisioning)
+        ESP_LOGI(TAG, "Creating device_serial endpoint...");
         ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("device_serial"));
+        ESP_LOGI(TAG, "device_serial endpoint created successfully");
+        
+        ESP_LOGI(TAG, "Creating device_claim_token_set endpoint...");
         ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("device_claim_token_set"));
+        ESP_LOGI(TAG, "device_claim_token_set endpoint created successfully");
+        
+        ESP_LOGI(TAG, "Creating wifi_connection_status endpoint...");
         ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("wifi_connection_status"));
+        ESP_LOGI(TAG, "wifi_connection_status endpoint created successfully");
+
+        ESP_LOGI(TAG, "Creating fleet_provisioning_status endpoint...");
         ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_create("fleet_provisioning_status"));
+        ESP_LOGI(TAG, "fleet_provisioning_status endpoint created successfully");
+        
+        // Build BLE device name from last 3 bytes of MAC
         char service_name[20];
         snprintf(service_name, sizeof(service_name), "PILL-%02X%02X%02X",
                  _wifi_info.sn.bytes.mac[3],
                  _wifi_info.sn.bytes.mac[4],
                  _wifi_info.sn.bytes.mac[5]);
 
-        ESP_LOGI(TAG, "Starting BLE provisioning as: %s", service_name);
+        ESP_LOGI(TAG, "WiFi not provisioned - starting BLE provisioning as: %s", service_name);
+
+        // Security 1 with no proof-of-possession (NULL)
         ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(
             WIFI_PROV_SECURITY_1, NULL, service_name, NULL));
+        
+        // Register handlers for custom endpoints (must be registered after start_provisioning)
+        ESP_LOGI(TAG, "Registering device_serial endpoint handler...");
         ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_register(
             "device_serial", device_serial_handler, NULL));
+        ESP_LOGI(TAG, "device_serial endpoint handler registered successfully");
+        
+        ESP_LOGI(TAG, "Registering device_claim_token_set endpoint handler...");
         ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_register(
             "device_claim_token_set", device_claim_token_set_handler, NULL));
+        ESP_LOGI(TAG, "device_claim_token_set endpoint handler registered successfully");
+        
+        ESP_LOGI(TAG, "Registering wifi_connection_status endpoint handler...");
         ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_register(
             "wifi_connection_status", wifi_connection_status_handler, NULL));
+        ESP_LOGI(TAG, "wifi_connection_status endpoint handler registered successfully");
+
+        ESP_LOGI(TAG, "Registering fleet_provisioning_status endpoint handler...");
         ESP_ERROR_CHECK(wifi_prov_mgr_endpoint_register(
             "fleet_provisioning_status", fleet_provisioning_status_handler, NULL));
+        ESP_LOGI(TAG, "fleet_provisioning_status endpoint handler registered successfully");
 
+        // Wait for app to send claim credentials (claimId and claimToken) via BLE endpoint
+        // WiFi connect success is detected via provisioning event callback
+        // BLE stays open because auto-stop is disabled
         int credentials_wait_sec = 0;
         while (!wifi_claim_credentials_received() && credentials_wait_sec < CLAIM_CREDENTIALS_TIMEOUT_SEC) {
             vTaskDelay(pdMS_TO_TICKS(1000));
             credentials_wait_sec++;
             
+            // Check if WiFi credentials failed - if so, give app 5 seconds to poll status then restart
             if (wifi_connection_failed && wifi_failure_time > 0) {
                 time_t now = time(NULL);
                 int seconds_since_failure = (int)(now - wifi_failure_time);
                 
                 if (seconds_since_failure >= 5) {
-                    ESP_LOGE(TAG, "✗ WiFi connection failed - restarting...");
+                    // 5 seconds elapsed since WiFi failure - safe to restart
+                    ESP_LOGE(TAG, "✗ WiFi connection failed >5 sec ago - clearing all credentials and restarting device...");
+                    
+                    // Clear all provisioning state
                     wifi_reset_claim_credentials();
                     wifi_prov_mgr_deinit();
                     esp_wifi_restore();
@@ -748,8 +837,9 @@ void WifiStateSupervisor::init() {
                     vTaskDelay(pdMS_TO_TICKS(1000));
                     esp_restart();
                 } else {
+                    // Still counting down - log every second
                     int remaining = 5 - seconds_since_failure;
-                    ESP_LOGW(TAG, "⏳ WiFi credentials failed - restarting in %d seconds...", remaining);
+                    ESP_LOGW(TAG, "⏳ WiFi credentials failed - restarting in %d seconds (waiting for app to detect)...", remaining);
                 }
             }
             
@@ -760,9 +850,15 @@ void WifiStateSupervisor::init() {
             esp_task_wdt_reset();
         }
         
+        // Check if credentials were received successfully
         if (wifi_claim_credentials_received()) {
             ESP_LOGI(TAG, "✓ Claim credentials received after %d sec", credentials_wait_sec);
             ESP_LOGI(TAG, "✓ Waiting for WiFi to connect...");
+
+            // Second wait loop: wait for WiFi to connect or detect CRED_FAIL and restart.
+            // Runs BEFORE _wifi_handler->init() (the reconnect task), so no background task
+            // can call wifi_prov_mgr_deinit() concurrently with fleet provisioning MQTT exchange.
+            // Loop exits the moment WiFi is connected, so fleet provisioning is never blocked.
             int wifi_connect_wait_sec = 0;
             int cred_fail_count = 0;
             while (!wifi_is_connected() && wifi_connect_wait_sec < 60) {
@@ -802,7 +898,12 @@ void WifiStateSupervisor::init() {
             fleet_prov_status = FLEET_PROV_STATUS_PENDING;
             // Do NOT deinit BLE here - wifi_deinit_provisioning() called by fleet_provisioning_task
         } else {
-            ESP_LOGE(TAG, "✗ TIMEOUT: Claim credentials not received - restarting...");
+            // Timeout occurred - claim credentials never received
+            ESP_LOGE(TAG, "✗ TIMEOUT: Claim credentials not received within %d sec", CLAIM_CREDENTIALS_TIMEOUT_SEC);
+            ESP_LOGE(TAG, "App did not send claim request via BLE endpoint");
+            ESP_LOGE(TAG, "Clearing WiFi credentials and restarting device...");
+            
+            // Clear all provisioning state
             wifi_reset_claim_credentials();
             wifi_prov_mgr_deinit();
             esp_wifi_restore();
@@ -811,12 +912,18 @@ void WifiStateSupervisor::init() {
             esp_restart();
         }
     } else {
+        // Already provisioned - start WiFi in STA mode
+        // Provisioning manager will be managed by the monitoring task based on WiFi connectivity
         ESP_LOGI(TAG, "WiFi already provisioned, starting STA");
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
         ESP_ERROR_CHECK(esp_wifi_start());
+        // WIFI_EVENT_STA_START fires -> StandardWifiHandler::wifi_event_start() -> esp_wifi_connect()
     }
 
+    // Start reconnect watchdog task
     _wifi_handler->init();
+    
+    // Start provisioning monitor task (manages BLE for WiFi re-provisioning if needed)
     provisioning_monitor_task_handle = create_task_with_watchdog(
         provisioning_monitor_task_function, "Prov Monitor", 4096, NULL, tskIDLE_PRIORITY);
     if (provisioning_monitor_task_handle) {
