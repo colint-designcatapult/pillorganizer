@@ -31,10 +31,6 @@ extern "C" {
 static bool wifi_connection_failed = false;
 static time_t wifi_failure_time = 0;  // Timestamp when WiFi CRED_FAIL occurs
 
-// WiFi re-provisioning monitor state
-static bool provisioning_manager_running = false;
-static TaskHandle_t provisioning_monitor_task_handle = NULL;
-
 // WiFi provisioning manager event handler callback
 // Called by the provisioning manager for provisioning state changes
 static void wifi_prov_event_handler(void *user_data, wifi_prov_cb_event_t event, void *event_data) {
@@ -62,84 +58,6 @@ static void wifi_prov_event_handler(void *user_data, wifi_prov_cb_event_t event,
             break;
         default:
             break;
-    }
-}
-
-// Provisioning state monitor task
-// If device is provisioned but WiFi is disconnected, keep BLE advertising for WiFi updates
-// If device is provisioned and WiFi is connected, stop BLE advertising
-static void provisioning_monitor_task_function(void* arg)
-{
-    ESP_LOGI(TAG, "Provisioning monitor task started");
-    
-    // Wait for initial WiFi to stabilize before monitoring
-    vTaskDelay(pdMS_TO_TICKS(10000));
-    
-    // Cache provisioning state - it doesn't change during normal operation
-    bool is_provisioned = device_provisioning_is_provisioned();
-    bool last_wifi_state = wifi_is_connected();
-    
-    ESP_LOGI(TAG, "Provisioning monitor: device %s, WiFi %s", 
-             is_provisioned ? "provisioned" : "not provisioned",
-             last_wifi_state ? "connected" : "disconnected");
-    
-    while (true) {
-        // Only monitor WiFi state changes (provisioning state is static during normal operation)
-        bool is_connected = wifi_is_connected();
-        
-        // Only act on WiFi state changes, not on every poll
-        if (is_provisioned && (is_connected != last_wifi_state)) {
-            last_wifi_state = is_connected;
-            
-            if (!is_connected && !provisioning_manager_running) {
-                // Provisioned but WiFi down - start BLE for WiFi re-provisioning
-                ESP_LOGI(TAG, "WiFi disconnected (provisioned device) - starting BLE for WiFi change...");
-                
-                wifi_prov_mgr_config_t prov_config = {};
-                prov_config.scheme = wifi_prov_scheme_ble;
-                prov_config.scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM;
-                prov_config.app_event_handler.event_cb = wifi_prov_event_handler;
-                prov_config.app_event_handler.user_data = NULL;
-                
-                if (wifi_prov_mgr_init(prov_config) == ESP_OK) {
-                    if (wifi_prov_mgr_disable_auto_stop(1000) == ESP_OK) {
-                        // Build service name with -WIFI suffix to indicate WiFi-only mode
-                        const wifi_info_t* wifi_info = wifi_get_info();
-                        char service_name[24];
-                        snprintf(service_name, sizeof(service_name), "PILL-%02X%02X%02X-WIFI",
-                                 wifi_info->sn.bytes.mac[3],
-                                 wifi_info->sn.bytes.mac[4],
-                                 wifi_info->sn.bytes.mac[5]);
-                        
-                        if (wifi_prov_mgr_start_provisioning(
-                                WIFI_PROV_SECURITY_1, NULL, service_name, NULL) == ESP_OK) {
-                            provisioning_manager_running = true;
-                            ESP_LOGI(TAG, "✓ BLE re-advertised as %s for WiFi change", service_name);
-                        } else {
-                            ESP_LOGE(TAG, "Failed to start provisioning");
-                            wifi_prov_mgr_deinit();
-                        }
-                    } else {
-                        ESP_LOGE(TAG, "Failed to disable auto-stop");
-                        wifi_prov_mgr_deinit();
-                    }
-                } else {
-                    ESP_LOGE(TAG, "Failed to init provisioning manager");
-                }
-            }
-            else if (is_connected && provisioning_manager_running) {
-                // Provisioned and WiFi connected - stop BLE
-                ESP_LOGI(TAG, "WiFi connected - stopping BLE advertising");
-                wifi_prov_mgr_deinit();
-                provisioning_manager_running = false;
-                ESP_LOGI(TAG, "✓ BLE stopped");
-            }
-        }
-        
-        // Check WiFi state less frequently (provisioning state is cached, doesn't change)
-        // WiFi disconnect events are already handled by WiFi event callbacks
-        vTaskDelay(pdMS_TO_TICKS(30000));
-        esp_task_wdt_reset();
     }
 }
 
@@ -639,13 +557,4 @@ void WifiStateSupervisor::init() {
 
     // Start reconnect watchdog task
     _wifi_handler->init();
-    
-    // Start provisioning monitor task (manages BLE for WiFi re-provisioning if needed)
-    provisioning_monitor_task_handle = create_task_with_watchdog(
-        provisioning_monitor_task_function, "Prov Monitor", 4096, NULL, tskIDLE_PRIORITY);
-    if (provisioning_monitor_task_handle) {
-        ESP_LOGI(TAG, "Provisioning monitor task started");
-    } else {
-        ESP_LOGE(TAG, "Failed to start provisioning monitor task");
-    }
 }
