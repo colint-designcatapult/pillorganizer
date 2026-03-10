@@ -19,6 +19,7 @@ enum ProvisionStage {
   scanning_wifi,
   select_wifi,
   provisioning_wifi,
+  verifying_wifi,
   fleet_provisioning,
   complete,
   failed,
@@ -252,17 +253,29 @@ class Provision extends _$Provision {
       print('DEBUG: Provisioning result: $success');
 
       if (success == true) {
-        // WiFi handed off — now wait for fleet provisioning to complete on device
+        // WiFi creds handed off — verify the device actually connected before fleet provisioning
+        state = state.copyWith(
+          stage: ProvisionStage.verifying_wifi,
+          progress: 0.3,
+        );
+        print('DEBUG: WiFi credentials sent. Verifying WiFi connection...');
+        final wifiConnected = await _pollWifiConnectionStatus(state.deviceName!);
+        if (!wifiConnected) return; // error state already set inside the method
+
+        // WiFi confirmed — now poll fleet provisioning
         state = state.copyWith(
           stage: ProvisionStage.fleet_provisioning,
           progress: 0.5,
         );
-        print('DEBUG: WiFi provisioned. Polling for fleet provisioning status...');
+        print('DEBUG: WiFi connected. Polling for fleet provisioning status...');
         await _pollFleetProvisioningStatus(state.deviceName!);
       } else {
+        // Espressif SDK returned false (e.g. AUTH_FAILED — wrong password).
+        // Device wipes all credentials and restarts, so user must start over.
         state = state.copyWith(
-          stage: ProvisionStage.failed,
-          error: 'WiFi provisioning returned false',
+          stage: ProvisionStage.scanning_ble,
+          progress: 0.0,
+          error: 'WiFi authentication failed — incorrect password. Your device is restarting, please start provisioning again.',
         );
       }
     } catch (e, stack) {
@@ -270,6 +283,89 @@ class Provision extends _$Provision {
       print('DEBUG: Provisioning error: $e');
       state = state.copyWith(stage: ProvisionStage.failed, error: 'Provisioning Error: ${e.toString()}');
     }
+  }
+
+  /// Polls wifi_connection_status after handing off credentials.
+  /// Returns true when the device is connected to WiFi.
+  /// Returns false (and sets select_wifi error state) on failure or timeout.
+  Future<bool> _pollWifiConnectionStatus(String deviceName) async {
+    const pollInterval = Duration(seconds: 3);
+    const maxDuration = Duration(seconds: 45);
+    final deadline = DateTime.now().add(maxDuration);
+
+    print('DEBUG: [WIFI] Starting wifi_connection_status poll (max 45s)...');
+
+    while (DateTime.now().isBefore(deadline)) {
+      await Future.delayed(pollInterval);
+
+      try {
+        final responseData = await _bleProv
+            .sendCustomData(deviceName, '', 'wifi_connection_status', Uint8List(0))
+            .timeout(const Duration(seconds: 5));
+
+        if (responseData == null || responseData.isEmpty) {
+          print('DEBUG: [WIFI] Empty response, retrying...');
+          continue;
+        }
+
+        final rawString = String.fromCharCodes(responseData);
+        print('DEBUG: [WIFI] Status: $rawString');
+
+        bool connected = false;
+        bool failed = false;
+        try {
+          final parsed = jsonDecode(rawString) as Map<String, dynamic>;
+          connected = parsed['connected'] as bool? ?? false;
+          failed = parsed['failed'] as bool? ?? false;
+        } catch (_) {
+          print('DEBUG: [WIFI] Parse error, retrying...');
+          continue;
+        }
+
+        developer.log('WiFi status: connected=$connected, failed=$failed', name: 'ProvisionNotifier');
+
+        if (failed) {
+          print('\n' + '⚠️  ' * 15);
+          print('WIFI CONNECTION FAILED — DEVICE RESTARTING, START OVER');
+          print('⚠️  ' * 15 + '\n');
+          // Device wipes credentials and restarts — user must start provisioning over
+          state = state.copyWith(
+            stage: ProvisionStage.scanning_ble,
+            progress: 0.0,
+            error: 'WiFi connection failed. Your device is restarting — please start provisioning again.',
+          );
+          return false;
+        }
+
+        if (connected) {
+          print('\n' + '📶 ' * 15);
+          print('WIFI CONNECTED SUCCESSFULLY!');
+          print('📶 ' * 15 + '\n');
+          return true;
+        }
+
+        // Still connecting — update progress and keep polling
+        final remaining = deadline.difference(DateTime.now()).inSeconds;
+        print('DEBUG: [WIFI] Not yet connected, ${remaining}s remaining...');
+        state = state.copyWith(
+          progress: 0.3 + (0.2 * (1 - remaining / maxDuration.inSeconds)),
+        );
+      } catch (e) {
+        print('DEBUG: [WIFI] Poll error (retrying): $e');
+      }
+    }
+
+    // 45s elapsed without connecting
+    print('\n' + '⏰ ' * 15);
+    print('WIFI CONNECTION TIMED OUT — DEVICE RESTARTING, START OVER');
+    print('⏰ ' * 15 + '\n');
+    // Device wipes credentials and restarts — user must start provisioning over
+    state = state.copyWith(
+      stage: ProvisionStage.scanning_ble,
+      progress: 0.0,
+      error: 'WiFi connection timed out. Your device is restarting — please start provisioning again.',
+    );
+    return false;
   }
 
   /// Polls the fleet_provisioning_status BLE endpoint every 3s for up to 60s.

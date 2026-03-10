@@ -1427,7 +1427,7 @@ abstract class AppLocalizations {
   /// No description provided for @setupCompleteSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Your pill organizer is now ready to use.'**
+  /// **'Your pill organizer will be ready to use after restarting.'**
   String get setupCompleteSubtitle;
 
   /// No description provided for @shape.

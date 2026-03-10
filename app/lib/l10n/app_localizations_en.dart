@@ -744,7 +744,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get setupCompleteSubtitle =>
-      'Your pill organizer is now ready to use.';
+      'Your pill organizer will be ready to use after restarting.';
 
   @override
   String get shape => 'Shape';
