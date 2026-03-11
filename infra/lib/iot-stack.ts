@@ -21,18 +21,22 @@ export class IotStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: IotStackProps) {
     super(scope, id, props);
 
+    // @relation(INFRA-REQ-11, scope=range_start)
     const domainConfig = new iot.CfnDomainConfiguration(this, 'MqttDomainConfig', {
       domainName: props.mqttDomain,
       serverCertificateArns: [props.mqttCertificateArn],
       serviceType: 'DATA',
       domainConfigurationStatus: 'ENABLED',
       applicationProtocol: "SECURE_MQTT",
+      // @relation(INFRA-REQ-12, scope=line)
       authenticationType: "AWS_X509"
     });
+    // @relation(INFRA-REQ-11, scope=range_end)
     domainConfig.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
 
     // -- Tenant Isolation Policy --
 
+    // @relation(INFRA-REQ-14, scope=range_start)
     const logicalIsolationPolicy = new iot.CfnPolicy(this, 'TenantTopicIsolationPolicy', {
       policyName: 'Tenant_Topic_Isolation_With_Provisioning',
       policyDocument: {
@@ -67,6 +71,7 @@ export class IotStack extends cdk.Stack {
         ]
       }
     });
+    // @relation(INFRA-REQ-14, scope=range_end)
 
     // --- WebSocket Domain & Custom Authorizer ---
     const iotAuthorizerFunction = createGlobalLambda(this, 'IotCustomAuthorizer',
@@ -80,16 +85,19 @@ export class IotStack extends cdk.Stack {
       sourceAccount: this.account,
     });
 
+    // @relation(INFRA-REQ-16, scope=range_start)
     const mobileAuthorizer = new iot.CfnAuthorizer(this, 'MobileJwtAuthorizer', {
       authorizerName: 'MobileAppJwtAuthorizer',
       authorizerFunctionArn: iotAuthorizer.functionArn,
       status: 'ACTIVE',
       signingDisabled: true, 
     });
+    // @relation(INFRA-REQ-16, scope=range_end)
 
     // Ensure the permission is created before the authorizer tries to use the Lambda
     mobileAuthorizer.node.addDependency(iotAuthorizer);
 
+    // @relation(INFRA-REQ-15, scope=range_start)
     const wsDomainConfig = new iot.CfnDomainConfiguration(this, 'MqttWsDomainConfig', {
       domainName: props.mqttWsDomain,
       serverCertificateArns: [props.mqttWsCertificateArn],
@@ -99,12 +107,14 @@ export class IotStack extends cdk.Stack {
       authenticationType: "CUSTOM_AUTH",
       authorizerConfig: {
         allowAuthorizerOverride: false,
+        // @relation(INFRA-REQ-16, scope=line)
         defaultAuthorizerName: "MobileAppJwtAuthorizer"
       }
     });
     wsDomainConfig.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
 
     wsDomainConfig.addDependency(mobileAuthorizer);
+    // @relation(INFRA-REQ-15, scope=range_end)
 
     // --- Fleet Provisioning ---
 

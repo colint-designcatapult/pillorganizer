@@ -116,3 +116,68 @@ RELATIONS:
   VALUE: SYS-REQ-14
 
 [[/SECTION]]
+
+[[SECTION]]
+TITLE: IoT Core
+
+[REQUIREMENT]
+UID: INFRA-REQ-11
+TITLE: MQTT Endpoint
+STATEMENT: >>>
+The infrastructure shall define a secure MQTT endpoint for the device to use.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: IC-1
+- TYPE: Parent
+  VALUE: SYS-REQ-11
+
+[REQUIREMENT]
+UID: INFRA-REQ-15
+TITLE: MQTT over WebSocket Endpoint
+STATEMENT: >>>
+The infrastructure shall define a secure MQTT over WebSocket endpoint for user applications to use.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: IC-7
+- TYPE: Parent
+  VALUE: SYS-REQ-11
+
+[REQUIREMENT]
+UID: INFRA-REQ-12
+TITLE: MQTT Endpoint Security
+STATEMENT: >>>
+The infrastructure shall require X.509 certificate-based authentication for the device MQTT endpoint.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: IC-2
+- TYPE: Parent
+  VALUE: SYS-REQ-18
+
+[REQUIREMENT]
+UID: INFRA-REQ-16
+TITLE: MQTT over WebSocket Endpoint Security
+STATEMENT: >>>
+The infrastructure shall require that connections to the MQTT over WebSocket endpoint are authorized by the control plane.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: IC-7
+- TYPE: Parent
+  VALUE: SYS-REQ-18
+
+[REQUIREMENT]
+UID: INFRA-REQ-14
+TITLE: MQTT Endpoint Tenant Isolation
+STATEMENT: >>>
+The infrastructure shall enforce that a device may only access MQTT topics and resources specifically permitted for that individual device.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-14
+- TYPE: Parent
+  VALUE: SYS-REQ-19
+
+[[/SECTION]]

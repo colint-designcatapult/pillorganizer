@@ -6,6 +6,7 @@ import jct.pillorganizer.core.service.TenantService
 import jct.pillorganizer.core.uid.KsuidService
 import jct.pillorganizer.core.dto.DeviceClaimEligibilityDto
 import jct.pillorganizer.global.BaseIntegrationSpec
+import jct.pillorganizer.global.exception.ClaimTokenExpiredException
 import jct.pillorganizer.global.model.BaseControlPlaneEntity
 import jct.pillorganizer.global.model.DeviceClaimEntity
 import jct.pillorganizer.global.model.DeviceEntity
@@ -25,7 +26,10 @@ import reactor.core.publisher.Mono
 
 import java.time.Duration
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
+// @relation(CTRL-REQ-17, scope=file)
+// @relation(CTRL-REQ-18, scope=file)
 class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
 
     IotClient iotClient = Mock()
@@ -100,6 +104,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         savedClaim.get().tenantId == tenantId
     }
 
+    // @relation(CTRL-REQ-19, scope=range_start)
     def "should fail to generate provisioning claim with a non-existent requested device ID"() {
         given:
         def serialNumber = "SN-REQ-123"
@@ -120,6 +125,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         def e = thrown(DeviceAccessException)
         e.message == "Not eligible to claim device"
     }
+    // @relation(CTRL-REQ-19, scope=range_end)
 
     def "should generate provisioning claim with an existing requested device ID"() {
         given:
@@ -152,6 +158,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         result.claimId() != null
     }
 
+    // @relation(CTRL-REQ-19, scope=range_start)
     def "should fail to generate provisioning claim if user is not eligible"() {
         given:
         def serialNumber = "SN-REQ-789"
@@ -171,7 +178,9 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         def e = thrown(DeviceAccessException)
         e.message == "Not eligible to claim device"
     }
+    // @relation(CTRL-REQ-19, scope=range_end)
 
+    // @relation(CTRL-REQ-27, scope=range_start)
     def "should throw IllegalStateException when generating claim for unregistered tenant"() {
         given:
         def serialNumber = "SN-UNREG"
@@ -190,7 +199,9 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         def e = thrown(IllegalStateException)
         e.message == "Device assigned to unregistered tenant: " + tenantId
     }
+    // @relation(CTRL-REQ-27, scope=range_end)
 
+    // @relation(CTRL-REQ-25, scope=range_start)
     def "should provision device successfully"() {
         given:
         def serialNumber = "SN-456"
@@ -245,7 +256,9 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         1 * messageService.grantUser({ it.userId == userId && it.userName == userName })
         1 * messageService.provisionDevice({ it.deviceId != null && it.serialNo == serialNumber })
     }
+    // @relation(CTRL-REQ-25, scope=range_end)
 
+    // @relation(CTRL-REQ-26, scope=range_start)
     def "should provision device successfully when updating existing device"() {
         given:
         def serialNumber = "SN-UPDATE-456-3"
@@ -315,7 +328,9 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         1 * messageService.grantUser({ it.userId == userId && it.userName == userName })
         1 * messageService.provisionDevice({ it.deviceId == newDeviceId && it.serialNo == serialNumber })
     }
+    // @relation(CTRL-REQ-26, scope=range_end)
 
+    // @relation(CTRL-REQ-27, scope=range_start)
     def "should fail to provision when claimed tenant does not match assigned tenant"() {
         given:
         def serialNumber = "SN-TENANT-MISMATCH"
@@ -349,6 +364,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         def e = thrown(IllegalStateException)
         e.message == "Invalid claim token"
     }
+    // @relation(CTRL-REQ-27, scope=range_end)
 
     def "should fail to provision when user entity no longer exists"() {
         given:
@@ -458,6 +474,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         e.cause instanceof IOException
     }
 
+    // @relation(CTRL-REQ-23, scope=range_start)
     def "should return empty when claim not found"() {
         given:
         def serialNumber = "SN-UNKNOWN"
@@ -472,7 +489,9 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         e.message == "Claim not found"
         0 * messageService._
     }
+    // @relation(CTRL-REQ-23, scope=range_end)
 
+    // @relation(CTRL-REQ-22, scope=range_start)
     def "should return certificate when claim is valid"() {
         given:
         def serialNumber = "SN-CERT-3"
@@ -508,8 +527,12 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         result != null
         result.certificatePem() == "cert-pem"
         result.privateKey() == "private-key"
+        // @relation(CTRL-REQ-24, scope=line)
+        result.expiration().isBefore(Instant.now().plus(5, ChronoUnit.MINUTES))
     }
+    // @relation(CTRL-REQ-22, scope=range_end)
 
+    // @relation(CTRL-REQ-23, scope=range_start)
     def "should return empty when claim not found for certificate"() {
         given:
         def serialNumber = "SN-UNKNOWN"
@@ -523,7 +546,9 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         def e = thrown(DeviceAccessException)
         e.message == "No claim found"
     }
+    // @relation(CTRL-REQ-23, scope=range_end)
 
+    // @relation(CTRL-REQ-21, scope=range_start)
     def "should return empty when claim is expired"() {
         given:
         def serialNumber = "SN-EXPIRED-3"
@@ -558,7 +583,8 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         def result = deviceProvisionService.getClaimCertificate(serialNumber, claimId, claimToken)
 
         then:
-        def e = thrown(jct.pillorganizer.global.exception.ClaimTokenExpiredException)
+        def e = thrown(ClaimTokenExpiredException)
         e.message == "Claim token expired"
     }
+    // @relation(CTRL-REQ-21, scope=range_end)
 }

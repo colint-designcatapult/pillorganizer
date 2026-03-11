@@ -8,7 +8,6 @@ import jct.pillorganizer.global.persistence.BaseDeviceControlPlaneSpec
 import spock.lang.Shared
 import spock.lang.Subject
 
-// @relation(CTRL-REQ-16, scope=file)
 @MicronautTest
 class DeviceRepoSpec extends BaseDeviceControlPlaneSpec {
 

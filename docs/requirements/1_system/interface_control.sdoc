@@ -282,3 +282,94 @@ SCHEMA: >>>
 <<<
 
 [[/SECTION]]
+
+[[SECTION]]
+TITLE: Provisioning
+
+[INTERFACE_CONTROL]
+UID: IC-14
+DIRECTION: App to/from device
+PROTOCOL: Unified Provisioning / Bluetooth LE
+TITLE: Device Unified Provisioning
+STATEMENT: >>>
+The system shall use ESP32 Unified Provisioning over Bluetooth Low Energy to exchange data between the mobile app and the device during provisioning.
+<<<
+
+[INTERFACE_CONTROL]
+UID: IC-17
+DIRECTION: Device in/out
+PROTOCOL: MQTTs
+TITLE: IoT Core Fleet Provisioning
+STATEMENT: >>>
+The system shall use IoT Core Fleet Provisioning to exchange temporary claim credentials and certificate for permanent X.509 certificates.
+<<<
+
+[INTERFACE_CONTROL]
+UID: IC-18
+DIRECTION: Device in/out
+PROTOCOL: MQTTs / mTLS
+TITLE: IoT Core Fleet Provisioning Request
+STATEMENT: >>>
+The system shall use the parameters for a device to request permanent Fleet Provisioning certificates.
+<<<
+SCHEMA: >>>
+**Connection level:** Claim certificate X.509 key pair
+
+**Fleet provisioning parameters:**
+
+**SerialNumber** (string, required)
+  The serial number of the device.
+**ClaimId** (string, required)
+  The claim identifier, from the Device Claim Token.
+**claimToken** (string, required)
+  The claim token value, from the Device Claim Token.
+<<<
+
+[INTERFACE_CONTROL]
+UID: IC-13
+ENDPOINT: device_serial
+DIRECTION: App to device
+PROTOCOL: Unified Provisioning
+TITLE: Device Serial Endpoint
+STATEMENT: >>>
+The system shall define the endpoint for the app to request the serial number of a device.
+<<<
+SCHEMA: >>>
+**Input:** (empty)
+
+**Output:** JSON object
+
+**serialNumber** (string, required)
+  The serial number of the device.
+<<<
+
+[INTERFACE_CONTROL]
+UID: IC-15
+DIRECTION: App to device
+TITLE: Device Claim Token
+STATEMENT: >>>
+The system shall use the schema to describe a temporary claim credential during provisioning.
+<<<
+SCHEMA: >>>
+**claimId** (string, required)
+  The claim identifier for this provisioning request.
+**claimToken** (string, required)
+  The claim token, a shared secret to authenticate the request.
+<<<
+
+[INTERFACE_CONTROL]
+UID: IC-16
+ENDPOINT: device_claim_token_set
+DIRECTION: App to device
+PROTOCOL: Unified Provisioning
+TITLE: Device Claim Token Set Endpoint
+STATEMENT: >>>
+The system shall define the endpoint for the app to provide the device a temporary claim credential to the device during provisioning.
+<<<
+SCHEMA: >>>
+**Input:** JSON serialized Device Claim Token
+
+**Output:** (empty)
+<<<
+
+[[/SECTION]]

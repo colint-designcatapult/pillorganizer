@@ -24,3 +24,88 @@ Limit of 100 to not exhaust non-volatile memory limits.
 RELATIONS:
 - TYPE: Parent
   VALUE: SYS-REQ-1
+
+[[SECTION]]
+TITLE: Provisioning
+
+[REQUIREMENT]
+UID: FW-REQ-3
+TITLE: Unified Provisioning
+STATEMENT: >>>
+The firmware shall use ESP32 Unified Provisioning to accept and program the Wi-Fi credentials onto the device.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-42
+- TYPE: Parent
+  VALUE: IC-14
+
+[REQUIREMENT]
+UID: FW-REQ-4
+TITLE: Firmware Claim Credentials
+STATEMENT: >>>
+The firmware shall accept a provision claim token from the control plane via a custom endpoint defined by ESP32 Unified Provisioning.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-44
+- TYPE: Parent
+  VALUE: IC-16
+
+[REQUIREMENT]
+UID: FW-REQ-5
+TITLE: Firmware Serial Endpoint
+STATEMENT: >>>
+The firmware shall define a custom endpoint via unified provisioning that provides the device's serial number.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-44
+- TYPE: Parent
+  VALUE: IC-13
+
+[REQUIREMENT]
+UID: FW-REQ-6
+TITLE: Firmware Claim Certificate
+STATEMENT: >>>
+The firmware shall request and receive a temporary claim certificate from the control plane using the provision claim token.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-44
+- TYPE: Parent
+  VALUE: IC-15
+
+[REQUIREMENT]
+UID: FW-REQ-7
+TITLE: Firmware Permanent Certificate
+STATEMENT: >>>
+The firmware shall request and receive permanent X.509 certificates via IoT Core Fleet Provisioning using the temporary claim certificate.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-44
+- TYPE: Parent
+  VALUE: IC-15
+- TYPE: Parent
+  VALUE: IC-18
+- TYPE: Parent
+  VALUE: IC-17
+
+[REQUIREMENT]
+UID: FW-REQ-8
+TITLE: Firmware Permanent Certificate Storage
+STATEMENT: >>>
+The firmware shall store the permanent X.509 certificate from IoT Fleet Provisioning in secure non-volatile memory.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-44
+- TYPE: Parent
+  VALUE: IC-15
+- TYPE: Parent
+  VALUE: IC-18
+- TYPE: Parent
+  VALUE: IC-17
+
+[[/SECTION]]
