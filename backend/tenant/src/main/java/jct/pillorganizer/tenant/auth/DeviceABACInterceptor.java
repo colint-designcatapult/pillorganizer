@@ -57,7 +57,7 @@ public class DeviceABACInterceptor implements MethodInterceptor<Object, Object> 
         return new AuthenticationException("Access denied to device");
     }
 
-    private Object authorizeByDeviceID(UUID id, MethodInvocationContext<Object, Object> context) {
+    private Object authorizeByDeviceID(String id, MethodInvocationContext<Object, Object> context) {
         if(context.getReturnType().isReactive()) {
             return authService.accessDevice(id);
         } else {

@@ -36,8 +36,8 @@ class UserDeviceAccessControllerSpec extends BaseIntegrationSpec {
     // @relation(CTRL-REQ-15, scope=range_start)
     void "test getUserDeviceAccess returns aggregated results"() {
         given:
-        def device1 = new DeviceAccessDto("d1", "dev1", "nickname1", "sn1", "model1", "tenant1", "apiBase1", true)
-        def device2 = new DeviceAccessDto("d2", "dev2", "nickname2", "sn2", "model2", "tenant2", "apiBase2", false)
+        def device1 = new DeviceAccessDto("d1", "dev1", "nickname1", "sn1", "model1", "tenant1", "apiBase1", true, "tenant1-sn1", "tenant-name")
+        def device2 = new DeviceAccessDto("d2", "dev2", "nickname2", "sn2", "model2", "tenant2", "apiBase2", false, "tenant2-sn2", "tenant-name")
         
         when:
         def request = HttpRequest.GET("/user/devices")
@@ -47,25 +47,27 @@ class UserDeviceAccessControllerSpec extends BaseIntegrationSpec {
         1 * userDeviceAccessService.getUserDeviceAccess() >> Flux.just(device1, device2)
         response.devices().size() == 2
         
-        with(response.devices().find { it.id() == "d1" }) {
-            id() == "d1"
-            deviceId() == "dev1"
+        with(response.devices().find { it.deviceId() == "d1" }) {
+            deviceId() == "d1"
+            claimId() == "dev1"
             nickname() == "nickname1"
             serialNo() == "sn1"
             modelId() == "model1"
             tenantId() == "tenant1"
             apiBase() == "apiBase1"
+            tenantName() == "tenant-name"
             primaryUser() == true
         }
 
-        with(response.devices().find { it.id() == "d2" }) {
-            id() == "d2"
-            deviceId() == "dev2"
+        with(response.devices().find { it.deviceId() == "d2" }) {
+            deviceId() == "d2"
+            claimId() == "dev2"
             nickname() == "nickname2"
             serialNo() == "sn2"
             modelId() == "model2"
             tenantId() == "tenant2"
             apiBase() == "apiBase2"
+            tenantName() == "tenant-name"
             primaryUser() == false
         }
     }

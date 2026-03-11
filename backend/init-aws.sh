@@ -65,3 +65,6 @@ DYNAMO_CONTROL_PLANE=$(cat <<EOF
 EOF
 )
 awslocal dynamodb create-table --cli-input-json "${DYNAMO_CONTROL_PLANE}"
+
+# SQS Queues
+awslocal sqs create-queue --queue-name tenant-test-tenant

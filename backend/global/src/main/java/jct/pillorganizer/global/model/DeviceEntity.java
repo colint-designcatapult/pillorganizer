@@ -24,6 +24,12 @@ public class DeviceEntity {
     @Getter(onMethod_ = @DynamoDbAttribute("TenantId"))
     String tenantId;
 
+    @Getter(onMethod_ = @DynamoDbAttribute("ClaimId"))
+    String claimId;
+
+    @Getter(onMethod_ = @DynamoDbAttribute("ThingName"))
+    String thingName;
+
     public static String pk(String serialNumber) {
         return "SN#" + serialNumber;
     }
@@ -58,6 +64,16 @@ public class DeviceEntity {
                 .gsi2Pk(gsi2Pk(deviceId))
                 .gsi2Sk(gsi2Sk())
                 .createdAt(Instant.now())
+                .lastModified(Instant.now())
+                .build();
+    }
+
+    public static BaseControlPlaneEntity updateBase(BaseControlPlaneEntity existingBase, String serialNumber, String tenantId, String deviceId) {
+        return existingBase.toBuilder()
+                .gsi1Pk(gsi1Pk(tenantId))
+                .gsi1Sk(gsi1Sk(serialNumber))
+                .gsi2Pk(gsi2Pk(deviceId))
+                .gsi2Sk(gsi2Sk())
                 .lastModified(Instant.now())
                 .build();
     }

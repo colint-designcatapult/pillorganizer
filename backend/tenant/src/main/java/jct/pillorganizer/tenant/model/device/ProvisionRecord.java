@@ -18,11 +18,11 @@ import java.sql.Timestamp;
 @Serdeable
 public class ProvisionRecord {
     @Id
-    private String deviceId;
+    private String claimId;
 
     private String serialNo;
 
-    private String claimToken;
+    private String thingName;
 
     private DeviceClass deviceClass = DeviceClass.v1_7x2;
 

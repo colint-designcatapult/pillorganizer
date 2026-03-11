@@ -1,4 +1,4 @@
-import 'package:app/api/device.dart';
+import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/device_provider.dart';
 import 'package:app/screens/modals/time_zone_selection.dart';
 import 'package:app/service/time_service.dart';
@@ -9,9 +9,12 @@ import 'package:flutter_svg/svg.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timezone/standalone.dart' as tz;
+import 'package:collection/collection.dart';
+
+import '../provider/selected_device_provider.dart';
 
 class TimeZoneSelection extends ConsumerStatefulWidget {
-  final DeviceUser device;
+  final DeviceMetadata? device;
   final bool isOwner;
 
   const TimeZoneSelection({
@@ -43,30 +46,25 @@ class TimeZoneSelectionState extends ConsumerState<TimeZoneSelection> {
   }
 
   Future<void> _updateDeviceTimezone(tz.Location location) async {
-    await ref.read(deviceListProvider.notifier).updateDeviceTimeZone(widget.device.deviceID, location);
+    await ref.read(deviceListProvider.notifier).updateDeviceTimeZone(widget.device!.id, location);
   }
 
   @override
   Widget build(BuildContext context) {
+    final activeDevice = ref.watch(activeDeviceProvider);
+    final deviceConfig = ref.watch(activeDeviceConfigProvider);
+    
+    // If we're looking at the active device, use its config
+    // Otherwise we don't have config for it yet via providers
+    final timezone = (activeDevice?.id == widget.device?.id) ? deviceConfig?.timezone : null;
+
     final deviceListAsync = ref.watch(deviceListProvider);
-    final devices = deviceListAsync.value ?? [];
-
-    DeviceUser? currentDevice;
-    if (devices.isNotEmpty) {
-      currentDevice = devices.firstWhere(
-        (device) => device.deviceID == widget.device.deviceID,
-        orElse: () => widget.device,
-      );
-    } else {
-      currentDevice = widget.device;
-    }
-
-    bool isUpdatingTimezone = deviceListAsync.isLoading; // Approximation
+    bool isUpdatingTimezone = deviceListAsync.isLoading;
 
     return Column(
       children: [
         _buildTimezoneSection(
-            currentDevice, widget.isOwner, isUpdatingTimezone),
+             timezone, widget.isOwner, isUpdatingTimezone),
         SizedBox(height: 16.h),
         _buildCurrentTimezoneButton(isUpdatingTimezone),
       ],
@@ -74,7 +72,7 @@ class TimeZoneSelectionState extends ConsumerState<TimeZoneSelection> {
   }
 
   Widget _buildTimezoneSection(
-      DeviceUser currentDevice, bool isOwner, bool isUpdatingTimezone) {
+      String? timezone, bool isOwner, bool isUpdatingTimezone) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -98,7 +96,7 @@ class TimeZoneSelectionState extends ConsumerState<TimeZoneSelection> {
                 )
               : ListTile(
                   title: Text(
-                    _buildTimeZoneName(currentDevice.timezone),
+                    _buildTimeZoneName(timezone),
                     style: Theme.of(context).textTheme.displaySmall,
                   ),
                   leading: SvgPicture.asset(
@@ -159,9 +157,10 @@ class TimeZoneSelectionState extends ConsumerState<TimeZoneSelection> {
     );
   }
 
-  String _buildTimeZoneName(TimeZoneLocation? loc) {
+  String _buildTimeZoneName(String? tzString) {
+    final loc = lookupTimeZoneLocation(tzString);
     if (loc == null) {
-      return "UTC/GMT";
+      return tzString ?? "UTC/GMT";
     } else {
       final idx = loc.name.indexOf('/') + 1;
       return "${loc.name.substring(idx, loc.name.length).replaceAll("_", " ")} (${loc.currentTimeZone.abbreviation})";

@@ -1,21 +1,5 @@
 menu "Development Configuration"
 
-config DEV_WIFI_ENABLED
-    bool "Enable development WiFi (skip BLE provisioning)"
-    default y
-    help
-        Use hardcoded WiFi credentials for development.
-
-config DEV_WIFI_SSID
-    string "WiFi SSID"
-    depends on DEV_WIFI_ENABLED
-    default ""
-
-config DEV_WIFI_PASSWORD
-    string "WiFi Password"
-    depends on DEV_WIFI_ENABLED
-    default ""
-
 config AWS_IOT_ENDPOINT
     string "AWS IoT Endpoint"
     default "mqtt.app.healthesolutions.ca"
@@ -23,5 +7,45 @@ config AWS_IOT_ENDPOINT
 config AWS_IOT_THING_NAME
     string "AWS IoT Thing Name"
     default "PillOrganizer_Test_001"
+
+config DEV_CLAIM_TENANT_ID
+    string "Claim Tenant ID"
+    default "public"
+    help
+        Tenant ID returned from the claim credential exchange.
+        Obtained by running the iot_provision.py script.
+
+config DEV_CLAIM_TOKEN
+    string "Claim Token (claimId)"
+    default ""
+    help
+        claimId returned from the claim credential exchange.
+        Obtained by running the iot_provision.py script.
+
+config CONTROL_PLANE_URL
+    string "Control Plane Base URL"
+    default "https://control-plane.app.healthesolutions.ca"
+    help
+        Base URL for control plane endpoints (device/claim_cert, etc.)
+        Used for fetching temporary certificates during Fleet Provisioning.
+
+config RESET_PROVISIONED_ON_BOOT
+    bool "Reset WiFi provisioning on boot (for testing)"
+    default n
+    help
+        Erase WiFi provisioning credentials on every boot to test BLE provisioning.
+        AWS IoT certificates are preserved. Disable this after testing.
+
+endmenu
+
+menu "Watchdog Configuration"
+
+config ESP_TASK_WDT_TIMEOUT_S
+    int "Task Watchdog Timeout (seconds)"
+    default 60
+    range 1 3600
+    help
+        The Task Watchdog Timer timeout in seconds. Set to 120 to accommodate
+        expensive TLS operations like ECDH key exchange during AWS IoT connections.
 
 endmenu

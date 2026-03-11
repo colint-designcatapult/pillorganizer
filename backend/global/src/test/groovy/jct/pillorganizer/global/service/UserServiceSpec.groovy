@@ -1,5 +1,6 @@
 package jct.pillorganizer.global.service
 
+import io.micronaut.security.token.validator.TokenValidator
 import jct.pillorganizer.core.uid.KsuidService
 import jct.pillorganizer.global.model.UserEntity
 import jct.pillorganizer.global.repo.UserRepo
@@ -13,9 +14,10 @@ class UserServiceSpec extends Specification {
 
     UserRepo userRepo = Mock()
     KsuidService ksuidService = new KsuidService()
+    TokenValidator<?> tokenValidator = Mock()
 
     @Subject
-    UserService userService = new UserService(userRepo, ksuidService)
+    UserService userService = new UserService(userRepo, ksuidService, tokenValidator)
 
     def "should create a new user when one does not exist"() {
         given:

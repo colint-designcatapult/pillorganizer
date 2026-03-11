@@ -3,6 +3,6 @@ package jct.pillorganizer.global.dto;
 import io.micronaut.serde.annotation.Serdeable;
 
 @Serdeable
-public record ProvisioningClaimDto(String certificatePem, String privateKey,
-                                   String expiration, String claimId, String tenantId, String tenantApiBase) {
+public record ProvisioningClaimDto(String claimId, String tenantId, String tenantApiBase, String deviceId,
+                                   String claimToken) {
 }

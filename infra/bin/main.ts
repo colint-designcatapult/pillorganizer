@@ -52,7 +52,11 @@ const authStack = new AuthStack(app, 'HealtheAuthStack', {
 
 const iotStack = new IotStack(app, `HealtheIotStack`, {
   env: globalEnv,
-  controlPlaneTable: controlPlaneDataStack.controlPlaneTable
+  controlPlaneTable: controlPlaneDataStack.controlPlaneTable,
+  mqttDomain: platformStack.mqttDomain,
+  mqttCertificateArn: platformStack.mqttCertificateArn,
+  mqttWsCertificateArn: platformStack.mqttWsCertificateArn,
+  mqttWsDomain: platformStack.mqttWsDomain,
 });
 
 // Environment-specific Stacks (Data, App)

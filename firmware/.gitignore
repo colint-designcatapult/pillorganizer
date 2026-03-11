@@ -19,6 +19,8 @@ sdkconfig.esp32dev.old
 src/certs/device_cert.crt
 src/certs/device_key.key
 src/certs/root_ca.pem
+src/certs/claim_cert.pem
+src/certs/claim_key.pem
 
 # End of https://www.toptal.com/developers/gitignore/api/platformio
 

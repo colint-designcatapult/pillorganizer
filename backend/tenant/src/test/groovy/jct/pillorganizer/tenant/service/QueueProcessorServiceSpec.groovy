@@ -47,17 +47,18 @@ class QueueProcessorServiceSpec extends BaseIntegrationSpec {
                 .deviceId("test-device-id")
                 .userId(user.id)
                 .serialNo("serial-123")
-                .claimToken("claim-456")
+                .claimId("claim-456")
+                .thingName("test-thing-name")
                 .build()
 
         when:
         queueProcessorService.processQueueMessage(message)
 
         then:
-        def provisionRecord = provisionRecordRepository.findById("test-device-id")
+        def provisionRecord = provisionRecordRepository.findById("claim-456")
         provisionRecord.isPresent()
         provisionRecord.get().serialNo == "serial-123"
-        provisionRecord.get().claimToken == "claim-456"
+        provisionRecord.get().claimId == "claim-456"
         provisionRecord.get().provisionedBy.id == user.id
     }
 

@@ -1,4 +1,4 @@
-import 'package:app/api/device.dart';
+import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/widgets/add_device.dart';
 import 'package:app/widgets/single_device_modal.dart';
@@ -11,7 +11,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class MultipleDevices extends ConsumerWidget {
-  final List<DeviceUser> devices;
+  final List<DeviceMetadata> devices;
 
   const MultipleDevices({
     super.key,
@@ -57,8 +57,8 @@ class MultipleDevices extends ConsumerWidget {
               itemBuilder: (context, index) {
                 final device = devices[index];
                 final isCurrentDevice =
-                    activeDevice?.deviceID == device.deviceID;
-                final isDeviceReadOnly = !device.owner;
+                    activeDevice?.id == device.id;
+                final isDeviceReadOnly = !device.primaryUser;
 
                 return Container(
                   margin: EdgeInsets.symmetric(vertical: 4.h),
@@ -209,7 +209,7 @@ class MultipleDevices extends ConsumerWidget {
                                   context: context,
                                   backgroundColor: Colors.transparent,
                                   builder: (context) => SingleDeviceModal(
-                                    deviceId: device.deviceID,
+                                    deviceId: device.id,
                                   ),
                                 );
                               },

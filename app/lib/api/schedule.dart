@@ -79,14 +79,14 @@ class ScheduleRepository {
 
   final RestClient client;
 
-  Future<SimpleSchedule> getDispenseTimes(int deviceID) {
+  Future<SimpleSchedule> getDispenseTimes(String deviceID) {
     return client
         .getDispenseTimes(deviceID)
         .then((value) => SimpleSchedule.fromDTO(value));
   }
 
   Future<SimpleSchedule> updateDispenseTimes(
-      int deviceID, SimpleSchedule schedule) {
+      String deviceID, SimpleSchedule schedule) {
     return client
         .updateDispenseTimes(deviceID, schedule.toDTO())
         .then((value) => SimpleSchedule.fromDTO(value));

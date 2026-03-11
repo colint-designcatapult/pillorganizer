@@ -1,5 +1,5 @@
-import 'package:app/api/device.dart';
-import 'package:app/api/schedule.dart';
+import 'package:app/apiv2/models/device.dart';
+import 'package:app/apiv2/models/schedule.dart';
 import 'package:app/provider/schedule_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
@@ -20,25 +20,23 @@ const double _subtitleContentSpacing = 16.0;
 class ScheduleEntry extends ConsumerStatefulWidget {
   final bool showRemovalSection;
   final bool showAddDeviceSection;
-  final DeviceUser? device;
-  final bool isOwner;
+  final DeviceMetadata? device;
 
   const ScheduleEntry({
     super.key,
     this.showRemovalSection = true,
     this.showAddDeviceSection = true,
     this.device,
-    this.isOwner = false,
   });
 
   @override
   ConsumerState<ScheduleEntry> createState() => _ScheduleEntryState();
 }
 
-void deleteDevice(context) {
+void deleteDevice(BuildContext context, DeviceMetadata? device) {
   showDialog(
     context: context,
-    builder: (_) => const RemoveDeviceDialog(),
+    builder: (_) => RemoveDeviceDialog(device: device),
   );
 }
 
@@ -49,7 +47,7 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final targetDevice = widget.device ?? ref.read(activeDeviceProvider);
       if (targetDevice != null) {
-        ref.read(scheduleProvider.notifier).load(targetDevice.deviceID);
+        ref.read(scheduleProvider.notifier).load(targetDevice.id);
       }
     });
   }
@@ -66,10 +64,6 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
     return scheduleAsync.when(
       data: (schedule) {
         final deviceSchedule = SimpleSchedule.fromDTO(schedule);
-        // We might need to check isLoading/isUpdating from the notifier if they are not in the state
-        // In Riverpod 3.0, we can use AsyncValue.isLoading for initial load.
-        // If we have custom updating states, we'd need a separate provider or complex state.
-        // For now, let's assume scheduleProvider state is just the List of schedules.
         
         return ScreenUtilWrapper(
           child: Column(
@@ -82,13 +76,13 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
                   false, // isLoading
                   false, // isUpdatingAM
                   false), // isUpdatingPM
-              if (widget.isOwner) ...[
+              if (targetDevice.primaryUser) ...[
                 SizedBox(height: _sectionSpacing.h),
                 _buildTimezoneSection(targetDevice),
               ],
               if (widget.showRemovalSection) ...[
                 SizedBox(height: _sectionSpacing.h),
-                const RemovalSection(),
+                RemovalSection(device: targetDevice),
               ],
               if (widget.showAddDeviceSection) ...[
                 SizedBox(height: _sectionSpacing.h),
@@ -106,7 +100,7 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
 
   Widget _buildTimeSetupSection(
       SimpleSchedule? deviceSchedule,
-      DeviceUser targetDevice,
+      DeviceMetadata targetDevice,
       bool isLoadingSchedule,
       bool isUpdatingAMSchedule,
       bool isUpdatingPMSchedule) {
@@ -141,7 +135,7 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
     );
   }
 
-  Widget _buildTimezoneSection(DeviceUser targetDevice) {
+  Widget _buildTimezoneSection(DeviceMetadata targetDevice) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -155,16 +149,16 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
           style: Theme.of(context).textTheme.bodySmall,
         ),
         SizedBox(height: _subtitleContentSpacing.h),
-        TimeZoneSelection(device: targetDevice, isOwner: widget.isOwner),
+        TimeZoneSelection(device: targetDevice, isOwner: targetDevice.primaryUser),
       ],
     );
   }
 
   Widget _buildTimeBlock(DayPeriod dayPeriod, DispenseTime? entry,
-      DeviceUser device, bool isUpdating) {
+      DeviceMetadata device, bool isUpdating) {
     return GestureDetector(
         onTap: () {
-          if (!widget.isOwner) {
+          if (!device.primaryUser) {
             return;
           }
 
@@ -184,7 +178,7 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
           ).then((selectedTime) {
             if (selectedTime != null) {
               ref.read(scheduleProvider.notifier)
-                  .updateTime(dayPeriod, selectedTime, device.deviceID);
+                  .updateTime(dayPeriod, selectedTime, device.id);
             }
           });
         },
@@ -232,7 +226,7 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
                                 ? EdgeInsets.fromLTRB(2.w, 16.h, 2.w, 16.h)
                                 : EdgeInsets.fromLTRB(14.w, 16.h, 14.w, 16.h),
                         child: Row(
-                          mainAxisAlignment: widget.isOwner
+                          mainAxisAlignment: device.primaryUser
                               ? MainAxisAlignment.spaceBetween
                               : MainAxisAlignment.center,
                           children: [
@@ -247,7 +241,7 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
                                   ? Theme.of(context).textTheme.bodySmall
                                   : Theme.of(context).textTheme.labelSmall,
                             ),
-                            if (widget.isOwner)
+                            if (device.primaryUser)
                               Row(children: [
                                 SvgPicture.asset(
                                   'lib/assets/SVG/PencilSimpleLine.svg',
@@ -269,7 +263,8 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
 }
 
 class RemovalSection extends ConsumerWidget {
-  const RemovalSection({super.key});
+  final DeviceMetadata? device;
+  const RemovalSection({super.key, this.device});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -287,7 +282,7 @@ class RemovalSection extends ConsumerWidget {
           width: double.infinity,
           child: OutlinedButton(
             onPressed: () {
-              deleteDevice(context);
+              deleteDevice(context, device);
             },
             style: ButtonStyle(
               side: WidgetStateProperty.all<BorderSide>(

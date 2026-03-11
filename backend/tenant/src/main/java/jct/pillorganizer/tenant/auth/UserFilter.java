@@ -34,9 +34,7 @@ public class UserFilter implements Ordered {
 
         request.setAttribute(USER_ID_ATTRIBUTE, userIdString);
 
-        BaseUser user = userService.get(userIdString)
-                .orElseThrow(() -> new InvalidTenantUserException("User authenticated but no record found for user: "
-                        + userIdString));
+        BaseUser user = userService.ensureExists(userIdString);
         request.setAttribute(USER_ENTITY_ATTRIBUTE, user);
     }
 

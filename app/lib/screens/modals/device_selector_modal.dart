@@ -1,3 +1,4 @@
+import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../api/device.dart';
+
 import '../../platform/bottom_modal.dart';
 import '../../widgets/device_icon.dart';
 
@@ -23,7 +24,7 @@ class DeviceListHeader extends StatelessWidget {
 }
 
 class DeviceListEntry extends ConsumerWidget {
-  final DeviceUser device;
+  final DeviceMetadata device;
 
   const DeviceListEntry({super.key, required this.device});
 
@@ -35,9 +36,7 @@ class DeviceListEntry extends ConsumerWidget {
         title: Text(device.name),
         leading: DeviceStatusIcon(
             size: 48,
-            status: device.isOnline
-                ? DeviceConnectionStatus.online
-                : DeviceConnectionStatus.offline),
+            status: DeviceConnectionStatus.online),
         onTap: () {
           ref.read(activeDeviceProvider.notifier).selectDevice(device);
           Navigator.of(context)
@@ -66,10 +65,10 @@ class DeviceSelectorModal extends ConsumerWidget {
         child: ref.watch(deviceListProvider).when(
           data: (devices) {
             Iterable<Widget> yourDevices = devices
-                .where((element) => element.owner)
+                .where((element) => element.primaryUser)
                 .map((e) => DeviceListEntry(device: e));
             Iterable<Widget> otherDevices = devices
-                .where((element) => !element.owner)
+                .where((element) => !element.primaryUser)
                 .map((e) => DeviceListEntry(device: e));
 
             return ListView(
@@ -97,7 +96,7 @@ class DeviceSelectorModal extends ConsumerWidget {
   }
 }
 
-Future<DeviceUser?> showDeviceSelectorModal(BuildContext context) {
+Future<DeviceMetadata?> showDeviceSelectorModal(BuildContext context) {
   return showPlatformModalBottomSheet(
       context: context,
       expand: false,

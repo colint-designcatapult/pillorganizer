@@ -11,6 +11,7 @@ extern "C" {
 #endif
 
 #include "pill_types.h"
+#include "ble_endpoints.h"
 
 void wifi_init_early();
 void wifi_init();
@@ -22,11 +23,17 @@ bool wifi_wait_for_connection(TickType_t ticks_to_wait);
 bool wifi_wait_for_disconnect(TickType_t ticks_to_wait);
 
 bool wifi_is_connected();
+bool wifi_is_credential_failed(void);
 
 const wifi_info_t* wifi_get_info();
 
-// Provisioning helper - set WiFi credentials
-esp_err_t wifi_set_credentials(const char* ssid, const char* password);
+/* Check if app acknowledged receipt of device serial number */
+bool wifi_device_serial_acknowledged();
+
+/* Reset the serial acknowledgement flag */
+void wifi_reset_serial_acknowledgement();
+
+void wifi_deinit_provisioning(void);
 
 #ifdef __cplusplus
 }

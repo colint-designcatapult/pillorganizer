@@ -3,16 +3,11 @@
 #include "esp_err.h"
 
 /**
- * @brief Initializes the telemetry timer and MQTT hooks.
+ * @brief Registers the bin event handler and starts telemetry.
  */
-esp_err_t iot_telemetry_start();
+esp_err_t iot_telemetry_start(void);
 
 /**
- * @brief Stops the 10-second heartbeat.
+ * @brief Publishes all 14 bin states to /tenant/{id}/{device}/bins/state.
  */
-void iot_telemetry_stop();
-
-/**
- * @brief Publishes the voltage of a specific bin as JSON.
- */
-void publish_bin_voltage_json(int bin_id);
+void iot_telemetry_publish_bin_state(void);

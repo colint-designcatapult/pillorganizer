@@ -22,8 +22,8 @@ class AppApi {
     return "v1_7x2";
   }
 
-  static Future<int?> deviceID() async {
-    return (await SharedPreferences.getInstance()).getInt("device_id");
+  static Future<String?> getSavedDeviceId() async {
+    return (await SharedPreferences.getInstance()).getString("device_id");
   }
 
   static Future<String?> deviceSerial() async {
@@ -40,10 +40,10 @@ abstract class RestClient {
 
   @POST("/device/provision/{id}/verify")
   Future<ProvisionStatus> provisionStatus(
-      @Path("id") int id, @Body() VerifyProvision status);
+      @Path("id") String id, @Body() VerifyProvision status);
 
   @POST("/device/{id}/reload")
-  Future<void> reload(@Path("id") int id);
+  Future<void> reload(@Path("id") String id);
 
   @POST("/mail/send_recovery_code")
   Future<void> sendRecoveryCode(@Body() UserSendRecoveryCodeDTO dto);
@@ -73,45 +73,45 @@ abstract class RestClient {
   Future<List<DeviceUserDTO>> listMyDevices();
 
   @GET("/device/{id}/medication")
-  Future<List<ScheduledMedicationDTO>> medications(@Path("id") int deviceID);
+  Future<List<ScheduledMedicationDTO>> medications(@Path("id") String id);
 
   @PUT("/device/{id}/medication")
   Future<ScheduledMedicationDTO> addMedication(
-      @Path("id") int deviceID, @Body() ScheduledMedicationDTO dto);
+      @Path("id") String id, @Body() ScheduledMedicationDTO dto);
 
   @POST("/device/{id}/medication")
   Future<ScheduledMedicationDTO> saveMedication(
-      @Path("id") int deviceID, @Body() SaveMedicationDTO dto);
+      @Path("id") String id, @Body() SaveMedicationDTO dto);
 
   @DELETE("/device/{id}/medication/{med_id}")
   Future<void> deleteMedication(
-      @Path("id") int deviceID, @Path("med_id") int medID);
+      @Path("id") String id, @Path("med_id") int medID);
 
   @DELETE("/device/{id}")
-  Future<void> removeDevice(@Path("id") int deviceID);
+  Future<void> removeDevice(@Path("id") String id);
 
   @GET("/device/{id}/medication/{med_id}")
   Future<ScheduledMedicationDTO> medication(
-      @Path("id") int deviceID, @Path("med_id") int medID);
+      @Path("id") String id, @Path("med_id") int medID);
 
   @PUT("/device/{id}")
   Future<DeviceUserDTO> setDeviceSettings(
-      @Path("id") int deviceID, @Body() UpdateDeviceUserSettings settings);
+      @Path("id") String id, @Body() UpdateDeviceUserSettings settings);
 
   @GET("/device/{id}/dispense_time")
-  Future<SimpleScheduleDTO> getDispenseTimes(@Path("id") int deviceID);
+  Future<SimpleScheduleDTO> getDispenseTimes(@Path("id") String id);
 
   @POST("/device/{id}/dispense_time")
   Future<SimpleScheduleDTO> updateDispenseTimes(
-      @Path("id") int deviceID, @Body() SimpleScheduleDTO dto);
+      @Path("id") String id, @Body() SimpleScheduleDTO dto);
 
   @POST("/device/{id}/sync")
-  Future<String> deviceSync(@Path("id") int deviceID, @Body() String data);
+  Future<String> deviceSync(@Path("id") String id, @Body() String data);
 
   @POST("/device/{id}/state")
   @FormUrlEncoded()
   Future<DeviceStateDTO> stateDate(
-      @Path("id") int deviceID, @Field() String date);
+      @Path("id") String id, @Field() String date);
 
   @POST("/caregiver/validate/{code}")
   Future<CaregiverCodeValidationDTO> validateCaregiverCode(
@@ -119,11 +119,11 @@ abstract class RestClient {
 
   @POST("/caregiver/generate/{deviceId}")
   Future<DeviceCaregiverCodeDTO> generateCaregiverCode(
-      @Path("deviceId") int deviceId);
+      @Path("deviceId") String id);
 
   @GET("/caregiver/codes")
   Future<List<DeviceCaregiverCodeDTO>> getShareCodes(
-      @Query("deviceIds") List<int> deviceIds);
+      @Query("deviceIds") List<String> deviceIds);
 
   @POST("/takecare/validate/{patientID}")
   Future<void> validateAndLinkTakecarePatient(
@@ -333,7 +333,7 @@ class ProvisionStart {
 
 @JsonSerializable()
 class DeviceProvision {
-  final int id;
+  final String id;
   final String oobKey;
 
   DeviceProvision({required this.id, required this.oobKey});
@@ -366,10 +366,10 @@ class UserInfoDTO {
 
 @JsonSerializable()
 class ProvisionStatus {
-  final int deviceID;
+  final String id;
   final bool provisioned;
 
-  ProvisionStatus({required this.deviceID, required this.provisioned});
+  ProvisionStatus({required this.id, required this.provisioned});
 
   factory ProvisionStatus.fromJson(Map<String, dynamic> json) =>
       _$ProvisionStatusFromJson(json);
@@ -377,10 +377,10 @@ class ProvisionStatus {
 
 @JsonSerializable()
 class DeviceBinID {
-  final int deviceID;
+  final String id;
   final int binID;
 
-  DeviceBinID({required this.deviceID, required this.binID});
+  DeviceBinID({required this.id, required this.binID});
 
   factory DeviceBinID.fromJson(Map<String, dynamic> json) =>
       _$DeviceBinIDFromJson(json);
@@ -427,7 +427,7 @@ class BinStateDTO {
 @JsonSerializable()
 class DeviceUserDTO {
   final int id;
-  final int deviceID;
+  final String deviceID;
   final String deviceClass;
   final String? customName;
   final int serialNo;
@@ -455,7 +455,7 @@ class DeviceUserDTO {
 
 @JsonSerializable()
 class DeviceDTO {
-  final int id;
+  final String id;
   final String deviceClass;
   final String serialNo;
   final String? customName;
@@ -764,7 +764,7 @@ class DosePeriodDTO {
 
 @JsonSerializable()
 class DeviceStateDTO {
-  final int id;
+  final String id;
   final int? lastSync;
   final int? bins;
   final List<DosePeriodDTO>? dosePeriods;
@@ -786,7 +786,7 @@ class DeviceStateDTO {
 @JsonSerializable()
 class DeviceCaregiverCodeDTO {
   final int id;
-  final int deviceID;
+  final String deviceID;
   final int code;
   final int expiresAt;
   final bool deleted;

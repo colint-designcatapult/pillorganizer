@@ -7,7 +7,7 @@ file(GLOB_RECURSE app_sources
     ${CMAKE_CURRENT_LIST_DIR}/*.cpp
 )
 
-# Filter out certs folder from sources
+# Filter out certs folder
 list(FILTER app_sources EXCLUDE REGEX ".*certs/.*")
 
 # Register the component WITH embedded files
@@ -16,12 +16,11 @@ idf_component_register(
     INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}
     EMBED_TXTFILES 
         ${CMAKE_CURRENT_LIST_DIR}/certs/root_ca.pem
-        ${CMAKE_CURRENT_LIST_DIR}/certs/device_cert.crt
-        ${CMAKE_CURRENT_LIST_DIR}/certs/device_key.key
         ${CMAKE_CURRENT_LIST_DIR}/data/engineering.html
     REQUIRES
         nvs_flash
         esp_http_server
+        esp_http_client
         esp_wifi
         esp_event
         esp_netif
@@ -31,10 +30,14 @@ idf_component_register(
         mqtt
         bt
         mbedtls
+        json
         coreMQTT
         Device-Shadow-for-AWS-IoT-embedded-sdk
         coreJSON
         backoffAlgorithm
+        Fleet-Provisioning-for-AWS-IoT-embedded-sdk
+        wifi_provisioning
+        protocomm
 )
 
 # Set C++23 standard

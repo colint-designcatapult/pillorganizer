@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:app/api/device.dart';
+import 'package:app/apiv2/models/device.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'bin_container.dart';
 

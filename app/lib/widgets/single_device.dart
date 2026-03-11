@@ -1,23 +1,26 @@
-import 'package:app/api/device.dart';
+import 'package:app/apiv2/models/device.dart';
+import 'package:app/provider/mqtt_provider.dart';
 import 'package:app/widgets/device_rename_modal.dart';
 import 'package:app/widgets/notifications_settings.dart';
 import 'package:app/widgets/schedule_entry.dart';
 import 'package:app/widgets/share_device.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
-void changeName(context, {DeviceUser? device}) {
+void changeName(context, {DeviceMetadata? device}) {
   showDialog(
     context: context,
     builder: (_) => ChangeDeviceNameDialog(device: device),
   );
 }
 
+
 class SingleDevice extends StatefulWidget {
-  final DeviceUser? device;
+  final DeviceMetadata? device;
   final bool showAddDeviceSection;
   final bool isModal;
 
@@ -40,8 +43,7 @@ class _SingleDeviceState extends State<SingleDevice> {
       case 0:
         return ScheduleEntry(
             showAddDeviceSection: widget.showAddDeviceSection,
-            device: widget.device,
-            isOwner: widget.device?.owner ?? false);
+            device: widget.device);
       case 1:
         return NotificationsSettings(device: widget.device);
       case 2:
@@ -49,8 +51,7 @@ class _SingleDeviceState extends State<SingleDevice> {
       default:
         return ScheduleEntry(
             showAddDeviceSection: widget.showAddDeviceSection,
-            device: widget.device,
-            isOwner: widget.device?.owner ?? false);
+            device: widget.device);
     }
   }
 
@@ -94,7 +95,7 @@ class _SingleDeviceState extends State<SingleDevice> {
 
   @override
   Widget build(BuildContext context) {
-    bool isOwner = widget.device?.owner ?? false;
+    bool isOwner = widget.device?.primaryUser ?? false;
     List<ButtonSegment> segments = _getSegments();
 
     return Container(

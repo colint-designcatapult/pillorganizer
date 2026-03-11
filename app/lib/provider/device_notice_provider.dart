@@ -1,5 +1,5 @@
 import 'package:app/api/api.dart';
-import 'package:app/api/device.dart';
+import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/device_connection_status_provider.dart';
 import 'package:app/provider/device_state_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

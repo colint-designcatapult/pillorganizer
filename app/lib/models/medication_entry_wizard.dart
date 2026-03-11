@@ -10,7 +10,7 @@ enum NewMedicationStage { name, appearance, schedule }
 abstract class NewMedicationState with _$NewMedicationState {
   const factory NewMedicationState(
       {ScheduledMedication? existing,
-      required int deviceID,
+      required String deviceID,
       @Default(NewMedicationStage.name) NewMedicationStage stage,
       String? name,
       MedicationShape? shape,

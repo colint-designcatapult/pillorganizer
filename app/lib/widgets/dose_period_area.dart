@@ -5,6 +5,7 @@ import 'package:app/widgets/circular_bin_status_indicator.dart';
 import 'package:app/widgets/shimmer_placeholder.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
+import 'package:app/service/time_service.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:collection/collection.dart';
@@ -12,7 +13,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:timezone/standalone.dart' as tz;
 
-import '../../api/device.dart';
+import '../apiv2/models/device.dart';
 import '../../provider/device_notice_provider.dart';
 import '../../provider/device_state_provider.dart';
 import '../../provider/medication_provider.dart';
@@ -30,7 +31,7 @@ class DosePeriodArea extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dosePeriodsRaw = ref.watch(deviceStateProvider.select((s) => s.value?.dosePeriods));
     final activeDevice = ref.watch(activeDeviceProvider);
-    final isOwner = activeDevice?.owner ?? false;
+    final isOwner = activeDevice?.primaryUser ?? false;
     final deviceNotice = ref.watch(deviceNoticeProvider);
 
     final now = DateTime.now();
@@ -38,7 +39,7 @@ class DosePeriodArea extends ConsumerWidget {
     List<DosePeriod>? dosePeriods = dosePeriodsRaw
         ?.where((element) {
           if (isOwner) {
-            if (element.status == BinStatus.DISABLED ||
+            if (element.status == BinStatus.disabled ||
                 element.scheduledTime == null) {
               return false;
             }
@@ -179,8 +180,8 @@ class DosePeriodArea extends ConsumerWidget {
   Widget _buildMed(BuildContext context, WidgetRef ref, DosePeriod period, ScheduledMedication? med,
       DeviceNotice deviceNotice) {
     final activeDevice = ref.watch(activeDeviceProvider);
-    final deviceID = activeDevice?.deviceID ?? 0;
-    final bool isOwner = activeDevice?.owner ?? false;
+    final deviceID = activeDevice?.id ?? "";
+    final bool isOwner = activeDevice?.primaryUser ?? false;
 
     void onComplete() {
       ref.invalidate(medicationsProvider);
@@ -353,19 +354,19 @@ class DosePeriodArea extends ConsumerWidget {
     }
     String format = _formatTimeInDeviceTimezone(context, ref, period.scheduledTime);
 
-    if (period.status == BinStatus.DISABLED ||
+    if (period.status == BinStatus.disabled ||
         deviceNotice == DeviceNotice.empty) {
       return AppLocalizations.of(context)!.doseRefill;
-    } else if (period.status == BinStatus.TAKEN) {
+    } else if (period.status == BinStatus.taken) {
       final takenTime = period.takenAtTime != null
           ? _formatTakenAtTime(context, period.takenAtTime)
           : format;
       return AppLocalizations.of(context)!.doseTakenAt(takenTime);
-    } else if (period.status == BinStatus.TAKE_NOW) {
+    } else if (period.status == BinStatus.takeNow) {
       return AppLocalizations.of(context)!.doseTakeNow;
-    } else if (period.status == BinStatus.PENDING) {
+    } else if (period.status == BinStatus.pending) {
       return AppLocalizations.of(context)!.doseTakeAt;
-    } else if (period.status == BinStatus.MISSED) {
+    } else if (period.status == BinStatus.missed) {
       return AppLocalizations.of(context)!.missedAt(format);
     } else {
       return '';
@@ -376,12 +377,16 @@ class DosePeriodArea extends ConsumerWidget {
     if (dateTime == null) return "";
 
     final selectedDevice = ref.watch(activeDeviceProvider);
-    final deviceTimezone = selectedDevice?.timezone;
+    final deviceTimezone = ref.watch(activeDeviceConfigProvider)?.timezone;
     final appLocale = AppLocalizations.of(context)!.localeName;
 
     if (deviceTimezone != null) {
-      final deviceTime = tz.TZDateTime.from(dateTime.toUtc(), deviceTimezone);
-      return DateFormat.jm(appLocale).format(deviceTime);
+      final loc = lookupTimeZoneLocation(deviceTimezone);
+      if (loc != null) {
+        final deviceTime = tz.TZDateTime.from(dateTime.toUtc(), loc);
+        return DateFormat.jm(appLocale).format(deviceTime);
+      }
+      return DateFormat.jm(appLocale).format(dateTime);
     } else {
       return DateFormat.jm(appLocale).format(dateTime);
     }

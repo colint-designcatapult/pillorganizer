@@ -5,11 +5,13 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.global.client.TenantClient;
+import lombok.extern.flogger.Flogger;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 
+@Flogger
 @Singleton
 public class UserDeviceAccessService {
 
@@ -30,4 +32,14 @@ public class UserDeviceAccessService {
                         )
                 );
     }
+
+
+    public Mono<String> getUserDeviceAccessPolicyDocument(String jwt, String tenantId, String deviceId) {
+        TenantClient client = tenants.stream().filter(c -> tenantId.equals(c.getTenantDetails().getId()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Tenant not found: " + tenantId));
+
+        return client.getDeviceAccessPolicyDocument(jwt, deviceId);
+    }
+
 }

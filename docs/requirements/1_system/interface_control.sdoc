@@ -1,0 +1,284 @@
+[DOCUMENT]
+TITLE: Interface Control Document
+
+[GRAMMAR]
+ELEMENTS:
+- TAG: SECTION
+  PROPERTIES:
+    IS_COMPOSITE: True
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: False
+  - TITLE: LEVEL
+    TYPE: String
+    REQUIRED: False
+  - TITLE: PREFIX
+    TYPE: String
+    REQUIRED: False
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: True
+- TAG: TEXT
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: False
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: True
+- TAG: INTERFACE_CONTROL
+  PROPERTIES:
+    PREFIX: IC-
+    VIEW_STYLE: Narrative
+  FIELDS:
+  - TITLE: MID
+    TYPE: String
+    REQUIRED: False
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: ENDPOINT
+    TYPE: String
+    REQUIRED: False
+  - TITLE: DIRECTION
+    TYPE: String
+    REQUIRED: False
+  - TITLE: PROTOCOL
+    TYPE: String
+    REQUIRED: False
+  - TITLE: CONFIG
+    TYPE: String
+    REQUIRED: False
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: True
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: True
+  - TITLE: RATIONALE
+    TYPE: String
+    REQUIRED: False
+  - TITLE: SCHEMA
+    TYPE: String
+    REQUIRED: False
+  RELATIONS:
+  - TYPE: Parent
+    ROLE: Refines
+
+[[SECTION]]
+TITLE: MQTT Communications
+
+[INTERFACE_CONTROL]
+UID: IC-1
+ENDPOINT: mqtts://mqtt.app.healthesolutions.ca
+DIRECTION: Device in/out
+PROTOCOL: MQTTs
+TITLE: MQTT Broker
+STATEMENT: >>>
+The system shall provide the MQTT broker at this address for the Device to use.
+<<<
+
+[INTERFACE_CONTROL]
+UID: IC-2
+DIRECTION: Device in/out
+PROTOCOL: MQTTs
+TITLE: Device MQTT Authentication
+STATEMENT: >>>
+The Device and the MQTT broker shall use mutual X.509 certificates for authentication.
+<<<
+
+[INTERFACE_CONTROL]
+UID: IC-7
+ENDPOINT: wss://ws-mqtt.app.healthesolutions.ca/mqtt
+DIRECTION: App in/out
+PROTOCOL: MQTT over Secure WebSocket
+TITLE: MQTT over WebSocket
+STATEMENT: >>>
+The system shall provide the MQTT broker at this address for the mobile app to use.
+<<<
+
+[INTERFACE_CONTROL]
+UID: IC-8
+DIRECTION: App in/out
+PROTOCOL: HTTPS, Secure WebSocket
+TITLE: App MQTT Authentication
+STATEMENT: >>>
+The system shall authenticate a mobile app user to access a specific device via MQTT using JSON Web Tokens (JWT). The following are provided as HTTP Headers during the initial HTTPS connection to the WebSocket address before the WebSocket protocol upgrade mechanism.
+<<<
+SCHEMA: >>>
+**x-jwt** (string)
+  The JWT ID Token. Note there is no "Bearer" prefix, just the raw JWT.
+**x-device-id** (string)
+  The Device ID of the device to access MQTT topics for.
+**x-tenant-id** (string)
+  The Tenant ID of the device to access MQTT topics for.
+<<<
+
+[INTERFACE_CONTROL]
+UID: IC-6
+TITLE: MQTT Schema Format
+STATEMENT: >>>
+The system shall use JSON as the interchange format for MQTT communications.
+<<<
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Device State & Configuration
+
+[INTERFACE_CONTROL]
+UID: IC-4
+TITLE: Bin Identifier
+STATEMENT: >>>
+The system shall use the following integer definitions to identify a particular bin on the physical device, known as the Bin ID.
+<<<
+SCHEMA: >>>
+- 0 - Monday PM
+- 1 - Monday AM
+- 2 - Tuesday PM
+- 3 - Tuesday AM
+- 4 - Wednesday PM
+- 5 - Wednesday AM
+- 6 - Thursday PM
+- 7 - Thursday AM
+- 8 - Friday PM
+- 9 - Friday AM
+- 10 - Saturday PM
+- 11 - Saturday AM
+- 12 - Sunday PM
+- 13 - Sunday AM
+<<<
+
+[INTERFACE_CONTROL]
+UID: IC-5
+TITLE: Bin Status Enum
+STATEMENT: >>>
+The system shall use the following enumeration to describe the status of a bin on the physical device. The system shall serialize the enum as its name in UPPER_CASE.
+<<<
+SCHEMA: >>>
+**DISABLED**
+  Bin is not scheduled.
+**TAKEN**
+  Bin has its medication taken.
+**MISSED**
+  Bin did not have its medication taken on time (marked as missed dose).
+**PENDING**
+  Bin has its medication scheduled to be taken some time in the future.
+**TAKE_NOW**
+  The bin's medication should be taken at the current time.
+<<<
+
+[INTERFACE_CONTROL]
+UID: IC-10
+TITLE: Device Event Type Enum
+STATEMENT: >>>
+The system shall use the following enumeration to describe the different types of events on the physical device. The system shall serialize the enum as its name in UPPER_CASE.
+<<<
+SCHEMA: >>>
+**DOOR_OPENED**
+  A bin is opened.
+**DOOR_CLOSED**
+  A bin is closed.
+**TAKEN**
+  A bin's state transitions to TAKEN.
+**MISSED**
+  A bin's state transitions to MISSED.
+**TAKE_NOW**
+  A bin's state transitions to TAKE_NOW.
+**RELOAD_START**
+  The device's medication reload mechanism is activated.
+**RELOAD_END**
+  The device's medication reload mechanism has completed.
+**SCHEDULE_UPDATED**
+  The device's internal bin scheduling state has updated.
+**PROVISIONED**
+  The device has completed provisioning.
+**ACTION_TIMEOUT**
+  Exception condition where an action was initiated on the device but never completed (e.g., door opened but never closed, reload start but never completed).
+<<<
+
+[INTERFACE_CONTROL]
+UID: IC-3
+ENDPOINT: healthe/things/{THING_NAME}/state
+DIRECTION: Device out
+PROTOCOL: MQTTs
+CONFIG: QoS 1, RETAIN
+TITLE: Device State Topic Schema
+STATEMENT: >>>
+The system shall use this topic and schema for the device's internal state.
+<<<
+SCHEMA: >>>
+**timestamp** (integer, required)
+  Unix timestamp (UTC) in milliseconds.
+**battery** (integer)
+  Battery percentage, out of 100.
+**charging** (boolean)
+  Battery charging status.
+**reloading** (boolean)
+  If the device is currently reloading medication.
+**doors** (integer)
+  An integer acting as a bitfield to track door states. Each bit corresponds to a specific bin door, read from the Least Significant Bit (LSB) upwards. 1 = door open, 0 = door closed.
+**bins** (array of objects)
+    **id** (integer, required)
+      Bin ID on the physical device reporting the state.
+    **status** (string, required)
+      The status of the bin, serialized as the name of the Bin Status enum.
+    **scheduled_time** (integer)
+      Unix timestamp (UTC) in milliseconds of the scheduled time the medication in this bin is taken at.
+    **event_time** (integer)
+      Unix timestamp (UTC) in milliseconds of the last recorded update to this bin's state.
+<<<
+
+[INTERFACE_CONTROL]
+UID: IC-9
+ENDPOINT: healthe/things/{THING_NAME}/event
+DIRECTION: Device out
+PROTOCOL: MQTTs
+CONFIG: QoS 1
+TITLE: Device Event Topic Schema
+STATEMENT: >>>
+The system shall use this topic and schema to report device events.
+<<<
+SCHEMA: >>>
+**timestamp** (integer, required)
+  Unix timestamp (UTC) in milliseconds that the event was observed/recorded.
+**event_type** (string, required)
+  The type of event, serialized as the name of the Device Event Type enum.
+**bin_id** (integer)
+  Bin ID on the physical device reporting the event (if the event is associated with a bin).
+**meta** (object)
+  Additional event type specific metadata.
+<<<
+
+[INTERFACE_CONTROL]
+UID: IC-12
+TITLE: Device Event Action Timeout Type Enum
+STATEMENT: >>>
+The system shall use the following enumeration to describe the different types of `ACTION_TIMEOUT` events. The system shall serialize the enum as its name in UPPER_CASE.
+<<<
+SCHEMA: >>>
+**DOOR_LEFT_OPEN**
+  A bin door is opened but not closed within a certain period of time.
+**RELOAD_TIMEOUT**
+  Medication reload is initiated but not completed within a certain period of time.
+<<<
+
+[INTERFACE_CONTROL]
+UID: IC-11
+TITLE: Device Event Action Timeout Metadata
+STATEMENT: >>>
+The system shall use this schema to report additional information for `ACTION_TIMEOUT` events.
+<<<
+SCHEMA: >>>
+**timeout_type** (string, required)
+  The type of event, serialized as the name of the Event Action Timeout Type enum.
+**duration** (integer, required)
+  Milliseconds that elapsed triggering the timeout.
+**event_type** (string)
+  The type of event that marked the start of the timeout, serialized as the name of the Device Event Type enum
+**start_time** (integer)
+  Unix timestamp (UTC) in milliseconds of the event that started the timeout timer.
+<<<
+
+[[/SECTION]]

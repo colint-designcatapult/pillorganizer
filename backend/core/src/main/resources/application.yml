@@ -36,6 +36,8 @@ endpoints:
     enabled: true
     sensitive: false
 app:
+  iot-core:
+    arn-prefix: "arn:aws:iot:ca-central-1:114829892869"
   tenant:
     default: "public"
     list:
@@ -46,11 +48,13 @@ app:
         api-base: "https://public.app.healthesolutions.ca"
       local:
         id: "local"
+        name: "Local Testing"
         active: true
         hostname: "localhost:8080"
         api-base: "http://localhost:8080"
       staging:
         id: "staging"
+        name: "Staging Environment"
         active: true
         hostname: "staging.app.healthesolutions.ca"
         api-base: "https://staging.app.healthesolutions.ca"

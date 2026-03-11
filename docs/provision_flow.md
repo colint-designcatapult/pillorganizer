@@ -12,24 +12,52 @@ The process involves authenticating with a control plane API to obtain temporary
 
 ## Detailed Steps
 
-### 1. Obtain Claim Credentials (HTTP)
+### 1. Obtain Claim Token (HTTP)
 
-The device (or simulation script) first contacts the Control Plane API to exchange a JWT token for a short-lived AWS IoT Provisioning Claim Certificate.
+The device (via the mobile app/BLE) first contacts the Control Plane API to exchange a JWT token for a `claimId` (or `claimToken`), `deviceId`, and tenant information.
 
-*   **URL**: `POST https://control-plane.app.healthesolutions.ca/device/claim/{SerialNumber}`
+*   **URL**: `POST https://control-plane.app.healthesolutions.ca/device/claim`
 *   **Headers**:
     *   `Authorization`: `Bearer {JWT_TOKEN}`
+*   **Body** (Optional `deviceId` if assigning to existing):
+    ```json
+    {
+      "serialNumber": "{SerialNumber}"
+    }
+    ```
+*   **Response**:
+    ```json
+    {
+      "claimId": "3AG2zI4gNE4u57Sfpyj56dHBjOq",
+      "tenantId": "public",
+      "tenantApiBase": "https://tenant.app.healthesolutions.ca",
+      "deviceId": "3AH3xP9wMQ5v68Tgqzj67eICKPr"
+    }
+    ```
+*   **Action**: The mobile app passes the `claimId`, `tenantId`, and `deviceId` to the device via Bluetooth LE.
+
+### 1.5 Obtain Claim Credentials (HTTP)
+
+The device, after connecting to Wi-Fi, uses the `claimId` and `claimToken` to request temporary AWS IoT Provisioning Claim Credentials.
+
+*   **URL**: `POST https://control-plane.app.healthesolutions.ca/device/claim_cert`
+*   **Body**:
+    ```json
+    {
+      "serialNumber": "{SerialNumber}",
+      "claimId": "3AG2zI4gNE4u57Sfpyj56dHBjOq",
+      "claimToken": "{claimToken}"
+    }
+    ```
 *   **Response**:
     ```json
     {
       "certificatePem": "-----BEGIN CERTIFICATE-----...",
       "privateKey": "-----BEGIN RSA PRIVATE KEY-----...",
-      "expiration": "2026-02-27T15:12:26Z",
-      "claimId": "3AG2zI4gNE4u57Sfpyj56dHBjOq",
-      "tenantId": "public"
+      "expiration": "2026-02-27T15:12:26Z"
     }
     ```
-*   **Action**: The script saves `certificatePem` and `privateKey` to local files (e.g., `claim.pem.crt`, `claim.private.key`).
+*   **Action**: The device saves `certificatePem` and `privateKey` to local files (e.g., `claim.pem.crt`, `claim.private.key`).
 
 ### 2. Connect to AWS IoT (MQTT)
 
@@ -65,9 +93,8 @@ The device finalizes provisioning by registering the "Thing" in the AWS IoT Regi
       "certificateOwnershipToken": "{token_from_step_3}",
       "parameters": {
         "SerialNumber": "{SerialNumber}",
-        "TenantId": "{tenantId_from_step_1}",
-        "DeviceId": "pending-assignment",
-        "ClaimToken": "{claimId_from_step_1}"
+        "ClaimId": "{claimId_from_step_1}",
+        "ClaimToken": "{claimToken_from_step_1}"
       }
     }
     ```
@@ -88,8 +115,13 @@ sequenceDiagram
 
     Note over Device: Has SerialNumber & JWT
 
-    Device->>API: POST /device/claim/{Serial} (Auth: Bearer JWT)
-    API-->>Device: 200 OK {ClaimCert, ClaimKey, TenantId, ClaimToken}
+    Device->>API: POST /device/claim {SerialNumber} (Auth: Bearer JWT)
+    API-->>Device: 200 OK {ClaimId, ClaimToken, TenantId, ApiBase, DeviceId}
+
+    Note over Device: Device Connects to WiFi
+
+    Device->>API: POST /device/claim_cert {SerialNumber, ClaimId, ClaimToken}
+    API-->>Device: 200 OK {ClaimCert, ClaimKey, Expiration}
 
     Device->>Device: Save Claim Certs
 
@@ -101,7 +133,7 @@ sequenceDiagram
 
     Device->>Device: Save Permanent Certs
 
-    Device->>IoT: Pub RegisterThing (Token, Params: {TenantId, ClaimToken...})
+    Device->>IoT: Pub RegisterThing (Token, Params: {SerialNumber,ClaimId,ClaimToken...})
     IoT->>Lambda: Invoke Pre-Provisioning Hook
     Lambda->>Lambda: Validate ClaimToken & Tenant
     Lambda-->>IoT: Allow & Return Policy

@@ -1,5 +1,6 @@
 package jct.pillorganizer.tenant.repo;
 
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -15,13 +16,13 @@ import java.util.Optional;
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
 public interface ProvisionRecordRepository extends CrudRepository<ProvisionRecord, String> {
-    List<ProvisionRecord> findByProvisionedByAndLogicalDeviceIsNull(User user);
-    Optional<ProvisionRecord> findByProvisionedByAndClaimToken(User user, String claimToken);
     List<ProvisionRecord> findAllByLogicalDevice(LogicalDevice logicalDevice);
 
     @Query("UPDATE provision_record r SET disabled_at = CURRENT_TIMESTAMP " +
-            "WHERE r.logical_device_id = :logicalDeviceId AND r.disabled_at IS NULL AND r.device_id != :recordId")
+            "WHERE r.logical_device_id = :logicalDeviceId AND r.disabled_at IS NULL AND r.claim_id != :recordId")
     @ParameterExpression(name = "logicalDeviceId", expression = "#{activeRecord.logicalDevice.id}")
-    @ParameterExpression(name = "recordId", expression = "#{activeRecord.deviceId}")
+    @ParameterExpression(name = "recordId", expression = "#{activeRecord.claimId}")
     void disableAllForDeviceExcept(ProvisionRecord activeRecord);
+
+
 }
