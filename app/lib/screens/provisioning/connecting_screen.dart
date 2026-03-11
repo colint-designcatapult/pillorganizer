@@ -57,8 +57,8 @@ class _ProvisionConnectingPageState
   Widget build(BuildContext context, ) {
     final state = ref.watch(provisionProvider);
     final ProvisionningProgress provisionningProgress = ProvisionningProgress(
-      state.stage == ProvisionStage.complete ? 3 : 2,
-      3,
+      1,
+      3
     );
 
     // When the device restarts (WiFi fail, fleet fail, timeout) go back to My Devices
