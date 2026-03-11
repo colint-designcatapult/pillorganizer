@@ -16,10 +16,6 @@ idf_component_register(
     INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}
     EMBED_TXTFILES 
         ${CMAKE_CURRENT_LIST_DIR}/certs/root_ca.pem
-        ${CMAKE_CURRENT_LIST_DIR}/certs/device_cert.crt
-        ${CMAKE_CURRENT_LIST_DIR}/certs/device_key.key
-        ${CMAKE_CURRENT_LIST_DIR}/certs/claim_cert.pem
-        ${CMAKE_CURRENT_LIST_DIR}/certs/claim_key.pem
         ${CMAKE_CURRENT_LIST_DIR}/data/engineering.html
     REQUIRES
         nvs_flash

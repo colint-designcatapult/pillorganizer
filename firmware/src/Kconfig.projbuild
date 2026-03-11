@@ -22,6 +22,13 @@ config DEV_CLAIM_TOKEN
         claimId returned from the claim credential exchange.
         Obtained by running the iot_provision.py script.
 
+config CONTROL_PLANE_URL
+    string "Control Plane Base URL"
+    default "https://control-plane.app.healthesolutions.ca"
+    help
+        Base URL for control plane endpoints (device/claim_cert, etc.)
+        Used for fetching temporary certificates during Fleet Provisioning.
+
 config RESET_PROVISIONED_ON_BOOT
     bool "Reset WiFi provisioning on boot (for testing)"
     default n

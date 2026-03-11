@@ -4,12 +4,14 @@
 #include "network.h"
 #include "wifi.h"
 #include "esp_log.h"
+#include "esp_wifi.h"
 #include "cJSON.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "fleet_provisioning.h"  // AWS IoT Fleet Provisioning library
 #include <string.h>
 #include <nvs.h>
+#include <time.h>
 
 #define TAG "DeviceProvisioning"
 #define TEMPLATE_NAME "TenantDeviceProvisioningTemplate"
@@ -28,8 +30,8 @@ static char* certificate_ownership_token = NULL;
 static char* thing_name_response = NULL;
 static EventGroupHandle_t provisioning_event_group = NULL;
 
-// Tenant/claim context
-static char* tenant_id = NULL;
+// Claim credentials (provided by app via BLE)
+static char* claim_id_stored = NULL;
 static char* claim_token = NULL;
 
 // MQTT callback for CreateKeys accepted
@@ -146,12 +148,113 @@ void device_provisioning_clear(void) {
     nvs_erase_key(h, "DEVICE_CERT");
     nvs_erase_key(h, "DEVICE_KEY");
     nvs_erase_key(h, "THING_NAME");
+    nvs_erase_key(h, "PROV_SUCCESS");
     nvs_commit(h);
     nvs_close(h);
     ESP_LOGI(TAG, "Provisioning credentials cleared from NVS");
+    
+    // Also clear WiFi provisioning credentials so device re-provisions from scratch
+    esp_wifi_restore();
+    ESP_LOGI(TAG, "WiFi credentials cleared");
 }
 
-esp_err_t device_provisioning_start(void) {
+void device_provisioning_mark_success(void) {
+    nvs_handle_t h;
+    esp_err_t err = nvs_open("storage", NVS_READWRITE, &h);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to open NVS for marking success: %d", err);
+        return;
+    }
+    uint8_t flag = 1;
+    err = nvs_set_u8(h, "PROV_SUCCESS", flag);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to write PROV_SUCCESS flag: %d", err);
+    }
+    nvs_commit(h);
+    nvs_close(h);
+    ESP_LOGI(TAG, "✓ Provisioning marked as complete in NVS");
+}
+
+bool device_provisioning_is_complete(void) {
+    nvs_handle_t h;
+    esp_err_t err = nvs_open("storage", NVS_READONLY, &h);
+    if (err != ESP_OK) {
+        return false;
+    }
+    uint8_t flag = 0;
+    err = nvs_get_u8(h, "PROV_SUCCESS", &flag);
+    nvs_close(h);
+    return (err == ESP_OK && flag == 1);
+}
+
+void mqtt_record_auth_failure_start(void) {
+    nvs_handle_t h;
+    esp_err_t err = nvs_open("storage", NVS_READWRITE, &h);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to open NVS for MQTT failure tracking: %d", err);
+        return;
+    }
+    
+    // Only record if not already set (don't overwrite on subsequent failures)
+    uint64_t existing_timestamp = 0;
+    err = nvs_get_u64(h, "MQTT_AUTH_FAIL_START", &existing_timestamp);
+    if (err == ESP_OK) {
+        // Already recorded, don't overwrite
+        nvs_close(h);
+        return;
+    }
+    
+    // Record current time as failure start
+    time_t current_time = time(NULL);
+    err = nvs_set_u64(h, "MQTT_AUTH_FAIL_START", (uint64_t)current_time);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to write MQTT auth failure timestamp: %d", err);
+    } else {
+        ESP_LOGW(TAG, "MQTT auth failure recorded - 48h timeout started");
+    }
+    nvs_commit(h);
+    nvs_close(h);
+}
+
+bool mqtt_check_auth_failure_timeout(uint32_t hours) {
+    nvs_handle_t h;
+    esp_err_t err = nvs_open("storage", NVS_READONLY, &h);
+    if (err != ESP_OK) {
+        return false;
+    }
+    
+    uint64_t failure_start_time = 0;
+    err = nvs_get_u64(h, "MQTT_AUTH_FAIL_START", &failure_start_time);
+    nvs_close(h);
+    
+    if (err != ESP_OK) {
+        // No failure record, so no timeout
+        return false;
+    }
+    
+    time_t current_time = time(NULL);
+    uint64_t elapsed_seconds = (uint64_t)current_time - failure_start_time;
+    uint64_t timeout_seconds = (uint64_t)hours * 3600;
+    
+    return (elapsed_seconds >= timeout_seconds);
+}
+
+void mqtt_clear_auth_failure_record(void) {
+    nvs_handle_t h;
+    esp_err_t err = nvs_open("storage", NVS_READWRITE, &h);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to open NVS for clearing MQTT failure record: %d", err);
+        return;
+    }
+    
+    nvs_erase_key(h, "MQTT_AUTH_FAIL_START");
+    nvs_commit(h);
+    nvs_close(h);
+    ESP_LOGI(TAG, "✓ MQTT auth failure record cleared");
+}
+
+esp_err_t device_provisioning_start(const char* claim_cert_pem, const char* claim_key_pem,
+                                     const char* claim_id_param, const char* claim_token_param) {
     esp_err_t ret = ESP_FAIL;
     char* claim_cert = NULL;
     char* claim_key = NULL;
@@ -183,37 +286,23 @@ esp_err_t device_provisioning_start(void) {
              mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     ESP_LOGI(TAG, "Device Serial Number: %s", serial_number);
     
-    // Phase 3: Load claim credentials from embedded files and Kconfig
-    ESP_LOGI(TAG, "Phase 1: Loading embedded claim credentials...");
-    extern const uint8_t claim_cert_pem_start[] asm("_binary_claim_cert_pem_start");
-    extern const uint8_t claim_cert_pem_end[]   asm("_binary_claim_cert_pem_end");
-    extern const uint8_t claim_key_pem_start[]  asm("_binary_claim_key_pem_start");
-    extern const uint8_t claim_key_pem_end[]    asm("_binary_claim_key_pem_end");
-
-    size_t cert_len = claim_cert_pem_end - claim_cert_pem_start;
-    size_t key_len  = claim_key_pem_end  - claim_key_pem_start;
-
-    claim_cert = (char*)malloc(cert_len + 1);
-    claim_key  = (char*)malloc(key_len  + 1);
+    // Phase 3: Use provided temp certs (RAM only - never written to NVS)
+    ESP_LOGI(TAG, "Phase 1: Using provided temp cert credentials (RAM only)...");
+    claim_cert = strdup(claim_cert_pem);
+    claim_key  = strdup(claim_key_pem);
     if (!claim_cert || !claim_key) {
-        ESP_LOGE(TAG, "Failed to allocate memory for claim credentials");
+        ESP_LOGE(TAG, "Failed to duplicate temp cert credentials");
         ret = ESP_ERR_NO_MEM;
         goto cleanup;
     }
-    memcpy(claim_cert, claim_cert_pem_start, cert_len);
-    claim_cert[cert_len] = '\0';
-    memcpy(claim_key, claim_key_pem_start, key_len);
-    claim_key[key_len] = '\0';
 
-    tenant_id   = strdup(CONFIG_DEV_CLAIM_TENANT_ID);
-    claim_token = strdup(CONFIG_DEV_CLAIM_TOKEN);
+    claim_id_stored = strdup(claim_id_param);  // Provided by app via BLE endpoint
+    claim_token = strdup(claim_token_param);   // Provided by app via BLE endpoint
 
-    ESP_LOGI(TAG, "✅ Claim credentials loaded from embedded files");
-    ESP_LOGI(TAG, "   Tenant ID: %s", tenant_id);
-    ESP_LOGI(TAG, "   Claim Token: %s", claim_token);
+    ESP_LOGI(TAG, "✅ Temp cert credentials ready");
 
-    // Client ID for provisioning = {tenantId}-{serialNumber}
-    snprintf(client_id, sizeof(client_id), "%s-%s", tenant_id, serial_number);
+    // Client ID for provisioning = serial number only
+    snprintf(client_id, sizeof(client_id), "%s", serial_number);
     
     // Phase 4: Load root CA
     extern const uint8_t aws_root_ca_start[] asm("_binary_root_ca_pem_start");
@@ -375,9 +464,9 @@ esp_err_t device_provisioning_start(void) {
     // Use AWS Fleet Provisioning library constant for parameters key
     cJSON *parameters = cJSON_CreateObject();
     cJSON_AddStringToObject(parameters, "SerialNumber", serial_number);
-    cJSON_AddStringToObject(parameters, "TenantId", tenant_id);
-    cJSON_AddStringToObject(parameters, "DeviceId", "pending-assignment");
+    cJSON_AddStringToObject(parameters, "ClaimId", claim_id_stored);
     cJSON_AddStringToObject(parameters, "ClaimToken", claim_token);
+    ESP_LOGI(TAG, "RegisterThing parameters: SerialNumber=%s, ClaimId=%s", serial_number, claim_id_stored);
     cJSON_AddItemToObject(register_request, FP_API_PARAMETERS_KEY, parameters);
     
     char* register_payload = cJSON_PrintUnformatted(register_request);
@@ -477,7 +566,6 @@ cleanup:
     // Free allocated memory
     if (claim_cert) free(claim_cert);
     if (claim_key) free(claim_key);
-    if (tenant_id) free(tenant_id);
     if (claim_token) free(claim_token);
     if (root_ca) free(root_ca);
     if (permanent_cert_pem) free(permanent_cert_pem);
@@ -490,7 +578,6 @@ cleanup:
     permanent_key_pem = NULL;
     certificate_ownership_token = NULL;
     thing_name_response = NULL;
-    tenant_id = NULL;
     claim_token = NULL;
     
     if (provisioning_event_group) {
