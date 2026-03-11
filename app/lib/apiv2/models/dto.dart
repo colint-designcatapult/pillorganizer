@@ -60,10 +60,10 @@ class ProvisioningClaimDto with ProvisioningClaimDtoMappable {
 @MappableClass()
 class ProvisioningClaimRequestDto with ProvisioningClaimRequestDtoMappable {
   final String serialNumber;
-  final String deviceId;
+  final String? deviceId;
 
   ProvisioningClaimRequestDto({
     required this.serialNumber,
-    required this.deviceId
+    this.deviceId
   });
 }

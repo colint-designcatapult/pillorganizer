@@ -47,7 +47,7 @@ class _ProvisionConnectingPageState
         final newState = ref.read(provisionProvider);
         if (newState.stage == ProvisionStage.complete) {
           Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-              '/name_new_device?id=${newState.deviceID}', (route) => false);
+              '/name_new_device?id=${newState.claim?.deviceId}', (route) => false);
         }
       });
     }
