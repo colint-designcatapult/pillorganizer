@@ -272,6 +272,8 @@ class Provision extends _$Provision {
       } else {
         // Espressif SDK returned false (e.g. AUTH_FAILED — wrong password).
         // Device wipes all credentials and restarts, so user must start over.
+        // Disconnect to clear the stale BLE session so the next attempt reconnects fresh.
+        try { await _bleProv.disconnectDevice(state.deviceName!); } catch (_) {}
         state = state.copyWith(
           stage: ProvisionStage.scanning_ble,
           progress: 0.0,
@@ -328,7 +330,9 @@ class Provision extends _$Provision {
           print('\n' + '⚠️  ' * 15);
           print('WIFI CONNECTION FAILED — DEVICE RESTARTING, START OVER');
           print('⚠️  ' * 15 + '\n');
-          // Device wipes credentials and restarts — user must start provisioning over
+          // Device wipes credentials and restarts — user must start provisioning over.
+          // Disconnect to clear the stale BLE session.
+          try { await _bleProv.disconnectDevice(deviceName); } catch (_) {}
           state = state.copyWith(
             stage: ProvisionStage.scanning_ble,
             progress: 0.0,
@@ -359,7 +363,9 @@ class Provision extends _$Provision {
     print('\n' + '⏰ ' * 15);
     print('WIFI CONNECTION TIMED OUT — DEVICE RESTARTING, START OVER');
     print('⏰ ' * 15 + '\n');
-    // Device wipes credentials and restarts — user must start provisioning over
+    // Device wipes credentials and restarts — user must start provisioning over.
+    // Disconnect to clear the stale BLE session.
+    try { await _bleProv.disconnectDevice(deviceName); } catch (_) {}
     state = state.copyWith(
       stage: ProvisionStage.scanning_ble,
       progress: 0.0,

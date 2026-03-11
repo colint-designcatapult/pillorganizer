@@ -83,7 +83,7 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(provisionProvider);
-    ProvisionningProgress provisionningProgress = ProvisionningProgress(1, 1);
+    ProvisionningProgress provisionningProgress = ProvisionningProgress(1, 3);
 
     return ScreenUtilWrapper(
       child: WizardStep(

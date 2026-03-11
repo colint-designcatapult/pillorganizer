@@ -56,7 +56,10 @@ class _ProvisionConnectingPageState
   @override
   Widget build(BuildContext context, ) {
     final state = ref.watch(provisionProvider);
-    final ProvisionningProgress provisionningProgress = ProvisionningProgress(1, 3);
+    final ProvisionningProgress provisionningProgress = ProvisionningProgress(
+      state.stage == ProvisionStage.complete ? 3 : 2,
+      3,
+    );
 
     // When the device restarts (WiFi fail, fleet fail, timeout) go back to My Devices
     ref.listen(provisionProvider, (previous, next) {
@@ -67,27 +70,24 @@ class _ProvisionConnectingPageState
         _navigatingBack = true;
         final message = next.error?.toString() ??
             'Your device is restarting. Please start provisioning again.';
-        // Pop back to My Devices first, then show the dialog
-        Navigator.of(context, rootNavigator: true).pop();
-        // Use a small delay so the dialog appears on My Devices screen
-        Future.delayed(Duration.zero, () {
-          if (context.mounted) {
-            showDialog<void>(
-              context: context,
-              barrierDismissible: false,
-              builder: (_) => AlertDialog(
-                title: const Text('Setup failed'),
-                content: Text(message),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('OK'),
-                  ),
-                ],
+        // Show dialog while context is still valid; pop to My Devices from OK button
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Setup failed'),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop(); // dismiss dialog
+                  Navigator.of(context, rootNavigator: true).pop(); // go back to My Devices
+                },
+                child: const Text('OK'),
               ),
-            );
-          }
-        });
+            ],
+          ),
+        );
       }
     });
 
@@ -142,7 +142,7 @@ class _ProvisionConnectingPageState
               ?.copyWith(color: Colors.white),
         ),
         onPressed: () {
-          //Navigator.of(context).pushReplacement(TodayPage.route(context));
+          Navigator.of(context, rootNavigator: true).pop();
         },
       );
     }

@@ -25,7 +25,7 @@ class ProvisionSelectWifiPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(provisionProvider);
     bool timeoutTryAgain = false;
-    ProvisionningProgress provisionningProgress = ProvisionningProgress(1, 2);
+    ProvisionningProgress provisionningProgress = ProvisionningProgress(2, 3);
 
     return ScreenUtilWrapper(
         child: WizardStep(
