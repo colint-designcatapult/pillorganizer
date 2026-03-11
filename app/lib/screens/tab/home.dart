@@ -42,7 +42,7 @@ class HomeScreen extends ConsumerWidget {
                 (BuildContext context, bool innerBoxIsScrolled) {
               return <Widget>[
                 SliverAppBar(
-                  toolbarHeight: 160.h,
+                  toolbarHeight: 200.h,
                   backgroundColor: Colors.transparent,
                   flexibleSpace: FlexibleSpaceBar(
                     expandedTitleScale: 1.0,

@@ -3,8 +3,10 @@ import 'package:app/widgets/single_device.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../apiv2/models/device.dart';
+
 class SingleDeviceModal extends ConsumerWidget {
-  final int deviceId;
+  final String deviceId;
 
   const SingleDeviceModal({super.key, required this.deviceId});
 
@@ -18,7 +20,7 @@ class SingleDeviceModal extends ConsumerWidget {
     }
 
     final device = devices.firstWhere(
-      (d) => d.deviceID == deviceId,
+      (d) => d.id == deviceId,
       orElse: () => devices.first,
     );
 

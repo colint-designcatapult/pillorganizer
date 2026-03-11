@@ -215,25 +215,25 @@ class MedicationRepository {
 
   final RestClient client;
 
-  Future<ScheduledMedication> medication(int deviceID, int medicationID) {
+  Future<ScheduledMedication> medication(String deviceID, int medicationID) {
     return client
         .medication(deviceID, medicationID)
         .then((value) => ScheduledMedication.fromDTO(value));
   }
 
-  Future<List<ScheduledMedication>> medications(int deviceID) async {
+  Future<List<ScheduledMedication>> medications(String deviceID) async {
     return (await client.medications(deviceID))
         .map((e) => ScheduledMedication.fromDTO(e))
         .toList(growable: false);
   }
 
   Future<ScheduledMedication> save(
-      int deviceID, ScheduledMedication model) async {
+      String deviceID, ScheduledMedication model) async {
     return ScheduledMedication.fromDTO(
         await client.addMedication(deviceID, model.toDTO()));
   }
 
-  Future<void> delete(int deviceID, int medID) {
+  Future<void> delete(String deviceID, int medID) {
     return client.deleteMedication(deviceID, medID);
   }
 }

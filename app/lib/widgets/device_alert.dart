@@ -4,7 +4,7 @@ import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
-import '../api/device.dart';
+import '../apiv2/models/device.dart';
 
 class DeviceAlert extends StatelessWidget {
   final DeviceNotice notice;

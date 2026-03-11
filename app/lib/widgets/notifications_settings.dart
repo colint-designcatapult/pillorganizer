@@ -1,4 +1,4 @@
-import 'package:app/api/device.dart';
+import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class NotificationsSettings extends ConsumerStatefulWidget {
-  final DeviceUser? device;
+  final DeviceMetadata? device;
 
   const NotificationsSettings({
     super.key,
@@ -110,8 +110,8 @@ class _NotificationsSettingsState extends ConsumerState<NotificationsSettings>
         });
   }
 
-  void updateNotification(bool value, DeviceUser targetDevice) {
-    ref.read(deviceListProvider.notifier).updateDeviceNotifications(targetDevice.deviceID, value);
+  void updateNotification(bool value, DeviceMetadata targetDevice) {
+    ref.read(deviceListProvider.notifier).updateDeviceNotifications(targetDevice.id, value);
 
     setState(() {
       _notificationPreference = Future.value(value);
@@ -136,7 +136,8 @@ class _NotificationsSettingsState extends ConsumerState<NotificationsSettings>
 
     if (targetDevice == null) return;
 
-    _notificationPreference = Future.value(targetDevice.notifications);
+    // Mocking notification preference as Device model doesn't have it
+    _notificationPreference = Future.value(true);
 
     if (await Permission.notification.status.isDenied ||
         await Permission.notification.status.isPermanentlyDenied) {

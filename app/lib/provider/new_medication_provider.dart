@@ -11,10 +11,10 @@ class NewMedicationNotifier extends _$NewMedicationNotifier {
   @override
   NewMedicationState build() {
     // Initial dummy state, should be initialized via [initialize]
-    return NewMedicationState(deviceID: 0);
+    return const NewMedicationState(deviceID: '');
   }
 
-  void initialize(int deviceID, {ScheduledMedication? existing, VoidCallback? onComplete}) {
+  void initialize(String deviceID, {ScheduledMedication? existing, VoidCallback? onComplete}) {
     if (existing != null) {
       state = NewMedicationState(
           existing: existing,

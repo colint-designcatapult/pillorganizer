@@ -68,7 +68,6 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         def serialNumber = "SN-123"
         def userId = "user-123"
         def tenantId = "tenant-1"
-        def apiBase = "http://tenant1.api"
 
         def mockResponse = CreateProvisioningClaimResponse.builder()
                 .certificatePem("cert-pem")
@@ -79,7 +78,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         and:
         iotClient.createProvisioningClaim(_) >> mockResponse
         deviceService.lookupTenant(serialNumber) >> tenantId
-        tenantService.getTenantDetails(tenantId) >> Optional.of(new TenantDetails(tenantId, true, "Tenant 1", apiBase))
+        tenantService.getTenantDetails(tenantId) >> Optional.of(TenantDetails.TEST_TENANT)
         messageService.getDeviceClaimEligibility(tenantId, _, serialNumber) >> Mono.just(new DeviceClaimEligibilityDto(true, false))
 
         when:
@@ -88,7 +87,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
 
         then:
         result.tenantId() == tenantId
-        result.tenantApiBase() == apiBase
+        result.tenantApiBase() == TenantDetails.TEST_TENANT.apiBase
         result.deviceId() != null
         result.claimId() != null
         result.claimToken() != null
@@ -109,7 +108,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
 
         and:
         deviceService.lookupTenant(serialNumber) >> tenantId
-        tenantService.getTenantDetails(tenantId) >> Optional.of(new TenantDetails(tenantId, true, "Tenant 1", "http://api"))
+        tenantService.getTenantDetails(tenantId) >> Optional.of(TenantDetails.TEST_TENANT)
         messageService.getDeviceClaimEligibility(tenantId, requestedDeviceId, serialNumber) >> Mono.just(new DeviceClaimEligibilityDto(true, false))
 
         when:
@@ -126,7 +125,6 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         def serialNumber = "SN-REQ-456"
         def userId = "user-123"
         def tenantId = "tenant-1"
-        def apiBase = "http://tenant1.api"
         def requestedDeviceId = "valid-device-123"
 
         def mockResponse = CreateProvisioningClaimResponse.builder()
@@ -138,7 +136,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         and:
         iotClient.createProvisioningClaim(_) >> mockResponse
         deviceService.lookupTenant(serialNumber) >> tenantId
-        tenantService.getTenantDetails(tenantId) >> Optional.of(new TenantDetails(tenantId, true, "Tenant 1", apiBase))
+        tenantService.getTenantDetails(tenantId) >> Optional.of(TenantDetails.TEST_TENANT)
         messageService.getDeviceClaimEligibility(tenantId, requestedDeviceId, serialNumber) >> Mono.just(new DeviceClaimEligibilityDto(true, true))
 
         when:
@@ -147,7 +145,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
 
         then:
         result.tenantId() == tenantId
-        result.tenantApiBase() == apiBase
+        result.tenantApiBase() == TenantDetails.TEST_TENANT.apiBase
         result.deviceId() == requestedDeviceId
         result.claimId() != null
     }
@@ -160,7 +158,7 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
 
         and:
         deviceService.lookupTenant(serialNumber) >> tenantId
-        tenantService.getTenantDetails(tenantId) >> Optional.of(new TenantDetails(tenantId, true, "Tenant 1", "http://api"))
+        tenantService.getTenantDetails(tenantId) >> Optional.of(TenantDetails.TEST_TENANT)
         messageService.getDeviceClaimEligibility(tenantId, _, serialNumber) >> Mono.just(new DeviceClaimEligibilityDto(false, false))
 
         when:

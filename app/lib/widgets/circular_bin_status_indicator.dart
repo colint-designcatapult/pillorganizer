@@ -1,4 +1,4 @@
-import 'package:app/api/device.dart';
+import 'package:app/apiv2/models/device.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -15,12 +15,12 @@ class CircularBinStatusIndicator extends StatelessWidget {
     Color border;
 
     switch (status) {
-      case BinStatus.TAKEN:
-      case BinStatus.TAKE_NOW:
+      case BinStatus.taken:
+      case BinStatus.takeNow:
         color = const Color(0xFF7CAC7B);
         border = const Color(0xFF4D7B50);
         break;
-      case BinStatus.MISSED:
+      case BinStatus.missed:
         color = const Color(0xFFD45C5C);
         border = const Color(0xFF7A2C2C);
         break;
@@ -33,7 +33,7 @@ class CircularBinStatusIndicator extends StatelessWidget {
       height: 20.h,
       width: 20.h,
       decoration:
-          status != BinStatus.DISABLED && deviceStatus != DeviceNotice.empty
+          status != BinStatus.disabled && deviceStatus != DeviceNotice.empty
               ? BoxDecoration(
                   shape: BoxShape.circle,
                   color: color,
@@ -41,7 +41,7 @@ class CircularBinStatusIndicator extends StatelessWidget {
                 )
               : null,
       child: Visibility(
-          visible: status == BinStatus.DISABLED ||
+          visible: status == BinStatus.disabled ||
               deviceStatus == DeviceNotice.empty,
           child: SvgPicture.asset(
             'lib/assets/SVG/cancelIcon.svg',

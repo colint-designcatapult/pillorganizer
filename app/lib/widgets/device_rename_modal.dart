@@ -1,4 +1,4 @@
-import 'package:app/api/device.dart';
+import 'package:app/apiv2/models/device.dart';
 import 'package:app/main.dart';
 import 'package:app/provider/device_provider.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +12,7 @@ import '../provider/selected_device_provider.dart';
 import 'basic_page.dart';
 
 class ChangeDeviceNameDialog extends ConsumerStatefulWidget {
-  final DeviceUser? device;
+  final DeviceMetadata? device;
 
   const ChangeDeviceNameDialog({super.key, this.device});
 
@@ -172,7 +172,7 @@ class _ChangeDeviceNameDialogState extends ConsumerState<ChangeDeviceNameDialog>
       final deviceToUpdate = widget.device ?? ref.read(activeDeviceProvider);
 
       if (deviceToUpdate != null) {
-        await ref.read(deviceListProvider.notifier).updateDeviceName(deviceToUpdate.deviceID, value!);
+        await ref.read(deviceListProvider.notifier).updateDeviceName(deviceToUpdate.id, value!);
       }
     }
   }

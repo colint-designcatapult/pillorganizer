@@ -16,7 +16,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart'; // Keep this import as it's used in IndexNewPills
 
 class AddNewPillModal extends ConsumerStatefulWidget {
-  final int deviceID;
+  final String deviceID;
   final Function() onComplete;
   const AddNewPillModal(
       {super.key, required this.deviceID, required this.onComplete});
@@ -55,7 +55,7 @@ class IndexNewPills extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activeDevice = ref.watch(activeDeviceProvider);
-    final deviceID = activeDevice?.deviceID ?? 0;
+    final deviceID = activeDevice?.id ?? "";
 
     return GestureDetector(
       onTap: () {

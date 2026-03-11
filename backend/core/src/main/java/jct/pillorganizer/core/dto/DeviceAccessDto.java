@@ -12,6 +12,7 @@ public record DeviceAccessDto(
         String tenantId,
         String apiBase,
         boolean primaryUser,
-        String thingName
+        String thingName,
+        String tenantName
 ) {
 }

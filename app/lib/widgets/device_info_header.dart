@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:app/api/device.dart';
+
 import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/device_state_provider.dart';
 import 'package:app/widgets/switch_device.dart';
@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
+import 'package:app/apiv2/models/device.dart';
 import '../provider/selected_device_provider.dart';
 
 
@@ -43,9 +44,13 @@ class DeviceInfoHeader extends ConsumerWidget {
     bool? batteryCharging;
     DeviceState? deviceState = deviceStateAsync.value;
     int numberOfDevices = deviceListAsync.value?.length ?? 0;
-    bool isOwner = activeDevice?.owner ?? false;
+    bool isOwner = activeDevice?.primaryUser ?? false;
     String deviceName = activeDevice?.name ??
         AppLocalizations.of(context)!.loadingState;
+
+    String? tenantName = activeDevice?.showTenant == true
+        ? activeDevice?.tenantName
+        : null;
 
     if (deviceState != null) {
       batteryLevel = deviceState.battery;
@@ -125,6 +130,23 @@ class DeviceInfoHeader extends ConsumerWidget {
                 ]
               ],
             )),
+        if(tenantName != null) Column(
+          children: [
+            Row(
+              children: [
+
+                Text(tenantName,
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14.h,
+                        fontWeight: FontWeight.w600),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1
+                )
+              ],
+            )
+          ],
+        ),
         if (false)
           Column(
             children: [

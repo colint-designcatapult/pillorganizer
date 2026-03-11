@@ -1,4 +1,4 @@
-import 'package:app/api/device.dart';
+import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/service/error_handler.dart';
@@ -9,7 +9,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class RemoveDeviceDialog extends ConsumerStatefulWidget {
-  final DeviceUser? device;
+  final DeviceMetadata? device;
 
   const RemoveDeviceDialog({super.key, this.device});
 
@@ -61,7 +61,7 @@ class _RemoveDeviceDialog extends ConsumerState<RemoveDeviceDialog> {
                     ),
                     fontWeight: FontWeight.w700),
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: 4.h),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0).w,
                 child: Text(
@@ -146,9 +146,9 @@ class _RemoveDeviceDialog extends ConsumerState<RemoveDeviceDialog> {
       if (deviceToRemove == null) return;
 
       final isRemovingSelectedDevice =
-          currentSelectedDevice?.deviceID == deviceToRemove.deviceID;
+          currentSelectedDevice?.id == deviceToRemove.id;
 
-      await deviceListNotifier.removeDevice(deviceToRemove.deviceID);
+      await deviceListNotifier.removeDevice(deviceToRemove.id);
 
       if (isRemovingSelectedDevice) {
         final devices = ref.read(deviceListProvider).asData?.value ?? [];

@@ -15,12 +15,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
-import 'firebase_options.dart';
-import 'provider/authentication_provider.dart';
 import 'provider/deep_link_provider.dart';
 import 'provider/language_provider.dart';
-import 'provider/schedule_provider.dart';
-import 'provider/selected_device_provider.dart';
 import 'screens/auth/launch_page_login.dart';
 import 'screens/auth/patient_confirmation.dart';
 
@@ -61,9 +57,7 @@ class MyApp extends StatelessWidget {
                         if (settings.name?.startsWith('/name_new_device') ==
                             true) {
                           final uri = Uri.parse(settings.name!);
-                          final deviceId = uri.queryParameters['id'] != null
-                              ? int.parse(uri.queryParameters['id']!)
-                              : null;
+                          final deviceId = uri.queryParameters['id'];
 
                           return MaterialPageRoute(
                             builder: (context) => NameDeviceWizard(deviceId: deviceId),

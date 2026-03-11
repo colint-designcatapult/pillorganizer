@@ -33,6 +33,8 @@ class PostSetupWizard extends ConsumerWidget {
       Navigator.of(context).pushNamedAndRemoveUntil("/index", (route) => false);
     }
 
+    final activeDevice = ref.watch(activeDeviceProvider);
+    final deviceID = activeDevice?.id ?? "";
     final schedule = ref.watch(scheduleProvider);
     final deviceList = ref.watch(deviceListProvider);
     
@@ -61,10 +63,9 @@ class PostSetupWizard extends ConsumerWidget {
               physics: AlwaysScrollableScrollPhysics(),
               child: Column(
                 children: [
-                  ScheduleEntry(
+                  const ScheduleEntry(
                     showRemovalSection: false,
                     showAddDeviceSection: false,
-                    isOwner: true,
                   ),
                   SizedBox(height: 72),
                 ],
@@ -208,7 +209,7 @@ class _MedicationEntryStepState extends ConsumerState<MedicationEntryStep> {
     }
 
     ref.read(newMedicationProvider.notifier).initialize(
-          device.deviceID,
+          device.id,
           onComplete: () => ref.read(medicationsProvider.notifier).refresh(),
         );
 
@@ -250,6 +251,7 @@ class _MedicationEntryStepState extends ConsumerState<MedicationEntryStep> {
         ),
         builder: (context) {
           final prov = ref.watch(medicationsProvider);
+          final activeDevice = ref.watch(activeDeviceProvider);
           return SizedBox(
                 height: MediaQuery.of(context).size.height * 0.9,
                 child: Stack(children: [
@@ -294,6 +296,10 @@ class _MedicationEntryStepState extends ConsumerState<MedicationEntryStep> {
                                     ]))),
                         SizedBox(
                           height: navFootBarHeight,
+                        ),
+                        AddNewPillModal(
+                            deviceID: activeDevice!.id,
+                            onComplete: () => ref.read(medicationsProvider.notifier).refresh(),
                         )
                       ])),
                   Align(

@@ -27,7 +27,7 @@ class MedicationCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activeDevice = ref.watch(activeDeviceProvider);
-    final deviceID = activeDevice?.deviceID ?? 0;
+    final deviceID = activeDevice?.id ?? "";
 
     void onComplete() {
       ref.invalidate(medicationsProvider);

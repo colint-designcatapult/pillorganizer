@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../api/device.dart';
+import '../apiv2/models/device.dart';
 import '../service/bin_service.dart';
 
 class DevicePeriodIcon extends StatelessWidget {

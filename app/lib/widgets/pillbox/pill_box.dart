@@ -1,6 +1,7 @@
-import 'package:app/api/device.dart';
+import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/device_notice_provider.dart';
 import 'package:app/provider/device_state_provider.dart';
+import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/time_provider.dart';
 import 'package:app/service/time_service.dart';
 import 'package:app/widgets/pillbox/bin_column.dart';
@@ -21,6 +22,10 @@ class Pillbox extends ConsumerWidget {
     final deviceStateAsync = ref.watch(deviceStateProvider);
     final minuteBasedTime = ref.watch(minuteBasedTimeProvider);
     final deviceNotice = ref.watch(deviceNoticeProvider);
+    final config = ref.watch(deviceStateProvider);
+    
+    print(config.value.toString());
+
 
     final List<String> daysOfWeek =
         DayOfWeek.values.map((e) => e.displayName(context).toString()).toList();
@@ -64,10 +69,10 @@ class Pillbox extends ConsumerWidget {
                               currentDayOfWeek.toUpperCase(),
                           dayStatus: deviceState != null
                               ? deviceState.bins[dayIndex]
-                              : BinStatus.DISABLED,
+                              : BinStatus.disabled,
                           nightStatus: deviceState != null
                               ? deviceState.bins[nightIndex]
-                              : BinStatus.DISABLED),
+                              : BinStatus.disabled),
                     ],
                   );
                 }).toList(),

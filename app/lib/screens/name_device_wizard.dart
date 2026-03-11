@@ -9,7 +9,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class NameDeviceWizard extends ConsumerStatefulWidget {
-  final int? deviceId;
+  final String? deviceId;
 
   const NameDeviceWizard({super.key, this.deviceId});
 
@@ -81,7 +81,7 @@ class _NameDeviceWizard extends ConsumerState<NameDeviceWizard> {
         _textController.text != _initialDeviceName) {
       if (activeDevice != null) {
         await ref.read(deviceListProvider.notifier).updateDeviceName(
-            activeDevice.deviceID, _textController.text);
+            activeDevice.id, _textController.text);
       }
     }
 

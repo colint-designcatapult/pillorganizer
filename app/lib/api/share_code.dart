@@ -9,7 +9,7 @@ abstract class ShareCode extends Equatable with _$ShareCode {
   const ShareCode._();
 
   const factory ShareCode({
-    required int deviceId,
+    required String deviceId,
     required String code,
     required DateTime expiresAt,
   }) = _ShareCode;

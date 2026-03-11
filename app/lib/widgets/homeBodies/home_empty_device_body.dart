@@ -59,7 +59,7 @@ class HomeEmptyDeviceBody extends ConsumerWidget {
                             }
 
                             ref.read(newMedicationProvider.notifier).initialize(
-                              device.deviceID,
+                              device.id,
                               onComplete: () {
                                 ref.invalidate(medicationsProvider);
                               },

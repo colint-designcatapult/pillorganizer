@@ -1,35 +1,51 @@
+import 'dart:convert';
+
 import 'package:app/api/api.dart';
-import 'package:app/api/device.dart';
+import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/time_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mqtt_client/mqtt_client.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import 'mqtt_provider.dart';
 
 part 'device_state_provider.g.dart';
 
+
 @riverpod
-class DeviceStateNotifier extends _$DeviceStateNotifier {
-  @override
-  FutureOr<DeviceState?> build() async {
-    // Watch time and active device
-    final _ = ref.watch(minuteBasedTimeProvider);
-    final activeDevice = ref.watch(activeDeviceProvider);
+Stream<DeviceState?> deviceState(Ref ref) async* {
+  // 1. Wait for the MQTT client to be connected and ready
+  final client = await ref.watch(mqttClientProvider.future);
+  final device = ref.watch(activeDeviceProvider)!;
 
-    if (activeDevice == null) {
-      return null;
+  // 2. Define the shadow topic
+  final topic = 'healthe/things/${device.thingName!}/state';
+  
+
+  // 3. Subscribe
+  client.subscribe(topic, MqttQos.atLeastOnce);
+
+  // 4. CLEANUP: Unsubscribe when this provider is no longer watched,
+  // or when the device changes.
+  ref.onDispose(() {
+    print('Unsubscribing from $topic');
+    client.unsubscribe(topic);
+  });
+
+  // 5. Yield updates from the MQTT stream
+  // (Assuming you have a helper to parse the MQTT payload into a Map/Model)
+  await for (final messages in client.updates!) {
+    for (final message in messages) {
+      if (message.topic == topic) {
+        final payload = message.payload as MqttPublishMessage;
+        final String jsonString = utf8.decode(payload.payload.message);
+        final dynamic decodedJson = jsonDecode(jsonString);
+        print(decodedJson);
+        DeviceStateDTO dto = DeviceStateDTO.fromJson(decodedJson);
+        yield DeviceState.fromDTO(dto);
+      }
     }
-
-    return _load(activeDevice.id);
-  }
-
-  Future<DeviceState?> _load(int deviceId) async {
-    // Mocking the original _load logic
-    return DeviceState(
-        id: deviceId,
-        battery: 100,
-        charging: false,
-        lastSync: DateTime.now(),
-        bins: List.generate(14, (index) => index == 1 ? BinStatus.TAKEN : BinStatus.DISABLED),
-        dosePeriods: List.generate(2, (index) => DosePeriod(binID: index, scheduledTime: DateTime.now(), status: BinStatus.TAKEN, medicationIDs: [1]))
-    );
   }
 }
+

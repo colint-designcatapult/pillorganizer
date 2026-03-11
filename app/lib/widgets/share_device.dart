@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:app/api/device.dart';
+import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/caregiver_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +11,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ShareDevice extends ConsumerStatefulWidget {
-  final DeviceUser? device;
+  final DeviceMetadata? device;
 
   const ShareDevice({super.key, this.device});
 
@@ -39,7 +39,7 @@ class _ShareDeviceState extends ConsumerState<ShareDevice> {
 
   void _fetchShareCodes() {
     if (widget.device != null) {
-      ref.read(caregiverProvider.notifier).fetchShareCodesForDevices([widget.device!.deviceID]);
+      ref.read(caregiverProvider.notifier).fetchShareCodesForDevices([widget.device!.id]);
     }
   }
 
@@ -52,7 +52,7 @@ class _ShareDeviceState extends ConsumerState<ShareDevice> {
 
         if (targetDevice != null) {
           final shareCode =
-              caregiver.getShareCodeForDevice(targetDevice.deviceID);
+              caregiver.getShareCodeForDevice(targetDevice.id);
           if (shareCode == null || !shareCode.isValid) {
             timer.cancel();
             _countdownNotifier.value = 0;
@@ -80,10 +80,10 @@ class _ShareDeviceState extends ConsumerState<ShareDevice> {
 
       try {
         await caregiver
-            .generateCaregiverCodeForDevice(targetDevice.deviceID);
+            .generateCaregiverCodeForDevice(targetDevice.id);
 
         final shareCode =
-            caregiver.getShareCodeForDevice(targetDevice.deviceID);
+            caregiver.getShareCodeForDevice(targetDevice.id);
         if (shareCode != null && shareCode.isValid) {
           _countdownNotifier.value = shareCode.remainingSeconds;
           _startCountdownTimer();
@@ -102,7 +102,7 @@ class _ShareDeviceState extends ConsumerState<ShareDevice> {
 
     if (targetDevice != null) {
       final shareCode =
-          caregiver.getShareCodeForDevice(targetDevice.deviceID);
+          caregiver.getShareCodeForDevice(targetDevice.id);
       if (shareCode != null) {
         Clipboard.setData(ClipboardData(text: shareCode.codeString));
       }
@@ -119,7 +119,7 @@ class _ShareDeviceState extends ConsumerState<ShareDevice> {
     }
 
         final shareCode =
-            ref.read(caregiverProvider.notifier).getShareCodeForDevice(targetDevice.deviceID);
+            ref.read(caregiverProvider.notifier).getShareCodeForDevice(targetDevice.id);
         final code = shareCode?.codeString;
         final isCodeValid = shareCode != null && shareCode.isValid;
 

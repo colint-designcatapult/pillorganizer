@@ -48,11 +48,13 @@ app:
         api-base: "https://public.app.healthesolutions.ca"
       local:
         id: "local"
+        name: "Local Testing"
         active: true
         hostname: "localhost:8080"
         api-base: "http://localhost:8080"
       staging:
         id: "staging"
+        name: "Staging Environment"
         active: true
         hostname: "staging.app.healthesolutions.ca"
         api-base: "https://staging.app.healthesolutions.ca"

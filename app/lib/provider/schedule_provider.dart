@@ -1,5 +1,5 @@
 import 'package:app/api/api.dart';
-import 'package:app/api/device.dart';
+import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -13,17 +13,17 @@ class Schedule extends _$Schedule {
     final device = ref.watch(activeDeviceProvider);
     if (device == null) return SimpleScheduleDTO();
 
-    return client.getDispenseTimes(device.deviceID);
+    return client.getDispenseTimes(device.id);
   }
 
-  Future<void> load(int deviceID) async {
+  Future<void> load(String deviceID) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       return client.getDispenseTimes(deviceID);
     });
   }
 
-  Future<void> updateTime(DayPeriod period, TimeOfDay time, int deviceID) async {
+  Future<void> updateTime(DayPeriod period, TimeOfDay time, String deviceID) async {
     final current = state.asData?.value ?? SimpleScheduleDTO();
     final secondsFrom00 = time.hour * 3600 + time.minute * 60;
     
@@ -48,7 +48,7 @@ class Schedule extends _$Schedule {
     final device = ref.read(activeDeviceProvider);
     if (device == null) return;
 
-    await client.updateDispenseTimes(device.deviceID, newSchedule);
+    await client.updateDispenseTimes(device.id, newSchedule);
     state = AsyncValue.data(newSchedule);
   }
 }
