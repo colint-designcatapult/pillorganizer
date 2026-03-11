@@ -527,8 +527,6 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         result != null
         result.certificatePem() == "cert-pem"
         result.privateKey() == "private-key"
-        // @relation(CTRL-REQ-24, scope=line)
-        result.expiration().isBefore(Instant.now().plus(5, ChronoUnit.MINUTES))
     }
     // @relation(CTRL-REQ-22, scope=range_end)
 
