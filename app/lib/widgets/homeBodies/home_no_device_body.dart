@@ -1,4 +1,5 @@
 import 'package:app/screens/provisioning/join_device_screen.dart';
+import 'package:app/screens/provisioning/provision.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,7 +14,7 @@ class HomeNoDeviceBody extends ConsumerWidget {
     var date = DateTime.now();
 
     void handleConnectNewDevice() {
-
+      Navigator.of(context).push(ProvisionPage.route(context));
     }
 
     void handleJoinExistingDevice() {

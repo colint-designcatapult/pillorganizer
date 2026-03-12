@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/service/amplify_service.dart';
 import 'package:mqtt_client/mqtt_client.dart';
@@ -9,18 +11,28 @@ part 'mqtt_provider.g.dart';
 final String mqttEndpoint = "wss://ws-mqtt.app.healthesolutions.ca/mqtt";
 
 @riverpod
-Future<MqttServerClient> mqttClient(Ref ref) async {
+Future<MqttServerClient?> mqttClient(Ref ref) async {
   final device = ref.watch(activeDeviceProvider);
 
   if(device == null) {
-    throw Exception("no device selected");
+    return null;
   }
 
   if(device.thingName == null) {
-    throw Exception("no thing name provided");
+    return null;
   }
 
-  final clientName = '${device.thingName}/user/3AOqWrce8DsiQeE6dwTKBGqGxni';
+    String? idToken = await AmplifyService().getIdToken();
+    if (idToken == null) {
+      return null;
+    }
+    String idpart = idToken.split(".")[1];
+    final base64s = base64.decode(base64Url.normalize(idpart));
+    final jsonstr = utf8.decode(base64s);
+    final String userid = jsonDecode(jsonstr)["userId"];
+
+
+    final clientName = '${device.thingName}/user/$userid';
 
   final client = MqttServerClient.withPort(mqttEndpoint, clientName, 443);
 
