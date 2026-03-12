@@ -66,10 +66,7 @@ class Authentication extends _$Authentication {
   }
 
   Future<void> signOut(BuildContext context) async {
-    return credentialManager.signOut().then((value) {
-      state = null;
-      Navigator.of(context).pushNamedAndRemoveUntil("/", (route) => false);
-    });
+    await AmplifyService().signOut();
   }
 
   Future<void> changePassword({

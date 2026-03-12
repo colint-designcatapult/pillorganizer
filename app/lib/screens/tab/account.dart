@@ -25,10 +25,7 @@ class AccountScreen extends ConsumerWidget {
                 subtitle: AppLocalizations.of(context)!.signingOutSubtitle,
                 saveWidgetText: AppLocalizations.of(context)!.signOut,
                 saveWidgetAction: () {
-                  ref.read(deviceListProvider.notifier)
-                      .updateNotificationsForAllDevices(false).then(
-                      (value) => ref.read(authenticationProvider.notifier)
-                          .signOut(context));
+                   ref.read(authenticationProvider.notifier).signOut(context);
                 },
               ));
     }
