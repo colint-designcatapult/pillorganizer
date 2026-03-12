@@ -22,8 +22,17 @@ class ErrorInfoBox extends StatefulWidget {
 class _ErrorInfoBoxState extends State<ErrorInfoBox> {
   @override
   Widget build(BuildContext context) {
-    return Text(AppLocalizations.of(context)!
-          .genericErrorInfoText(widget.error?.toString() ?? ''),
+    final errorStr = widget.error?.toString() ?? '';
+    final localizedError = provErrorMessage(context, errorStr);
+    
+    // If localizedError is the generic fallback, show the actual error string
+    final displayError = (localizedError == AppLocalizations.of(context)!.genericError && errorStr.isNotEmpty)
+        ? errorStr
+        : localizedError;
+
+    return Text(
+      displayError,
+      style: TextStyle(color: Theme.of(context).colorScheme.error),
     );
   }
 }
@@ -47,18 +56,18 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.invalidate(provisionStateProvider);
+      ref.invalidate(provisionProvider);
       _startScanningBluetooth();
     });
   }
 
   Future<void> _startScanningBluetooth() async {
-    final prov = ref.read(provisionStateProvider.notifier);
-    final state = ref.read(provisionStateProvider);
+    final prov = ref.read(provisionProvider.notifier);
+    final state = ref.read(provisionProvider);
 
     if (state.deviceName == null) {
       prov.scanBluetooth().then((_) {
-        final newState = ref.read(provisionStateProvider);
+        final newState = ref.read(provisionProvider);
         if (newState.deviceName != null && mounted) {
           Navigator.of(context)
               .pushReplacement(ProvisionSelectWifiPage.route(context, newState));
@@ -73,8 +82,8 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(provisionStateProvider);
-    ProvisionningProgress provisionningProgress = ProvisionningProgress(1, 1);
+    final state = ref.watch(provisionProvider);
+    ProvisionningProgress provisionningProgress = ProvisionningProgress(1, 3);
 
     return ScreenUtilWrapper(
       child: WizardStep(
@@ -115,7 +124,7 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
               setState(() {
                 timeoutTryAgain = false;
               });
-              ref.read(provisionStateProvider.notifier).rescanBluetooth();
+              ref.read(provisionProvider.notifier).rescanBluetooth();
             },
           ),
         ) : null,
@@ -162,12 +171,12 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
             child: Column(
               mainAxisSize: MainAxisSize.max,
               children: [
-                ...state.bluetoothList!
+                ...state.bluetoothList
                     .map((e) => _buildBleCard(context, e))
                     .toList(growable: false),
                 TextButton(
                   onPressed: () {
-                    ref.read(provisionStateProvider.notifier).rescanBluetooth();
+                    ref.read(provisionProvider.notifier).rescanBluetooth();
                   },
                   child:
                   Text(AppLocalizations.of(context)!.provRescanBluetooth),
@@ -198,7 +207,8 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
               setState(() {
                 scanningWifi = true;
               });
-              ref.read(provisionStateProvider.notifier).selectBluetooth(entry).then((newState) {
+              ref.read(provisionProvider.notifier).selectBluetooth(entry).then((_) {
+                final newState = ref.read(provisionProvider);
                 if (context.mounted) {
                   Navigator.of(context).pushReplacement(
                       ProvisionSelectWifiPage.route(context, newState));
@@ -216,7 +226,9 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
       return AppLocalizations.of(context)!.provErrConGeneric;
     } else if (state.stage == ProvisionStage.scanning_ble) {
       return AppLocalizations.of(context)!.provConSearching;
-    } else if (state.stage == ProvisionStage.scanning_wifi || scanningWifi) {
+    } else if (state.stage == ProvisionStage.scanning_wifi ||
+        state.stage == ProvisionStage.fetchingSerial ||
+        scanningWifi) {
       return AppLocalizations.of(context)!.provConConnecting;
     } else if (state.stage == ProvisionStage.select_ble) {
       return AppLocalizations.of(context)!.provConConnecting;
@@ -232,7 +244,9 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
       return AppLocalizations.of(context)!.provErrConGenericSubtitle;
     } else if (state.stage == ProvisionStage.scanning_ble) {
       return AppLocalizations.of(context)!.provConSearchingSubtitle;
-    } else if (state.stage == ProvisionStage.scanning_wifi || scanningWifi) {
+    } else if (state.stage == ProvisionStage.scanning_wifi ||
+        state.stage == ProvisionStage.fetchingSerial ||
+        scanningWifi) {
       return AppLocalizations.of(context)!.provConConnectingSubtitle;
     } else if (state.stage == ProvisionStage.select_ble) {
       return AppLocalizations.of(context)!.provConSelectingSubtitle;

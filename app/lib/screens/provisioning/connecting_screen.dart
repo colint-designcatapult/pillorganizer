@@ -9,7 +9,7 @@ import '../../service/provisioning_service.dart';
 import '../../widgets/wizard.dart';
 import 'provision.dart';
 
-class ProvisionConnectingPage extends ConsumerWidget {
+class ProvisionConnectingPage extends ConsumerStatefulWidget {
   const ProvisionConnectingPage({super.key});
 
   static Route<ProvisionConnectingPage> route(context, state) =>
@@ -17,30 +17,84 @@ class ProvisionConnectingPage extends ConsumerWidget {
           builder: (_) => const ProvisionConnectingPage());
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(provisionStateProvider);
-    ProvisionningProgress provisionningProgress = ProvisionningProgress(1, 3);
+  ConsumerState<ProvisionConnectingPage> createState() =>
+      _ProvisionConnectingPageState();
+}
 
-    void initConnection() {
-      ref.read(provisionStateProvider.notifier)
-          .finalize(context)
-          .then((value) {
-        if (value.stage == ProvisionStage.complete) {
-          // Assuming these providers are also refactored to Riverpod or accessible via ref
-          // ref.read(deviceProvider.notifier).refresh();
-          // ref.read(selectedDeviceProvider.notifier).selectDeviceByID(value.deviceID!);
-          
+class _ProvisionConnectingPageState
+    extends ConsumerState<ProvisionConnectingPage> {
+  bool _connectionStarted = false;
+  bool _navigatingBack = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final state = ref.read(provisionProvider);
+      if (state.stage == ProvisionStage.select_wifi && !_connectionStarted) {
+        _connectionStarted = true;
+        _initConnection(state);
+      }
+    });
+  }
+
+  void _initConnection(state) {
+    if (state.ssid != null && state.wifiPassword != null) {
+      ref.read(provisionProvider.notifier)
+          .provisionWifi(ssid: state.ssid!, password: state.wifiPassword!)
+          .then((_) {
+        if (!mounted) return;
+        final newState = ref.read(provisionProvider);
+        if (newState.stage == ProvisionStage.complete) {
           Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-              '/name_new_device?id=${value.deviceID}', (route) => false);
+              '/name_new_device?id=${newState.claim?.deviceId}', (route) => false);
         }
       });
     }
+  }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (state.stage == ProvisionStage.finalizing) {
-         initConnection();
+  @override
+  Widget build(BuildContext context, ) {
+    final state = ref.watch(provisionProvider);
+    final ProvisionningProgress provisionningProgress = ProvisionningProgress(
+      state.stage == ProvisionStage.complete ? 3 : 2,
+      3,
+    );
+
+    // When the device restarts (WiFi fail, fleet fail, timeout) go back to My Devices
+    ref.listen(provisionProvider, (previous, next) {
+      if (next.stage == ProvisionStage.scanning_ble &&
+          previous?.stage != ProvisionStage.scanning_ble &&
+          mounted &&
+          !_navigatingBack) {
+        _navigatingBack = true;
+        final message = next.error?.toString() ??
+            'Your device is restarting. Please start provisioning again.';
+        // Show dialog while context is still valid; pop to My Devices from OK button
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Setup failed'),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop(); // dismiss dialog
+                  Navigator.of(context, rootNavigator: true).pop(); // go back to My Devices
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
       }
     });
+
+    void initConnection() {
+      final currentState = ref.read(provisionProvider);
+      _initConnection(currentState);
+    }
 
     return WizardStep(
       height: state.error != null ? null : 400.h,
@@ -88,7 +142,7 @@ class ProvisionConnectingPage extends ConsumerWidget {
               ?.copyWith(color: Colors.white),
         ),
         onPressed: () {
-          //Navigator.of(context).pushReplacement(TodayPage.route(context));
+          Navigator.of(context, rootNavigator: true).pop();
         },
       );
     }
@@ -120,21 +174,27 @@ class ProvisionConnectingPage extends ConsumerWidget {
             child: Builder(builder: (context) {
               if (state.stage == ProvisionStage.complete) {
                 return const SizedBox.shrink();
-              } else if (state.stage == ProvisionStage.finalizing) {
+              } else if (state.stage == ProvisionStage.provisioning_wifi ||
+                  state.stage == ProvisionStage.verifying_wifi ||
+                  state.stage == ProvisionStage.fleet_provisioning) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ClipRRect(
                         borderRadius: BorderRadius.all(Radius.circular(32.r)),
                         child: LinearProgressIndicator(
-                          value: state.progress,
+                          value: state.stage == ProvisionStage.fleet_provisioning
+                              ? state.progress
+                              : null, // indeterminate for wifi steps
                           semanticsLabel:
                               AppLocalizations.of(context)!.progress,
                           minHeight: 12.h,
                         )),
-                    SizedBox(height: 14.h),
-                    Text(
-                        '${AppLocalizations.of(context)!.estimatedTime} ${(state.completionETA?.inMinutes ?? 0) + 1} min.')
+                    if (state.stage == ProvisionStage.provisioning_wifi) ...[  
+                      SizedBox(height: 14.h),
+                      Text(
+                          '${AppLocalizations.of(context)!.estimatedTime} ${(state.completionETA?.inMinutes ?? 0) + 1} min.')
+                    ],
                   ],
                 );
               } else {
@@ -150,8 +210,12 @@ class ProvisionConnectingPage extends ConsumerWidget {
       return AppLocalizations.of(context)!.provMissingPermission;
     } else if (state.error != null) {
       return AppLocalizations.of(context)!.connectionProblem;
-    } else if (state.stage == ProvisionStage.finalizing) {
+    } else if (state.stage == ProvisionStage.provisioning_wifi) {
       return AppLocalizations.of(context)!.finishingSetup;
+    } else if (state.stage == ProvisionStage.verifying_wifi) {
+      return 'Connecting to WiFi...';
+    } else if (state.stage == ProvisionStage.fleet_provisioning) {
+      return 'Registering device...';
     } else if (state.stage == ProvisionStage.complete) {
       return AppLocalizations.of(context)!.setupComplete;
     } else {
@@ -164,8 +228,12 @@ class ProvisionConnectingPage extends ConsumerWidget {
       return null;
     } else if (state.error != null) {
       return AppLocalizations.of(context)!.connectionProblemSubtitle;
-    } else if (state.stage == ProvisionStage.finalizing) {
+    } else if (state.stage == ProvisionStage.provisioning_wifi) {
       return AppLocalizations.of(context)!.finishingSetupSubtitle;
+    } else if (state.stage == ProvisionStage.verifying_wifi) {
+      return 'Waiting for the device to join the network...';
+    } else if (state.stage == ProvisionStage.fleet_provisioning) {
+      return 'Connecting to cloud and setting up your device. This may take a moment.';
     } else if (state.stage == ProvisionStage.complete) {
       return AppLocalizations.of(context)!.setupCompleteSubtitle;
     } else {
