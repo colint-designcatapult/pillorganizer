@@ -9,6 +9,7 @@ list(FILTER app_sources EXCLUDE REGEX ".*certs/.*")
 idf_component_register(
     SRCS 
         main.c
+        mux_io.c
     INCLUDE_DIRS 
         ${CMAKE_CURRENT_LIST_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
