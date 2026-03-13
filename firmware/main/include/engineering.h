@@ -1,15 +1,11 @@
 #pragma once
 #include <stdbool.h>
-#include "pill.pb.h"
 #include "pill_types.h"
 
 
 bool engineering_mode();
 uint32_t engineering_get_bin_voltage(int bin_id);
-void engineering_handle_sync(SyncResponse* sync);
-EngineeringRequest* engineering_request();
 void engineering_print_samples();
-void engineering_build_sync(SyncRequest* sync);
 void engineering_init();
 void engineering_start_server();
 void engineering_stop_server();

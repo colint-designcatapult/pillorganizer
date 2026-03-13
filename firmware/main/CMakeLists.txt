@@ -1,19 +1,17 @@
 # This file was automatically generated for projects
 # without default 'CMakeLists.txt' file
 
-# Collect all C and C++ source files
-file(GLOB_RECURSE app_sources 
-    ${CMAKE_CURRENT_LIST_DIR}/*.c
-    ${CMAKE_CURRENT_LIST_DIR}/*.cpp
-)
 
 # Filter out certs folder
 list(FILTER app_sources EXCLUDE REGEX ".*certs/.*")
 
 # Register the component WITH embedded files
 idf_component_register(
-    SRCS ${app_sources}
-    INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}
+    SRCS 
+        main.c
+    INCLUDE_DIRS 
+        ${CMAKE_CURRENT_LIST_DIR}
+        ${CMAKE_CURRENT_LIST_DIR}/include
     EMBED_TXTFILES 
         ${CMAKE_CURRENT_LIST_DIR}/certs/root_ca.pem
         ${CMAKE_CURRENT_LIST_DIR}/data/engineering.html
@@ -25,7 +23,12 @@ idf_component_register(
         esp_event
         esp_netif
         esp_timer
+        console
+        app_update
         driver
+        esp_driver_gpio 
+        esp_adc
+        ulp
         esp-tls
         mqtt
         bt
@@ -42,3 +45,16 @@ idf_component_register(
 
 # Set C++23 standard
 target_compile_options(${COMPONENT_LIB} PRIVATE -std=gnu++23)
+
+set(ulp_app_name "ulp_main")
+
+# 2. Point to your assembly source file(s)
+set(ulp_s_sources "ulp/mux.S")
+
+# 3. Tell CMake which C files depend on the generated ULP variables.
+# This ensures the ULP is compiled BEFORE app_main.c, so the "ulp_main.h" 
+# header is generated in time for your C code to include it.
+set(ulp_exp_dep_srcs "main.c")
+
+# 4. Trigger the ULP build and embed the binary into the ESP32 flash
+ulp_embed_binary(${ulp_app_name} "${ulp_s_sources}" "${ulp_exp_dep_srcs}")

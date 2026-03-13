@@ -2,8 +2,6 @@
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "mqtt_handler.h"
-#include "pill_state.h"
-#include "pill_types.h"
 #include "network.h"
 #include "event.h"
 #include "sdkconfig.h"
@@ -42,41 +40,7 @@ static void build_topic(void)
 
 void iot_telemetry_publish_bin_state(void)
 {
-    if (!mqtt_is_connected()) {
-        return;
-    }
 
-    // Serialise all 14 bin states into one JSON object.
-    // Payload example:
-    // {"ts":1740000000,"bins":[{"id":0,"status":3,"scheduled":1740001000}, ...]}
-    char payload[512];
-    int  pos = 0;
-
-    time_t now;
-    time(&now);
-
-    pos += snprintf(payload + pos, sizeof(payload) - pos,
-                    "{\"ts\":%lld,\"bins\":[", (long long)now);
-
-    const bin_state_t* bins = state_acquire_ro();
-    for (bin_id_t i = 0; i < BIN_COUNT; i++) {
-        pos += snprintf(payload + pos, sizeof(payload) - pos,
-                        "%s{\"id\":%d,\"status\":%d,\"scheduled\":%lld}",
-                        i == 0 ? "" : ",",
-                        i,
-                        bins[i].status,
-                        (long long)bins[i].schedule_time);
-    }
-    state_release_ro(bins);
-
-    pos += snprintf(payload + pos, sizeof(payload) - pos, "]}");
-
-    esp_err_t err = mqtt_publish(s_topic, payload, pos);
-    if (err == ESP_OK) {
-        ESP_LOGI(TAG, "Published bin state (%d bytes)", pos);
-    } else {
-        ESP_LOGE(TAG, "Failed to publish bin state");
-    }
 }
 
 static void bin_event_handler(void* arg, esp_event_base_t base,

@@ -10,7 +10,6 @@
 #include "driver/adc.h"
 #include "driver/dac.h"
 #include <driver/dac_oneshot.h>
-#include "esp_adc_cal.h"
 #include "esp_log.h"
 #include "driver/i2c.h"
 #include "config.h"

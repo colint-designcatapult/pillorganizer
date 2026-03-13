@@ -1,9 +1,7 @@
 #pragma once
-#include "pill.pb.h"
 #include <esp_partition.h>
 #include <esp_ota_ops.h>
 
-void ota_handle_sync(SyncResponse* sync);
 void ota_init();
 
 

@@ -197,10 +197,12 @@
     "C_Cpp.enhancedColorization": "Enabled",
     "C_Cpp.intelliSenseEngine": "Default",
     "C_Cpp.autocomplete": "Default",
-    "idf.portWin": "COM5",
+    "idf.portWin": "COM3",
     "editor.wordWrap": "wordWrapColumn",
     "editor.rulers": [
         120
     ],
     "editor.wordWrapColumn": 120,
+    "idf.currentSetup": "C:\\esp\\v5.5.3\\esp-idf",
+    "idf.flashType": "UART",
 }

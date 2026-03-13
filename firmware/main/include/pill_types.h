@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include <esp_netif_types.h>
 
-#include "pill.pb.h"
 #include <time.h>
 
 #define BIN_COUNT       14

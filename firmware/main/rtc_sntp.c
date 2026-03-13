@@ -30,7 +30,7 @@ static void initialize_sntp(void);
 
 void time_sync_notification_cb(struct timeval *tv)
 {
-    on_time_sync(tv);
+    //on_time_sync(tv);
 }
 
 void obtain_time(void)

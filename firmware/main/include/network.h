@@ -1,11 +1,9 @@
 #pragma once
 
-#include "pill_state.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/message_buffer.h>
 #include <esp_http_client.h>
 
-#include "pill.pb.h"
 
 #ifdef __cplusplus
 extern "C" {
