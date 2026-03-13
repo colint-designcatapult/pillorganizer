@@ -10,6 +10,10 @@ idf_component_register(
     SRCS 
         main.c
         mux_io.c
+        nvs_wrapper.c
+        IS31FL3730.c
+        i2c_dev.c
+        ledc.c
     INCLUDE_DIRS 
         ${CMAKE_CURRENT_LIST_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include

@@ -5,7 +5,6 @@
 #include "ulp_adc.h"
 #include "ulp.h"          
 #include "ulp_main.h"     
-#include <driver/adc.h>
 #include "esp_sleep.h"
 #include "driver/rtc_io.h"
 #include "driver/gpio.h"
