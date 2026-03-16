@@ -357,6 +357,20 @@ STATEMENT: >>>
 The Patient needs the device to restore its previous state and operation automatically following a power loss, without requiring reconfiguration
 <<<
 
+[USER_NEED]
+UID: UN-7316
+TITLE: Device Data Transfer
+STATEMENT: >>>
+The Patient needs the option to transfer the configuration, data, and records from an old device to a new device.
+<<<
+
+[USER_NEED]
+UID: UN-7317
+TITLE: Reset Data Preservation
+STATEMENT: >>>
+The Patient needs the device to preserve the configuration, data, and records after a factory reset.
+<<<
+
 [[/SECTION]]
 
 [[SECTION]]
