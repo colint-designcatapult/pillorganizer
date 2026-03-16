@@ -76,4 +76,8 @@ class AmplifyService {
       return null;
     }
   }
+
+  Future<void> signOut() async {
+    await Amplify.Auth.signOut();
+  }
 }
