@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:app/apiv2/models/device.dart';
 import 'package:app/apiv2/models/dto.dart';
 import 'package:app/provider/control_plane_providers.dart';
@@ -11,7 +13,22 @@ part 'device_provider.g.dart';
 class DeviceList extends _$DeviceList {
   @override
   FutureOr<List<DeviceMetadata>> build() async {
-    return _fetchDevices();
+    final devices = await _fetchDevices();
+
+    // If no devices are found, start a timer to retry
+    if (devices.isEmpty) {
+      final timer = Timer(const Duration(seconds: 5), () {
+        // ref.invalidateSelf() tells Riverpod to discard the current state
+        // and run this build() method again from scratch.
+        ref.invalidateSelf();
+      });
+
+      // Crucial: Clean up the timer if the provider is disposed or
+      // invalidated before the 5 seconds are up.
+      ref.onDispose(timer.cancel);
+    }
+
+    return devices;
   }
 
   Future<void> refresh() async {
@@ -21,7 +38,7 @@ class DeviceList extends _$DeviceList {
 
   Future<List<DeviceMetadata>> _fetchDevices() async {
     var deviceandUser = await ref.read(controlPlaneClientProvider).getDevices();
-    return deviceandUser.devices.map((dto) => dto.toDomain()).toList();
+    return deviceandUser.devices?.map((dto) => dto.toDomain()).toList() ?? List.empty();
   }
 
   Future<DeviceMetadata> updateDeviceName(String id, String newName) async {

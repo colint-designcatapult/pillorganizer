@@ -14,7 +14,6 @@ import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 
 class Pillbox extends ConsumerWidget {
-  static TimeService timeService = TimeService();
   const Pillbox({super.key});
 
   @override
@@ -22,36 +21,33 @@ class Pillbox extends ConsumerWidget {
     final deviceStateAsync = ref.watch(deviceStateProvider);
     final minuteBasedTime = ref.watch(minuteBasedTimeProvider);
     final deviceNotice = ref.watch(deviceNoticeProvider);
-    final config = ref.watch(deviceStateProvider);
-    
-    print(config.value.toString());
-
 
     final List<String> daysOfWeek =
-        DayOfWeek.values.map((e) => e.displayName(context).toString()).toList();
+    DayOfWeek.values.map((e) => e.displayName(context).toString()).toList();
 
     final String currentDayOfWeek = DateFormat('EEEE',
-            AppLocalizations.of(context)!.localeName == 'fr' ? 'fr' : 'en')
+        AppLocalizations.of(context)!.localeName == 'fr' ? 'fr' : 'en')
         .format(minuteBasedTime);
 
-    final bool isDeviceActive =
-        deviceNotice.name != 'empty' && deviceNotice.name != 'disconnected';
+    final bool isDeviceActive = deviceNotice != DeviceNotice.disconnected;
 
     return SizedBox(
         height: 250.h,
         child: ShimmerPlaceholder(
-            loading: deviceStateAsync.value == null,
+            loading: deviceStateAsync.isLoading,
             baseColor: const Color(0xFFBFD2DB),
             highlightColor: const Color(0xFFF1F6F5),
             direction: ShimmerDirection.ltr,
             builder: (BuildContext context, bool loading) {
               final deviceState = deviceStateAsync.value;
+
               return Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: daysOfWeek.asMap().entries.map((entry) {
                   final nightIndex = entry.key * 2;
                   final day = entry.value;
                   final dayIndex = nightIndex + 1;
+
                   return Column(
                     children: [
                       Padding(
@@ -63,16 +59,13 @@ class Pillbox extends ConsumerWidget {
                                 ?.copyWith(color: const Color(0xFF03012C))),
                       ),
                       BinColumn(
-                          isDeviceLoading: deviceState == null,
-                          isDeviceActive: isDeviceActive,
-                          isToday: day.toUpperCase() ==
-                              currentDayOfWeek.toUpperCase(),
-                          dayStatus: deviceState != null
-                              ? deviceState.bins[dayIndex]
-                              : BinStatus.disabled,
-                          nightStatus: deviceState != null
-                              ? deviceState.bins[nightIndex]
-                              : BinStatus.disabled),
+                        isDeviceLoading: deviceStateAsync.isLoading,
+                        isDeviceActive: isDeviceActive,
+                        isToday: day.toUpperCase() == currentDayOfWeek.toUpperCase(),
+                        // 4. Safely fall back to disabled status if state is null
+                        dayStatus: deviceState?.bins[dayIndex] ?? BinStatus.disabled,
+                        nightStatus: deviceState?.bins[nightIndex] ?? BinStatus.disabled,
+                      ),
                     ],
                   );
                 }).toList(),

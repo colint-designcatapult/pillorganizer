@@ -578,10 +578,10 @@ void app_main(void)
     check_and_print_time();
 
     // START THE MQTT CLIENT HERE
-    // mqtt_app_start();
+    //mqtt_app_start();
 
     // Start MQTT event monitoring
-    // iot_telemetry_start();
+    iot_telemetry_start();
 
     // todo: remove this
     // replace with power management

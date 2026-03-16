@@ -18,8 +18,6 @@ class HomeScreen extends ConsumerWidget {
     // but better to keep it clean. For permissions, build is fine if we guard.
     _askPermissions(context);
 
-    final deviceStateAsync = ref.watch(deviceStateProvider);
-
     return ScreenUtilWrapper(
       child: Scaffold(
         body: Stack(children: [
@@ -63,11 +61,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ];
             },
-            body: deviceStateAsync.when(
-              data: (_) => const HomeBodySelector(),
-              loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
-              error: (err, stack) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.white))),
-            ),
+            body: const HomeBodySelector(),
           ),
         ]),
       ),
