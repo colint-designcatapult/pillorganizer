@@ -54,7 +54,7 @@ The URL scheme has been configured in `ios/Runner/Info.plist`:
 adb shell am start \
   -W -a android.intent.action.VIEW \
   -d "cabinet://patient?patientId=123456" \
-  jct.pillorganizer.pills
+  ca.healthesolutions.cabinet
 ```
 
 ### iOS Testing

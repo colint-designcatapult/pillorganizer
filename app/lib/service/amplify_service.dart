@@ -20,8 +20,8 @@ class AmplifyService {
                         "OAuth": {
                             "WebDomain": "healthesolutions.auth.ca-central-1.amazoncognito.com",
                             "AppClientId": "2ofl5qi7qfqopfph6dqff0dl61",
-                            "SignInRedirectURI": "jct.pillorganizer.pills://callback",
-                            "SignOutRedirectURI": "jct.pillorganizer.pills://signout",
+                            "SignInRedirectURI": "ca.healthesolutions.cabinet://callback",
+                            "SignOutRedirectURI": "ca.healthesolutions.cabinet://signout",
                             "Scopes": [
                                 "profile",
                                 "openid"

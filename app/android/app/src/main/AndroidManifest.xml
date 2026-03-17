@@ -6,11 +6,11 @@
         </intent>
     </queries>
     <application
-        android:label="app"
+        android:label="CabiNET"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
-            android:name="jct.pillorganizer.pills.MainActivity"
+            android:name="ca.healthesolutions.cabinet.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""
@@ -34,7 +34,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="jct.pillorganizer.pills" />
+                <data android:scheme="ca.healthesolutions.cabinet" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
