@@ -70,7 +70,7 @@ void supervisor_run()
     }
 
     while (1) {
-        event_received = xQueueReceive(s_supervisor_event_queue, &event, pdTICKS_TO_MS(1000));
+        event_received = xQueueReceive(s_supervisor_event_queue, &event, pdMS_TO_TICKS(1000));
 
         if (event_received) {
             ESP_LOGI(TAG, "Received event: %d in state: %d", event.id, current_state);
