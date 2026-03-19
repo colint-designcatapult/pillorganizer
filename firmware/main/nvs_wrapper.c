@@ -20,8 +20,8 @@ void init_nvs()
         ESP_ERROR_CHECK(nvs_flash_init());
 
     }
-
     ESP_ERROR_CHECK(ret);
+    ESP_LOGI(TAG, "NVS initialized");
 }
 
 esp_err_t nvs_write_blob(const char* key, const void* value, size_t len)

@@ -1,111 +1,66 @@
 #include "network.h"
 #include <esp_log.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <freertos/queue.h>
-#include <esp_http_client.h>
-#include "util.h"
-#include <event.h>
-#include "nvs_wrapper.h"
-#include "engineering.h"
-#include "ota.h"
-#include <nvs.h>
+#include <esp_wifi.h>
+#include <esp_netif.h>
+#include <esp_err.h>
+#include "wifi_provision.h"
+#include "supervisor.h"
+#include "claim.h"
 
-#include "wifi.h"
-#include <esp_bt.h>
-#include <string.h>
+
 
 #define TAG "NETWORK"
 
-
-void network_get_serial_number(uint8_t* sn_out, size_t* len_out)
+static void network_wifi_event_handler(void* arg, esp_event_base_t event_base,
+                               int32_t event_id, void* event_data)
 {
-    const wifi_info_t* wifi_info = wifi_get_info();
-    memcpy(sn_out, wifi_info->sn.bytes.mac, 6);
-    *len_out = 6;
-}
-
-// Save PEM certificate/key to NVS
-esp_err_t network_save_cert_to_nvs(const char* nvs_key, const char* cert_pem)
-{
-    return nvs_write_blob(nvs_key, cert_pem, strlen(cert_pem) + 1);
-}
-
-// Load PEM certificate/key from NVS (caller must free *cert_out)
-esp_err_t network_load_cert_from_nvs(const char* nvs_key, char** cert_out, size_t* len_out)
-{
-    nvs_handle_t h;
-    esp_err_t err = nvs_open("storage", NVS_READONLY, &h);
-    if (err != ESP_OK) return err;
-
-    size_t required_size = 0;
-    err = nvs_get_blob(h, nvs_key, NULL, &required_size);
-    if (err != ESP_OK) {
-        nvs_close(h);
-        return err;
+    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+        // When the Wi-Fi driver starts, initiate the connection
+        ESP_LOGI(TAG, "Wi-Fi started, connecting to AP...");
+        esp_wifi_connect();
+    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        // If disconnected (or failed to connect), try to connect again
+        ESP_LOGW(TAG, "Disconnected from AP. Attempting to reconnect...");
+        ESP_ERROR_CHECK(supervisor_submit_event(EVENT_NETIF_DISCONNECTED));
+        esp_wifi_connect();
+    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_CONNECTED) {
+        // If disconnected (or failed to connect), try to connect again
+        ESP_LOGW(TAG, "Connected to AP");
+    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        // Once connected and an IP is assigned, print it out
+        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+        ESP_LOGI(TAG, "Successfully connected! Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
+        ESP_ERROR_CHECK(supervisor_submit_event(EVENT_NETIF_CONNECTED));
     }
-
-    *cert_out = malloc(required_size);
-    if (*cert_out == NULL) {
-        nvs_close(h);
-        return ESP_ERR_NO_MEM;
-    }
-
-    err = nvs_get_blob(h, nvs_key, *cert_out, &required_size);
-    nvs_close(h);
-    if (err != ESP_OK) {
-        free(*cert_out);
-        *cert_out = NULL;
-        return err;
-    }
-
-    if (len_out) *len_out = required_size;
-    return ESP_OK;
 }
 
-// Save Thing name to NVS
-esp_err_t network_save_thing_name(const char* thing_name)
+static void network_wifi_init()
 {
-    return nvs_write_blob("THING_NAME", thing_name, strlen(thing_name) + 1);
+    // Initialize the underlying TCP/IP stack (LwIP)
+    ESP_ERROR_CHECK(esp_netif_init());
+
+    // Create the default Wi-Fi Station network interface
+    esp_netif_t *sta_netif = esp_netif_create_default_wifi_sta();
+    assert(sta_netif);  
+
+    // Initialize the Wi-Fi driver with default parameters
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &network_wifi_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &network_wifi_event_handler, NULL));
+
+    // Set the Wi-Fi operating mode to Station (STA)
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+
+    // Start the Wi-Fi driver
+    ESP_ERROR_CHECK(esp_wifi_start());
+
+    ESP_LOGI(TAG, "WiFi interface initialized");
 }
 
-// Load Thing name from NVS
-esp_err_t network_load_thing_name(char* thing_name_out, size_t max_len)
-{
-    nvs_handle_t h;
-    esp_err_t err = nvs_open("storage", NVS_READONLY, &h);
-    if (err != ESP_OK) return err;
-
-    size_t len = max_len;
-    err = nvs_get_blob(h, "THING_NAME", thing_name_out, &len);
-    nvs_close(h);
-    if (err != ESP_OK) return err;
-
-    ESP_LOGI(TAG, "Loaded Thing name from NVS: %s", thing_name_out);
-    return ESP_OK;
+void network_init()
+{    
+    // Initialize/start wifi
+    network_wifi_init();
 }
-
-
-
-/*void network_wifi_connect(const wifi_info_t*  info, bool just_provisioned)
-{
-    wifi_info = info;
-    ESP_LOGI(TAG, "Connected to wifi '%s' just provisioned= %d", info->ssid, just_provisioned);
-    if(just_provisioned) {
-        engineering_restart(5000);
-        return;
-    }
-    connected = true;
-
-    engineering_start_server();
-}
-
-void network_wifi_disconnect()
-{
-    ESP_LOGI(TAG, "Disconnected from wifi");
-    connected = false;
-
-    engineering_stop_server();
-}*/
-
-

@@ -17,6 +17,9 @@
 #include "soc/periph_defs.h"
 #include "esp_sleep.h"
 #include "pill_pins.h"
+#include "esp_log.h"
+
+#define TAG "MUX_IO"
 
 extern const uint8_t ulp_main_bin_start[] asm("_binary_ulp_main_bin_start");
 extern const uint8_t ulp_main_bin_end[]   asm("_binary_ulp_main_bin_end");
@@ -79,7 +82,9 @@ void mux_init()
     ESP_ERROR_CHECK(ulp_isr_register(ulp_isr_handler, NULL));
     
     /* 3. Enable the specific ULP interrupt bit in the RTC controller so it fires */
-    REG_SET_BIT(RTC_CNTL_INT_ENA_REG, RTC_CNTL_ULP_CP_INT_ENA);    
+    REG_SET_BIT(RTC_CNTL_INT_ENA_REG, RTC_CNTL_ULP_CP_INT_ENA);
+
+    ESP_LOGI(TAG, "MUX driver initialized");
 }
 
 void mux_prep_deep_sleep()
@@ -180,7 +185,7 @@ static void init_ulp_program(void)
 static void start_ulp_program(void)
 {
     /* Start the program */
-    esp_err_t err = ulp_run(&ulp_entry - RTC_SLOW_MEM);
-    ESP_ERROR_CHECK(err);
+    //esp_err_t err = ulp_run(&ulp_entry - RTC_SLOW_MEM);
+    //ESP_ERROR_CHECK(err);
 }
 

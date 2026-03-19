@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <memory.h>
 #include <inttypes.h>
 #include "esp_sleep.h"
 #include "esp_system.h"
@@ -16,7 +17,15 @@
 #include "pill_pins.h"
 #include "i2c_dev.h"
 #include "ledc.h"
+#include "supervisor.h"
+#include "device_config.h"
+#include "network.h"
+#include "rtc.h"
+#include <esp_err.h>
+#include <esp_event.h>
+#include "claim.h"
 
+#define TAG "MAIN"
 
 void RTC_IRAM_ATTR esp_wake_deep_sleep(void)
 { 
@@ -97,6 +106,9 @@ static void app_init_hw()
     // HARDWARE INITIALIZATION
     // 
 
+    // Initialize the MUX first so we receive bin door events as early as possible
+    mux_init();
+
     // Init GPIO
     app_init_gpio();
 
@@ -109,24 +121,47 @@ static void app_init_hw()
 
 void app_main(void)
 {
-    // Perform early initialization depending on if this is a fresh boot or wake from deep sleep
-    esp_reset_reason_t reset_reason = esp_reset_reason();
-    if (reset_reason == ESP_RST_DEEPSLEEP) {
-        app_wake_deep_sleep();
-    } else {
-        app_fresh_boot();
-    }
-    
     // Initialize non-volatile storage (flash storage)
     init_nvs();
 
-    // Initialize the MUX so we receive bin door events as early as possible
-    mux_init();
+    // Initialize event loop
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    // Initialize the rest of the hardware
+    // Initialize the supervisor
+    supervisor_init();
+
+    // Perform early initialization depending on if this is a fresh boot or wake from deep sleep
+    esp_reset_reason_t reset_reason = esp_reset_reason();
+    if (reset_reason == ESP_RST_DEEPSLEEP) {
+        ESP_LOGI(TAG, "Waking from deep sleep");
+        app_wake_deep_sleep();
+    } else {
+        ESP_LOGI(TAG, "Cold boot");
+        app_fresh_boot();
+    }
+
+    // Initialize hardware peripherals
     app_init_hw();
 
-    //mux_prep_deep_sleep();
-    //esp_deep_sleep_start();
+    ESP_LOGI(TAG, "Hardware initialized");
+
+    // Initialize device configuration 
+    devcfg_init();
+
+    // Initialize RTC
+    app_rtc_init();
+
+    // Initialize claim subsystem
+    claim_init();
+
+    // Initialize networking
+    network_init();
+
+    // Hand off business logic to the supervisor
+    supervisor_run();
+
+    // If we've reached here, there is nothing more to do
+    // Go to sleep
+    esp_deep_sleep_start();
 }
 

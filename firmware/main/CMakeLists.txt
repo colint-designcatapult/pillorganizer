@@ -14,6 +14,14 @@ idf_component_register(
         IS31FL3730.c
         i2c_dev.c
         ledc.c
+        supervisor.c
+        wifi_provision.c
+        device_config.c
+        network.c
+        rtc.c
+        claim.c
+        mqtt_wrapper.c
+        fleet_provision.c
     INCLUDE_DIRS 
         ${CMAKE_CURRENT_LIST_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
@@ -22,8 +30,10 @@ idf_component_register(
         ${CMAKE_CURRENT_LIST_DIR}/data/engineering.html
     REQUIRES
         nvs_flash
+        efuse
         esp_http_server
         esp_http_client
+        wifi_provisioning
         esp_wifi
         esp_event
         esp_netif
