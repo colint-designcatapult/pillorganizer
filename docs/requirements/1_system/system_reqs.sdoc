@@ -457,7 +457,16 @@ RELATIONS:
 [[SECTION]]
 TITLE: Device Provisioning
 
-[[/SECTION]]
+[REQUIREMENT]
+UID: SYS-REQ-42
+TITLE: Device Provisioning
+STATEMENT: >>>
+The system shall provide a mechanism for the user to program Wi-Fi credentials on the device for the device to access the Central Backend Platform. The process of securely programming Wi-Fi credentials and linking the device to the user account is called provisioning.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-501
+  ROLE: Refines
 
 [REQUIREMENT]
 UID: SYS-REQ-29
@@ -475,6 +484,77 @@ RELATIONS:
 - TYPE: Parent
   VALUE: UN-501
   ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-43
+TITLE: In-App Provisioning
+STATEMENT: >>>
+The system shall allow the user provision the device via the mobile application.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-501
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-44
+TITLE: Provisioning Security
+STATEMENT: >>>
+The system shall ensure that a device provisioning is only authorized by the user in physical possession of the device.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7311
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-45
+TITLE: Existing Device Provisioning
+STATEMENT: >>>
+The system shall allow a primary user to re-provision an existing device, preserving its configuration, data, and records.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7317
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-46
+TITLE: Device Transfer Provisioning
+STATEMENT: >>>
+The system shall allow a primary user to provision a new device and optionally transfer the configuration, data, and records from an existing device they are the primary user of.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7316
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-47
+TITLE: Provisioning Credentials
+STATEMENT: >>>
+The system shall grant a device unique, secure credentials during provisioning to authenticate with the Central Backend Platform.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7311
+  ROLE: Refines
+
+[REQUIREMENT]
+UID: SYS-REQ-48
+TITLE: Provisioning Credentials Revocation
+STATEMENT: >>>
+The system shall ensure that previously issued device credentials are revoked when the device is provisioned.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7311
+  ROLE: Refines
+- TYPE: Parent
+  VALUE: UN-502
+  ROLE: Refines
+
+[[/SECTION]]
 
 [[/SECTION]]
 

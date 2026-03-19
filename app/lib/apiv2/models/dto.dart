@@ -31,10 +31,10 @@ class DeviceAccessDto with DeviceAccessDtoMappable {
 
 @MappableClass()
 class UserAndDeviceAccessDto with UserAndDeviceAccessDtoMappable {
-  final List<DeviceAccessDto> devices;
+  final List<DeviceAccessDto>? devices;
 
   UserAndDeviceAccessDto({
-    required this.devices
+    this.devices
   });
 }
 

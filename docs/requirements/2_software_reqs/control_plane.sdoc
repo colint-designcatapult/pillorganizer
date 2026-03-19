@@ -163,3 +163,144 @@ RELATIONS:
   VALUE: SYS-REQ-15
 
 [[/SECTION]]
+
+[[SECTION]]
+TITLE: Device Provisioning
+
+[REQUIREMENT]
+UID: CTRL-REQ-17
+TITLE: Provision Claim Initiation
+STATEMENT: >>>
+The control plane shall provide an API for the user application to initiate provisioning of a device.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-43
+
+[REQUIREMENT]
+UID: CTRL-REQ-18
+TITLE: Provision Claim Parameters
+STATEMENT: >>>
+The control plane claim initiation API shall accept a serial number and an optional existing logical device ID.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-46
+- TYPE: Parent
+  VALUE: SYS-REQ-45
+
+[REQUIREMENT]
+UID: CTRL-REQ-19
+TITLE: Provision Claim Device Access
+STATEMENT: >>>
+The control plane claim initiation API shall ensure, when an existing logical device ID is specified, that the user is the primary owner of the existing device and that the existing device exists.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-47
+- TYPE: Parent
+  VALUE: SYS-REQ-44
+
+[REQUIREMENT]
+UID: CTRL-REQ-20
+TITLE: Provision Claim Token
+STATEMENT: >>>
+The control plane initiation API shall, after duly authorizing the request, generate temporary credentials for the device to securely identify itself with.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-47
+- TYPE: Parent
+  VALUE: SYS-REQ-44
+- TYPE: Parent
+  VALUE: IC-15
+
+[REQUIREMENT]
+UID: CTRL-REQ-21
+TITLE: Provision Claim Token Expiration
+STATEMENT: >>>
+The control plane initiation API shall ensure that a provision claim credential can only be used for a period of ten (10) minutes after issuance.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-47
+- TYPE: Parent
+  VALUE: SYS-REQ-44
+
+[REQUIREMENT]
+UID: CTRL-REQ-22
+TITLE: Provision Claim Certificate API
+STATEMENT: >>>
+The control plane shall provide an API for the device to present its serial number and a claim credential receive a temporary claim certificate. The temporary claim certificate shall be used to authenticate with IoT Core Fleet Provisioning.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-47
+- TYPE: Parent
+  VALUE: SYS-REQ-44
+- TYPE: Parent
+  VALUE: IC-18
+
+[REQUIREMENT]
+UID: CTRL-REQ-23
+TITLE: Provision Claim Certificate Security
+STATEMENT: >>>
+The control plane shall claim certificate API shall ensure the validity of presented claim credentials.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-44
+
+[REQUIREMENT]
+UID: CTRL-REQ-24
+TITLE: Provision Claim Certificate Expiration
+STATEMENT: >>>
+The control plane shall claim certificate API shall ensure the temporary claim certificate can only be used for a period of five (5) minutes after issuance.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-47
+- TYPE: Parent
+  VALUE: SYS-REQ-44
+
+[REQUIREMENT]
+UID: CTRL-REQ-25
+TITLE: Fleet Provision Hook
+STATEMENT: >>>
+The control plane shall receive requests from the device for permanent certificates via IoT Core Fleet Provisioning and generate them if authorized.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-47
+- TYPE: Parent
+  VALUE: SYS-REQ-44
+- TYPE: Parent
+  VALUE: IC-17
+
+[REQUIREMENT]
+UID: CTRL-REQ-26
+TITLE: Fleet Provision Hook Validation
+STATEMENT: >>>
+The control plane receive validate requests and only issue permanent certificates to devices authorized by serial number, claim identifier, and claim token.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-47
+- TYPE: Parent
+  VALUE: SYS-REQ-44
+- TYPE: Parent
+  VALUE: IC-18
+
+[REQUIREMENT]
+UID: CTRL-REQ-27
+TITLE: Provision Tenant Assignment
+STATEMENT: >>>
+The control plane shall ensure that once a device is provisioned, its communications, configuration, and data flow exclusively through exclusively the Tenant the device is assigned to.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-38
+- TYPE: Parent
+  VALUE: SYS-REQ-14
+
+[[/SECTION]]

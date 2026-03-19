@@ -16,6 +16,7 @@ class DeviceServiceSpec extends Specification {
             defaultTenant: defaultTenant
     )
 
+    // @relation(CTRL-REQ-16, scope=range_start)
     def "should lookup tenant from mapping"() {
         given:
         def serialNumber = "SN-123"
@@ -34,6 +35,7 @@ class DeviceServiceSpec extends Specification {
         then:
         result == tenantId
     }
+    // @relation(CTRL-REQ-16, scope=range_end)
 
     def "should return default tenant if no mapping exists"() {
         given:

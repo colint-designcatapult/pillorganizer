@@ -63,6 +63,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1091240480280',
     projectId: 'cabinet-f7e5a',
     storageBucket: 'cabinet-f7e5a.appspot.com',
-    iosBundleId: 'jct.pillorganizer.pills',
+    iosBundleId: 'ca.healthesolutions.cabinet',
   );
 }

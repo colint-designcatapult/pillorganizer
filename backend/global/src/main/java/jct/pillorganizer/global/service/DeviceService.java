@@ -22,11 +22,13 @@ public class DeviceService {
     @Value("${app.tenant.default}")
     String defaultTenant;
 
+    // @relation(CTRL-REQ-16, scope=range_start)
     public String lookupTenant(String serialNumber) {
         return deviceTenantMappingRepo.findBySerialNumber(serialNumber)
                 .map(DeviceTenantMappingEntity::getTenantId)
                 .orElse(defaultTenant);
     }
+    // @relation(CTRL-REQ-16, scope=range_end)
 
     public Optional<DeviceEntity> getDevice(String deviceId) {
         return deviceRepo.findByDeviceId(deviceId);

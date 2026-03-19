@@ -135,11 +135,13 @@ List<BinStatus> decodePackedStatus(int? bins) {
     return List.empty(growable: false);
   }
 
-  List<BinStatus> out = List.empty(growable: true);
+  List<BinStatus> out = []; // '[]' is the idiomatic way to create a growable list in Dart
 
   for (int i = 0; i < 14; i++) {
-    int statusInt = (bins >> (i * 4)) & 0xf;
-    out.add(BinStatus.values[statusInt]);
+    // Shift right by i, then bitwise AND with 1 to isolate the target bit
+    bool isTaken = ((bins >> i) & 1) == 1;
+
+    out.add(isTaken ? BinStatus.taken : BinStatus.disabled);
   }
 
   return out;

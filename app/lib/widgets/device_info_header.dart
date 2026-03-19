@@ -57,6 +57,7 @@ class DeviceInfoHeader extends ConsumerWidget {
       batteryCharging = deviceState.charging;
     }
 
+    /*
     if (deviceState == null) {
       return Padding(
           padding: const EdgeInsets.only(bottom: 20),
@@ -69,7 +70,7 @@ class DeviceInfoHeader extends ConsumerWidget {
                       fontWeight: FontWeight.w700)),
             ],
           ));
-    }
+    }*/
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
