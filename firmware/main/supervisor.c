@@ -97,7 +97,7 @@ void supervisor_run()
                         ESP_LOGW(TAG, "Wi-Fi provisionming failed, count = %d", s_provision_fail_ctr);
 
                         // On 3 failures, restart the system
-                        if (s_provision_fail_ctr > 3) {
+                        if (s_provision_fail_ctr >= 3) {
                             esp_restart();
                         }
                     }
