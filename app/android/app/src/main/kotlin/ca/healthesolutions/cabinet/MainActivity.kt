@@ -1,4 +1,4 @@
-package jct.pillorganizer.pills
+package ca.healthesolutions.cabinet
 
 import io.flutter.embedding.android.FlutterActivity
 
