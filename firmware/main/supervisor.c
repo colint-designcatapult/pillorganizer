@@ -10,6 +10,7 @@
 #include "device_config.h"
 #include "claim.h"
 #include "fleet_provision.h"
+#include "mqtt.h"
 
 #define TAG "SUPERVISOR"
 
@@ -121,6 +122,7 @@ void supervisor_run()
                         ESP_LOGI(TAG, "RTC time synced");
                         if (devcfg_has_permanent_identity()) {
                             // No more initial provisioning to do. Device online and fully provisioned.
+                            mqtt_init();
                             current_state = STATE_OPERATIONAL;
                         } else if (claim_has_credentials()) {
                             // Not fully provisioned, but we have claim credentials. Fetch temporary claim certs.
