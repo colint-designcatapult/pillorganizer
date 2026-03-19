@@ -156,9 +156,6 @@ void app_main(void)
     // Initialize claim subsystem
     claim_init();
 
-    // Initialize shadow state handler
-    shadow_state_init();
-
     // Initialize networking
     network_init();
 
