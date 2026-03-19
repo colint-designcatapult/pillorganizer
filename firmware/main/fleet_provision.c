@@ -9,6 +9,7 @@
 #include "freertos/timers.h"
 #include "fleet_provisioning.h"
 #include "mqtt_client.h"
+#include <stdlib.h>
 #include <string.h>
 #include <nvs.h>
 #include "supervisor.h"

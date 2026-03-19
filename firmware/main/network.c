@@ -41,7 +41,10 @@ static void network_wifi_init()
 
     // Create the default Wi-Fi Station network interface
     esp_netif_t *sta_netif = esp_netif_create_default_wifi_sta();
-    assert(sta_netif);  
+    if (!sta_netif) {
+        ESP_LOGE(TAG, "Failed to create Wi-Fi Station network interface");
+        ESP_ERROR_CHECK(ESP_ERR_ESP_NETIF_INIT_FAILED);
+    }
 
     // Initialize the Wi-Fi driver with default parameters
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();

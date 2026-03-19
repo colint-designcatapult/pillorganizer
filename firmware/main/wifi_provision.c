@@ -4,6 +4,7 @@
 #include <esp_err.h>
 #include <esp_log.h>
 #include <esp_mac.h>
+#include <stdlib.h>
 #include <wifi_provisioning/manager.h>
 #include <wifi_provisioning/scheme_ble.h>
 #include <string.h>

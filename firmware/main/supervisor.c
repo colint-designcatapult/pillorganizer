@@ -43,7 +43,9 @@ void supervisor_init()
 {
     // Create event queue
     s_supervisor_event_queue = xQueueCreate(16, sizeof(supervisor_event_t));
-    assert(s_supervisor_event_queue != NULL);
+    if (s_supervisor_event_queue == NULL) {
+        ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
+    }
 
     ESP_LOGI(TAG, "Supervisor initialized");
 }
