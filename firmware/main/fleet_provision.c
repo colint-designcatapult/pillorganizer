@@ -2,7 +2,6 @@
 #include "mqtt_wrapper.h"
 #include "sdkconfig.h"
 #include "network.h"
-#include "wifi.h"
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "cJSON.h"

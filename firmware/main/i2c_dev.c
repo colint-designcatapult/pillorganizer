@@ -1,7 +1,7 @@
 #include "i2c_dev.h"
 
 #include <stdio.h>
-#include "pill_gpio.h"
+#include "pill_pins.h"
 #include "driver/i2c.h"
 
 static const char TAG[] = "I2C_DEV"; 
