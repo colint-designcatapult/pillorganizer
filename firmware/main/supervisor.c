@@ -169,14 +169,14 @@ void supervisor_run()
     }
 }
 
-esp_err_t supervisor_submit_event_block(supervisor_event_id_t event_id, void* payload, size_t timeout)
+esp_err_t supervisor_submit_event_block(supervisor_event_id_t event_id, void* payload, TickType_t ticks_to_wait)
 {
     supervisor_event_t event = {
         .id = event_id,
         .payload = payload
     };
 
-    if (xQueueSend(s_supervisor_event_queue, &event, timeout) != pdPASS) {
+    if (xQueueSend(s_supervisor_event_queue, &event, ticks_to_wait) != pdPASS) {
         return ESP_ERR_NO_MEM;
     }
     return ESP_OK;

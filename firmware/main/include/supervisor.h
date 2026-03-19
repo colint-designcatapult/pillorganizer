@@ -46,5 +46,5 @@ typedef struct {
 void supervisor_init();
 void supervisor_run();
 
-esp_err_t supervisor_submit_event_block(supervisor_event_id_t event_id, void* payload, size_t timeout);
+esp_err_t supervisor_submit_event_block(supervisor_event_id_t event_id, void* payload, TickType_t ticks_to_wait);
 esp_err_t supervisor_submit_event(supervisor_event_id_t event_id);
