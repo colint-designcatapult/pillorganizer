@@ -49,7 +49,7 @@ static void app_wake_deep_sleep()
 
 static void app_init_gpio(void)
 {
-    gpio_config_t io_conf = {};
+    gpio_config_t io_conf = { 0 };
 
 
     // TEST POINTS
