@@ -203,6 +203,6 @@
         120
     ],
     "editor.wordWrapColumn": 120,
-    "idf.currentSetup": "C:\\esp\\v5.5.3\\esp-idf",
+    "idf.currentSetup": "C:\\esp\\v5.4.3\\esp-idf",
     "idf.flashType": "UART",
 }
