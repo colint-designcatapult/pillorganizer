@@ -96,7 +96,7 @@ void supervisor_run()
                         // Increment failure counter
                         s_provision_fail_ctr++;
 
-                        ESP_LOGW(TAG, "Wi-Fi provisionming failed, count = %d", s_provision_fail_ctr);
+                        ESP_LOGW(TAG, "Wi-Fi provision failed, count = %d", s_provision_fail_ctr);
 
                         // On 3 failures, restart the system
                         if (s_provision_fail_ctr >= 3) {
