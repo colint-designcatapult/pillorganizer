@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <esp_err.h>
+#include <freertos/FreeRTOS.h>
 
 /* --- CURRENT STATE --- */
 
