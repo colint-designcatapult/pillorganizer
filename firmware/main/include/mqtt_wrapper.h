@@ -16,7 +16,7 @@ typedef struct {
 
 // --- Core API ---
 
-// Initializes the client, starts the task, and blocks until TLS/MQTT is fully connected
+// Initializes the client, starts the MQTT task
 esp_err_t mqtt_wrapper_connect(const mqtt_wrapper_config_t* config);
 
 // Disconnects the broker, stops the background task, and frees memory
