@@ -19,6 +19,11 @@ adc_readings:
 current_mux_channel: 
     .long 0
 
+    /* NEW: Semaphore flag to sync with Main CPU */
+    .global data_ready
+data_ready:
+    .long 0
+
     .text
     .global entry
 entry:
@@ -72,25 +77,31 @@ delay_10ms:
 
 read_adc:
     /* ==========================================================
-     * 4x Oversampling
+     * 4x Oversampling with Dummy Read
      * ========================================================== */
+     
+    /* 1. Dummy Read: Forces the internal ADC capacitor to connect 
+          to the pin. We discard this value. */
+    adc r0, 0, adc_channel + 1
+    wait 4000                   /* Wait ~0.5ms for internal cap to charge/equalize */
+
+    /* 2. Real Sampling */
     move r1, 0                  /* Clear r1 to act as our accumulator */
     
     adc r0, 0, adc_channel + 1  /* Sample 1 */
     add r1, r1, r0
-    wait 10
+    wait 100                    /* Wait ~12.5us between samples */
     
     adc r0, 0, adc_channel + 1  /* Sample 2 */
     add r1, r1, r0
-    wait 10
+    wait 100
 
     adc r0, 0, adc_channel + 1  /* Sample 3 */
     add r1, r1, r0
-    wait 10
+    wait 100
 
     adc r0, 0, adc_channel + 1  /* Sample 4 */
     add r1, r1, r0
-    wait 10
 
     rsh r1, r1, 2               /* Divide by 4 (Right shift by 2) to get the average */
 
@@ -110,7 +121,20 @@ next_channel:
     jump channel_loop           /* If no, loop back to the top */
 
 exit:
-    /* Unconditionally wake the main core */
+    /* 1. Set the data_ready flag to 1 */
+    move r3, data_ready
+    move r0, 1
+    st r0, r3, 0
+    
+    /* 2. Unconditionally wake the main core */
     wake
 
+wait_for_cpu:
+    /* 3. Wait for the main CPU to clear the flag to 0 */
+    /* wait 100 optional here to slow down the spinlock slightly */
+    move r3, data_ready
+    ld r0, r3, 0
+    jumpr wait_for_cpu, 1, ge  /* Jump back to wait_for_cpu if data_ready >= 1 */
+
+    /* 4. CPU has safely copied the data, start next sweep immediately! */
     jump entry

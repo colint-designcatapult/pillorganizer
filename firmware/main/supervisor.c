@@ -38,8 +38,6 @@ static supervisor_state_t network_connect_success()
     return STATE_SYNCING_TIME;
 }
 
-
-
 void supervisor_init()
 {
     // Create event queue
@@ -77,6 +75,20 @@ void supervisor_run()
 
         if (event_received) {
             ESP_LOGI(TAG, "Received event: %d in state: %d", event.id, current_state);
+
+            supervisor_event_door_t door_payload = (supervisor_event_door_t)event.payload;
+
+            /* Handle events regardless of state */
+            switch(event.id) {
+                case EVENT_DOOR_OPENED:
+                    ESP_LOGI(TAG, "Door %d opened", door_payload);
+                    break;
+                case EVENT_DOOR_CLOSED:
+                    ESP_LOGI(TAG, "Door %d closed", door_payload);
+                    break;
+                default:
+                    break;
+            }
 
             switch (current_state) {
                 case STATE_UNPROVISIONED:

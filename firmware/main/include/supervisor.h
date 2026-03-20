@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <esp_err.h>
+#include <freertos/FreeRTOS.h>
 
 /* --- CURRENT STATE --- */
 
@@ -24,6 +25,7 @@ typedef enum {
 /* --- EVENTS (State Transition Edges) --- */
 
 typedef enum {
+    /* Device init & provision */
     EVENT_PROVISION_STARTED,
     EVENT_PROVISION_WIFI_SUCCESS,
     EVENT_PROVISION_FAILED,
@@ -35,13 +37,27 @@ typedef enum {
     EVENT_TIME_SYNCED,
     EVENT_FLEET_PROVISION_SUCCESS,
     EVENT_FLEET_PROVISION_FAILED,
-    EVENT_FLEET_PROVISION_DEINIT
+    EVENT_FLEET_PROVISION_DEINIT,
+
+    /* Operational events */
+    EVENT_DOOR_OPENED,
+    EVENT_DOOR_CLOSED,
+    EVENT_BIN_TAKEN,
+    EVENT_BIN_MISSED,
+    EVENT_BIN_TAKE_NOW,
+    EVENT_RELOAD_START,
+    EVENT_RELOAD_END,
+    EVENT_ACTION_TIMEOUT
 } supervisor_event_id_t;
 
 typedef struct {
     supervisor_event_id_t id;
     void* payload; // optional
 } supervisor_event_t;
+
+typedef int supervisor_event_door_t;
+// Pack event into payload void*, make sure it fits
+static_assert(sizeof(supervisor_event_door_t) <= sizeof(void*));
 
 void supervisor_init();
 void supervisor_run();
