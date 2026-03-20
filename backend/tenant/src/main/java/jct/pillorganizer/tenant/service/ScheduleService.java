@@ -1,7 +1,8 @@
 package jct.pillorganizer.tenant.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micronaut.serde.ObjectMapper;
+
+import java.io.IOException;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
@@ -12,11 +13,13 @@ import jct.pillorganizer.tenant.model.device.ScheduleStatus;
 import jct.pillorganizer.tenant.model.schedule.BaseSchedule;
 import jct.pillorganizer.tenant.model.schedule.SimpleSchedule;
 import jct.pillorganizer.tenant.model.user.User;
+import jct.pillorganizer.tenant.exceptions.DeviceAccessException;
 import jct.pillorganizer.tenant.repo.DeviceScheduleRepository;
 import jct.pillorganizer.tenant.repo.LogicalDeviceRepository;
 import lombok.extern.flogger.Flogger;
 
 import java.util.UUID;
+
 
 @Singleton
 @Flogger
@@ -41,7 +44,7 @@ public class ScheduleService {
     @Transactional
     public DeviceScheduleStateDTO getSchedule(String deviceId) {
         LogicalDevice device = logicalDeviceRepository.findById(deviceId)
-                .orElseThrow(() -> new IllegalArgumentException("Device not found: " + deviceId));
+                .orElseThrow(() -> new DeviceAccessException("Device not found: " + deviceId));
 
         SimpleSchedule current = parseSchedule(device.getCurrentSchedule());
         String currentId = device.getCurrentSchedule() != null ? device.getCurrentSchedule().getId() : null;
@@ -66,7 +69,7 @@ public class ScheduleService {
     @Transactional
     public DeviceScheduleStateDTO setSchedule(String deviceId, SimpleSchedule newSchedule, User user) {
         LogicalDevice device = logicalDeviceRepository.findById(deviceId)
-                .orElseThrow(() -> new IllegalArgumentException("Device not found: " + deviceId));
+                .orElseThrow(() -> new DeviceAccessException("Device not found: " + deviceId));
 
         DeviceSchedule existing = device.getRequestedSchedule();
         if (existing != null && existing.getStatus() == ScheduleStatus.PENDING) {
@@ -105,7 +108,7 @@ public class ScheduleService {
             }
             log.atWarning().log("Unexpected schedule type in device_schedule id=%s", deviceSchedule.getId());
             return null;
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.atSevere().withCause(e).log("Failed to parse scheduleJson for device_schedule id=%s", deviceSchedule.getId());
             return null;
         }
@@ -114,7 +117,7 @@ public class ScheduleService {
     private String serializeSchedule(BaseSchedule schedule) {
         try {
             return objectMapper.writeValueAsString(schedule);
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             throw new IllegalStateException("Failed to serialize schedule", e);
         }
     }

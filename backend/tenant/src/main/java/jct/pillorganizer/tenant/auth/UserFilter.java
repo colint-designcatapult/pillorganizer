@@ -5,10 +5,8 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.annotation.RequestFilter;
 import io.micronaut.http.annotation.ServerFilter;
 import io.micronaut.http.filter.ServerFilterPhase;
-import io.micronaut.security.authentication.AuthenticationException;
 import io.micronaut.security.utils.SecurityService;
 import jakarta.inject.Inject;
-import jct.pillorganizer.tenant.exceptions.InvalidTenantUserException;
 import jct.pillorganizer.tenant.model.user.BaseUser;
 import jct.pillorganizer.tenant.service.UserService;
 
