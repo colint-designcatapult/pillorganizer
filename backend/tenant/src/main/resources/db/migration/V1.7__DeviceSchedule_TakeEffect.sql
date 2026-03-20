@@ -1,0 +1,2 @@
+ALTER TABLE device_schedule
+    ADD COLUMN take_effect TEXT NOT NULL DEFAULT 'IMMEDIATE';

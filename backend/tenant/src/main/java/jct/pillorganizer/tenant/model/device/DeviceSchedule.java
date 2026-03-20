@@ -38,6 +38,9 @@ public class DeviceSchedule {
 
     private ScheduleStatus status;
 
+    /** When the device should apply this schedule. */
+    private ScheduleTakeEffect takeEffect;
+
     @DateCreated
     private Timestamp createdAt;
 
