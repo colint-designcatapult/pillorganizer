@@ -14,6 +14,7 @@ import jct.pillorganizer.tenant.model.schedule.BaseSchedule;
 import jct.pillorganizer.tenant.model.schedule.SimpleSchedule;
 import jct.pillorganizer.tenant.model.user.User;
 import jct.pillorganizer.tenant.exceptions.DeviceAccessException;
+import jct.pillorganizer.tenant.model.device.ScheduleTakeEffect;
 import jct.pillorganizer.tenant.repo.DeviceScheduleRepository;
 import jct.pillorganizer.tenant.repo.LogicalDeviceRepository;
 import lombok.extern.flogger.Flogger;
@@ -67,7 +68,7 @@ public class ScheduleService {
      * @return the updated scheduling state
      */
     @Transactional
-    public DeviceScheduleStateDTO setSchedule(String deviceId, SimpleSchedule newSchedule, User user) {
+    public DeviceScheduleStateDTO setSchedule(String deviceId, SimpleSchedule newSchedule, ScheduleTakeEffect takeEffect, User user) {
         LogicalDevice device = logicalDeviceRepository.findById(deviceId)
                 .orElseThrow(() -> new DeviceAccessException("Device not found: " + deviceId));
 
@@ -84,6 +85,7 @@ public class ScheduleService {
         pendingSchedule.setDevice(device);
         pendingSchedule.setScheduleJson(scheduleJson);
         pendingSchedule.setStatus(ScheduleStatus.PENDING);
+        pendingSchedule.setTakeEffect(takeEffect);
         pendingSchedule.setCreatedBy(user);
 
         DeviceSchedule saved = deviceScheduleRepository.save(pendingSchedule);

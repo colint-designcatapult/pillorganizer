@@ -11,7 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 import jct.pillorganizer.tenant.auth.AuthService;
 import jct.pillorganizer.tenant.dto.DeviceScheduleStateDTO;
-import jct.pillorganizer.tenant.model.schedule.SimpleSchedule;
+import jct.pillorganizer.tenant.dto.SetScheduleRequestDTO;
 import jct.pillorganizer.tenant.service.ScheduleService;
 import lombok.extern.flogger.Flogger;
 
@@ -37,8 +37,8 @@ public class AppScheduleController {
     @Post("/{id}/dispense_time")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public DeviceScheduleStateDTO updateDispenseTime(@PathVariable("id") String deviceID,
-                                                      @Body SimpleSchedule dto) {
+                                                      @Body SetScheduleRequestDTO dto) {
         authService.accessDevice(deviceID);
-        return scheduleService.setSchedule(deviceID, dto, authService.getUser());
+        return scheduleService.setSchedule(deviceID, dto.schedule(), dto.takeEffect(), authService.getUser());
     }
 }
