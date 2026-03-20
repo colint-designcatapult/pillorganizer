@@ -24,6 +24,7 @@
 #include <esp_err.h>
 #include <esp_event.h>
 #include "claim.h"
+#include "shadow_state.h"
 
 #define TAG "MAIN"
 
@@ -154,6 +155,9 @@ void app_main(void)
 
     // Initialize claim subsystem
     claim_init();
+
+    // Initialize shadow state handler
+    shadow_state_init();
 
     // Initialize networking
     network_init();

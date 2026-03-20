@@ -11,4 +11,4 @@ typedef uint64_t rtc_relative_time_t;
 rtc_relative_time_t app_rtc_get_relative_timestamp();
 
 // Converts a relative timestamp to UTC time, given that the RTC has been synced
-time_t app_rtc_calc_utc_time(rtc_relative_time_t rtc_time);
+time_t app_rtc_calc_utc_time_ms(rtc_relative_time_t rtc_time);

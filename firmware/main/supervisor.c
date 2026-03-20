@@ -11,6 +11,8 @@
 #include "claim.h"
 #include "fleet_provision.h"
 #include "mqtt.h"
+#include "string.h"
+#include "shadow_state.h"
 
 #define TAG "SUPERVISOR"
 
@@ -49,11 +51,33 @@ void supervisor_init()
     ESP_LOGI(TAG, "Supervisor initialized");
 }
 
+static void create_initial_device_state(device_state_t* state)
+{
+    memset(state, 0, sizeof(device_state_t));
+    state->timestamp = app_rtc_get_relative_timestamp();
+}
+
+static void update_state(device_state_t* state)
+{
+    // Update state timestamp
+    state->timestamp = app_rtc_get_relative_timestamp();
+    supervisor_submit_event(EVENT_STATE_CHANGED);
+}
+
+static void send_state_update(device_state_t* state)
+{
+    mqtt_publish_device_state(state);
+}
+
 void supervisor_run()
 {
     supervisor_state_t current_state = STATE_INIT;
     supervisor_event_t event;
+    device_state_t device_state;
     bool event_received = false;
+
+    create_initial_device_state(&device_state);
+    update_state(&device_state);
 
     if (wifiprov_is_provisioned()) {
         // Device provisioned with Wi-Fi Credentials, network stack is already connecting
@@ -82,9 +106,15 @@ void supervisor_run()
             switch(event.id) {
                 case EVENT_DOOR_OPENED:
                     ESP_LOGI(TAG, "Door %d opened", door_payload);
+                    device_state.bins[door_payload].opened_at = app_rtc_get_relative_timestamp();
+                    device_state.doors |= (1 << door_payload);
+                    update_state(&device_state);
                     break;
                 case EVENT_DOOR_CLOSED:
                     ESP_LOGI(TAG, "Door %d closed", door_payload);
+                    device_state.bins[door_payload].closed_at = app_rtc_get_relative_timestamp();
+                    device_state.doors &= ~(1 << door_payload);
+                    update_state(&device_state);
                     break;
                 default:
                     break;
@@ -133,9 +163,9 @@ void supervisor_run()
                     if (event.id == EVENT_TIME_SYNCED) {
                         ESP_LOGI(TAG, "RTC time synced");
                         if (devcfg_has_permanent_identity()) {
-                            // No more initial provisioning to do. Device online and fully provisioned.
+                            // No more initial provisioning to do. Begin MQTT init
+                            current_state = STATE_MQTT_DISCONNECTED;
                             mqtt_init();
-                            current_state = STATE_OPERATIONAL;
                         } else if (claim_has_credentials()) {
                             // Not fully provisioned, but we have claim credentials. Fetch temporary claim certs.
                             current_state = STATE_FETCHING_CERT;
@@ -170,10 +200,22 @@ void supervisor_run()
                         reset_provisioning();
                     }
                     break;
+                case STATE_MQTT_DISCONNECTED:
+                    if (event.id == EVENT_MQTT_CONNECTED) {
+                        current_state = STATE_OPERATIONAL;
+                        // Notify dependents that MQTT is up
+                        shadow_state_on_connect();
+
+                        // Send a state update
+                        update_state(&device_state);
+                    }
+                    break;
                 case STATE_OPERATIONAL:
                     // Handle events during normal operation
-                    if(event.id == EVENT_FLEET_PROVISION_DEINIT) {
-                        // We just finished fleet provisioning
+                    if(event.id == EVENT_STATE_CHANGED) {
+                        send_state_update(&device_state);
+                    } else if(event.id == EVENT_MQTT_DISCONNECTED) {
+                        current_state = STATE_MQTT_DISCONNECTED;
                     }
                     break;
                 default:
@@ -201,4 +243,10 @@ esp_err_t supervisor_submit_event_block(supervisor_event_id_t event_id, void* pa
 esp_err_t supervisor_submit_event(supervisor_event_id_t event_id)
 {
     return supervisor_submit_event_block(event_id, NULL, 0);
+}
+
+/* Pill Organizer Logic */
+void a()
+{
+    
 }
