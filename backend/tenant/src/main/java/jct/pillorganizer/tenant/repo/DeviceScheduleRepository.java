@@ -7,9 +7,10 @@ import jct.pillorganizer.tenant.model.device.DeviceSchedule;
 import jct.pillorganizer.tenant.model.device.ScheduleStatus;
 
 import java.util.List;
+import java.util.UUID;
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
-public interface DeviceScheduleRepository extends CrudRepository<DeviceSchedule, String> {
+public interface DeviceScheduleRepository extends CrudRepository<DeviceSchedule, UUID> {
 
     List<DeviceSchedule> findByDeviceId(String deviceId);
 

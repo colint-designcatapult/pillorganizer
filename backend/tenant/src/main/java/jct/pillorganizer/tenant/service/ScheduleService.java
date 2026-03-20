@@ -48,10 +48,10 @@ public class ScheduleService {
                 .orElseThrow(() -> new DeviceAccessException("Device not found: " + deviceId));
 
         SimpleSchedule current = parseSchedule(device.getCurrentSchedule());
-        String currentId = device.getCurrentSchedule() != null ? device.getCurrentSchedule().getId() : null;
+        UUID currentId = device.getCurrentSchedule() != null ? device.getCurrentSchedule().getId() : null;
 
         SimpleSchedule requested = parseSchedule(device.getRequestedSchedule());
-        String requestedId = device.getRequestedSchedule() != null ? device.getRequestedSchedule().getId() : null;
+        UUID requestedId = device.getRequestedSchedule() != null ? device.getRequestedSchedule().getId() : null;
         ScheduleStatus requestedStatus = device.getRequestedSchedule() != null ? device.getRequestedSchedule().getStatus() : null;
 
         return new DeviceScheduleStateDTO(currentId, current, requestedId, requested, requestedStatus);
@@ -81,7 +81,7 @@ public class ScheduleService {
         String scheduleJson = serializeSchedule(newSchedule);
 
         DeviceSchedule pendingSchedule = new DeviceSchedule();
-        pendingSchedule.setId(UUID.randomUUID().toString());
+        pendingSchedule.setId(UUID.randomUUID());
         pendingSchedule.setDevice(device);
         pendingSchedule.setScheduleJson(scheduleJson);
         pendingSchedule.setStatus(ScheduleStatus.PENDING);
@@ -94,7 +94,7 @@ public class ScheduleService {
         logicalDeviceRepository.update(device);
 
         SimpleSchedule current = parseSchedule(device.getCurrentSchedule());
-        String currentId = device.getCurrentSchedule() != null ? device.getCurrentSchedule().getId() : null;
+        UUID currentId = device.getCurrentSchedule() != null ? device.getCurrentSchedule().getId() : null;
 
         return new DeviceScheduleStateDTO(currentId, current, saved.getId(), newSchedule, ScheduleStatus.PENDING);
     }

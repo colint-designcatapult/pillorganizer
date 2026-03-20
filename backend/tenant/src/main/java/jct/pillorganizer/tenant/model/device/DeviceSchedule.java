@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.sql.Timestamp;
+import java.util.UUID;
 
 /**
  * Represents a versioned, immutable schedule for a device.
@@ -27,7 +28,7 @@ import java.sql.Timestamp;
 public class DeviceSchedule {
 
     @Id
-    private String id;
+    private UUID id;
 
     @Relation(value = Relation.Kind.MANY_TO_ONE)
     @JsonIgnore

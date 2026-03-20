@@ -1,5 +1,5 @@
 CREATE TABLE device_schedule (
-    id            TEXT PRIMARY KEY,
+    id            UUID PRIMARY KEY,
     device_id     TEXT NOT NULL,
     schedule_json TEXT NOT NULL,
     status        TEXT NOT NULL,

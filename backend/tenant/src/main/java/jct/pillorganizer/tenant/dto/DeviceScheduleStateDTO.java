@@ -6,6 +6,8 @@ import io.micronaut.serde.annotation.Serdeable;
 import jct.pillorganizer.tenant.model.device.ScheduleStatus;
 import jct.pillorganizer.tenant.model.schedule.SimpleSchedule;
 
+import java.util.UUID;
+
 /**
  * Represents the current scheduling state of a device.
  *
@@ -18,9 +20,9 @@ import jct.pillorganizer.tenant.model.schedule.SimpleSchedule;
 @Serdeable
 @Introspected
 public record DeviceScheduleStateDTO(
-        @Nullable String currentScheduleId,
+        @Nullable UUID currentScheduleId,
         @Nullable SimpleSchedule currentSchedule,
-        @Nullable String requestedScheduleId,
+        @Nullable UUID requestedScheduleId,
         @Nullable SimpleSchedule requestedSchedule,
         @Nullable ScheduleStatus requestedStatus
 ) {}
