@@ -1,6 +1,5 @@
 package jct.pillorganizer.tenant.auth;
 
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.annotation.RequestFilter;
@@ -14,7 +13,6 @@ import jct.pillorganizer.tenant.model.user.BaseUser;
 import jct.pillorganizer.tenant.service.UserService;
 
 @ServerFilter(io.micronaut.http.annotation.Filter.MATCH_ALL_PATTERN)
-@Requires(notEnv = "localtest")
 public class UserFilter implements Ordered {
 
     public static final String USER_ID_ATTRIBUTE = "userId";
