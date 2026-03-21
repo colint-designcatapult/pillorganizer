@@ -1,7 +1,8 @@
 /*
- * ULP Assembly to poll 16 channels via a CD4067B MUX
+ * ULP Assembly to poll channels via a CD4067B MUX
+ * Sequence: Ch14, Ch0-13, Ch15, Ch14 (17 samples total)
  * Features 4x oversampling per channel.
- * Wakes the main core unconditionally after all 16 channels are read.
+ * Wakes the main core unconditionally after all 17 channels are read.
  */
 #include "soc/rtc_cntl_reg.h"
 #include "soc/rtc_io_reg.h"
@@ -13,33 +14,67 @@
 .bss
     .global adc_readings
 adc_readings: 
-    .skip 64   /* 16 elements * 4 bytes each */
+    .skip 68   /* 17 elements * 4 bytes each = 68 bytes */
 
-    .global current_mux_channel
-current_mux_channel: 
+    /* Renamed to clarify we are tracking the sequence index, not the raw channel */
+    .global current_sequence_idx
+current_sequence_idx: 
     .long 0
 
-    /* NEW: Semaphore flag to sync with Main CPU */
     .global data_ready
 data_ready:
     .long 0
 
-    .text
+.text
     .global entry
 entry:
-    /* Reset channel counter to 0 on every ULP wakeup */
+    /* Jump over our lookup table so it doesn't execute as code */
+    jump real_entry
+
+/* * Embedded Lookup Table: 
+ * Placed in .text to guarantee it flashes correctly to RTC memory 
+ * without relying on C-side .bss initialization.
+ */
+    .global channel_sequence
+channel_sequence:
+    .long 14
+    .long 0
+    .long 1
+    .long 2
+    .long 3
+    .long 4
+    .long 5
+    .long 6
+    .long 7
+    .long 8
+    .long 9
+    .long 10
+    .long 11
+    .long 12
+    .long 13
+    .long 15
+    .long 14
+
+real_entry:
+    /* Reset sequence counter to 0 on every ULP wakeup */
     move r0, 0
-    move r3, current_mux_channel
+    move r3, current_sequence_idx
     st r0, r3, 0
 
 channel_loop:
-    move r3, current_mux_channel
+    /* Load the current index (0 to 16) into r2 */
+    move r3, current_sequence_idx
     ld r2, r3, 0
 
+    /* Fetch the actual MUX channel from the lookup table into r1 */
+    move r3, channel_sequence
+    add r3, r3, r2
+    ld r1, r3, 0
+
     /* ==========================================================
-     * MUX Channel Selection 
+     * MUX Channel Selection (Using r1 as the target channel)
      * ========================================================== */
-    and r0, r2, 1
+    and r0, r1, 1
     jumpr set_mux_a, 1, ge
     WRITE_RTC_REG(RTC_GPIO_OUT_W1TC_REG, RTC_GPIO_OUT_DATA_W1TC_S + 9, 1, 1)
     jump mux_b
@@ -47,7 +82,7 @@ set_mux_a:
     WRITE_RTC_REG(RTC_GPIO_OUT_W1TS_REG, RTC_GPIO_OUT_DATA_W1TS_S + 9, 1, 1)
 
 mux_b:
-    and r0, r2, 2
+    and r0, r1, 2
     jumpr set_mux_b, 1, ge
     WRITE_RTC_REG(RTC_GPIO_OUT_W1TC_REG, RTC_GPIO_OUT_DATA_W1TC_S + 8, 1, 1)
     jump mux_c
@@ -55,7 +90,7 @@ set_mux_b:
     WRITE_RTC_REG(RTC_GPIO_OUT_W1TS_REG, RTC_GPIO_OUT_DATA_W1TS_S + 8, 1, 1)
 
 mux_c:
-    and r0, r2, 4
+    and r0, r1, 4
     jumpr set_mux_c, 1, ge
     WRITE_RTC_REG(RTC_GPIO_OUT_W1TC_REG, RTC_GPIO_OUT_DATA_W1TC_S + 17, 1, 1)
     jump mux_d
@@ -63,7 +98,7 @@ set_mux_c:
     WRITE_RTC_REG(RTC_GPIO_OUT_W1TS_REG, RTC_GPIO_OUT_DATA_W1TS_S + 17, 1, 1)
 
 mux_d:
-    and r0, r2, 8
+    and r0, r1, 8
     jumpr set_mux_d, 1, ge
     WRITE_RTC_REG(RTC_GPIO_OUT_W1TC_REG, RTC_GPIO_OUT_DATA_W1TC_S + 7, 1, 1)
     jump delay_10ms
@@ -107,16 +142,16 @@ read_adc:
 
     /* Store the averaged ADC value directly */
     move r3, adc_readings
-    add r3, r3, r2     
+    add r3, r3, r2              /* r2 is our sequence index (0 to 16) */
     st r1, r3, 0
 
 next_channel:
-    add r2, r2, 1               /* Increment channel counter */
-    move r3, current_mux_channel
+    add r2, r2, 1               /* Increment sequence counter */
+    move r3, current_sequence_idx
     st r2, r3, 0
     
     move r0, r2
-    sub r0, r0, 16              /* Check if we've hit 16 channels */
+    sub r0, r0, 17              /* Check if we've hit 17 samples (index 17) */
     jump exit, eq               /* If yes, exit and wake */
     jump channel_loop           /* If no, loop back to the top */
 
@@ -131,10 +166,9 @@ exit:
 
 wait_for_cpu:
     /* 3. Wait for the main CPU to clear the flag to 0 */
-    /* wait 100 optional here to slow down the spinlock slightly */
     move r3, data_ready
     ld r0, r3, 0
-    jumpr wait_for_cpu, 1, ge  /* Jump back to wait_for_cpu if data_ready >= 1 */
+    jumpr wait_for_cpu, 1, ge  
 
-    /* 4. CPU has safely copied the data, start next sweep immediately! */
+    /* 4. CPU has safely copied the data, start next sweep immediately */
     jump entry
