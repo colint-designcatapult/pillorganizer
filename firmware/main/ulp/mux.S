@@ -19,6 +19,16 @@
 adc_readings: 
     .skip 68   /* 17 elements * 4 bytes each */
 
+    /* --- ADD THESE FOR THE RESET CHECK --- */
+    .global button_counter
+button_counter:
+    .long 0
+
+    .global reset_flag
+reset_flag:
+    .long 0
+    /* ------------------------------------- */
+
     .global current_sequence_idx
 current_sequence_idx: 
     .long 0
@@ -58,6 +68,40 @@ real_entry:
     st r0, r3, 0
 
 channel_loop:
+    /* ==========================================================
+     * Glitch Filter & Reset Button Check (GPIO36 / RTC_GPIO0)
+     * ========================================================== */
+    /* Read the state of GPIO36. The 1-bit result goes into R0. */
+    READ_RTC_REG(RTC_GPIO_IN_REG, RTC_GPIO_IN_NEXT_S + 0, 1)
+
+    /* If R0 >= 1 (Button is High/Unpressed), reset the streak counter */
+    jumpr reset_streak, 1, ge
+
+    /* Button is Low (Pressed). Increment the streak counter. */
+    move r3, button_counter
+    ld r0, r3, 0
+    add r0, r0, 1
+    st r0, r3, 0
+
+    /* Check if we've reached 5 consecutive Low reads (~50ms) */
+    jumpr button_done, 5, lt
+
+    /* SOLID PRESS DETECTED! Set flag, wake CPU, and exit loop. */
+    move r3, reset_flag
+    move r0, 1
+    st r0, r3, 0
+    wake
+    jump exit
+
+reset_streak:
+    move r3, button_counter
+    move r0, 0
+    st r0, r3, 0
+
+button_done:
+    /* ==========================================================
+     * MUX Channel Selection (Original Code)
+     * ========================================================== */
     move r3, current_sequence_idx
     ld r2, r3, 0
 
