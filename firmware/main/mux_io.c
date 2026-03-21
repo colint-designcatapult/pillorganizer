@@ -100,6 +100,12 @@ static void ulp_event_task(void *arg)
         /* Block indefinitely (0 CPU cycles) until the ISR callback notifies us */
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         if (process_ulp_events(&ulp_adc_readings)) {
+
+                uint32_t bat_start_val = (&ulp_adc_readings)[0] & 0xFFFF;
+                uint32_t bat_end_val   = (&ulp_adc_readings)[16] & 0xFFFF;
+
+            ESP_LOGI(TAG, "Battery! %ld", bat_start_val);
+
             for (int i = 0; i < ADC_NUM_DOOR_CHANNELS; i++) {
                 if (ch_stats[i].state != last_known_state[i]) {
                     // State changed!
