@@ -14,6 +14,7 @@
 #include "string.h"
 #include "shadow_state.h"
 #include "ledc.h"
+#include "nvs_wrapper.h"
 
 #define TAG "SUPERVISOR"
 
@@ -22,28 +23,28 @@ static QueueHandle_t s_supervisor_event_queue = NULL;
 // Number of provision failures this boot
 static uint8_t s_provision_fail_ctr = 0;
 
-static bool supervisor_is_fully_provisioned()
-{
-    return wifiprov_is_provisioned() && devcfg_has_permanent_identity();
-}
+// Whether a reset is requested, survives restarts
+RTC_NOINIT_ATTR uint32_t reset_pending;
 
-static void _Noreturn reset_provisioning(void) 
+// Define reset flags to random values to avoid flipping bits in RTC RAM
+#define RESET_FLAG_FACTORY      0x47eb74d9
+#define RESET_FLAG_WIFI         0x3ab1ac62
+
+static supervisor_state_t provisioning_failed()
 {
     wifiprov_reset_provision();
     devcfg_reset_identity();
 
     // Blink red to indicate failure
     led_task_param_t param = {
-        .blink_and_rollback = {
-            .red = 0xFF,
+        .blink = {
+            .red = LED_ALL_DOORS,
             .green = 0x00
         }
     };
-    ledc_set_task(LED_BLINK_AND_ROLLBACK, param);
+    ledc_set_task(LED_BLINK, param, 3000);
 
-    ESP_LOGI(TAG, "Provision state reset, restarting...");
-    vTaskDelay(pdMS_TO_TICKS(6000));
-    esp_restart();
+    return STATE_RESET_PENDING;
 }
 
 static supervisor_state_t network_connect_success()
@@ -52,8 +53,43 @@ static supervisor_state_t network_connect_success()
     return STATE_SYNCING_TIME;
 }
 
+static void supervisor_check_factory_reset()
+{
+    esp_reset_reason_t reason = esp_reset_reason();
+    if (reason != ESP_RST_SW) {
+        // The memory is full of random garbage right now. Safe to zero it.
+        reset_pending = 0;
+    }
+
+    if (reset_pending == RESET_FLAG_FACTORY) {
+        // Immediately reset the value
+        reset_pending = 0;
+
+        devcfg_reset_identity();
+        nvs_factory_reset();
+        esp_restart();
+    }
+}
+
+static void supervisor_check_wifi_reset()
+{
+    if (reset_pending == RESET_FLAG_WIFI) {
+        // Immediately reset the value
+        reset_pending = 0;
+
+        // Just reset Wi-Fi
+        wifiprov_reset_provision();
+        esp_restart();
+    }
+    // Unconditionally unset pending flag
+    reset_pending = 0;
+}
+
 void supervisor_init()
 {
+    // Check if reset is requested and execute it if requested
+    supervisor_check_factory_reset();
+
     // Create event queue
     s_supervisor_event_queue = xQueueCreate(16, sizeof(supervisor_event_t));
     if (s_supervisor_event_queue == NULL) {
@@ -88,20 +124,19 @@ void supervisor_run()
     device_state_t device_state;
     bool event_received = false;
 
+    // Check if Wi-Fi wants to be reset
+    supervisor_check_wifi_reset();
+
     create_initial_device_state(&device_state);
     update_state(&device_state);
 
     if (wifiprov_is_provisioned()) {
         // Device provisioned with Wi-Fi Credentials, network stack is already connecting
-        // network_wifi_init() / esp_wifi_start() uses provisioned credentials to connect
         if(devcfg_has_permanent_identity()) {
-            // Can initialize shadow state
             shadow_state_init();
             current_state = STATE_CONNECTING_NETIF;
         } else {
-            // Has Wi-Fi credentials, but no permanent identity
-            // Must start over since it has no way of getting a claim cert
-            reset_provisioning();
+            current_state = provisioning_failed();
         }
     } else {
         wifiprov_start_provision();
@@ -137,66 +172,58 @@ void supervisor_run()
             switch (current_state) {
                 case STATE_UNPROVISIONED:
                     if (event.id == EVENT_PROVISION_STARTED) {
-                        // Start LED breathing effect
                         led_task_param_t param = {
                             .breathe = {
                                 .red = 0x00,
-                                .green = 0x7F
+                                .green = LED_ALL_DOORS
                             }
                         };
-                        ledc_set_task(LED_BREATHE, param);
+                        ledc_set_task(LED_BREATHE, param, 0);
 
                         current_state = STATE_PROVISIONING;
                     }
                     break;
                 case STATE_PROVISIONING:
                     if (event.id == EVENT_PROVISION_WIFI_SUCCESS) {
-                        // At this point, provisioning is complete AND we are connected to Wi-Fi
                         wifiprov_deinit();
                         current_state = network_connect_success();
 
-                        // Update progress bar to 2
-                        led_task_param_t param = {
+                        ledc_set_task(LED_PROGRESS, (led_task_param_t) {
                             .progress = {
                                 .red = 0x00,
-                                .green = 0xFF,
+                                .green = LED_ALL_DOORS,
                                 .progress = 2
                             }
-                        };
-                        ledc_set_task(LED_PROGRESS, param);
+                        }, 0);
 
-                        // Reset failure counter
                         s_provision_fail_ctr = 0;
                         ESP_LOGI(TAG, "Wi-Fi provisioning success");
                     } else if (event.id == EVENT_PROVISION_FAILED) {              
-                        // Provisioning failed, but the provision service stays running so we don't need to reset it
-
-                        // Blink red to indicate failure
-                        led_task_param_t param = {
-                            .breathe = {
-                                .red = 0xFF,
+                        ledc_set_task(LED_BLINK, (led_task_param_t) {
+                            .blink = {
+                                .red = LED_ALL_DOORS,
                                 .green = 0x00
                             }
-                        };
-                        ledc_set_task(LED_BLINK_AND_ROLLBACK, param);
+                        }, 3000);
 
-                        // Increment failure counter
                         s_provision_fail_ctr++;
-
                         ESP_LOGW(TAG, "Wi-Fi provision failed, count = %d", s_provision_fail_ctr);
 
-                        // On 3 failures, restart the system
                         if (s_provision_fail_ctr >= 3) {
-                            // Wait 3 seconds for LED animation
-                            vTaskDelay(pdMS_TO_TICKS(6000));
-                            esp_restart();
+                            current_state = STATE_RESET_PENDING;
                         }
+                    } else if (event.id == EVENT_LED_EFFECT_COMPLETE) {
+                        // Resume breathing
+                        led_task_param_t param = {
+                            .breathe = {
+                                .red = 0x00,
+                                .green = LED_ALL_DOORS
+                            }
+                        };
+                        ledc_set_task(LED_BREATHE, param, 0);
                     }
                     break;
                 case STATE_CONNECTING_NETIF:
-                    //
-                    // Wi-Fi connecting state, but does NOT include the connection during provisioning.
-                    // 
                     if (event.id == EVENT_NETIF_CONNECTED) {
                         current_state = network_connect_success();
                     } else if (event.id == EVENT_NETIF_DISCONNECTED) {
@@ -205,31 +232,25 @@ void supervisor_run()
                     }
                     break;
                 case STATE_SYNCING_TIME:
-                    // System will always hit this state during init, even if time doesn't need to be synced
                     if (event.id == EVENT_TIME_SYNCED) {
                         ESP_LOGI(TAG, "RTC time synced");
                         if (devcfg_has_permanent_identity()) {
-                            // No more initial provisioning to do. Begin MQTT init
                             current_state = STATE_MQTT_DISCONNECTED;
                             mqtt_init();
                         } else if (claim_has_credentials()) {
-                            // Not fully provisioned, but we have claim credentials. Fetch temporary claim certs.
                             current_state = STATE_FETCHING_CERT;
 
-                            // Update progress bar to 3
-                            led_task_param_t param = {
+                            ledc_set_task(LED_PROGRESS, (led_task_param_t) {
                                 .progress = {
                                     .red = 0x00,
-                                    .green = 0xFF,
+                                    .green = LED_ALL_DOORS,
                                     .progress = 3
                                 }
-                            };
-                            ledc_set_task(LED_PROGRESS, param);
+                            }, 0);
 
                             claim_execute_fetch();
                         } else {
-                            // Not fully provisioned, no claim credentials. Unrecoverable state. Reset device.
-                            reset_provisioning();
+                            current_state = provisioning_failed();
                         }
                     } else if (event.id == EVENT_NETIF_DISCONNECTED) {
                         current_state = STATE_CONNECTING_NETIF;
@@ -241,48 +262,37 @@ void supervisor_run()
                         ESP_LOGI(TAG, "Claim certificate fetched successfully. Moving to STATE_FLEET_PROVISIONING.");
                         current_state = STATE_FLEET_PROVISIONING;
 
-                            // Update progress bar to 4
-                            led_task_param_t param = {
-                                .progress = {
-                                    .red = 0x00,
-                                    .green = 0xFF,
-                                    .progress = 4
-                                }
-                            };
-                            ledc_set_task(LED_PROGRESS, param);
+                        ledc_set_task(LED_PROGRESS, (led_task_param_t) {
+                            .progress = {
+                                .red = 0x00,
+                                .green = LED_ALL_DOORS,
+                                .progress = 4
+                            }
+                        }, 0);
 
                         claim_fleet_provision();
                     } else if (event.id == EVENT_CERT_CLAIM_FAILED) {
                         ESP_LOGW(TAG, "Claim certificate fetch failed. Resetting provisioning and restarting.");
-                        reset_provisioning();
+                        current_state = provisioning_failed();
                     } else if (event.id == EVENT_NETIF_DISCONNECTED) {
                         current_state = STATE_CONNECTING_NETIF;
                         network_reconnect();
                     }
                     break;
                 case STATE_FLEET_PROVISIONING:
-                    // Will handle Fleet Provisioning success/failure events here
                     if(event.id == EVENT_FLEET_PROVISION_SUCCESS) {
                         ESP_LOGI(TAG, "Fleet provision success!");
-
-                        // Update progress bar to 6
-                        led_task_param_t param = {
+                        ledc_set_task(LED_PROGRESS, (led_task_param_t) {
                             .progress = {
                                 .red = 0x00,
-                                .green = 0xFF,
+                                .green = LED_ALL_DOORS,
                                 .progress = 7
                             }
-                        };
-                        ledc_set_task(LED_PROGRESS, param);
-
-                        vTaskDelay(pdMS_TO_TICKS(6000));
-
-                        // Restart now, we just went through the entire provisioning flow
-                        // Better to just start from a clean slate
-                        esp_restart();
+                        }, 6000);
+                        current_state = STATE_RESET_PENDING;
                     } else if(event.id == EVENT_FLEET_PROVISION_FAILED) {
                         ESP_LOGE(TAG, "Fleet provision failed!");
-                        reset_provisioning();
+                        current_state = provisioning_failed();
                     } else if (event.id == EVENT_NETIF_DISCONNECTED) {
                         current_state = STATE_CONNECTING_NETIF;
                         network_reconnect();
@@ -291,10 +301,7 @@ void supervisor_run()
                 case STATE_MQTT_DISCONNECTED:
                     if (event.id == EVENT_MQTT_CONNECTED) {
                         current_state = STATE_OPERATIONAL;
-                        // Notify dependents that MQTT is up
                         shadow_state_on_connect();
-
-                        // Send a state update
                         update_state(&device_state);
                     } else if (event.id == EVENT_NETIF_DISCONNECTED) {
                         current_state = STATE_CONNECTING_NETIF;
@@ -302,7 +309,6 @@ void supervisor_run()
                     }
                     break;
                 case STATE_OPERATIONAL:
-                    // Handle events during normal operation
                     if(event.id == EVENT_STATE_CHANGED) {
                         send_state_update(&device_state);
                     } else if(event.id == EVENT_MQTT_DISCONNECTED) {
@@ -312,6 +318,12 @@ void supervisor_run()
                         network_reconnect();
                     }
                     break;
+                case STATE_RESET_PENDING:
+                    if (event.id == EVENT_LED_EFFECT_COMPLETE) {
+                        // We were waiting for an LED effect to finish
+                        // Perform restart
+                        esp_restart();
+                    }
                 default:
                     break;
             }
@@ -339,8 +351,14 @@ esp_err_t supervisor_submit_event(supervisor_event_id_t event_id)
     return supervisor_submit_event_block(event_id, NULL, 0);
 }
 
-/* Pill Organizer Logic */
-void a()
+void supervisor_reset_wifi()
 {
-    
+    reset_pending = RESET_FLAG_WIFI;
+    esp_restart();
+}
+
+void supervisor_factory_reset()
+{
+    reset_pending = RESET_FLAG_FACTORY;
+    esp_restart();
 }

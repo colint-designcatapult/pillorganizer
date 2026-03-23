@@ -21,7 +21,8 @@ typedef enum {
     STATE_FETCHING_CERT,
     STATE_FLEET_PROVISIONING,
     STATE_OPERATIONAL,
-    STATE_MQTT_DISCONNECTED
+    STATE_MQTT_DISCONNECTED,
+    STATE_RESET_PENDING
 } supervisor_state_t;
 
 /* --- EVENTS (State Transition Edges) --- */
@@ -52,7 +53,9 @@ typedef enum {
     EVENT_BIN_TAKE_NOW,
     EVENT_RELOAD_START,
     EVENT_RELOAD_END,
-    EVENT_ACTION_TIMEOUT
+    EVENT_ACTION_TIMEOUT,
+    EVENT_LED_EFFECT_COMPLETE,
+    
 } supervisor_event_id_t;
 
 typedef struct {
@@ -71,7 +74,8 @@ typedef enum {
     TAKEN,
     MISSED,
     PENDING,
-    TAKE_NOW
+    TAKE_NOW,
+    NO_RECORD
 } bin_status_t;
 
 typedef struct {
@@ -110,3 +114,8 @@ void supervisor_run();
 
 esp_err_t supervisor_submit_event_block(supervisor_event_id_t event_id, void* payload, TickType_t ticks_to_wait);
 esp_err_t supervisor_submit_event(supervisor_event_id_t event_id);
+
+// Resets just the stored Wi-Fi credentials. Does not wipe the device identity.
+void supervisor_reset_wifi();
+// Fully wipes NVS to clean state, including Wi-Fi credentials and device identity.
+void supervisor_factory_reset();

@@ -4,162 +4,189 @@
 #include "IS31FL3730.h"
 #include "i2c_dev.h"
 #include <stdatomic.h>
+#include "supervisor.h"
 
-static atomic_ullong s_led_task = 0; 
-static atomic_ullong s_led_param = 0;
-static atomic_bool s_reset = true;
+// Define magic numbers for better readability
+#define PROGRESS_TICKS_PER_STEP 50
+#define BLINK_INTERVAL_TICKS    12
+#define MAX_BREATHE_STEPS       127
+#define TASK_TICK_RATE_MS       20
 
-void led_task(void*);
+static atomic_uint_fast32_t s_led_task = ATOMIC_VAR_INIT(0); 
+static atomic_ullong s_led_param = ATOMIC_VAR_INIT(0);
+static atomic_uint_fast32_t s_led_duration = ATOMIC_VAR_INIT(0);
+static atomic_bool s_reset = ATOMIC_VAR_INIT(true);
 
-void ledc_init()
+void led_task(void* arg);
+
+void ledc_init(void)
 {
     // Initialize the LED driver
     IS31FL3730_init();
-    IS31FL3730_set_brightness(127);
+    IS31FL3730_set_brightness(MAX_BREATHE_STEPS);
 
     xTaskCreate(led_task, "LED Task", 4096, NULL, 1, NULL);   
 }
 
-void ledc_set_task(led_task_t task, led_task_param_t param)
+void ledc_set_task(led_task_t task, led_task_param_t param, uint32_t duration_ms)
 {
     atomic_store_explicit(&s_led_task, task, memory_order_relaxed);
     atomic_store_explicit(&s_led_param, param.raw, memory_order_relaxed);
-    atomic_store_explicit(&s_reset, true, memory_order_relaxed);
+    atomic_store_explicit(&s_led_duration, duration_ms, memory_order_relaxed);
+    
+    // Use memory_order_release to ensure the parameter writes finish before the flag flips
+    atomic_store_explicit(&s_reset, true, memory_order_release); 
+}
+
+static void apply_led_bitfields(uint16_t red, uint16_t green)
+{
+    uint8_t r_mwfu_pm = 0, r_mwfu_am = 0, r_trs_pm = 0, r_trs_am = 0;
+    uint8_t g_mwfu_pm = 0, g_mwfu_am = 0, g_trs_pm = 0, g_trs_am = 0;
+
+    for (int i = 0; i < 14; i++) {
+        int day = i / 2;
+        bool is_am = i % 2; // Preserved original hardware mapping
+        uint8_t bit = 1 << (day / 2);
+        bool is_mwfu = (day % 2 == 0);
+
+        if ((red >> i) & 1) {
+            if (is_mwfu) {
+                if (is_am) r_mwfu_am |= bit; else r_mwfu_pm |= bit;
+            } else {
+                if (is_am) r_trs_am |= bit; else r_trs_pm |= bit;
+            }
+        }
+
+        if ((green >> i) & 1) {
+            if (is_mwfu) {
+                if (is_am) g_mwfu_am |= bit; else g_mwfu_pm |= bit;
+            } else {
+                if (is_am) g_trs_am |= bit; else g_trs_pm |= bit;
+            }
+        }
+    }
+
+    i2c_write_register(ISSI_ADDR, MWFU_G_PM, g_mwfu_pm);
+    i2c_write_register(ISSI_ADDR, MWFU_G_AM, g_mwfu_am);
+    i2c_write_register(ISSI_ADDR, TRS_G_PM, g_trs_pm);                            
+    i2c_write_register(ISSI_ADDR, TRS_G_AM, g_trs_am);
+    i2c_write_register(ISSI_ADDR, MWFU_R_PM, r_mwfu_pm);
+    i2c_write_register(ISSI_ADDR, MWFU_R_AM, r_mwfu_am);
+    i2c_write_register(ISSI_ADDR, TRS_R_PM, r_trs_pm);                            
+    i2c_write_register(ISSI_ADDR, TRS_R_AM, r_trs_am);
 }
 
 void led_task(void* arg)
 {
+    led_task_t prev_task = LED_IDLE; // Keep track of the previous state
     int8_t step = 1;
     uint32_t step_ctr = 0;
-
-    // Initialize to safe defaults
-    led_task_param_t last_param = {0};
-    led_task_t last_task = LED_IDLE;
-    led_task_t prev_task = LED_IDLE; // Keep track of the previous task to prevent unwanted resets
+    uint32_t duration_ticks = 0;
+    uint32_t elapsed_ticks = 0;
 
     for(;;) {
+        // 1. Thread-safe read and reset of the flag using atomic_exchange
+        bool trigger_reset = atomic_exchange_explicit(&s_reset, false, memory_order_acquire);
+        
         led_task_t task = (led_task_t)atomic_load_explicit(&s_led_task, memory_order_relaxed);
         led_task_param_t param;
         param.raw = atomic_load_explicit(&s_led_param, memory_order_relaxed);
+        uint32_t duration_ms = atomic_load_explicit(&s_led_duration, memory_order_relaxed);
 
-        if (atomic_load_explicit(&s_reset, memory_order_relaxed)) {
-            bool task_changed = (task != prev_task);
-
-            if (task != LED_BLINK_AND_ROLLBACK) {
-                last_task = task;
-                last_param = param;
-            }
-
-            // Only reset the animation step counter if we are actually changing tasks.
-            if (task_changed || task != LED_PROGRESS) {
+        // 2. Handle Task Transitions & Resets
+        if (trigger_reset) {
+            elapsed_ticks = 0;
+            duration_ticks = (duration_ms == 0) ? 0 : (duration_ms / TASK_TICK_RATE_MS);
+            
+            // CRITICAL FIX: Only reset the step counter if we are NOT continuing a PROGRESS effect
+            if (!(task == LED_PROGRESS && prev_task == LED_PROGRESS)) {
                 step_ctr = 0;
             }
-            prev_task = task;
-            
-            if(task == LED_IDLE) {
-                i2c_write_register(ISSI_ADDR, MWFU_G_PM, 0x00);
-                i2c_write_register(ISSI_ADDR, MWFU_G_AM, 0x00);
-                i2c_write_register(ISSI_ADDR, TRS_G_PM, 0x00);                            
-                i2c_write_register(ISSI_ADDR, TRS_G_AM, 0x00);
-                i2c_write_register(ISSI_ADDR, MWFU_R_PM, 0x00);
-                i2c_write_register(ISSI_ADDR, MWFU_R_AM, 0x00);
-                i2c_write_register(ISSI_ADDR, TRS_R_PM, 0x00);                            
-                i2c_write_register(ISSI_ADDR, TRS_R_AM, 0x00);
-                IS31FL3730_set_brightness(0);
-                i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);   
-            } else if (task == LED_BREATHE || task == LED_BLINK_AND_ROLLBACK) {
-                step = 1;
-                i2c_write_register(ISSI_ADDR, MWFU_G_PM, param.breathe.green);
-                i2c_write_register(ISSI_ADDR, MWFU_G_AM, param.breathe.green);
-                i2c_write_register(ISSI_ADDR, TRS_G_PM, param.breathe.green);                            
-                i2c_write_register(ISSI_ADDR, TRS_G_AM, param.breathe.green);
-                i2c_write_register(ISSI_ADDR, MWFU_R_PM, param.breathe.red);
-                i2c_write_register(ISSI_ADDR, MWFU_R_AM, param.breathe.red);
-                i2c_write_register(ISSI_ADDR, TRS_R_PM, param.breathe.red);                            
-                i2c_write_register(ISSI_ADDR, TRS_R_AM, param.breathe.red);
-                i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);   
-            } else if (task == LED_PROGRESS) {
-                // Ensure global brightness is set for solid LEDs
-                IS31FL3730_set_brightness(127);
-            }
 
-            atomic_store_explicit(&s_reset, false, memory_order_relaxed);
+            // Task Initialization 
+            switch (task) {
+                case LED_IDLE:
+                    apply_led_bitfields(0, 0);
+                    IS31FL3730_set_brightness(0);
+                    i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);   
+                    break;
+                case LED_BREATHE:
+                    step = 1;
+                    apply_led_bitfields(param.breathe.red, param.breathe.green);
+                    i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);   
+                    break;
+                case LED_BLINK:
+                case LED_PROGRESS:
+                    IS31FL3730_set_brightness(MAX_BREATHE_STEPS);
+                    if (task == LED_BLINK) {
+                        apply_led_bitfields(param.blink.red, param.blink.green);
+                        i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
+                    }
+                    break;
+                default:
+                    break;
+            }
+            
+            prev_task = task; // Save for the next iteration
         }
 
-        if (task == LED_BREATHE) {
-            if (step_ctr >= 64) {
-                step = -1;
-            } else if (step_ctr <= 0) {
-                step = 1;
+        // 3. Handle Duration Expiration
+        if (task != LED_IDLE && duration_ticks > 0) {
+            elapsed_ticks++;
+            if (elapsed_ticks >= duration_ticks) {
+                ledc_set_task(LED_IDLE, (led_task_param_t){0}, 0);
+                supervisor_submit_event(EVENT_LED_EFFECT_COMPLETE);
+                continue; // Skip the tick logic and re-evaluate state immediately
             }
-            
-            step_ctr += step;
+        }
 
-            IS31FL3730_set_brightness((uint8_t)step_ctr);
-            i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);   
+        // 4. Tick Animation Logic (Using a switch for readability)
+        switch (task) {
+            case LED_BREATHE:
+                if (step_ctr >= MAX_BREATHE_STEPS) step = -1;
+                else if (step_ctr == 0) step = 1;
+                
+                step_ctr += step;
+                IS31FL3730_set_brightness((uint8_t)step_ctr);
+                i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);   
+                break;
 
-        } else if (task == LED_BLINK_AND_ROLLBACK) {
-            
-            // Toggle logic based on your 50-tick intervals
-            if(step_ctr % 25 == 0) {
-                uint8_t brightness = ((step_ctr / 25) % 2 == 0) ? 127 : 0;
-                IS31FL3730_set_brightness(brightness);
-                i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
-            }
-
-            step_ctr++;
-
-            if(step_ctr == 400) {
-                ledc_set_task(last_task, last_param);
-            }
-            
-        } else if (task == LED_PROGRESS) {
-            // 50 ticks = 1 second. 
-            uint32_t target_tick = param.progress.progress * 50;
-
-            // Catch up to target progress
-            if (step_ctr < target_tick) {
+            case LED_BLINK:
+                if (step_ctr % BLINK_INTERVAL_TICKS == 0) {
+                    bool on = (step_ctr / BLINK_INTERVAL_TICKS) % 2 == 0;
+                    apply_led_bitfields(on ? param.blink.red : 0, on ? param.blink.green : 0);
+                    i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
+                }
                 step_ctr++;
-            } else if (step_ctr > target_tick) {
-                step_ctr--; 
-            }
+                break;
 
-            // Calculate how many days should be currently lit based on the step_ctr
-            // Day 1 snaps on at tick 1, Day 2 snaps on at tick 51, etc.
-            uint8_t active_days = (step_ctr > 0) ? ((step_ctr - 1) / 50) + 1 : 0;
+            case LED_PROGRESS: {
+                uint32_t target_tick = param.progress.progress * PROGRESS_TICKS_PER_STEP;
 
-            uint8_t mwfu_mask = 0;
-            uint8_t trs_mask = 0;
+                // Animate towards the target (Handles both increasing AND decreasing progress gracefully)
+                if (step_ctr < target_tick) step_ctr++;
+                else if (step_ctr > target_tick) step_ctr--; 
 
-            // Map standard linear index 0-6 to MWFU and TRS bits
-            for (int i = 0; i < 7; i++) {
-                if (i < active_days) {
-                    switch(i) {
-                        case 0: mwfu_mask |= (1 << 0); break; // Monday    (MWFU bit 0)
-                        case 1: trs_mask  |= (1 << 0); break; // Tuesday   (TRS  bit 0)
-                        case 2: mwfu_mask |= (1 << 1); break; // Wednesday (MWFU bit 1)
-                        case 3: trs_mask  |= (1 << 1); break; // Thursday  (TRS  bit 1)
-                        case 4: mwfu_mask |= (1 << 2); break; // Friday    (MWFU bit 2)
-                        case 5: trs_mask  |= (1 << 2); break; // Saturday  (TRS  bit 2)
-                        case 6: mwfu_mask |= (1 << 3); break; // Sunday    (MWFU bit 3)
+                uint8_t active_days = (step_ctr > 0) ? ((step_ctr - 1) / PROGRESS_TICKS_PER_STEP) + 1 : 0;
+                uint16_t red_mask = 0, green_mask = 0;
+
+                for (int i = 0; i < 7; i++) {
+                    if (i < active_days) {
+                        red_mask |= (0x3 << (i * 2));
+                        green_mask |= (0x3 << (i * 2));
                     }
                 }
-            }
 
-            // Apply the bitwise masks along with the requested base colors
-            i2c_write_register(ISSI_ADDR, MWFU_G_PM, mwfu_mask & param.progress.green);
-            i2c_write_register(ISSI_ADDR, MWFU_G_AM, mwfu_mask & param.progress.green);
-            i2c_write_register(ISSI_ADDR, TRS_G_PM,  trs_mask  & param.progress.green);
-            i2c_write_register(ISSI_ADDR, TRS_G_AM,  trs_mask  & param.progress.green);
+                apply_led_bitfields(red_mask & param.progress.red, green_mask & param.progress.green);
+                i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
+                break;
+            }
             
-            i2c_write_register(ISSI_ADDR, MWFU_R_PM, mwfu_mask & param.progress.red);
-            i2c_write_register(ISSI_ADDR, MWFU_R_AM, mwfu_mask & param.progress.red);
-            i2c_write_register(ISSI_ADDR, TRS_R_PM,  trs_mask  & param.progress.red);
-            i2c_write_register(ISSI_ADDR, TRS_R_AM,  trs_mask  & param.progress.red);
-            
-            i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
+            case LED_IDLE:
+            default:
+                break;
         }
 
-        vTaskDelay(pdMS_TO_TICKS(20));
+        vTaskDelay(pdMS_TO_TICKS(TASK_TICK_RATE_MS));
     }
 }
