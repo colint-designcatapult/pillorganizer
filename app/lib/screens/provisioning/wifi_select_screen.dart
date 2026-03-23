@@ -11,15 +11,10 @@ import '../../service/provisioning_service.dart';
 import '../../widgets/wizard.dart';
 import 'package:app/l10n/app_localizations.dart';
 
-import 'connecting_screen.dart';
 import 'provision.dart';
 
 class ProvisionSelectWifiPage extends ConsumerWidget {
   const ProvisionSelectWifiPage({super.key});
-
-  static Route<ProvisionSelectWifiPage> route(context, state) =>
-      MaterialPageRoute(
-          builder: (_) => const ProvisionSelectWifiPage());
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -31,18 +26,20 @@ class ProvisionSelectWifiPage extends ConsumerWidget {
         child: WizardStep(
           provisionningProgress: provisionningProgress,
           title: AppLocalizations.of(context)!.provSelectWifi,
-          subtext: state.stage == ProvisionStage.missingPermissions
+          subtext: state is ProvisionStateMissingPermissions
               ? null
               : AppLocalizations.of(context)!.provSelectWifiSubtitle,
-          onBackPressed: () =>
-              Navigator.of(context, rootNavigator: true).pop(),
+          onBackPressed: () {
+            ref.read(provisionProvider.notifier).cancelProvisioning();
+            Navigator.of(context, rootNavigator: true).pop();
+          },
           child: Expanded(
             child: Padding(
               padding: EdgeInsets.only(
                   left: 20.w, right: 20.0.w, bottom: 32.0.h),
               child: Builder(
                 builder: (context) {
-                  if (state.stage == ProvisionStage.missingPermissions) {
+                  if (state is ProvisionStateMissingPermissions) {
                     return Center(
                         child: Padding(
                             padding:
@@ -68,15 +65,16 @@ class ProvisionSelectWifiPage extends ConsumerWidget {
                               ),
                             ])));
                   }
-                  if (state.stage == ProvisionStage.failed) {
-                    return Center(
-                        child: Padding(
+                  return Column(
+                    children: [
+                      if (state.errorMessage != null)
+                        Padding(
                             padding:
-                            EdgeInsets.symmetric(horizontal: 20.0.w),
+                            EdgeInsets.symmetric(horizontal: 20.0.w, vertical: 10.h),
                             child: Column(children: [
                               SingleChildScrollView(
                                 physics: const AlwaysScrollableScrollPhysics(),
-                                child: ErrorInfoBox(error: state.error),
+                                child: ErrorInfoBox(error: state.errorMessage),
                               ),
                               TextButton(
                                 onPressed: () {
@@ -86,52 +84,52 @@ class ProvisionSelectWifiPage extends ConsumerWidget {
                                 child: Text(AppLocalizations.of(context)!
                                     .provRescanWifi),
                               ),
-                            ])));
-                  }
-                  if (state.stage == ProvisionStage.scanning_wifi || (state.wifiNetworks.isEmpty && state.stage != ProvisionStage.select_wifi)) {
-                    return Center(
-                        child: Column(children: [
-                          const CircularProgressIndicator(),
-                          timeoutTryAgain
-                              ? TextButton(
-                            onPressed: () {
-                              timeoutTryAgain = false;
-                              ref.read(provisionProvider.notifier)
-                                  .rescanNetworks()
-                                  .timeout(const Duration(seconds: 25),
-                                  onTimeout: () {
-                                    timeoutTryAgain = true;
-                                  });
-                            },
-                            child: Text(AppLocalizations.of(context)!
-                                .provRescanWifi),
-                          )
-                              : const SizedBox.shrink()
-                        ]));
-                  } else {
-                    return SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          ...state.wifiNetworks
-                              .map(
-                                  (e) => _buildWifiCard(context, e, ref))
-                              .toList(growable: false),
-                          TextButton(
-                            onPressed: () {
-                              ref.read(provisionProvider.notifier).rescanNetworks();
-                            },
-                            child: Text(AppLocalizations.of(context)!
-                                .provRescanWifi),
+                            ])),
+                      if (state is ProvisionStateScanningWifi || (state.wifiNetworks.isEmpty && state is! ProvisionStateSelectWifi))
+                        Center(
+                            child: Column(children: [
+                              const CircularProgressIndicator(),
+                              timeoutTryAgain
+                                  ? TextButton(
+                                onPressed: () {
+                                  timeoutTryAgain = false;
+                                  ref.read(provisionProvider.notifier)
+                                      .rescanNetworks()
+                                      .timeout(const Duration(seconds: 25),
+                                      onTimeout: () {
+                                        timeoutTryAgain = true;
+                                      });
+                                },
+                                child: Text(AppLocalizations.of(context)!
+                                    .provRescanWifi),
+                              )
+                                  : const SizedBox.shrink()
+                            ]))
+                      else
+                        Expanded(child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.max,
+                            children: [
+                              ...state.wifiNetworks
+                                  .map(
+                                      (e) => _buildWifiCard(context, e, ref))
+                                  .toList(growable: false),
+                              TextButton(
+                                onPressed: () {
+                                  ref.read(provisionProvider.notifier).rescanNetworks();
+                                },
+                                child: Text(AppLocalizations.of(context)!
+                                    .provRescanWifi),
+                              ),
+                              SizedBox(
+                                height: 35.h,
+                              )
+                            ],
                           ),
-                          SizedBox(
-                            height: 35.h,
-                          )
-                        ],
-                      ),
-                    );
-                  }
+                        )),
+                    ],
+                  );
                 },
               ),
             ),
@@ -142,31 +140,26 @@ class ProvisionSelectWifiPage extends ConsumerWidget {
   void _showPasswordDialog(
       BuildContext context, WifiEntry entry, WidgetRef ref) {
     final state = ref.read(provisionProvider);
-    if (state.stage == ProvisionStage.select_wifi) {
+    if (state is ProvisionStateSelectWifi) {
       PasswordEntryModal.show(context, entry, ref).then((value) {
         if (value != null) {
-          ref.read(provisionProvider.notifier).setWifiCredentials(entry.name, value);
-          final newState = ref.read(provisionProvider);
-          if (context.mounted) {
-            Navigator.of(context).pushReplacement(
-                ProvisionConnectingPage.route(context, newState));
-          }
+          ref.read(provisionProvider.notifier).provisionWifi(ssid: entry.name, password: value);
         }
       });
     }
   }
 
-  Widget _buildWifiCard(context, WifiEntry entry, WidgetRef ref) {
+  Widget _buildWifiCard(BuildContext context, WifiEntry entry, WidgetRef ref) {
     final state = ref.watch(provisionProvider);
     Widget? subtitle;
 
     if (state.ssid == entry.name) {
-      if (state.error != null) {
+      if (state.errorMessage != null) {
         String text;
-        if (state.error is TimeoutException) {
+        if (state.errorMessage is TimeoutException) {
           text = AppLocalizations.of(context)!.genericTryAgain;
         } else {
-          text = provErrorMessage(context, state.error.toString());
+          text = provErrorMessage(context, state.errorMessage.toString());
         }
         subtitle = Text(
           text,
@@ -180,7 +173,7 @@ class ProvisionSelectWifiPage extends ConsumerWidget {
         child: Card(
           elevation: 1,
           child: ListTile(
-            leading: state.ssid == entry.name && state.error == null
+            leading: state.ssid == entry.name && state.errorMessage == null
                 ? SizedBox(
               width: 24.w,
               height: 24.h,
@@ -211,7 +204,7 @@ class PasswordEntryModal extends ConsumerStatefulWidget {
 
   final WifiEntry wifiEntry;
 
-  static Future<String?> show(context, WifiEntry entry, WidgetRef ref) {
+  static Future<String?> show(BuildContext context, WifiEntry entry, WidgetRef ref) {
     return showDialog<String>(
         context: context,
         builder: (context) {

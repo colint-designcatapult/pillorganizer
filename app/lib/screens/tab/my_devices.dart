@@ -7,7 +7,7 @@ import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../provisioning/provision.dart';
+import '../provisioning/provision_flow_screen.dart';
 
 class MyDevicesScreen extends ConsumerWidget {
   const MyDevicesScreen({super.key});
@@ -39,8 +39,8 @@ class MyDevicesScreen extends ConsumerWidget {
                   ),
                 ),
                 FilledButton(onPressed: () {
-                  Navigator.of(context).push(ProvisionPage.route(context));
-                }, child: Text('Start Provision (test)')),
+                  Navigator.of(context).push(ProvisionFlowPage.route());
+                }, child: const Text('Start Provision (test)')),
                 Flexible(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0).w,
