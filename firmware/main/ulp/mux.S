@@ -63,13 +63,8 @@ channel_sequence:
     .long 14
 
 real_entry:
-    move r0, 0
-    move r3, current_sequence_idx
-    st r0, r3, 0
-
-channel_loop:
     /* ==========================================================
-     * Glitch Filter & Reset Button Check (GPIO36 / RTC_GPIO0)
+     * Reset Button Check (GPIO36 / RTC_GPIO0) - ONCE PER WAKEUP
      * ========================================================== */
     /* Read the state of GPIO36. The 1-bit result goes into R0. */
     READ_RTC_REG(RTC_GPIO_IN_REG, RTC_GPIO_IN_NEXT_S + 0, 1)
@@ -77,31 +72,44 @@ channel_loop:
     /* If R0 >= 1 (Button is High/Unpressed), reset the streak counter */
     jumpr reset_streak, 1, ge
 
-    /* Button is Low (Pressed). Increment the streak counter. */
+    /* Button is Low (Pressed). Load counter. */
     move r3, button_counter
     ld r0, r3, 0
+    
+    /* Cap the counter at 2 so it doesn't overflow during a long hold */
+    jumpr skip_inc, 2, ge
     add r0, r0, 1
     st r0, r3, 0
 
-    /* Check if we've reached 5 consecutive Low reads (~50ms) */
-    jumpr button_done, 5, lt
+skip_inc:
+    /* Require 2 consecutive Low reads (~340ms) to declare a solid press */
+    jumpr button_done, 2, lt
 
-    /* SOLID PRESS DETECTED! Set flag, wake CPU, and exit loop. */
+    /* SOLID PRESS DETECTED! Set flag. */
     move r3, reset_flag
     move r0, 1
     st r0, r3, 0
-    wake
-    jump exit
+    jump button_done
 
 reset_streak:
+    /* Button released: Clear counter and flag */
     move r3, button_counter
+    move r0, 0
+    st r0, r3, 0
+    
+    move r3, reset_flag
     move r0, 0
     st r0, r3, 0
 
 button_done:
     /* ==========================================================
-     * MUX Channel Selection (Original Code)
+     * Start the 17-Channel MUX Sequence
      * ========================================================== */
+    move r0, 0
+    move r3, current_sequence_idx
+    st r0, r3, 0
+
+channel_loop:
     move r3, current_sequence_idx
     ld r2, r3, 0
 
