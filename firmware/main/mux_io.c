@@ -28,7 +28,6 @@ extern const uint8_t ulp_main_bin_end[]   asm("_binary_ulp_main_bin_end");
 /* Declare our ULP variables */
 extern uint32_t ulp_adc_readings;
 extern uint32_t ulp_data_ready;
-extern uint32_t ulp_reset_flag;
 
 static TaskHandle_t ulp_task_handle = NULL;
 
@@ -102,13 +101,8 @@ static void ulp_event_task(void *arg)
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         if (process_ulp_events(&ulp_adc_readings)) {
 
-            if (ulp_reset_flag) {
-                ulp_reset_flag = false;
-                ESP_LOGI(TAG, "RESET!");
-            }
-
-            uint32_t bat_start_val = (&ulp_adc_readings)[0] & 0xFFFF;
-            uint32_t bat_end_val   = (&ulp_adc_readings)[16] & 0xFFFF;
+                uint32_t bat_start_val = (&ulp_adc_readings)[0] & 0xFFFF;
+                uint32_t bat_end_val   = (&ulp_adc_readings)[16] & 0xFFFF;
 
             ESP_LOGI(TAG, "Battery! %ld", bat_start_val);
 
@@ -155,10 +149,6 @@ void mux_init()
     /* 3. Enable the specific ULP interrupt bit in the RTC controller so it fires */
     REG_SET_BIT(RTC_CNTL_INT_ENA_REG, RTC_CNTL_ULP_CP_INT_ENA);
 
-    /* Reset button config */
-    rtc_gpio_init(GPIO_NUM_36);
-    rtc_gpio_set_direction(GPIO_NUM_36, RTC_GPIO_MODE_INPUT_ONLY);
-
     ESP_LOGI(TAG, "MUX driver initialized");
 }
 
@@ -190,21 +180,10 @@ bool RTC_IRAM_ATTR mux_wake_deep_sleep_early()
 static bool process_ulp_events(uint32_t* values)
 {    
     uint32_t local_buffer[ADC_READINGS];
-    bool local_reset_flag;
     memcpy(local_buffer, values, sizeof(local_buffer));
-    local_reset_flag = (bool)ulp_reset_flag;
 
     // Let ULP know it can continue
     ulp_data_ready = 0;
-
-    bool should_wake_main_cpu = false;
-
-    /* ==========================================================
-     * Reset Button Handling
-     * ========================================================== */
-    if (local_reset_flag) {
-        should_wake_main_cpu = true;
-    }
 
     /* ==========================================================
      * Battery Presence & Square Wave Filtering
@@ -239,6 +218,7 @@ static bool process_ulp_events(uint32_t* values)
     /* ==========================================================
      * Door Channel Processing
      * ========================================================== */
+    bool should_wake_main_cpu = false;
 
     // Only process door channels
     for (int ch = ADC_DOOR_CHANNEL_START; ch <= ADC_DOOR_CHANNEL_END; ch++) {

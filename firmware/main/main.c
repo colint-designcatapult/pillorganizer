@@ -92,6 +92,14 @@ static void app_init_gpio(void)
     // Hold this at high
     gpio_set_level(IS31_CS, 1);
 
+    // Reset Button
+	memset(&io_conf, 0, sizeof(io_conf));
+	io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pin_bit_mask = (1ULL << RESET_BTN);
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;  
+    gpio_config(&io_conf);
+
 }
 
 static void app_init_hw()
