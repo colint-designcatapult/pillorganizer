@@ -36,6 +36,16 @@ public class LogicalDevice {
     @JsonIgnore
     private List<DeviceUser> users;
 
+    /** The currently applied schedule on the device. Null if no schedule has been applied. */
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    @Nullable
+    private DeviceSchedule currentSchedule;
+
+    /** The schedule the user wants applied, but hasn't necessarily been confirmed by the device yet. Null if none is pending. */
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    @Nullable
+    private DeviceSchedule requestedSchedule;
+
     @Version
     @JsonIgnore
     private Long version = 0L;
