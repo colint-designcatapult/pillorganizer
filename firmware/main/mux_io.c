@@ -19,7 +19,6 @@
 #include "pill_pins.h"
 #include "esp_log.h"
 #include "supervisor.h"
-#include <esp_timer.h>
 
 #define TAG "MUX_IO"
 
@@ -98,47 +97,15 @@ static void ulp_event_task(void *arg)
 {
     static door_state_t last_known_state[ADC_NUM_DOOR_CHANNELS] = {DOOR_CLOSED};
 
-    // State tracking for the reset button
-    static int64_t btn_start_time = 0;
-    static bool btn_pressed = false;
-    static bool fired_1s = false;
-    static bool fired_6s = false;
-
     while (1) {
         /* Block indefinitely (0 CPU cycles) until the ISR callback notifies us */
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         if (process_ulp_events(&ulp_adc_readings)) {
 
-            bool is_reset_pressed = (ulp_reset_flag & 0xFFFF) != 0;
-
-            if (is_reset_pressed) {
-                if (!btn_pressed) {
-                    // Initial press detected
-                    btn_pressed = true;
-                    btn_start_time = esp_timer_get_time();
-                    fired_1s = false;
-                    fired_6s = false;
-                } else {
-                    // Button is being held, check durations
-                    int64_t elapsed_ms = (esp_timer_get_time() - btn_start_time) / 1000;
-                    
-                    if (elapsed_ms >= 1000 && !fired_1s) {
-                        fired_1s = true;
-                        // handle 1 second here
-                        ESP_LOGI(TAG, "Reset button held for 1 second!");
-                    }
-                    
-                    if (elapsed_ms >= 6000 && !fired_6s) {
-                        fired_6s = true;
-                        // handle 6 second here
-                        ESP_LOGI(TAG, "Reset button held for 6 seconds!");
-                    }
-                }
-            } else {
-                // Button released, reset the tracking state
-                btn_pressed = false;
+            if (ulp_reset_flag) {
+                ulp_reset_flag = false;
+                ESP_LOGI(TAG, "RESET!");
             }
-        
 
             uint32_t bat_start_val = (&ulp_adc_readings)[0] & 0xFFFF;
             uint32_t bat_end_val   = (&ulp_adc_readings)[16] & 0xFFFF;
@@ -223,8 +190,9 @@ bool RTC_IRAM_ATTR mux_wake_deep_sleep_early()
 static bool process_ulp_events(uint32_t* values)
 {    
     uint32_t local_buffer[ADC_READINGS];
-    bool local_reset_flag = (ulp_reset_flag & 0xFFFF) != 0;
+    bool local_reset_flag;
     memcpy(local_buffer, values, sizeof(local_buffer));
+    local_reset_flag = (bool)ulp_reset_flag;
 
     // Let ULP know it can continue
     ulp_data_ready = 0;
@@ -363,6 +331,9 @@ static void init_ulp_program(void)
     
     rtc_gpio_init(MUX_PIN_D);
     rtc_gpio_set_direction(MUX_PIN_D, RTC_GPIO_MODE_OUTPUT_ONLY);
+
+    /* 200ms ULP wakeup period (polling should run every 160ms) */
+    //ulp_set_wakeup_period(0, 200000);
 
 #if CONFIG_IDF_TARGET_ESP32
     rtc_gpio_isolate(GPIO_NUM_12);
