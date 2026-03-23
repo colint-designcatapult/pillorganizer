@@ -1,7 +1,5 @@
 package jct.pillorganizer.tenant.api.app;
 
-import java.util.Optional;
-
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
@@ -12,10 +10,9 @@ import io.micronaut.security.rules.SecurityRule;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 import jct.pillorganizer.tenant.auth.AuthService;
-import jct.pillorganizer.tenant.dto.SimpleScheduleDTO;
-import jct.pillorganizer.tenant.model.device.DeviceUser;
-import jct.pillorganizer.tenant.model.device.LogicalDevice;
-import jct.pillorganizer.tenant.repo.DeviceUserRepository;
+import jct.pillorganizer.tenant.dto.DeviceScheduleStateDTO;
+import jct.pillorganizer.tenant.dto.SetScheduleRequestDTO;
+import jct.pillorganizer.tenant.service.ScheduleService;
 import lombok.extern.flogger.Flogger;
 
 @Controller("/api/v1/device")
@@ -25,22 +22,23 @@ public class AppScheduleController {
     @Inject
     AuthService authService;
 
-
     @Inject
-    DeviceUserRepository deviceUserRepository;
+    ScheduleService scheduleService;
 
-    @Operation(summary = "Get dispense times")
+    @Operation(summary = "Get the current and pending schedule for a device")
     @Get("/{id}/dispense_time")
     @Secured(SecurityRule.IS_AUTHENTICATED)
-    public SimpleScheduleDTO dispenseTimes(@PathVariable("id") String deviceID) {
-        throw new RuntimeException("not implemented");
+    public DeviceScheduleStateDTO dispenseTimes(@PathVariable("id") String deviceID) {
+        authService.accessDevice(deviceID);
+        return scheduleService.getSchedule(deviceID);
     }
 
-    @Operation(summary = "Update dispense times")
+    @Operation(summary = "Request a new schedule for a device")
     @Post("/{id}/dispense_time")
     @Secured(SecurityRule.IS_AUTHENTICATED)
-    public SimpleScheduleDTO updateDispenseTime(@PathVariable("id") String deviceID, @Body SimpleScheduleDTO dto) {
-        throw new RuntimeException("not implemented");
+    public DeviceScheduleStateDTO updateDispenseTime(@PathVariable("id") String deviceID,
+                                                      @Body SetScheduleRequestDTO dto) {
+        authService.accessDevice(deviceID);
+        return scheduleService.setSchedule(deviceID, dto.schedule(), dto.takeEffect(), authService.getUser());
     }
-
 }

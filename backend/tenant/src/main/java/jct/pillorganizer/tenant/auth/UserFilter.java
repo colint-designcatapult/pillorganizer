@@ -5,10 +5,8 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.annotation.RequestFilter;
 import io.micronaut.http.annotation.ServerFilter;
 import io.micronaut.http.filter.ServerFilterPhase;
-import io.micronaut.security.authentication.AuthenticationException;
 import io.micronaut.security.utils.SecurityService;
 import jakarta.inject.Inject;
-import jct.pillorganizer.tenant.exceptions.InvalidTenantUserException;
 import jct.pillorganizer.tenant.model.user.BaseUser;
 import jct.pillorganizer.tenant.service.UserService;
 
@@ -26,8 +24,12 @@ public class UserFilter implements Ordered {
 
     @RequestFilter
     void filterRequest(HttpRequest<?> request) {
-        String userIdString = securityService.getAuthentication()
-                .orElseThrow(() -> new AuthenticationException("No authentication provided"))
+        var auth = securityService.getAuthentication();
+        if (auth.isEmpty()) {
+            return; // Anonymous request — let the security layer enforce access rules
+        }
+
+        String userIdString = auth.get()
                 .getAttributes()
                 .get("userId")
                 .toString();
