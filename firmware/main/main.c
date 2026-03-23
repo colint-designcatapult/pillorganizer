@@ -25,6 +25,10 @@
 #include <esp_event.h>
 #include "claim.h"
 #include "shadow_state.h"
+#include <esp_private/sar_periph_ctrl.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/semphr.h>
 
 #define TAG "MAIN"
 
@@ -47,6 +51,101 @@ static void app_wake_deep_sleep()
 {
     // Init system from deep sleep
     mux_wake_deep_sleep();
+}
+
+SemaphoreHandle_t s_button_press_sem;
+
+static void IRAM_ATTR reset_btn_isr_handler(void* arg)
+{
+    // 1. Immediately disable the interrupt to prevent bounce spam
+    gpio_intr_disable(RESET_BTN);
+
+    // 2. Wake up the button task
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xSemaphoreGiveFromISR(s_button_press_sem, &xHigherPriorityTaskWoken);
+    
+    // 3. Yield to the higher priority task if needed
+    if (xHigherPriorityTaskWoken == pdTRUE) {
+        portYIELD_FROM_ISR();
+    }
+}
+
+void reset_button_task(void *pvParameters)
+{
+    while (1) {
+        // Sleep until the ISR gives the semaphore (button is pressed)
+        if (xSemaphoreTake(s_button_press_sem, portMAX_DELAY)) {
+            
+            // Wait 50ms to let the physical button contacts settle (debounce)
+            vTaskDelay(pdMS_TO_TICKS(50)); 
+            
+            uint32_t hold_time_ms = 0;
+            bool triggered_1s = false;
+            bool triggered_3s = false;
+            bool triggered_10s = false;
+
+            // Loop continuously AS LONG AS the button is held down (0 = pressed)
+            while (gpio_get_level(RESET_BTN) == 0) {
+                
+                vTaskDelay(pdMS_TO_TICKS(100)); // Step forward in 100ms chunks
+                hold_time_ms += 100;
+
+                // --- REAL TIME FEEDBACK LOGIC ---
+                if (hold_time_ms >= 1000 && !triggered_1s) {
+                    ESP_LOGI(TAG, "Reset held for 1 second");
+                    triggered_1s = true;
+                    ledc_set_task(LED_BLINK, (led_task_param_t) {
+                        .blink = {
+                            .red = 0,
+                            .green = LED_ALL_DOORS
+                        }
+                    }, 0);
+                }
+                
+                if (hold_time_ms >= 3000 && !triggered_3s) {
+                    ESP_LOGI(TAG, "Reset held for 3 seconds");
+                    triggered_3s = true;
+                    ledc_set_task(LED_BLINK, (led_task_param_t) {
+                        .blink = {
+                            .red = LED_ALL_DOORS,
+                            .green = LED_ALL_DOORS
+                        }
+                    }, 0);
+                }
+
+                if (hold_time_ms >= 10000 && !triggered_10s) {
+                    ESP_LOGI(TAG, "Reset held for 10 seconds");
+                    triggered_10s = true;
+                    ledc_set_task(LED_BLINK, (led_task_param_t) {
+                        .blink = {
+                            .red = LED_ALL_DOORS,
+                            .green = 0
+                        }
+                    }, 0);
+                }
+            }
+
+            // --- BUTTON RELEASED: FINAL ACTION LOGIC ---
+            if (triggered_10s) {
+                // Factory reset
+                supervisor_factory_reset();
+            } else if (triggered_3s) {
+                // Reset Wi-Fi
+                supervisor_reset_wifi();
+            } else if (triggered_1s) {
+                // Reboot
+                esp_restart();
+            } else {
+                ESP_LOGI(TAG, "Reset released before any threshold");
+                // Notify that LED effect complete so supervisor knows to reset LED state
+                ESP_ERROR_CHECK(supervisor_submit_event(EVENT_LED_EFFECT_COMPLETE));
+            }
+
+            // Clean up and re-enable the interrupt for the next press
+            xSemaphoreTake(s_button_press_sem, 0); // Flush any accidental bounce tokens
+            gpio_intr_enable(RESET_BTN);         // Turn the interrupt back on
+        }
+    }
 }
 
 static void app_init_gpio(void)
@@ -92,14 +191,26 @@ static void app_init_gpio(void)
     // Hold this at high
     gpio_set_level(IS31_CS, 1);
 
-    // Reset Button
-	memset(&io_conf, 0, sizeof(io_conf));
-	io_conf.intr_type = GPIO_INTR_DISABLE;
+    // Prevent GPIO36 voltage glitch
+    // WORKAROUND for ESP32 Errata 3.11
+    // See issue #136
+    sar_periph_ctrl_adc_oneshot_power_acquire();
+
+    s_button_press_sem = xSemaphoreCreateBinary();
+    xTaskCreate(reset_button_task, "reset_button_task", 2048, NULL, 10, NULL);
+
+    // Configure the pin to fire ONLY on the press (Falling Edge)
+    memset(&io_conf, 0, sizeof(io_conf));
+    io_conf.intr_type = GPIO_INTR_NEGEDGE;          // <-- Fire on press only
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pin_bit_mask = (1ULL << RESET_BTN);
     io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;  
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;       
     gpio_config(&io_conf);
 
+    // Attach the interrupt
+    gpio_install_isr_service(ESP_INTR_FLAG_IRAM); 
+    gpio_isr_handler_add(RESET_BTN, reset_btn_isr_handler, NULL);
 }
 
 static void app_init_hw()

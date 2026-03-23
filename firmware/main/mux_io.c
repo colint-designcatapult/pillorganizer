@@ -31,9 +31,25 @@ extern uint32_t ulp_data_ready;
 
 static TaskHandle_t ulp_task_handle = NULL;
 
-#define NUM_DOOR_CHANNELS 14
+#define ADC_READINGS 17
+#define ADC_DOOR_CHANNEL_START 1
+#define ADC_DOOR_CHANNEL_END 15
+#define ADC_NUM_DOOR_CHANNELS (ADC_DOOR_CHANNEL_END - ADC_DOOR_CHANNEL_START + 1)
+
 #define SCALE_FACTOR 256  // Scales integers to give us "decimal" precision
 #define ALPHA_SHIFT 3     // Equivalent to an alpha of 1/8 for smoothing
+
+/* --- Battery Detection Macros --- */
+// ADC value that represents the threshold between the BQ24074's LOW and HIGH pulse.
+#define BAT_ADC_THRESHOLD 1500 
+
+// Number of consecutive fully-HIGH sweeps required to assume a battery was plugged back in.
+// 5 sweeps * 200ms wakeup = ~1 second of steady DC voltage.
+#define BAT_CONSECUTIVE_HIGHS_FOR_CONNECTED 5 
+
+/* State tracking for battery presence. Must survive deep sleep. */
+static RTC_DATA_ATTR uint32_t consecutive_bat_highs = 0;
+static RTC_DATA_ATTR bool battery_connected = true; // Assume true until proven false
 
 typedef enum {
     DOOR_CLOSED = 0,
@@ -50,7 +66,7 @@ typedef struct {
     bool initialized;
 } ch_stats_t;
 
-static RTC_DATA_ATTR ch_stats_t ch_stats[NUM_DOOR_CHANNELS];
+static RTC_DATA_ATTR ch_stats_t ch_stats[ADC_NUM_DOOR_CHANNELS];
 
 static void init_ulp_program(void);
 static void start_ulp_program(void);
@@ -78,13 +94,19 @@ static void IRAM_ATTR ulp_isr_handler(void *arg)
  * ========================================================== */
 static void ulp_event_task(void *arg)
 {
-static door_state_t last_known_state[NUM_DOOR_CHANNELS] = {DOOR_CLOSED};
+    static door_state_t last_known_state[ADC_NUM_DOOR_CHANNELS] = {DOOR_CLOSED};
 
     while (1) {
         /* Block indefinitely (0 CPU cycles) until the ISR callback notifies us */
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         if (process_ulp_events(&ulp_adc_readings)) {
-            for (int i = 0; i < NUM_DOOR_CHANNELS; i++) {
+
+                uint32_t bat_start_val = (&ulp_adc_readings)[0] & 0xFFFF;
+                uint32_t bat_end_val   = (&ulp_adc_readings)[16] & 0xFFFF;
+
+            ESP_LOGI(TAG, "Battery! %ld", bat_start_val);
+
+            for (int i = 0; i < ADC_NUM_DOOR_CHANNELS; i++) {
                 if (ch_stats[i].state != last_known_state[i]) {
                     // State changed!
 
@@ -96,16 +118,16 @@ static door_state_t last_known_state[NUM_DOOR_CHANNELS] = {DOOR_CLOSED};
                     
                     esp_err_t err;
                     if (ch_stats[i].state == DOOR_OPEN) {
-                        err = supervisor_submit_event_block(EVENT_DOOR_OPENED, (void*)i, pdMS_TO_TICKS(10));
+                        //err = supervisor_submit_event_block(EVENT_DOOR_OPENED, (void*)i, pdMS_TO_TICKS(10));
                     } else {
-                        err = supervisor_submit_event_block(EVENT_DOOR_CLOSED, (void*)i, pdMS_TO_TICKS(10));
+                        //err = supervisor_submit_event_block(EVENT_DOOR_CLOSED, (void*)i, pdMS_TO_TICKS(10));
                     }
 
                     // Only commit the last known state if we submitted the event, that way we can try submitting
                     // the event again.
-                    if (err == ESP_OK) {
+                    //if (err == ESP_OK) {
                         last_known_state[i] = ch_stats[i].state;
-                    }
+                    //}
                 }
             }
         }
@@ -157,64 +179,102 @@ bool RTC_IRAM_ATTR mux_wake_deep_sleep_early()
 
 static bool process_ulp_events(uint32_t* values)
 {    
-    uint32_t local_buffer[16];
-    memcpy(local_buffer, values, 16 * sizeof(uint32_t));
+    uint32_t local_buffer[ADC_READINGS];
+    memcpy(local_buffer, values, sizeof(local_buffer));
 
     // Let ULP know it can continue
     ulp_data_ready = 0;
 
+    /* ==========================================================
+     * Battery Presence & Square Wave Filtering
+     * ========================================================== */
+    uint32_t bat_start_val = local_buffer[0] & 0xFFFF;
+    uint32_t bat_end_val   = local_buffer[16] & 0xFFFF;
+
+    bool start_is_high = (bat_start_val > BAT_ADC_THRESHOLD);
+    bool end_is_high   = (bat_end_val > BAT_ADC_THRESHOLD);
+
+    // 1. Determine battery presence based on steady DC vs pulsing
+    if (!start_is_high || !end_is_high) {
+        // A real battery never drops LOW. If we see a LOW, we are seeing the 2Hz pulse.
+        consecutive_bat_highs = 0;
+        battery_connected = false;
+    } else {
+        // Both readings are HIGH. Is it a real battery, or just the HIGH phase of the pulse?
+        if (consecutive_bat_highs < BAT_CONSECUTIVE_HIGHS_FOR_CONNECTED) {
+            consecutive_bat_highs++;
+        } else {
+            // We've seen steady HIGHs for a full second. The battery is connected.
+            battery_connected = true;
+        }
+    }
+
+    // 2. Inhibit door logic if no battery is present AND the pulse is currently HIGH
+    if (!battery_connected && (start_is_high || end_is_high)) {
+        // Throw away these ULP reads so they don't corrupt the EMA/MAD door baselines.
+        return false; 
+    }
+
+    /* ==========================================================
+     * Door Channel Processing
+     * ========================================================== */
     bool should_wake_main_cpu = false;
 
-    // Only process channels 0 through 13
-    for (int ch = 0; ch < NUM_DOOR_CHANNELS; ch++) {
+    // Only process door channels
+    for (int ch = ADC_DOOR_CHANNEL_START; ch <= ADC_DOOR_CHANNEL_END; ch++) {
+
+        int door = ch - ADC_DOOR_CHANNEL_START;
+        ch_stats_t* stats = &ch_stats[door];
         
+        // Grab the value from the 1-indexed offset
         int32_t val = local_buffer[ch] & 0xFFFF;
         int32_t s_val = val * SCALE_FACTOR; // Scale up to preserve precision
 
-        if (!ch_stats[ch].initialized) {
-            ch_stats[ch].ema = s_val;
-            ch_stats[ch].mad = 5 * SCALE_FACTOR; // Seed with a small assumed variance
-            ch_stats[ch].state = DOOR_CLOSED;
-            ch_stats[ch].initialized = true;
+        if (!stats->initialized) {
+            stats->ema = s_val;
+            stats->mad = 5 * SCALE_FACTOR; // Seed with a small assumed variance
+            stats->state = DOOR_CLOSED;
+            stats->initialized = true;
             continue;
         }
 
-        if (ch_stats[ch].state == DOOR_CLOSED) {
-            int32_t diff = s_val - ch_stats[ch].ema;
+        if (stats->state == DOOR_CLOSED) {
+            int32_t diff = s_val - stats->ema;
             int32_t abs_diff = (diff > 0) ? diff : -diff;
 
             // Threshold: Current EMA + (K * MAD). 
             // K=5 is roughly equivalent to 4 standard deviations.
-            int32_t threshold = ch_stats[ch].mad * 5; 
+            int32_t threshold = stats->mad * 5; 
 
             if (diff > threshold) {
                 // SHARP INCREASE DETECTED: Door opened!
-                ch_stats[ch].state = DOOR_OPEN;
+                stats->state = DOOR_OPEN;
                 
                 // Freeze the baseline so we know what "closed" looks like
-                ch_stats[ch].open_baseline = ch_stats[ch].ema; 
+                stats->open_baseline = stats->ema; 
                 should_wake_main_cpu = true;
             } else {
                 // Update EMA and MAD
-                ch_stats[ch].ema += (diff >> ALPHA_SHIFT);
-                ch_stats[ch].mad += ((abs_diff - ch_stats[ch].mad) >> ALPHA_SHIFT);
+                stats->ema += (diff >> ALPHA_SHIFT);
+                stats->mad += ((abs_diff - stats->mad) >> ALPHA_SHIFT);
 
-                // FIX: Raise the floor to ignore baseline ESP32 ADC noise!
+                // Raise the floor to ignore baseline ESP32 ADC noise!
                 // Minimum ~30 ADC units of variance.
-                if (ch_stats[ch].mad < (30 * SCALE_FACTOR)) {
-                    ch_stats[ch].mad = 30 * SCALE_FACTOR;
-                }            }
+                if (stats->mad < (30 * SCALE_FACTOR)) {
+                    stats->mad = 30 * SCALE_FACTOR;
+                }           
+             }
         } else {
             // DOOR IS OPEN: Wait for value to drop back near the stored baseline.
             // We consider it closed if it drops within 2 MADs of the old closed baseline.
-            int32_t close_threshold = ch_stats[ch].open_baseline + (ch_stats[ch].mad * 2);
+            int32_t close_threshold = stats->open_baseline + (stats->mad * 2);
 
             if (s_val < close_threshold) {
                 // VOLTAGE DROPPED: Door closed!
-                ch_stats[ch].state = DOOR_CLOSED;
+                stats->state = DOOR_CLOSED;
                 
                 // Fast-reset the EMA to the current lighting to sync immediately
-                ch_stats[ch].ema = s_val; 
+                stats->ema = s_val; 
                 should_wake_main_cpu = true;
             }
         }
@@ -222,6 +282,7 @@ static bool process_ulp_events(uint32_t* values)
     
     return should_wake_main_cpu;
 }
+
 static void init_ulp_program(void)
 {
     esp_err_t err = ulp_load_binary(0, ulp_main_bin_start,

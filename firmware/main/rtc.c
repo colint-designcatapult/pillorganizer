@@ -80,3 +80,9 @@ time_t app_rtc_calc_utc_time_ms(rtc_relative_time_t rtc_time)
     
     return event_utc_time;
 }
+
+int64_t app_rtc_calc_duration_ms(rtc_relative_time_t start, rtc_relative_time_t end)
+{
+    int64_t diff = (int64_t)end - (int64_t)start;
+    return diff / 1000LL;
+}
