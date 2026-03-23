@@ -223,7 +223,7 @@ static void provisioning_mqtt_event_handler(void *handler_args, esp_event_base_t
                 if (s_ctx->state == PROV_STATE_SUB_CREATE_KEYS) {
                     s_ctx->state = PROV_STATE_PUB_CREATE_KEYS;
                     ESP_LOGI(TAG, "All CreateKeys SUBACKs received. Publishing request...");
-                    mqtt_wrapper_publish(FP_JSON_CREATE_KEYS_PUBLISH_TOPIC, "{}", 2, 1);
+                    mqtt_wrapper_publish(FP_JSON_CREATE_KEYS_PUBLISH_TOPIC, "{}", 2, 1, 0);
                 }
                 else if (s_ctx->state == PROV_STATE_SUB_REGISTER_THING) {
                     s_ctx->state = PROV_STATE_PUB_REGISTER_THING;
@@ -240,7 +240,7 @@ static void provisioning_mqtt_event_handler(void *handler_args, esp_event_base_t
                     char* payload = cJSON_PrintUnformatted(req);
                     cJSON_Delete(req);
                     
-                    mqtt_wrapper_publish(s_ctx->pub_topic, payload, strlen(payload), 1);
+                    mqtt_wrapper_publish(s_ctx->pub_topic, payload, strlen(payload), 1, 0);
                     free(payload);
                 }
             }

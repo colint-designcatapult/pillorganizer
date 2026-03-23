@@ -23,7 +23,7 @@ esp_err_t mqtt_wrapper_connect(const mqtt_wrapper_config_t* config);
 esp_err_t mqtt_wrapper_disconnect(void);
 
 // Publishes a message (thread-safe)
-esp_err_t mqtt_wrapper_publish(const char* topic, const char* payload, int len, int qos);
+esp_err_t mqtt_wrapper_publish(const char* topic, const char* payload, int len, int qos, int retain);
 
 // Subscribes to a topic (thread-safe)
 esp_err_t mqtt_wrapper_subscribe(const char* topic, int qos);

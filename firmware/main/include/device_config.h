@@ -32,4 +32,3 @@ const char* devcfg_get_permanent_cert();
 esp_err_t devcfg_set_permanent_cert(const char* cert, const char* privkey);
 
 
-

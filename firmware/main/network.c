@@ -19,10 +19,8 @@ static void network_wifi_event_handler(void* arg, esp_event_base_t event_base,
         ESP_LOGI(TAG, "Wi-Fi started, connecting to AP...");
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        // If disconnected (or failed to connect), try to connect again
         ESP_LOGW(TAG, "Disconnected from AP. Attempting to reconnect...");
         ESP_ERROR_CHECK(supervisor_submit_event(EVENT_NETIF_DISCONNECTED));
-        esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_CONNECTED) {
         // If disconnected (or failed to connect), try to connect again
         ESP_LOGW(TAG, "Connected to AP");
@@ -66,4 +64,9 @@ void network_init()
 {    
     // Initialize/start wifi
     network_wifi_init();
+}
+
+void network_reconnect()
+{
+    esp_wifi_connect();
 }

@@ -68,8 +68,8 @@ export class AuthStack extends cdk.Stack {
           cognito.OAuthScope.PROFILE
         ],
         // You will need to update these to match your Flutter app's deep link schemes
-        callbackUrls: ['jct.pillorganizer.pills://callback'],
-        logoutUrls: ['jct.pillorganizer.pills://signout'],
+        callbackUrls: ['jct.pillorganizer.pills://callback', 'ca.healthesolutions.cabinet://callback'],
+        logoutUrls: ['jct.pillorganizer.pills://signout', 'ca.healthesolutions.cabinet://signout'],
       },
       supportedIdentityProviders: [
         cognito.UserPoolClientIdentityProvider.COGNITO

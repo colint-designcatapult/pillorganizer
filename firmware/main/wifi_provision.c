@@ -44,6 +44,7 @@ static void wifiprov_event_handler(void *user_data, wifi_prov_cb_event_t event, 
             break;
         case WIFI_PROV_CRED_FAIL:
             ESP_LOGE(TAG, "WIFI_PROV_CRED_FAIL - Failed to connect to WiFi (bad SSID/password or network unavailable)");
+            wifi_prov_mgr_reset_sm_state_on_failure();
             ESP_ERROR_CHECK(supervisor_submit_event(EVENT_PROVISION_FAILED));
             break;
         case WIFI_PROV_START:

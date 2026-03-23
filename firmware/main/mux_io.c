@@ -18,27 +18,43 @@
 #include "esp_sleep.h"
 #include "pill_pins.h"
 #include "esp_log.h"
+#include "supervisor.h"
 
 #define TAG "MUX_IO"
 
 extern const uint8_t ulp_main_bin_start[] asm("_binary_ulp_main_bin_start");
 extern const uint8_t ulp_main_bin_end[]   asm("_binary_ulp_main_bin_end");
 
-/* Declare our ULP arrays */
+/* Declare our ULP variables */
 extern uint32_t ulp_adc_readings;
-extern uint32_t ulp_prev_readings;
-extern uint32_t ulp_event_flags;
+extern uint32_t ulp_data_ready;
 
 static TaskHandle_t ulp_task_handle = NULL;
 
-static RTC_DATA_ATTR uint32_t wake_readings[MUX_CHANNELS];
-static RTC_DATA_ATTR uint32_t wake_prev_readings[MUX_CHANNELS];
-static RTC_DATA_ATTR uint32_t wake_event_flags[MUX_CHANNELS];
+#define NUM_DOOR_CHANNELS 14
+#define SCALE_FACTOR 256  // Scales integers to give us "decimal" precision
+#define ALPHA_SHIFT 3     // Equivalent to an alpha of 1/8 for smoothing
 
+typedef enum {
+    DOOR_CLOSED = 0,
+    DOOR_OPEN = 1
+} door_state_t;
+
+/* State tracking for each channel. 
+ * Must be in RTC_DATA_ATTR to survive deep sleep. */
+typedef struct {
+    int32_t ema;           // Scaled Exponential Moving Average
+    int32_t mad;           // Scaled Mean Absolute Deviation
+    int32_t open_baseline; // The EMA recorded right before the door opened
+    door_state_t state;
+    bool initialized;
+} ch_stats_t;
+
+static RTC_DATA_ATTR ch_stats_t ch_stats[NUM_DOOR_CHANNELS];
 
 static void init_ulp_program(void);
 static void start_ulp_program(void);
-static void process_ulp_events(uint32_t* flags, uint32_t* reads, uint32_t* emas);
+static bool process_ulp_events(uint32_t* values);
 
 /* ==========================================================
  * ESP-IDF Managed Callback for ULP events while awake 
@@ -62,10 +78,37 @@ static void IRAM_ATTR ulp_isr_handler(void *arg)
  * ========================================================== */
 static void ulp_event_task(void *arg)
 {
+static door_state_t last_known_state[NUM_DOOR_CHANNELS] = {DOOR_CLOSED};
+
     while (1) {
         /* Block indefinitely (0 CPU cycles) until the ISR callback notifies us */
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        process_ulp_events(&ulp_event_flags, &ulp_adc_readings, &ulp_prev_readings);
+        if (process_ulp_events(&ulp_adc_readings)) {
+            for (int i = 0; i < NUM_DOOR_CHANNELS; i++) {
+                if (ch_stats[i].state != last_known_state[i]) {
+                    // State changed!
+
+                    ESP_LOGI(TAG, "Door %d | STATE: %s | Real ADC: %ld | MAD: %ld", 
+                             i, 
+                             ch_stats[i].state == DOOR_OPEN ? "OPEN" : "CLOSED",
+                             ch_stats[i].ema / SCALE_FACTOR, 
+                             ch_stats[i].mad / SCALE_FACTOR);
+                    
+                    esp_err_t err;
+                    if (ch_stats[i].state == DOOR_OPEN) {
+                        err = supervisor_submit_event_block(EVENT_DOOR_OPENED, (void*)i, pdMS_TO_TICKS(10));
+                    } else {
+                        err = supervisor_submit_event_block(EVENT_DOOR_CLOSED, (void*)i, pdMS_TO_TICKS(10));
+                    }
+
+                    // Only commit the last known state if we submitted the event, that way we can try submitting
+                    // the event again.
+                    if (err == ESP_OK) {
+                        last_known_state[i] = ch_stats[i].state;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -103,44 +146,81 @@ void mux_fresh_boot()
 
 void mux_wake_deep_sleep()
 {
-    process_ulp_events(wake_event_flags, wake_readings, wake_prev_readings);
+
+    //process_ulp_events(wake_event_flags, wake_readings, wake_prev_readings);
 }
 
-void RTC_IRAM_ATTR mux_wake_deep_sleep_early()
+bool RTC_IRAM_ATTR mux_wake_deep_sleep_early()
 {
-    // Copy current state of ULP readings so when the system inits it can process the event info
-    memcpy(wake_event_flags, &ulp_event_flags, sizeof(wake_event_flags));
-    memcpy(wake_readings, &ulp_adc_readings, sizeof(wake_readings));
-    memcpy(wake_prev_readings, &ulp_prev_readings, sizeof(wake_prev_readings));
+    return process_ulp_events(&ulp_adc_readings);
 }
 
-static void process_ulp_events(uint32_t* flags, uint32_t* values, uint32_t* prev_values)
+static bool process_ulp_events(uint32_t* values)
 {    
-    for (int i = 0; i < 16; i++) {
-        uint16_t flag = flags[i] & UINT16_MAX;
+    uint32_t local_buffer[16];
+    memcpy(local_buffer, values, 16 * sizeof(uint32_t));
+
+    // Let ULP know it can continue
+    ulp_data_ready = 0;
+
+    bool should_wake_main_cpu = false;
+
+    // Only process channels 0 through 13
+    for (int ch = 0; ch < NUM_DOOR_CHANNELS; ch++) {
         
-        if (flag > 0) {
-            uint16_t current_val = values[i] & UINT16_MAX;
-            uint16_t baseline    = prev_values[i] & UINT16_MAX;
-            
-            if (flag == 1) {
-                printf("\nDOOR CH %02d OPENED!  (Spike: Baseline %d -> Read %d)\n", i, baseline, current_val);
-            } else if (flag == 2) {
-                printf("\nDOOR CH %02d CLOSED!  (Drop: Baseline %d -> Read %d)\n", i, baseline, current_val);
+        int32_t val = local_buffer[ch] & 0xFFFF;
+        int32_t s_val = val * SCALE_FACTOR; // Scale up to preserve precision
+
+        if (!ch_stats[ch].initialized) {
+            ch_stats[ch].ema = s_val;
+            ch_stats[ch].mad = 5 * SCALE_FACTOR; // Seed with a small assumed variance
+            ch_stats[ch].state = DOOR_CLOSED;
+            ch_stats[ch].initialized = true;
+            continue;
+        }
+
+        if (ch_stats[ch].state == DOOR_CLOSED) {
+            int32_t diff = s_val - ch_stats[ch].ema;
+            int32_t abs_diff = (diff > 0) ? diff : -diff;
+
+            // Threshold: Current EMA + (K * MAD). 
+            // K=5 is roughly equivalent to 4 standard deviations.
+            int32_t threshold = ch_stats[ch].mad * 5; 
+
+            if (diff > threshold) {
+                // SHARP INCREASE DETECTED: Door opened!
+                ch_stats[ch].state = DOOR_OPEN;
+                
+                // Freeze the baseline so we know what "closed" looks like
+                ch_stats[ch].open_baseline = ch_stats[ch].ema; 
+                should_wake_main_cpu = true;
+            } else {
+                // Update EMA and MAD
+                ch_stats[ch].ema += (diff >> ALPHA_SHIFT);
+                ch_stats[ch].mad += ((abs_diff - ch_stats[ch].mad) >> ALPHA_SHIFT);
+
+                // FIX: Raise the floor to ignore baseline ESP32 ADC noise!
+                // Minimum ~30 ADC units of variance.
+                if (ch_stats[ch].mad < (30 * SCALE_FACTOR)) {
+                    ch_stats[ch].mad = 30 * SCALE_FACTOR;
+                }            }
+        } else {
+            // DOOR IS OPEN: Wait for value to drop back near the stored baseline.
+            // We consider it closed if it drops within 2 MADs of the old closed baseline.
+            int32_t close_threshold = ch_stats[ch].open_baseline + (ch_stats[ch].mad * 2);
+
+            if (s_val < close_threshold) {
+                // VOLTAGE DROPPED: Door closed!
+                ch_stats[ch].state = DOOR_CLOSED;
+                
+                // Fast-reset the EMA to the current lighting to sync immediately
+                ch_stats[ch].ema = s_val; 
+                should_wake_main_cpu = true;
             }
-            
-            /* Clear the flag so it doesn't process again */
-            flags[i] = 0; 
         }
     }
-
-    printf("\n--- MUX Data  ---\n");
-        
-    for (int ch = 0; ch < 16; ch++) {
-        uint16_t val = values[ch] & UINT16_MAX;
-        uint16_t ema = prev_values[ch] & UINT16_MAX;
-        printf("CH %02d | RAW: %04d | EMA: %04d\n", ch, val, ema);
-    }
+    
+    return should_wake_main_cpu;
 }
 static void init_ulp_program(void)
 {
@@ -172,7 +252,7 @@ static void init_ulp_program(void)
     rtc_gpio_set_direction(MUX_PIN_D, RTC_GPIO_MODE_OUTPUT_ONLY);
 
     /* 200ms ULP wakeup period (polling should run every 160ms) */
-    ulp_set_wakeup_period(0, 200000);
+    //ulp_set_wakeup_period(0, 200000);
 
 #if CONFIG_IDF_TARGET_ESP32
     rtc_gpio_isolate(GPIO_NUM_12);
@@ -185,7 +265,7 @@ static void init_ulp_program(void)
 static void start_ulp_program(void)
 {
     /* Start the program */
-    //esp_err_t err = ulp_run(&ulp_entry - RTC_SLOW_MEM);
-    //ESP_ERROR_CHECK(err);
+    esp_err_t err = ulp_run(&ulp_entry - RTC_SLOW_MEM);
+    ESP_ERROR_CHECK(err);
 }
 

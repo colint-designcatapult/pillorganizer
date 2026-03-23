@@ -4,6 +4,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include <string.h>
+#include "supervisor.h"
 
 #define TAG "MQTT_WRAPPER"
 
@@ -32,12 +33,14 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             ESP_LOGI(TAG, "MQTT Connected");
             xEventGroupClearBits(mqtt_event_group, MQTT_DISCONNECTED_BIT);
             xEventGroupSetBits(mqtt_event_group, MQTT_CONNECTED_BIT);
+            supervisor_submit_event(EVENT_MQTT_CONNECTED);
             break;
 
         case MQTT_EVENT_DISCONNECTED:
             ESP_LOGI(TAG, "MQTT Disconnected");
             xEventGroupClearBits(mqtt_event_group, MQTT_CONNECTED_BIT);
             xEventGroupSetBits(mqtt_event_group, MQTT_DISCONNECTED_BIT);
+            supervisor_submit_event(EVENT_MQTT_DISCONNECTED);
             break;
         default:
             break;
@@ -109,10 +112,10 @@ esp_err_t mqtt_wrapper_disconnect(void) {
     return ESP_OK;
 }
 
-esp_err_t mqtt_wrapper_publish(const char* topic, const char* payload, int len, int qos) {
+esp_err_t mqtt_wrapper_publish(const char* topic, const char* payload, int len, int qos, int retain) {
     if (!mqtt_wrapper_is_connected()) return ESP_ERR_INVALID_STATE;
     
-    int msg_id = esp_mqtt_client_publish(mqtt_client, topic, payload, len, qos, 0);
+    int msg_id = esp_mqtt_client_publish(mqtt_client, topic, payload, len, qos, retain);
     return (msg_id >= 0) ? ESP_OK : ESP_FAIL;
 }
 

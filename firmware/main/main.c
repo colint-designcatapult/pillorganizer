@@ -24,15 +24,17 @@
 #include <esp_err.h>
 #include <esp_event.h>
 #include "claim.h"
+#include "shadow_state.h"
 
 #define TAG "MAIN"
 
 void RTC_IRAM_ATTR esp_wake_deep_sleep(void)
 { 
-    esp_default_wake_deep_sleep();
-
-    // Code that runs immediately after deep sleep wake
-    mux_wake_deep_sleep_early();
+    if (mux_wake_deep_sleep_early()) {
+        esp_default_wake_deep_sleep();
+    } else {
+        esp_deep_sleep_start();
+    }
 }
 
 static void app_fresh_boot()

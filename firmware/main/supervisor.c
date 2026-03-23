@@ -10,6 +10,10 @@
 #include "device_config.h"
 #include "claim.h"
 #include "fleet_provision.h"
+#include "mqtt.h"
+#include "string.h"
+#include "shadow_state.h"
+#include "ledc.h"
 
 #define TAG "SUPERVISOR"
 
@@ -27,7 +31,18 @@ static void _Noreturn reset_provisioning(void)
 {
     wifiprov_reset_provision();
     devcfg_reset_identity();
+
+    // Blink red to indicate failure
+    led_task_param_t param = {
+        .blink_and_rollback = {
+            .red = 0xFF,
+            .green = 0x00
+        }
+    };
+    ledc_set_task(LED_BLINK_AND_ROLLBACK, param);
+
     ESP_LOGI(TAG, "Provision state reset, restarting...");
+    vTaskDelay(pdMS_TO_TICKS(6000));
     esp_restart();
 }
 
@@ -36,8 +51,6 @@ static supervisor_state_t network_connect_success()
     app_rtc_sync();
     return STATE_SYNCING_TIME;
 }
-
-
 
 void supervisor_init()
 {
@@ -50,16 +63,40 @@ void supervisor_init()
     ESP_LOGI(TAG, "Supervisor initialized");
 }
 
+static void create_initial_device_state(device_state_t* state)
+{
+    memset(state, 0, sizeof(device_state_t));
+    state->timestamp = app_rtc_get_relative_timestamp();
+}
+
+static void update_state(device_state_t* state)
+{
+    // Update state timestamp
+    state->timestamp = app_rtc_get_relative_timestamp();
+    supervisor_submit_event(EVENT_STATE_CHANGED);
+}
+
+static void send_state_update(device_state_t* state)
+{
+    mqtt_publish_device_state(state);
+}
+
 void supervisor_run()
 {
     supervisor_state_t current_state = STATE_INIT;
     supervisor_event_t event;
+    device_state_t device_state;
     bool event_received = false;
+
+    create_initial_device_state(&device_state);
+    update_state(&device_state);
 
     if (wifiprov_is_provisioned()) {
         // Device provisioned with Wi-Fi Credentials, network stack is already connecting
         // network_wifi_init() / esp_wifi_start() uses provisioned credentials to connect
         if(devcfg_has_permanent_identity()) {
+            // Can initialize shadow state
+            shadow_state_init();
             current_state = STATE_CONNECTING_NETIF;
         } else {
             // Has Wi-Fi credentials, but no permanent identity
@@ -77,9 +114,38 @@ void supervisor_run()
         if (event_received) {
             ESP_LOGI(TAG, "Received event: %d in state: %d", event.id, current_state);
 
+            supervisor_event_door_t door_payload = (supervisor_event_door_t)event.payload;
+
+            /* Handle events regardless of state */
+            switch(event.id) {
+                case EVENT_DOOR_OPENED:
+                    ESP_LOGI(TAG, "Door %d opened", door_payload);
+                    device_state.bins[door_payload].opened_at = app_rtc_get_relative_timestamp();
+                    device_state.doors |= (1 << door_payload);
+                    update_state(&device_state);
+                    break;
+                case EVENT_DOOR_CLOSED:
+                    ESP_LOGI(TAG, "Door %d closed", door_payload);
+                    device_state.bins[door_payload].closed_at = app_rtc_get_relative_timestamp();
+                    device_state.doors &= ~(1 << door_payload);
+                    update_state(&device_state);
+                    break;
+                default:
+                    break;
+            }
+
             switch (current_state) {
                 case STATE_UNPROVISIONED:
                     if (event.id == EVENT_PROVISION_STARTED) {
+                        // Start LED breathing effect
+                        led_task_param_t param = {
+                            .breathe = {
+                                .red = 0x00,
+                                .green = 0x7F
+                            }
+                        };
+                        ledc_set_task(LED_BREATHE, param);
+
                         current_state = STATE_PROVISIONING;
                     }
                     break;
@@ -88,10 +154,31 @@ void supervisor_run()
                         // At this point, provisioning is complete AND we are connected to Wi-Fi
                         wifiprov_deinit();
                         current_state = network_connect_success();
+
+                        // Update progress bar to 2
+                        led_task_param_t param = {
+                            .progress = {
+                                .red = 0x00,
+                                .green = 0xFF,
+                                .progress = 2
+                            }
+                        };
+                        ledc_set_task(LED_PROGRESS, param);
+
+                        // Reset failure counter
                         s_provision_fail_ctr = 0;
                         ESP_LOGI(TAG, "Wi-Fi provisioning success");
                     } else if (event.id == EVENT_PROVISION_FAILED) {              
                         // Provisioning failed, but the provision service stays running so we don't need to reset it
+
+                        // Blink red to indicate failure
+                        led_task_param_t param = {
+                            .breathe = {
+                                .red = 0xFF,
+                                .green = 0x00
+                            }
+                        };
+                        ledc_set_task(LED_BLINK_AND_ROLLBACK, param);
 
                         // Increment failure counter
                         s_provision_fail_ctr++;
@@ -100,6 +187,8 @@ void supervisor_run()
 
                         // On 3 failures, restart the system
                         if (s_provision_fail_ctr >= 3) {
+                            // Wait 3 seconds for LED animation
+                            vTaskDelay(pdMS_TO_TICKS(6000));
                             esp_restart();
                         }
                     }
@@ -112,7 +201,7 @@ void supervisor_run()
                         current_state = network_connect_success();
                     } else if (event.id == EVENT_NETIF_DISCONNECTED) {
                         ESP_LOGW(TAG, "Failed to connect to network.");
-                        // Let the esp_wifi_connect auto-retry logic in network.c handle it.
+                        network_reconnect();
                     }
                     break;
                 case STATE_SYNCING_TIME:
@@ -120,11 +209,23 @@ void supervisor_run()
                     if (event.id == EVENT_TIME_SYNCED) {
                         ESP_LOGI(TAG, "RTC time synced");
                         if (devcfg_has_permanent_identity()) {
-                            // No more initial provisioning to do. Device online and fully provisioned.
-                            current_state = STATE_OPERATIONAL;
+                            // No more initial provisioning to do. Begin MQTT init
+                            current_state = STATE_MQTT_DISCONNECTED;
+                            mqtt_init();
                         } else if (claim_has_credentials()) {
                             // Not fully provisioned, but we have claim credentials. Fetch temporary claim certs.
                             current_state = STATE_FETCHING_CERT;
+
+                            // Update progress bar to 3
+                            led_task_param_t param = {
+                                .progress = {
+                                    .red = 0x00,
+                                    .green = 0xFF,
+                                    .progress = 3
+                                }
+                            };
+                            ledc_set_task(LED_PROGRESS, param);
+
                             claim_execute_fetch();
                         } else {
                             // Not fully provisioned, no claim credentials. Unrecoverable state. Reset device.
@@ -132,34 +233,83 @@ void supervisor_run()
                         }
                     } else if (event.id == EVENT_NETIF_DISCONNECTED) {
                         current_state = STATE_CONNECTING_NETIF;
+                        network_reconnect();
                     }
                     break;
                 case STATE_FETCHING_CERT:
                     if (event.id == EVENT_CERT_CLAIM_SUCCESS) {
                         ESP_LOGI(TAG, "Claim certificate fetched successfully. Moving to STATE_FLEET_PROVISIONING.");
                         current_state = STATE_FLEET_PROVISIONING;
+
+                            // Update progress bar to 4
+                            led_task_param_t param = {
+                                .progress = {
+                                    .red = 0x00,
+                                    .green = 0xFF,
+                                    .progress = 4
+                                }
+                            };
+                            ledc_set_task(LED_PROGRESS, param);
+
                         claim_fleet_provision();
                     } else if (event.id == EVENT_CERT_CLAIM_FAILED) {
                         ESP_LOGW(TAG, "Claim certificate fetch failed. Resetting provisioning and restarting.");
                         reset_provisioning();
+                    } else if (event.id == EVENT_NETIF_DISCONNECTED) {
+                        current_state = STATE_CONNECTING_NETIF;
+                        network_reconnect();
                     }
                     break;
                 case STATE_FLEET_PROVISIONING:
                     // Will handle Fleet Provisioning success/failure events here
                     if(event.id == EVENT_FLEET_PROVISION_SUCCESS) {
                         ESP_LOGI(TAG, "Fleet provision success!");
+
+                        // Update progress bar to 6
+                        led_task_param_t param = {
+                            .progress = {
+                                .red = 0x00,
+                                .green = 0xFF,
+                                .progress = 7
+                            }
+                        };
+                        ledc_set_task(LED_PROGRESS, param);
+
+                        vTaskDelay(pdMS_TO_TICKS(6000));
+
                         // Restart now, we just went through the entire provisioning flow
                         // Better to just start from a clean slate
                         esp_restart();
                     } else if(event.id == EVENT_FLEET_PROVISION_FAILED) {
                         ESP_LOGE(TAG, "Fleet provision failed!");
                         reset_provisioning();
+                    } else if (event.id == EVENT_NETIF_DISCONNECTED) {
+                        current_state = STATE_CONNECTING_NETIF;
+                        network_reconnect();
+                    }
+                    break;
+                case STATE_MQTT_DISCONNECTED:
+                    if (event.id == EVENT_MQTT_CONNECTED) {
+                        current_state = STATE_OPERATIONAL;
+                        // Notify dependents that MQTT is up
+                        shadow_state_on_connect();
+
+                        // Send a state update
+                        update_state(&device_state);
+                    } else if (event.id == EVENT_NETIF_DISCONNECTED) {
+                        current_state = STATE_CONNECTING_NETIF;
+                        network_reconnect();
                     }
                     break;
                 case STATE_OPERATIONAL:
                     // Handle events during normal operation
-                    if(event.id == EVENT_FLEET_PROVISION_DEINIT) {
-                        // We just finished fleet provisioning
+                    if(event.id == EVENT_STATE_CHANGED) {
+                        send_state_update(&device_state);
+                    } else if(event.id == EVENT_MQTT_DISCONNECTED) {
+                        current_state = STATE_MQTT_DISCONNECTED;
+                    } else if (event.id == EVENT_NETIF_DISCONNECTED) {
+                        current_state = STATE_CONNECTING_NETIF;
+                        network_reconnect();
                     }
                     break;
                 default:
@@ -187,4 +337,10 @@ esp_err_t supervisor_submit_event_block(supervisor_event_id_t event_id, void* pa
 esp_err_t supervisor_submit_event(supervisor_event_id_t event_id)
 {
     return supervisor_submit_event_block(event_id, NULL, 0);
+}
+
+/* Pill Organizer Logic */
+void a()
+{
+    
 }
