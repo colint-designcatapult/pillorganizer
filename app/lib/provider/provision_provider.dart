@@ -1,13 +1,14 @@
 import 'dart:typed_data';
 import 'dart:convert';
+import 'dart:async';
 import 'package:app/apiv2/control_plane.dart';
 import 'package:app/provider/control_plane_providers.dart';
 import 'package:flutter_esp_ble_prov/flutter_esp_ble_prov.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'dart:developer' as developer;
-import 'package:app/service/amplify_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:app/service/provisioning_service.dart';
 
 import '../apiv2/models/dto.dart';
 
@@ -50,7 +51,7 @@ class ProvisioningRepository {
   ProvisioningRepository({required this.bleProv, required this.apiClient});
 
   Future<List<String>> scanBleDevices() {
-    String prefix = 'PILL-';
+    String prefix = 'cabiNET-';
     return bleProv.scanBleDevices(prefix);
   }
 
@@ -122,44 +123,6 @@ class ProvisioningRepository {
     return bleProv.disconnectDevice(deviceName);
   }
 
-  Future<WifiConnectionStatus?> getWifiConnectionStatus(String deviceName) async {
-    final responseData = await bleProv.sendCustomData(deviceName, '', 'wifi_connection_status', Uint8List(0))
-        .timeout(const Duration(seconds: 5));
-        
-    if (responseData == null || responseData.isEmpty) return null;
-    
-    final rawString = String.fromCharCodes(responseData);
-    try {
-      final parsed = jsonDecode(rawString) as Map<String, dynamic>;
-      final connected = parsed['connected'] as bool? ?? false;
-      final failed = parsed['failed'] as bool? ?? false;
-      return WifiConnectionStatus(connected: connected, failed: failed);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Future<String?> getFleetProvisioningStatus(String deviceName) async {
-    final responseData = await bleProv.sendCustomData(deviceName, '', 'fleet_provisioning_status', Uint8List(0))
-        .timeout(const Duration(seconds: 5));
-        
-    if (responseData == null || responseData.isEmpty) return null;
-    
-    final rawString = String.fromCharCodes(responseData);
-    try {
-      final parsed = jsonDecode(rawString) as Map<String, dynamic>;
-      return parsed['status'] as String? ?? 'unknown';
-    } catch (_) {
-      return rawString.trim();
-    }
-  }
-}
-
-class WifiConnectionStatus {
-  final bool connected;
-  final bool failed;
-
-  WifiConnectionStatus({required this.connected, required this.failed});
 }
 
 
@@ -169,20 +132,6 @@ ProvisioningRepository provisioningRepository(Ref ref) {
     bleProv: FlutterEspBleProv(),
     apiClient: ref.watch(controlPlaneClientProvider),
   );
-}
-
-enum ProvisionStage {
-  scanning_ble,
-  select_ble,
-  fetchingSerial,
-  scanning_wifi,
-  select_wifi,
-  provisioning_wifi,
-  verifying_wifi,
-  fleet_provisioning,
-  complete,
-  failed,
-  missingPermissions
 }
 
 @MappableClass()
@@ -197,9 +146,7 @@ class WifiEntry with WifiEntryMappable {
 }
 
 @MappableClass()
-class ProvisionState with ProvisionStateMappable {
-  final ProvisionStage stage;
-  final Object? error;
+sealed class ProvisionState with ProvisionStateMappable {
   final double progress;
   final String? deviceName;
   final List<String> bluetoothList;
@@ -209,10 +156,9 @@ class ProvisionState with ProvisionStateMappable {
   final String? wifiPassword;
   final String? serialNumber;
   final ProvisioningClaim? claim;
+  final Object? errorMessage;
 
   const ProvisionState({
-    this.stage = ProvisionStage.scanning_ble,
-    this.error,
     this.progress = 0.0,
     this.deviceName,
     this.bluetoothList = const [],
@@ -221,39 +167,92 @@ class ProvisionState with ProvisionStateMappable {
     this.completionETA,
     this.wifiPassword,
     this.serialNumber,
-    this.claim
+    this.claim,
+    this.errorMessage,
   });
+
+  // Helper to check for error without needing to cast specifically in all places
+  Object? get error => errorMessage;
+}
+
+@MappableClass()
+class ProvisionStateScanningBle extends ProvisionState with ProvisionStateScanningBleMappable {
+  const ProvisionStateScanningBle({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage});
+}
+
+@MappableClass()
+class ProvisionStateSelectBle extends ProvisionState with ProvisionStateSelectBleMappable {
+  const ProvisionStateSelectBle({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage});
+}
+
+@MappableClass()
+class ProvisionStateFetchingSerial extends ProvisionState with ProvisionStateFetchingSerialMappable {
+  const ProvisionStateFetchingSerial({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage});
+}
+
+@MappableClass()
+class ProvisionStateScanningWifi extends ProvisionState with ProvisionStateScanningWifiMappable {
+  const ProvisionStateScanningWifi({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage});
+}
+
+@MappableClass()
+class ProvisionStateSelectWifi extends ProvisionState with ProvisionStateSelectWifiMappable {
+  const ProvisionStateSelectWifi({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage});
+}
+
+@MappableClass()
+class ProvisionStateProvisioningWifi extends ProvisionState with ProvisionStateProvisioningWifiMappable {
+  const ProvisionStateProvisioningWifi({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage});
+}
+
+@MappableClass()
+class ProvisionStateComplete extends ProvisionState with ProvisionStateCompleteMappable {
+  const ProvisionStateComplete({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage});
+}
+
+@MappableClass()
+class ProvisionStateFailed extends ProvisionState with ProvisionStateFailedMappable {
+  const ProvisionStateFailed({required super.errorMessage, super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim});
+}
+
+@MappableClass()
+class ProvisionStateMissingPermissions extends ProvisionState with ProvisionStateMissingPermissionsMappable {
+  const ProvisionStateMissingPermissions({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage});
+}
+
+@MappableClass()
+class ProvisionStateTimeout extends ProvisionState with ProvisionStateTimeoutMappable {
+  const ProvisionStateTimeout({required super.errorMessage, super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim});
 }
 
 @riverpod
 class Provision extends _$Provision {
   @override
   ProvisionState build() {
-    return const ProvisionState();
+    return const ProvisionStateScanningBle();
   }
 
   Future<void> scanBluetooth() async {
     final repo = ref.read(provisioningRepositoryProvider);
 
     // Set initial state
-    state = state.copyWith(
-      stage: ProvisionStage.scanning_ble,
+    state = ProvisionStateScanningBle(
       progress: 0.1,
-      error: null,
     );
     try {
-      final devices = await repo.scanBleDevices();
-      developer.log('BLE scan completed. Found ${devices.length} devices: $devices', name: 'ProvisionNotifier');
-      print('DEBUG: BLE scan completed. Found ${devices.length} devices: $devices');
-      state = state.copyWith(
-        stage: ProvisionStage.select_ble,
+      final devices = await repo.scanBleDevices()
+          .timeout(const Duration(seconds: 25));
+      developer.log('BLE scan completed. Found ${devices.length} devices.', name: 'ProvisionNotifier');
+      state = ProvisionStateSelectBle(
         bluetoothList: devices,
         progress: 1.0,
       );
+    } on TimeoutException catch (e, stack) {
+      developer.log('BLE scan timed out', name: 'ProvisionNotifier', error: e, stackTrace: stack);
+      state = ProvisionStateTimeout(errorMessage: 'BLE Scan Timeout: Device not found.');
     } catch (e, stack) {
       developer.log('BLE scan failed: $e', name: 'ProvisionNotifier', error: e, stackTrace: stack);
-      print('DEBUG: BLE scan failed: $e');
-      state = state.copyWith(stage: ProvisionStage.failed, error: 'BLE Scan Error: ${e.toString()}');
+      state = ProvisionStateFailed(errorMessage: 'BLE Scan Error: ${e.toString()}');
     }
   }
 
@@ -262,81 +261,87 @@ class Provision extends _$Provision {
   Future<void> selectBluetooth(String name) async {
     final repo = ref.read(provisioningRepositoryProvider);
 
-    state = state.copyWith(
+    state = ProvisionStateScanningWifi(
       deviceName: name,
-      stage: ProvisionStage.scanning_wifi, // Start with WiFi scan to establish session
       progress: 0.1,
-      error: null,
     );
 
     try {
       // Step 1: Establish SECURITY_1 session by scanning WiFi networks first
       developer.log('Connecting to device $name to establish session...', name: 'ProvisionNotifier');
-      print('DEBUG: Connecting to device $name to establish session...');
 
-      final networks = await repo.scanWifiNetworks(name);
+      final networks = await repo.scanWifiNetworks(name)
+          .timeout(const Duration(seconds: 25));
+      final wifiEntries = networks.map((n) => WifiEntry(name: n)).toList();
       developer.log('Session established. Found ${networks.length} networks', name: 'ProvisionNotifier');
-      print('DEBUG: WiFi scan completed and session established. Found ${networks.length} networks');
 
       // Step 2: Fetch hardware serial number from device
-      state = state.copyWith(
-        stage: ProvisionStage.fetchingSerial,
+      state = ProvisionStateFetchingSerial(
+        deviceName: name,
+        wifiNetworks: wifiEntries,
         progress: 0.4,
       );
       developer.log('Fetching serial number from hardware...', name: 'ProvisionNotifier');
-      print('DEBUG: Fetching serial number from hardware...');
 
       final serial = await repo.fetchHardwareSerial(name);
 
-      print('\n' + '*' * 50);
-      print('SERIAL NUMBER RETRIEVED: $serial');
-      print('*' * 50 + '\n');
       developer.log('Serial number retrieved: $serial', name: 'ProvisionNotifier');
 
-      state = state.copyWith(serialNumber: serial, progress: 0.55);
+      state = ProvisionStateFetchingSerial(
+        deviceName: name,
+        serialNumber: serial,
+        wifiNetworks: wifiEntries,
+        progress: 0.55,
+      );
 
       // Step 3: Claim device from backend using real hardware serial
       developer.log('Claiming device from backend for $serial...', name: 'ProvisionNotifier');
-      print('DEBUG: Claiming device from backend for $serial...');
 
       final claimResult = await repo.claimDevice(serial);
 
       developer.log('Claim successful. DeviceID: ${claimResult.deviceId}', name: 'ProvisionNotifier');
 
-      print('\n' + '=' * 60);
-      print('🚀 DEVICE CLAIMED SUCCESSFULLY:');
-      print('   DEVICE ID:   ${claimResult.deviceId}');
-      print('   CLAIM ID:    ${claimResult.claimId}');
-      print('   CLAIM TOKEN: ${claimResult.claimToken}');
-      print('=' * 60 + '\n');
-
-      state = state.copyWith(
+      state = ProvisionStateFetchingSerial(
+        deviceName: name,
+        serialNumber: serial,
         claim: claimResult,
+        wifiNetworks: wifiEntries,
         progress: 0.75,
       );
 
       // Step 4: Send Claim ID and Token to device
       developer.log('Sending claim ID and token to device...', name: 'ProvisionNotifier');
-      print('DEBUG: Sending claim ID and token to device...');
 
       await repo.sendClaimTokenToHardware(name, claimResult);
 
       developer.log('Claim token set on device successfully', name: 'ProvisionNotifier');
 
-      print('\n' + '🛰️ ' * 20);
-      print('SUCCESS: CLAIM ID & TOKEN SET ON HARDWARE');
-      print('🛰️ ' * 20 + '\n');
-
       // Step 5: Move to WiFi selection
-      state = state.copyWith(
-        stage: ProvisionStage.select_wifi,
-        wifiNetworks: networks.map((n) => WifiEntry(name: n)).toList(),
+      state = ProvisionStateSelectWifi(
+        deviceName: name,
+        serialNumber: serial,
+        claim: claimResult,
+        wifiNetworks: wifiEntries,
         progress: 1.0,
       );
+    } on TimeoutException catch (e, stack) {
+      try { await repo.disconnectDevice(name); } catch (_) {}
+      developer.log('Provisioning session timed out: $e', name: 'ProvisionNotifier', error: e, stackTrace: stack);
+      state = ProvisionStateTimeout(
+        errorMessage: 'Connection Timed Out: The device took too long to respond.',
+        deviceName: name,
+        serialNumber: state.serialNumber,
+        claim: state.claim,
+      );
     } catch (e, stack) {
+      try { await repo.disconnectDevice(name); } catch (_) {}
       developer.log('Provisioning sequence failed: $e', name: 'ProvisionNotifier', error: e, stackTrace: stack);
-      print('DEBUG: Provisioning sequence failed: $e');
-      state = state.copyWith(stage: ProvisionStage.failed, error: 'Provisioning Error: ${e.toString()}');
+      state = ProvisionStateFailed(
+        errorMessage: 'Provisioning Error: ${e.toString()}',
+        deviceName: name,
+        serialNumber: state.serialNumber,
+        claim: state.claim,
+      );
     }
   }
 
@@ -355,208 +360,113 @@ class Provision extends _$Provision {
     required String ssid,
     required String password,
   }) async {
-    if (state.deviceName == null) return;
+    final currentDeviceName = state.deviceName;
+    if (currentDeviceName == null) return;
     final repo = ref.read(provisioningRepositoryProvider);
 
-    state = state.copyWith(
+    state = ProvisionStateProvisioningWifi(
+      deviceName: currentDeviceName,
+      serialNumber: state.serialNumber,
+      claim: state.claim,
+      wifiNetworks: state.wifiNetworks,
       ssid: ssid,
-      stage: ProvisionStage.provisioning_wifi,
+      wifiPassword: password,
       progress: 0.0,
-      error: null,
     );
 
-    developer.log('Initiating Wi-Fi provisioning for ${state.deviceName} with SSID: $ssid', name: 'ProvisionNotifier');
-    print('DEBUG: Initiating Wi-Fi provisioning for ${state.deviceName} with SSID: $ssid');
+    developer.log('Initiating Wi-Fi provisioning for $currentDeviceName with SSID: $ssid', name: 'ProvisionNotifier');
     try {
       final success = await repo.provisionWifi(
-        state.deviceName!,
+        currentDeviceName,
         ssid,
         password,
       );
       developer.log('Provisioning result: $success', name: 'ProvisionNotifier');
-      print('DEBUG: Provisioning result: $success');
 
       if (success == true) {
-        // WiFi creds handed off — verify the device actually connected before fleet provisioning
-        state = state.copyWith(
-          stage: ProvisionStage.verifying_wifi,
-          progress: 0.3,
+        developer.log('WiFi credentials sent and provisioned successfully.', name: 'ProvisionNotifier');
+        await repo.disconnectDevice(currentDeviceName);
+        state = ProvisionStateComplete(
+          deviceName: currentDeviceName,
+          serialNumber: state.serialNumber,
+          claim: state.claim,
+          wifiNetworks: state.wifiNetworks,
+          ssid: ssid,
+          progress: 1.0,
         );
-        print('DEBUG: WiFi credentials sent. Verifying WiFi connection...');
-        final wifiConnected = await _pollWifiConnectionStatus(state.deviceName!);
-        if (!wifiConnected) return; // error state already set inside the method
-
-        // WiFi confirmed — now poll fleet provisioning
-        state = state.copyWith(
-          stage: ProvisionStage.fleet_provisioning,
-          progress: 0.5,
-        );
-        print('DEBUG: WiFi connected. Polling for fleet provisioning status...');
-        await _pollFleetProvisioningStatus(state.deviceName!);
-      } else {
+      } else if (success == false) {
         // Espressif SDK returned false (e.g. AUTH_FAILED — wrong password).
-        // Device wipes all credentials and restarts, so user must start over.
-        // Disconnect to clear the stale BLE session so the next attempt reconnects fresh.
-        try { await repo.disconnectDevice(state.deviceName!); } catch (_) {}
-        state = state.copyWith(
-          stage: ProvisionStage.scanning_ble,
-          progress: 0.0,
-          error: 'WiFi authentication failed — incorrect password. Your device is restarting, please start provisioning again.',
+        // Gracefully handle it: return to SelectWifi with an errorMessage
+        developer.log('WiFi authentication failed — incorrect password.', name: 'ProvisionNotifier');
+        state = ProvisionStateSelectWifi(
+          errorMessage: ProvisionError.errorPasswordIncorrect,
+          deviceName: currentDeviceName,
+          serialNumber: state.serialNumber,
+          claim: state.claim,
+          wifiNetworks: state.wifiNetworks,
+          ssid: ssid,
+          progress: 1.0,
         );
+      } else {
+        // success is null — device likely wiped credentials and restarted.
+        await _reconnectGracefully(currentDeviceName, ssid, reason: 'unpredictable disconnect');
       }
     } catch (e, stack) {
       developer.log('Provisioning error: $e', name: 'ProvisionNotifier', error: e, stackTrace: stack);
-      print('DEBUG: Provisioning error: $e');
-      state = state.copyWith(stage: ProvisionStage.failed, error: 'Provisioning Error: ${e.toString()}');
+      await _reconnectGracefully(currentDeviceName, ssid, reason: e.toString());
     }
   }
 
-  /// Polls wifi_connection_status after handing off credentials.
-  /// Returns true when the device is connected to WiFi.
-  /// Returns false (and sets select_wifi error state) on failure or timeout.
-  Future<bool> _pollWifiConnectionStatus(String deviceName) async {
+  Future<void> _reconnectGracefully(String deviceName, String ssid, {required String reason}) async {
     final repo = ref.read(provisioningRepositoryProvider);
-    const pollInterval = Duration(seconds: 3);
-    const maxDuration = Duration(seconds: 45);
-    final deadline = DateTime.now().add(maxDuration);
-
-    print('DEBUG: [WIFI] Starting wifi_connection_status poll (max 45s)...');
-
-    while (DateTime.now().isBefore(deadline)) {
-      await Future.delayed(pollInterval);
-
-      try {
-        final status = await repo.getWifiConnectionStatus(deviceName);
-
-        if (status == null) {
-          print('DEBUG: [WIFI] Empty response or parse error, retrying...');
-          continue;
-        }
-
-        bool connected = status.connected;
-        bool failed = status.failed;
-
-        developer.log('WiFi status: connected=$connected, failed=$failed', name: 'ProvisionNotifier');
-
-        if (failed) {
-          print('\n' + '⚠️  ' * 15);
-          print('WIFI CONNECTION FAILED — DEVICE RESTARTING, START OVER');
-          print('⚠️  ' * 15 + '\n');
-          // Device wipes credentials and restarts — user must start provisioning over.
-          // Disconnect to clear the stale BLE session.
-          try { await repo.disconnectDevice(deviceName); } catch (_) {}
-          state = state.copyWith(
-            stage: ProvisionStage.scanning_ble,
-            progress: 0.0,
-            error: 'WiFi connection failed. Your device is restarting — please start provisioning again.',
-          );
-          return false;
-        }
-
-        if (connected) {
-          print('\n' + '📶 ' * 15);
-          print('WIFI CONNECTED SUCCESSFULLY!');
-          print('📶 ' * 15 + '\n');
-          return true;
-        }
-
-        // Still connecting — update progress and keep polling
-        final remaining = deadline.difference(DateTime.now()).inSeconds;
-        print('DEBUG: [WIFI] Not yet connected, ${remaining}s remaining...');
-        state = state.copyWith(
-          progress: 0.3 + (0.2 * (1 - remaining / maxDuration.inSeconds)),
-        );
-      } catch (e) {
-        print('DEBUG: [WIFI] Poll error (retrying): $e');
-      }
-    }
-
-    // 45s elapsed without connecting
-    print('\n' + '⏰ ' * 15);
-    print('WIFI CONNECTION TIMED OUT — DEVICE RESTARTING, START OVER');
-    print('⏰ ' * 15 + '\n');
-    // Device wipes credentials and restarts — user must start provisioning over.
-    // Disconnect to clear the stale BLE session.
+    developer.log('Device unreachable ($reason). Attempting gentle reconnect...', name: 'ProvisionNotifier');
+    
     try { await repo.disconnectDevice(deviceName); } catch (_) {}
-    state = state.copyWith(
-      stage: ProvisionStage.scanning_ble,
-      progress: 0.0,
-      error: 'WiFi connection timed out. Your device is restarting — please start provisioning again.',
+
+    state = ProvisionStateScanningWifi(
+      deviceName: deviceName,
+      serialNumber: state.serialNumber,
+      claim: state.claim,
+      wifiNetworks: state.wifiNetworks,
+      ssid: ssid,
+      progress: 0.1,
+      errorMessage: 'Connection lost. Reconnecting to device...',
     );
-    return false;
+
+    // Give ESP32 some time to reboot and advertise BLE
+    await Future.delayed(const Duration(seconds: 3));
+
+    try {
+      await selectBluetooth(deviceName);
+      
+      if (state is ProvisionStateSelectWifi) {
+        // Successfully reconnected, mark the previous Wi-Fi connection as failed
+        state = (state as ProvisionStateSelectWifi).copyWith(
+          errorMessage: 'Wi-Fi connection failed. Please check credentials and try again.',
+          ssid: ssid,
+        );
+      }
+    } catch (e, stack) {
+      try { await repo.disconnectDevice(deviceName); } catch (_) {}
+      developer.log('Graceful reconnect failed: $e', name: 'ProvisionNotifier', error: e, stackTrace: stack);
+      state = ProvisionStateFailed(
+        errorMessage: 'Device disconnected and could not be reached. Please start over.',
+        deviceName: deviceName,
+        serialNumber: state.serialNumber,
+        claim: state.claim,
+        wifiNetworks: state.wifiNetworks,
+        ssid: ssid,
+      );
+    }
   }
 
-  /// Polls the fleet_provisioning_status BLE endpoint every 3s for up to 60s.
-  /// - "success" → stage = complete ✅
-  /// - "failed" or timeout → stage = scanning_ble (device restarts, user re-pairs) ❌
-  Future<void> _pollFleetProvisioningStatus(String deviceName) async {
-    final repo = ref.read(provisioningRepositoryProvider);
-    const pollInterval = Duration(seconds: 3);
-    const maxDuration = Duration(seconds: 60);
-    final deadline = DateTime.now().add(maxDuration);
-
-    print('DEBUG: [FLEET] Starting fleet provisioning status poll (max 60s)...');
-
-    while (DateTime.now().isBefore(deadline)) {
-      await Future.delayed(pollInterval);
-
+  Future<void> cancelProvisioning() async {
+    final name = state.deviceName;
+    if (name != null) {
       try {
-        final status = await repo.getFleetProvisioningStatus(deviceName);
-
-        if (status == null) {
-          print('DEBUG: [FLEET] Empty response or parse error, continuing poll...');
-          continue;
-        }
-
-        developer.log('Fleet provisioning status: $status', name: 'ProvisionNotifier');
-
-        switch (status) {
-          case 'success':
-            print('\n' + '✅ ' * 20);
-            print('FLEET PROVISIONING COMPLETE — DEVICE IS REGISTERED!');
-            print('✅ ' * 20 + '\n');
-            await repo.disconnectDevice(deviceName);
-            state = state.copyWith(
-              stage: ProvisionStage.complete,
-              progress: 1.0,
-            );
-            return;
-
-          case 'failed':
-            print('\n' + '❌ ' * 20);
-            print('FLEET PROVISIONING FAILED — DEVICE RESTARTING, RESCAN BLE');
-            print('❌ ' * 20 + '\n');
-            await repo.disconnectDevice(deviceName);
-            state = state.copyWith(
-              stage: ProvisionStage.scanning_ble,
-              progress: 0.0,
-              error: 'Fleet provisioning failed. Device is restarting — please re-scan.',
-            );
-            return;
-
-          default: // 'idle', 'pending', or unknown
-            final remainingSeconds = deadline.difference(DateTime.now()).inSeconds;
-            print('DEBUG: [FLEET] Status "$status", ${remainingSeconds}s remaining...');
-            state = state.copyWith(
-              progress: 0.5 + (0.4 * (1 - remainingSeconds / maxDuration.inSeconds)),
-            );
-            break;
-        }
-      } catch (e) {
-        // BLE timeout/error mid-poll — keep trying until deadline
-        print('DEBUG: [FLEET] Poll error (retrying): $e');
-      }
+        final repo = ref.read(provisioningRepositoryProvider);
+        await repo.disconnectDevice(name);
+      } catch (_) {}
     }
-
-    // 60s elapsed with no success
-    print('\n' + '⏰ ' * 20);
-    print('FLEET PROVISIONING TIMED OUT — DEVICE RESTARTING, RESCAN BLE');
-    print('⏰ ' * 20 + '\n');
-    await repo.disconnectDevice(deviceName);
-    state = state.copyWith(
-      stage: ProvisionStage.scanning_ble,
-      progress: 0.0,
-      error: 'Fleet provisioning timed out. Device is restarting — please re-scan.',
-    );
   }
 }

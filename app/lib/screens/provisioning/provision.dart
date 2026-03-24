@@ -1,6 +1,5 @@
 import 'package:app/screens/ScreenUtilWrapper.dart';
 import 'package:app/provider/provision_provider.dart';
-import 'package:app/screens/provisioning/wifi_select_screen.dart';
 import 'package:app/widgets/missing_permission_info_box.dart';
 import 'package:app/widgets/wizard.dart';
 import 'package:flutter/material.dart';
@@ -40,23 +39,16 @@ class _ErrorInfoBoxState extends State<ErrorInfoBox> {
 class ProvisionPage extends ConsumerStatefulWidget {
   const ProvisionPage({super.key});
 
-  static Route<ProvisionPage> route(context) => MaterialPageRoute(
-      builder: (_) => const ProvisionPage());
-
   @override
   ConsumerState<ProvisionPage> createState() => _ProvisionPageState();
 }
 
 class _ProvisionPageState extends ConsumerState<ProvisionPage>
     with TickerProviderStateMixin {
-  bool scanningWifi = false;
-  bool timeoutTryAgain = false;
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.invalidate(provisionProvider);
       _startScanningBluetooth();
     });
   }
@@ -66,17 +58,7 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
     final state = ref.read(provisionProvider);
 
     if (state.deviceName == null) {
-      prov.scanBluetooth().then((_) {
-        final newState = ref.read(provisionProvider);
-        if (newState.deviceName != null && mounted) {
-          Navigator.of(context)
-              .pushReplacement(ProvisionSelectWifiPage.route(context, newState));
-        }
-      }).timeout(const Duration(seconds: 25), onTimeout: () {
-        setState(() {
-          timeoutTryAgain = true;
-        });
-      });
+      prov.scanBluetooth();
     }
   }
 
@@ -87,25 +69,26 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
 
     return ScreenUtilWrapper(
       child: WizardStep(
-        height: state.error != null ||
-            state.stage == ProvisionStage.missingPermissions
+        height: state.errorMessage != null ||
+            state is ProvisionStateMissingPermissions
             ? null
-            : state.stage == ProvisionStage.select_ble
+            : state is ProvisionStateSelectBle
             ? 600.h
             : 400.h,
         provisionningProgress: provisionningProgress,
         title: _buildTitle(state),
         subtext: _buildSubtitle(state),
         onBackPressed: () {
+          ref.read(provisionProvider.notifier).cancelProvisioning();
           if (Navigator.of(context).canPop()) {
             Navigator.of(context).pop();
           } else {
             Navigator.of(context, rootNavigator: true).pop();
           }
         },
-        footer: state.error != null ||
-            timeoutTryAgain ||
-            state.stage == ProvisionStage.missingPermissions
+        footer: state.errorMessage != null ||
+            state is ProvisionStateTimeout ||
+            state is ProvisionStateMissingPermissions
             ? ClipRRect(
           borderRadius: BorderRadius.circular(8.r),
           child: ElevatedButton(
@@ -121,9 +104,6 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
                   ?.copyWith(color: Colors.white),
             ),
             onPressed: () async {
-              setState(() {
-                timeoutTryAgain = false;
-              });
               ref.read(provisionProvider.notifier).rescanBluetooth();
             },
           ),
@@ -134,7 +114,7 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
   }
 
   Widget _buildBody(ProvisionState state) {
-    if (state.stage == ProvisionStage.missingPermissions) {
+    if (state is ProvisionStateMissingPermissions) {
       return Expanded(
           child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 40.0.w),
@@ -142,15 +122,15 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
                 physics: AlwaysScrollableScrollPhysics(),
                 child: MissingPermissionInfoBox(),
               )));
-    } else if (state.error != null) {
+    } else if (state.errorMessage != null) {
       return Expanded(
           child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 40.0.w),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                child: ErrorInfoBox(error: state.error),
+                child: ErrorInfoBox(error: state.errorMessage),
               )));
-    } else if (state.stage == ProvisionStage.scanning_ble) {
+    } else if (state is ProvisionStateScanningBle) {
       return Padding(
           padding: EdgeInsets.symmetric(horizontal: 24.0.w),
           child: Align(
@@ -163,7 +143,7 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
                   minHeight: 12.h,
                 )),
           ));
-    } else if (state.stage == ProvisionStage.select_ble && !scanningWifi) {
+    } else if (state is ProvisionStateSelectBle) {
       return SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Padding(
@@ -187,12 +167,14 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
               ],
             )),
       );
+    } else if (state is ProvisionStateScanningWifi || state is ProvisionStateFetchingSerial || state is ProvisionStateSelectWifi) {
+      return const Center(child: CircularProgressIndicator());
     } else {
       return const Center(child: CircularProgressIndicator());
     }
   }
 
-  Widget _buildBleCard(context, String entry) {
+  Widget _buildBleCard(BuildContext context, String entry) {
     Widget? subtitle;
 
     return Padding(
@@ -204,54 +186,52 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
             title: Text(entry),
             subtitle: subtitle,
             onTap: () {
-              setState(() {
-                scanningWifi = true;
-              });
-              ref.read(provisionProvider.notifier).selectBluetooth(entry).then((_) {
-                final newState = ref.read(provisionProvider);
-                if (context.mounted) {
-                  Navigator.of(context).pushReplacement(
-                      ProvisionSelectWifiPage.route(context, newState));
-                }
-              });
+              ref.read(provisionProvider.notifier).selectBluetooth(entry);
             },
           ),
         ));
   }
-
   String _buildTitle(ProvisionState state) {
-    if (state.stage == ProvisionStage.missingPermissions) {
+    if (state is ProvisionStateMissingPermissions) {
       return AppLocalizations.of(context)!.provMissingPermission;
-    } else if (state.error != null) {
+    } else if (state.errorMessage != null) {
       return AppLocalizations.of(context)!.provErrConGeneric;
-    } else if (state.stage == ProvisionStage.scanning_ble) {
+    } else if (state is ProvisionStateScanningBle) {
       return AppLocalizations.of(context)!.provConSearching;
-    } else if (state.stage == ProvisionStage.scanning_wifi ||
-        state.stage == ProvisionStage.fetchingSerial ||
-        scanningWifi) {
+    } else if (state is ProvisionStateScanningWifi ||
+        state is ProvisionStateFetchingSerial) {
       return AppLocalizations.of(context)!.provConConnecting;
-    } else if (state.stage == ProvisionStage.select_ble) {
+    } else if (state is ProvisionStateSelectBle) {
       return AppLocalizations.of(context)!.provConConnecting;
+    } else if (state is ProvisionStateSelectWifi) {
+      return AppLocalizations.of(context)!.provSelectWifi;
+    } else if (state is ProvisionStateProvisioningWifi) {
+      return AppLocalizations.of(context)!.finishingSetup;
+    } else if (state is ProvisionStateComplete) {
+      return AppLocalizations.of(context)!.setupComplete;
     } else {
       return AppLocalizations.of(context)!.genericError;
     }
   }
 
   String? _buildSubtitle(ProvisionState state) {
-    if (state.stage == ProvisionStage.missingPermissions) {
+    if (state is ProvisionStateMissingPermissions) {
       return null;
-    } else if (state.error != null) {
+    } else if (state.errorMessage != null) {
       return AppLocalizations.of(context)!.provErrConGenericSubtitle;
-    } else if (state.stage == ProvisionStage.scanning_ble) {
+    } else if (state is ProvisionStateScanningBle) {
       return AppLocalizations.of(context)!.provConSearchingSubtitle;
-    } else if (state.stage == ProvisionStage.scanning_wifi ||
-        state.stage == ProvisionStage.fetchingSerial ||
-        scanningWifi) {
+    } else if (state is ProvisionStateScanningWifi ||
+        state is ProvisionStateFetchingSerial) {
       return AppLocalizations.of(context)!.provConConnectingSubtitle;
-    } else if (state.stage == ProvisionStage.select_ble) {
+    } else if (state is ProvisionStateSelectBle) {
       return AppLocalizations.of(context)!.provConSelectingSubtitle;
+    } else if (state is ProvisionStateSelectWifi) {
+      return AppLocalizations.of(context)!.provSelectWifiSubtitle;
+    } else if (state is ProvisionStateProvisioningWifi) {
+      return AppLocalizations.of(context)!.finishingSetupSubtitle;
     } else {
-      return AppLocalizations.of(context)!.genericError;
+      return null;
     }
   }
 }

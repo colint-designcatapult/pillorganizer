@@ -12,10 +12,6 @@ import 'provision.dart';
 class ProvisionConnectingPage extends ConsumerStatefulWidget {
   const ProvisionConnectingPage({super.key});
 
-  static Route<ProvisionConnectingPage> route(context, state) =>
-      MaterialPageRoute(
-          builder: (_) => const ProvisionConnectingPage());
-
   @override
   ConsumerState<ProvisionConnectingPage> createState() =>
       _ProvisionConnectingPageState();
@@ -23,33 +19,17 @@ class ProvisionConnectingPage extends ConsumerStatefulWidget {
 
 class _ProvisionConnectingPageState
     extends ConsumerState<ProvisionConnectingPage> {
-  bool _connectionStarted = false;
   bool _navigatingBack = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final state = ref.read(provisionProvider);
-      if (state.stage == ProvisionStage.select_wifi && !_connectionStarted) {
-        _connectionStarted = true;
-        _initConnection(state);
-      }
-    });
   }
 
-  void _initConnection(state) {
+  void _initConnection(ProvisionState state) {
     if (state.ssid != null && state.wifiPassword != null) {
       ref.read(provisionProvider.notifier)
-          .provisionWifi(ssid: state.ssid!, password: state.wifiPassword!)
-          .then((_) {
-        if (!mounted) return;
-        final newState = ref.read(provisionProvider);
-        if (newState.stage == ProvisionStage.complete) {
-          Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
-              '/name_new_device?id=${newState.claim?.deviceId}', (route) => false);
-        }
-      });
+          .provisionWifi(ssid: state.ssid!, password: state.wifiPassword!);
     }
   }
 
@@ -61,34 +41,17 @@ class _ProvisionConnectingPageState
       3
     );
 
-    // When the device restarts (WiFi fail, fleet fail, timeout) go back to My Devices
+    // Navigation listener
     ref.listen(provisionProvider, (previous, next) {
-      if (next.stage == ProvisionStage.scanning_ble &&
-          previous?.stage != ProvisionStage.scanning_ble &&
-          mounted &&
-          !_navigatingBack) {
-        _navigatingBack = true;
-        final message = next.error?.toString() ??
-            'Your device is restarting. Please start provisioning again.';
-        // Show dialog while context is still valid; pop to My Devices from OK button
-        showDialog<void>(
-          context: context,
-          barrierDismissible: false,
-          builder: (dialogContext) => AlertDialog(
-            title: const Text('Setup failed'),
-            content: Text(message),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(dialogContext).pop(); // dismiss dialog
-                  Navigator.of(context, rootNavigator: true).pop(); // go back to My Devices
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
+      if (!mounted) return;
+
+      // Handle setup complete
+      if (next is ProvisionStateComplete && previous is! ProvisionStateComplete) {
+        Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+            '/name_new_device?id=${next.claim?.deviceId}', (route) => false);
+        return;
       }
+
     });
 
     void initConnection() {
@@ -97,21 +60,23 @@ class _ProvisionConnectingPageState
     }
 
     return WizardStep(
-      height: state.error != null ? null : 400.h,
+      height: state.errorMessage != null ? null : 400.h,
       provisionningProgress: provisionningProgress,
       title: _buildTitle(state, context),
       subtext: _buildSubtitle(state, context),
       footer: _buildFooter(context, state, initConnection),
-      onBackPressed: () =>
-          Navigator.of(context, rootNavigator: true).pop(),
+      onBackPressed: () {
+        ref.read(provisionProvider.notifier).cancelProvisioning();
+        Navigator.of(context, rootNavigator: true).pop();
+      },
       child: _buildBody(context, state, ref),
     );
   }
 
-  Widget? _buildFooter(context, ProvisionState state, retryAction) {
-    if (state.stage == ProvisionStage.failed ||
-        state.stage == ProvisionStage.missingPermissions ||
-        state.error != null) {
+  Widget? _buildFooter(BuildContext context, ProvisionState state, VoidCallback retryAction) {
+    if (state is ProvisionStateFailed ||
+        state is ProvisionStateMissingPermissions ||
+        state.errorMessage != null) {
       return ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: Theme.of(context).primaryColor,
@@ -128,7 +93,7 @@ class _ProvisionConnectingPageState
           retryAction();
         },
       );
-    } else if (state.stage == ProvisionStage.complete) {
+    } else if (state is ProvisionStateComplete) {
       return ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: Theme.of(context).primaryColor,
@@ -149,8 +114,8 @@ class _ProvisionConnectingPageState
     return null;
   }
 
-  Widget _buildBody(context, ProvisionState state, WidgetRef ref) {
-    if (state.stage == ProvisionStage.missingPermissions) {
+  Widget _buildBody(BuildContext context, ProvisionState state, WidgetRef ref) {
+    if (state is ProvisionStateMissingPermissions) {
       return Expanded(
           child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 40.0.w),
@@ -159,38 +124,34 @@ class _ProvisionConnectingPageState
                 child: MissingPermissionInfoBox(),
               )));
     }
-    if (state.stage == ProvisionStage.failed || state.error != null) {
+    if (state is ProvisionStateFailed || state.errorMessage != null) {
       return Expanded(
           child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 40.w),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                child: ErrorInfoBox(error: state.error),
+                child: ErrorInfoBox(error: state.errorMessage),
               )));
     } else {
       return Padding(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Center(
             child: Builder(builder: (context) {
-              if (state.stage == ProvisionStage.complete) {
+              if (state is ProvisionStateComplete) {
                 return const SizedBox.shrink();
-              } else if (state.stage == ProvisionStage.provisioning_wifi ||
-                  state.stage == ProvisionStage.verifying_wifi ||
-                  state.stage == ProvisionStage.fleet_provisioning) {
+              } else if (state is ProvisionStateProvisioningWifi) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ClipRRect(
                         borderRadius: BorderRadius.all(Radius.circular(32.r)),
                         child: LinearProgressIndicator(
-                          value: state.stage == ProvisionStage.fleet_provisioning
-                              ? state.progress
-                              : null, // indeterminate for wifi steps
+                          value: null, // indeterminate for wifi steps
                           semanticsLabel:
                               AppLocalizations.of(context)!.progress,
                           minHeight: 12.h,
                         )),
-                    if (state.stage == ProvisionStage.provisioning_wifi) ...[  
+                    if (state is ProvisionStateProvisioningWifi) ...[  
                       SizedBox(height: 14.h),
                       Text(
                           '${AppLocalizations.of(context)!.estimatedTime} ${(state.completionETA?.inMinutes ?? 0) + 1} min.')
@@ -206,38 +167,36 @@ class _ProvisionConnectingPageState
   }
 
   String _buildTitle(ProvisionState state, BuildContext context) {
-    if (state.stage == ProvisionStage.missingPermissions) {
+    if (state is ProvisionStateMissingPermissions) {
       return AppLocalizations.of(context)!.provMissingPermission;
-    } else if (state.error != null) {
+    } else if (state.errorMessage != null) {
       return AppLocalizations.of(context)!.connectionProblem;
-    } else if (state.stage == ProvisionStage.provisioning_wifi) {
+    } else if (state is ProvisionStateProvisioningWifi) {
       return AppLocalizations.of(context)!.finishingSetup;
-    } else if (state.stage == ProvisionStage.verifying_wifi) {
-      return 'Connecting to WiFi...';
-    } else if (state.stage == ProvisionStage.fleet_provisioning) {
-      return 'Registering device...';
-    } else if (state.stage == ProvisionStage.complete) {
+    } else if (state is ProvisionStateComplete) {
       return AppLocalizations.of(context)!.setupComplete;
+    } else if (state is ProvisionStateScanningBle || state is ProvisionStateSelectBle) {
+      return AppLocalizations.of(context)!.provConConnecting;
+    } else if (state is ProvisionStateScanningWifi || state is ProvisionStateFetchingSerial || state is ProvisionStateSelectWifi) {
+      return AppLocalizations.of(context)!.provConConnecting;
     } else {
       return AppLocalizations.of(context)!.genericError;
     }
   }
 
   String? _buildSubtitle(ProvisionState state, BuildContext context) {
-    if (state.stage == ProvisionStage.missingPermissions) {
+    if (state is ProvisionStateMissingPermissions) {
       return null;
-    } else if (state.error != null) {
+    } else if (state.errorMessage != null) {
       return AppLocalizations.of(context)!.connectionProblemSubtitle;
-    } else if (state.stage == ProvisionStage.provisioning_wifi) {
+    } else if (state is ProvisionStateProvisioningWifi) {
       return AppLocalizations.of(context)!.finishingSetupSubtitle;
-    } else if (state.stage == ProvisionStage.verifying_wifi) {
-      return 'Waiting for the device to join the network...';
-    } else if (state.stage == ProvisionStage.fleet_provisioning) {
-      return 'Connecting to cloud and setting up your device. This may take a moment.';
-    } else if (state.stage == ProvisionStage.complete) {
+    } else if (state is ProvisionStateComplete) {
       return AppLocalizations.of(context)!.setupCompleteSubtitle;
+    } else if (state is ProvisionStateScanningBle || state is ProvisionStateSelectBle || state is ProvisionStateScanningWifi || state is ProvisionStateFetchingSerial || state is ProvisionStateSelectWifi) {
+      return AppLocalizations.of(context)!.provConConnectingSubtitle;
     } else {
-      return AppLocalizations.of(context)!.genericError;
+      return null;
     }
   }
 }
