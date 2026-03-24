@@ -3,7 +3,7 @@ package jct.pillorganizer.tenant.dto;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
 import jct.pillorganizer.tenant.model.device.ScheduleTakeEffect;
-import jct.pillorganizer.tenant.model.schedule.SimpleSchedule;
+import jct.pillorganizer.tenant.model.schedule.BaseSchedule;
 
 /**
  * Request body for POST /{id}/dispense_time.
@@ -14,6 +14,6 @@ import jct.pillorganizer.tenant.model.schedule.SimpleSchedule;
 @Serdeable
 @Introspected
 public record SetScheduleRequestDTO(
-        SimpleSchedule schedule,
+        BaseSchedule schedule,
         ScheduleTakeEffect takeEffect
 ) {}

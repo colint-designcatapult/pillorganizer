@@ -13,7 +13,5 @@ import java.util.UUID;
 public interface LogicalDeviceRepository extends CrudRepository<LogicalDevice, String> {
     @Join(value = "physicalDevice", type = Join.Type.LEFT_FETCH)
     @Join(value = "users", type = Join.Type.LEFT_FETCH)
-    @Join(value = "currentSchedule", type = Join.Type.LEFT_FETCH)
-    @Join(value = "requestedSchedule", type = Join.Type.LEFT_FETCH)
     Optional<LogicalDevice> findById(String id);
 }
