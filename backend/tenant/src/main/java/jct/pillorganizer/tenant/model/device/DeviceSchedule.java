@@ -2,8 +2,8 @@ package jct.pillorganizer.tenant.model.device;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.DateCreated;
+import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
@@ -45,11 +45,7 @@ public class DeviceSchedule {
     @DateCreated
     private Timestamp createdAt;
 
-    /**
-     * Timestamp of the last status update. Null if the device has not yet processed this schedule.
-     * Managed manually — NOT auto-populated — so that null reliably means "awaiting device".
-     */
-    @Nullable
+    @DateUpdated
     private Timestamp updatedAt;
 
     @Relation(value = Relation.Kind.MANY_TO_ONE)

@@ -11,7 +11,6 @@ import jct.pillorganizer.tenant.model.device.DeviceSchedule;
 import jct.pillorganizer.tenant.model.device.LogicalDevice;
 import jct.pillorganizer.tenant.model.device.ScheduleStatus;
 import jct.pillorganizer.tenant.model.schedule.BaseSchedule;
-import jct.pillorganizer.tenant.model.schedule.SimpleSchedule;
 import jct.pillorganizer.tenant.model.user.User;
 import jct.pillorganizer.tenant.exceptions.DeviceAccessException;
 import jct.pillorganizer.tenant.model.device.ScheduleTakeEffect;
@@ -47,10 +46,10 @@ public class ScheduleService {
         LogicalDevice device = logicalDeviceRepository.findById(deviceId)
                 .orElseThrow(() -> new DeviceAccessException("Device not found: " + deviceId));
 
-        SimpleSchedule current = parseSchedule(device.getCurrentSchedule());
+        BaseSchedule current = parseSchedule(device.getCurrentSchedule());
         UUID currentId = device.getCurrentSchedule() != null ? device.getCurrentSchedule().getId() : null;
 
-        SimpleSchedule requested = parseSchedule(device.getRequestedSchedule());
+        BaseSchedule requested = parseSchedule(device.getRequestedSchedule());
         UUID requestedId = device.getRequestedSchedule() != null ? device.getRequestedSchedule().getId() : null;
         ScheduleStatus requestedStatus = device.getRequestedSchedule() != null ? device.getRequestedSchedule().getStatus() : null;
 
@@ -68,7 +67,7 @@ public class ScheduleService {
      * @return the updated scheduling state
      */
     @Transactional
-    public DeviceScheduleStateDTO setSchedule(String deviceId, SimpleSchedule newSchedule, ScheduleTakeEffect takeEffect, User user) {
+    public DeviceScheduleStateDTO setSchedule(String deviceId, BaseSchedule newSchedule, ScheduleTakeEffect takeEffect, User user) {
         LogicalDevice device = logicalDeviceRepository.findById(deviceId)
                 .orElseThrow(() -> new DeviceAccessException("Device not found: " + deviceId));
 
@@ -93,23 +92,18 @@ public class ScheduleService {
         device.setRequestedSchedule(saved);
         logicalDeviceRepository.update(device);
 
-        SimpleSchedule current = parseSchedule(device.getCurrentSchedule());
+        BaseSchedule current = parseSchedule(device.getCurrentSchedule());
         UUID currentId = device.getCurrentSchedule() != null ? device.getCurrentSchedule().getId() : null;
 
         return new DeviceScheduleStateDTO(currentId, current, saved.getId(), newSchedule, ScheduleStatus.PENDING);
     }
 
-    private SimpleSchedule parseSchedule(DeviceSchedule deviceSchedule) {
+    private BaseSchedule parseSchedule(DeviceSchedule deviceSchedule) {
         if (deviceSchedule == null || deviceSchedule.getScheduleJson() == null) {
             return null;
         }
         try {
-            BaseSchedule parsed = objectMapper.readValue(deviceSchedule.getScheduleJson(), BaseSchedule.class);
-            if (parsed instanceof SimpleSchedule simple) {
-                return simple;
-            }
-            log.atWarning().log("Unexpected schedule type in device_schedule id=%s", deviceSchedule.getId());
-            return null;
+            return objectMapper.readValue(deviceSchedule.getScheduleJson(), BaseSchedule.class);
         } catch (IOException e) {
             log.atSevere().withCause(e).log("Failed to parse scheduleJson for device_schedule id=%s", deviceSchedule.getId());
             return null;

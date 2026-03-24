@@ -4,7 +4,7 @@ import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.serde.annotation.Serdeable;
 import jct.pillorganizer.tenant.model.device.ScheduleStatus;
-import jct.pillorganizer.tenant.model.schedule.SimpleSchedule;
+import jct.pillorganizer.tenant.model.schedule.BaseSchedule;
 
 import java.util.UUID;
 
@@ -21,8 +21,8 @@ import java.util.UUID;
 @Introspected
 public record DeviceScheduleStateDTO(
         @Nullable UUID currentScheduleId,
-        @Nullable SimpleSchedule currentSchedule,
+        @Nullable BaseSchedule currentSchedule,
         @Nullable UUID requestedScheduleId,
-        @Nullable SimpleSchedule requestedSchedule,
+        @Nullable BaseSchedule requestedSchedule,
         @Nullable ScheduleStatus requestedStatus
 ) {}

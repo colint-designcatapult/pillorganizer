@@ -26,7 +26,7 @@ public class AppScheduleController {
     ScheduleService scheduleService;
 
     @Operation(summary = "Get the current and pending schedule for a device")
-    @Get("/{id}/dispense_time")
+    @Get("/{id}/schedule")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public DeviceScheduleStateDTO dispenseTimes(@PathVariable("id") String deviceID) {
         authService.accessDevice(deviceID);
@@ -34,7 +34,7 @@ public class AppScheduleController {
     }
 
     @Operation(summary = "Request a new schedule for a device")
-    @Post("/{id}/dispense_time")
+    @Post("/{id}/schedule")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public DeviceScheduleStateDTO updateDispenseTime(@PathVariable("id") String deviceID,
                                                       @Body SetScheduleRequestDTO dto) {
