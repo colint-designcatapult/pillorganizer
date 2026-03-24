@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   localstack:
-    image: localstack/localstack:community-archive
+    image: localstack/localstack:latest
     ports:
       - "4566:4566" # SQS
       - "1883:1883" # MQTT - IoT Core

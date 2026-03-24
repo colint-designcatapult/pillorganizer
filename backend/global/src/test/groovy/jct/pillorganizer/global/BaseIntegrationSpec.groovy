@@ -28,7 +28,8 @@ class BaseIntegrationSpec extends Specification implements TestPropertyProvider 
             .withEnv([
                     "DEFAULT_REGION": "ca-central-1",
                     "SERVICES": "sqs,iot,secretsmanager,dynamodb",
-                    "ENVIRONMENT_KEY": "test"
+                    "ENVIRONMENT_KEY": "test",
+                    "LOCALSTACK_ACKNOWLEDGE_ACCOUNT_REQUIREMENT": "1"
             ])
             .withCopyFileToContainer(
                     MountableFile.forHostPath(getInitScriptPath(), 0777),
