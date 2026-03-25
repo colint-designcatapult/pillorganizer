@@ -42,7 +42,7 @@ export class AppStack extends cdk.Stack {
 
     // -- Lambda --
 
-    const createTenantFunction = (id: string, handler: string) => {
+    const createTenantFunction = (id: string, handler: string, env: string = "") => {
       const fn = new lambda.Function(this, id, {
         runtime: lambda.Runtime.JAVA_21,
         handler: handler,
@@ -53,7 +53,7 @@ export class AppStack extends cdk.Stack {
         tracing: lambda.Tracing.ACTIVE,
         insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_498_0,
         environment: {
-          MICRONAUT_ENVIRONMENTS: `tenant,${props.environmentName}`,
+          MICRONAUT_ENVIRONMENTS: `tenant,${props.environmentName}${env != '' ? ',' + env : ''}`,
           DB_HOST: props.dsqlEndpoint,
           DB_PORT: '5432',
           DB_NAME: 'pillorganizer'
@@ -101,9 +101,13 @@ export class AppStack extends cdk.Stack {
     const appFunction = createTenantFunction('AppFunction', 'io.micronaut.function.aws.proxy.payload2.APIGatewayV2HTTPEventFunction');
     const queueProcessor = createTenantFunction('QueueProcessor', 'jct.pillorganizer.tenant.function.TenantQueueProcessor');
 
+    // Create function to run Flyway migrations
+    const flywayFunction = createTenantFunction('FlywayMigrationHandler', 'jct.pillorganizer.tenant.function.MigrationHandler', 'flyway')
+    appFunction.node.addDependency(flywayFunction)
+    queueProcessor.node.addDependency(flywayFunction)
+
     // Wire up SQS trigger (using currentVersion to support SnapStart)
     queueProcessor.currentVersion.addEventSource(new lambdaEventSources.SqsEventSource(tenantQueue));
-
 
     // -- API Gateway --
 
