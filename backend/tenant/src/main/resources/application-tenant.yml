@@ -48,3 +48,8 @@ takecare:
   api:
     url: ${TAKECARE_API_URL:https://ca.takecareapi.com}
     token: ${TAKECARE_API_TOKEN}
+aws:
+  region: ca-central-1
+  services:
+    iotdataplane:
+      endpoint-override: a22nzy0lm1nh8l-ats.iot.ca-central-1.amazonaws.com
