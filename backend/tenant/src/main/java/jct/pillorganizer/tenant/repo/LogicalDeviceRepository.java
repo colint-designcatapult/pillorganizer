@@ -4,6 +4,7 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
+import jct.pillorganizer.tenant.model.device.DeviceSchedule;
 import jct.pillorganizer.tenant.model.device.LogicalDevice;
 
 import java.util.Optional;
@@ -19,4 +20,7 @@ public interface LogicalDeviceRepository extends CrudRepository<LogicalDevice, S
     @Join(value = "currentSchedule", type = Join.Type.LEFT_FETCH)
     @Join(value = "requestedSchedule", type = Join.Type.LEFT_FETCH)
     Optional<LogicalDevice> getById(String id);
+
+    void updateCurrentSchedule(LogicalDevice device, DeviceSchedule currentSchedule);
+    void updateRequestedSchedule(LogicalDevice device, DeviceSchedule requestedSchedule);
 }

@@ -23,6 +23,8 @@ import java.io.IOException;
 @Singleton
 public class IotShadowService {
 
+    public static final String SCHEDULE_SHADOW = "schedule";
+
     private final ObjectMapper objectMapper;
     private final IotDataPlaneClient iotDataPlaneClient;
 
@@ -45,7 +47,12 @@ public class IotShadowService {
                 null,
                 new ShadowStateStateDTO(scheduleDTO, null, null)
         );
-        updateDesiredShadow(device.getPhysicalDevice().getThingName(), "schedule", shadowStateDTO);
+        updateDesiredShadow(device.getPhysicalDevice().getThingName(), SCHEDULE_SHADOW, shadowStateDTO);
+    }
+
+    @Transactional
+    public void test() {
+
     }
 
     public void updateDesiredShadow(String thingName, String shadowName, ShadowStateDTO shadowState) throws IOException {
