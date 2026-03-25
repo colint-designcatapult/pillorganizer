@@ -4,6 +4,7 @@ import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as iot from 'aws-cdk-lib/aws-iot';
 import * as lambdaEventSources from 'aws-cdk-lib/aws-lambda-event-sources';
 import { Construct } from 'constructs';
 
@@ -40,13 +41,43 @@ export class AppStack extends cdk.Stack {
       conditions: { StringEquals: { 'aws:PrincipalAccount': this.account } }
     }));
 
+    // -- IoT SQS Integration --
+      
+    // Create the IAM Role that allows IoT Core to publish to the SQS Queue
+    const iotSqsRole = new iam.Role(this, 'IotSqsPublishRole', {
+      assumedBy: new iam.ServicePrincipal('iot.amazonaws.com'),
+      description: 'Allows AWS IoT Rule to push messages to the SQS queue',
+    });
+    tenantQueue.grantSendMessages(iotSqsRole);
+
+    const shadowUpdateRule = new iot.CfnTopicRule(this, 'NamedShadowUpdateRule', {
+      ruleName: `RouteNamedShadowUpdatesToSQS_${props.environmentName}`, 
+      topicRulePayload: {
+        awsIotSqlVersion: '2016-03-23',
+        // 
+        sql: `SELECT *, topic(3) as thingName, topic(6) as shadowName, 'shadow' as type, '${props.environmentName}' as tenant
+         FROM '$aws/things/+/shadow/name/+/update/documents' WHERE startswith(topic(3), '${props.environmentName}-')`,
+        ruleDisabled: false,
+        actions: [
+          {
+            sqs: {
+              queueUrl: tenantQueue.queueUrl,
+              roleArn: iotSqsRole.roleArn,
+              useBase64: false, 
+            },
+          },
+        ],
+      },
+    });
+
     // -- Lambda --
+    const tenantCode = lambda.Code.fromAsset("../backend/tenant/target/tenant-0.1.jar");
 
     const createTenantFunction = (id: string, handler: string, env: string = "") => {
       const fn = new lambda.Function(this, id, {
         runtime: lambda.Runtime.JAVA_21,
         handler: handler,
-        code: lambda.Code.fromAsset("../backend/tenant/target/tenant-0.1.jar"),
+        code: tenantCode,
         memorySize: 2048,
         timeout: cdk.Duration.seconds(30),
         snapStart: lambda.SnapStartConf.ON_PUBLISHED_VERSIONS,
