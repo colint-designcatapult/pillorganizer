@@ -80,6 +80,21 @@ export class AppStack extends cdk.Stack {
         })
       );
 
+      // Ensure app functions have access to AWS IoT Shadow State operations
+      // Lock down IAM based on tenant
+      fn.addToRolePolicy(
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            'iot:GetThingShadow',
+            'iot:UpdateThingShadow'
+          ],
+          resources: [
+            `arn:aws:iot:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:thing/${props.environmentName}-*`
+          ]
+        })
+      );
+
       return fn;
     };
 
