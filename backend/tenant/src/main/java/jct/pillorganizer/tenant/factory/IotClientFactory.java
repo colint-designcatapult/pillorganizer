@@ -19,7 +19,7 @@ public class IotClientFactory {
     public IotDataPlaneClient iotDataPlaneClient(
             AwsCredentialsProviderChain credentialsProvider,
             AwsRegionProviderChain regionProvider,
-            @Value("aws.services.iotdataplane.endpoint-override") Optional<String> endpointOverride) {
+            @Property(name = "aws.services.iotdataplane.endpoint-override") Optional<String> endpointOverride) {
 
         var builder = IotDataPlaneClient.builder()
                 .credentialsProvider(credentialsProvider)

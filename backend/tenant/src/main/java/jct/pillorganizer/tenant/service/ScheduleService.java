@@ -48,7 +48,7 @@ public class ScheduleService {
      */
     @Transactional
     public DeviceScheduleStateDTO getSchedule(LogicalDevice deviceIn) {
-        LogicalDevice device = logicalDeviceRepository.findWithSchedulesById(deviceIn.getId())
+        LogicalDevice device = logicalDeviceRepository.getById(deviceIn.getId())
                 .orElseThrow(() -> new DeviceAccessException("device not found"));
         return createScheduleStateDTO(device);
     }
