@@ -1,23 +1,16 @@
 package jct.pillorganizer.tenant.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.json.JsonMapper;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
 import jct.pillorganizer.core.dto.ShadowStateDto;
 import jct.pillorganizer.core.message.*;
 import jct.pillorganizer.tenant.dto.DeviceScheduleDTO;
 import jct.pillorganizer.tenant.model.device.ProvisionRecord;
-import jct.pillorganizer.tenant.model.schedule.BaseSchedule;
 import jct.pillorganizer.tenant.model.user.User;
 import lombok.extern.flogger.Flogger;
-
-import java.util.Optional;
 
 @Singleton
 @Flogger

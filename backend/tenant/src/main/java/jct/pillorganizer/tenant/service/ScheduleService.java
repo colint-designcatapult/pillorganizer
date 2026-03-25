@@ -111,7 +111,7 @@ public class ScheduleService {
 
     @Transactional
     public void processScheduleDocument(String thingName, ShadowStateDto<DeviceScheduleDTO> shadowStateDto) {
-        log.atInfo().log("Processing schedule update for %s (version %s)", thingName, shadowStateDto.toString());
+        log.atInfo().log("Processing schedule update for %s (version %d)", thingName, shadowStateDto.version());
 
         DeviceScheduleDTO reported = shadowStateDto.state().reported();
 
@@ -165,7 +165,7 @@ public class ScheduleService {
         if(requestedSchedule != null && !requestedSchedule.getId().equals(schedule.getId())) {
             // If another request is pending, supersede it
             requestedSchedule.setStatus(ScheduleStatus.SUPERSEDED);
-            deviceScheduleRepository.update(currentSchedule);
+            deviceScheduleRepository.update(requestedSchedule);
         }
 
 
@@ -175,11 +175,11 @@ public class ScheduleService {
 
         // Update device's current schedule pointer
         device.setCurrentSchedule(schedule);
-        logicalDeviceRepository.updateCurrentSchedule(device, schedule);
+        logicalDeviceRepository.updateCurrentSchedule(device.getId(), schedule);
 
         // Clear requested schedule entry, it's obsolete
         device.setRequestedSchedule(null);
-        logicalDeviceRepository.updateRequestedSchedule(device, null);
+        logicalDeviceRepository.updateRequestedSchedule(device.getId(), null);
     }
 
     private BaseSchedule parseSchedule(String json) {

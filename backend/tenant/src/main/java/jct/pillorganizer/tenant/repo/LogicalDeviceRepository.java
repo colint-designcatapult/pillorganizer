@@ -1,5 +1,6 @@
 package jct.pillorganizer.tenant.repo;
 
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -21,6 +22,6 @@ public interface LogicalDeviceRepository extends CrudRepository<LogicalDevice, S
     @Join(value = "requestedSchedule", type = Join.Type.LEFT_FETCH)
     Optional<LogicalDevice> getById(String id);
 
-    void updateCurrentSchedule(LogicalDevice device, DeviceSchedule currentSchedule);
-    void updateRequestedSchedule(LogicalDevice device, DeviceSchedule requestedSchedule);
+    void updateCurrentSchedule(@Id String logicalDeviceId, DeviceSchedule currentSchedule);
+    void updateRequestedSchedule(@Id String logicalDeviceId, DeviceSchedule requestedSchedule);
 }
