@@ -20,7 +20,6 @@ import jct.pillorganizer.tenant.model.user.User;
 import jct.pillorganizer.tenant.repo.DeviceScheduleRepository;
 import jct.pillorganizer.tenant.repo.LogicalDeviceRepository;
 import lombok.extern.flogger.Flogger;
-import software.amazon.awssdk.services.iotdataplane.model.ResourceNotFoundException;
 
 import java.util.UUID;
 
@@ -186,7 +185,8 @@ public class ScheduleService {
         try {
             return objectMapper.readValue(json, BaseSchedule.class);
         } catch (IOException e) {
-            log.atSevere().withCause(e).log("Failed to parse schedule JSON: %s", json);
+            log.atSevere().withCause(e)
+                    .log("Failed to parse schedule JSON (length=%d)", json != null ? json.length() : 0);
             return null;
         }
     }

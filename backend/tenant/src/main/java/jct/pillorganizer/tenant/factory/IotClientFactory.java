@@ -2,8 +2,6 @@ package jct.pillorganizer.tenant.factory;
 
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Property;
-import io.micronaut.context.annotation.Value;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
 import software.amazon.awssdk.regions.providers.AwsRegionProviderChain;
