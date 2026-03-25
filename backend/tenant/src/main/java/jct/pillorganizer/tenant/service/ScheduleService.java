@@ -105,7 +105,7 @@ public class ScheduleService {
             shadowService.updateSchedule(device, dto.requestedSchedule());
             return dto;
         } catch (IOException ex) {
-            throw new IllegalArgumentException("Invalid schedule");
+            throw new IllegalArgumentException("Invalid schedule", ex);
         }
     }
 
