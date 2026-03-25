@@ -63,13 +63,19 @@ public class IotShadowService {
             // Execute the update
             UpdateThingShadowResponse response = iotDataPlaneClient.updateThingShadow(request);
             String acceptedResponseJson = response.payload().asUtf8String();
-            log.atInfo().log("Thing %s accepted state update: %s", thingName, acceptedResponseJson);
+            log.atInfo().log("Thing %s shadow %s accepted state update (responseSize=%d chars)",
+                    thingName, shadowName, acceptedResponseJson.length());
         } catch(ResourceNotFoundException ex) {
-            log.atInfo().withCause(ex).log("Thing name not found: %s", thingName);
+            log.atWarning().withCause(ex).log("Thing name not found for thing %s shadow %s", thingName, shadowName);
             throw new DeviceAccessException("Thing name not found");
         } catch(IotDataPlaneException ex) {
-            log.atInfo().withCause(ex).log("AWS IoT Service error updating thing %s shadow %s state: %s",
-                    thingName, shadowName, objectMapper.writeValueAsString(shadowState));
+            log.atSevere().withCause(ex).log(
+                    "AWS IoT Service error updating thing %s shadow %s (statusCode=%d, awsErrorCode=%s, requestId=%s)",
+                    thingName,
+                    shadowName,
+                    ex.statusCode(),
+                    ex.awsErrorDetails() != null ? ex.awsErrorDetails().errorCode() : null,
+                    ex.requestId());
             throw new RuntimeException(ex);
         }
     }

@@ -56,11 +56,21 @@ public class QueueProcessorService {
     private void shadowStateDocument(IotShadowStateMessage message) {
         if(IotShadowService.SCHEDULE_SHADOW.equals(message.shadowName())) {
 
+            Object currentState = message.current();
+            if (currentState == null) {
+                log.atWarning().log(
+                        "Missing current shadow state for thing %s and shadow %s; skipping processing.",
+                        message.thingName(),
+                        message.shadowName()
+                );
+                return;
+            }
+
             try {
                 Argument<ShadowStateDto> targetType =
                         Argument.of(ShadowStateDto.class, DeviceScheduleDTO.class);
 
-                byte[] rawDataBytes = jsonMapper.writeValueAsBytes(message.current());
+                byte[] rawDataBytes = jsonMapper.writeValueAsBytes(currentState);
                 ShadowStateDto<DeviceScheduleDTO> result = jsonMapper.readValue(rawDataBytes, targetType);
 
                 scheduleService.processScheduleDocument(message.thingName(), result);
