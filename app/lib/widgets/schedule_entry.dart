@@ -62,9 +62,7 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
 
     final scheduleAsync = ref.watch(scheduleProvider);
     return scheduleAsync.when(
-      data: (schedule) {
-        final deviceSchedule = SimpleSchedule.fromDTO(schedule);
-        
+      data: (deviceSchedule) {
         return ScreenUtilWrapper(
           child: Column(
             mainAxisSize: MainAxisSize.max,

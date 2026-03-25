@@ -67,3 +67,55 @@ class ProvisioningClaimRequestDto with ProvisioningClaimRequestDtoMappable {
     this.deviceId
   });
 }
+
+@MappableClass()
+class DosePeriodDto with DosePeriodDtoMappable {
+  final String dayOfWeek;
+  final String time;
+
+  DosePeriodDto({required this.dayOfWeek, required this.time});
+}
+
+@MappableClass()
+class SimpleScheduleDto with SimpleScheduleDtoMappable {
+  final String type;
+  final List<DosePeriodDto> bins;
+
+  SimpleScheduleDto({this.type = 'SIMPLE', required this.bins});
+}
+
+@MappableEnum(caseStyle: CaseStyle.upperCase)
+enum ScheduleStatus { pending, applied, rejected, superseded }
+
+@MappableEnum()
+enum ScheduleTakeEffect {
+  @MappableValue('IMMEDIATE')
+  immediate,
+  @MappableValue('NEXT_RELOAD')
+  nextReload,
+}
+
+@MappableClass()
+class DeviceScheduleStateDto with DeviceScheduleStateDtoMappable {
+  final String? currentScheduleId;
+  final SimpleScheduleDto? currentSchedule;
+  final String? requestedScheduleId;
+  final SimpleScheduleDto? requestedSchedule;
+  final ScheduleStatus? requestedStatus;
+
+  DeviceScheduleStateDto({
+    this.currentScheduleId,
+    this.currentSchedule,
+    this.requestedScheduleId,
+    this.requestedSchedule,
+    this.requestedStatus,
+  });
+}
+
+@MappableClass()
+class SetScheduleRequestDto with SetScheduleRequestDtoMappable {
+  final SimpleScheduleDto schedule;
+  final ScheduleTakeEffect takeEffect;
+
+  SetScheduleRequestDto({required this.schedule, required this.takeEffect});
+}
