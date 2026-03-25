@@ -1,12 +1,13 @@
 package jct.pillorganizer.tenant.service;
 
+import io.micronaut.core.type.Argument;
+import io.micronaut.json.JsonMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
-import jct.pillorganizer.core.message.BaseMessage;
-import jct.pillorganizer.core.message.DeviceProvisionMessage;
-import jct.pillorganizer.core.message.GrantUserMessage;
-import jct.pillorganizer.core.message.NoOpMessage;
+import jct.pillorganizer.core.dto.ShadowStateDto;
+import jct.pillorganizer.core.message.*;
+import jct.pillorganizer.tenant.dto.DeviceScheduleDTO;
 import jct.pillorganizer.tenant.model.device.ProvisionRecord;
 import jct.pillorganizer.tenant.model.user.User;
 import lombok.extern.flogger.Flogger;
@@ -20,6 +21,12 @@ public class QueueProcessorService {
 
     @Inject
     DeviceService deviceService;
+
+    @Inject
+    ScheduleService scheduleService;
+
+    @Inject
+    JsonMapper jsonMapper;
 
     private void deviceProvision(DeviceProvisionMessage message) {
         // Ensure the user exists
@@ -39,12 +46,44 @@ public class QueueProcessorService {
         userService.upsert(message.userId(), message.userName(), message.email());
     }
 
+    private void shadowStateDocument(IotShadowStateMessage message) {
+        if(IotShadowService.SCHEDULE_SHADOW.equals(message.shadowName())) {
+
+            Object currentState = message.current();
+            if (currentState == null) {
+                log.atWarning().log(
+                        "Missing current shadow state for thing %s and shadow %s; skipping processing.",
+                        message.thingName(),
+                        message.shadowName()
+                );
+                return;
+            }
+
+            try {
+                Argument<ShadowStateDto> targetType =
+                        Argument.of(ShadowStateDto.class, DeviceScheduleDTO.class);
+
+                byte[] rawDataBytes = jsonMapper.writeValueAsBytes(currentState);
+                ShadowStateDto<DeviceScheduleDTO> result = jsonMapper.readValue(rawDataBytes, targetType);
+
+                scheduleService.processScheduleDocument(message.thingName(), result);
+            } catch (Exception e) {
+                log.atWarning().withCause(e).log("Failed to parse shadow state for: %s", message.thingName());
+            }
+
+        } else {
+            log.atWarning().log("Could not process shadow document for unknown named shadow: %s", message.shadowName());
+        }
+    }
+
     @Transactional
     public void processQueueMessage(BaseMessage message) throws Exception {
         if(message instanceof GrantUserMessage) {
             grantUser((GrantUserMessage) message);
         } else if (message instanceof DeviceProvisionMessage) {
             deviceProvision((DeviceProvisionMessage) message);
+        } else if(message instanceof IotShadowStateMessage) {
+            shadowStateDocument((IotShadowStateMessage) message);
         } else if(message instanceof NoOpMessage) {
             // do nothing
             log.atInfo().log("Processing noop queue message");
