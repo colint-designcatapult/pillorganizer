@@ -50,11 +50,6 @@ public class IotShadowService {
         updateDesiredShadow(device.getPhysicalDevice().getThingName(), SCHEDULE_SHADOW, shadowStateDTO);
     }
 
-    @Transactional
-    public void test() {
-
-    }
-
     public void updateDesiredShadow(String thingName, String shadowName, ShadowStateDTO shadowState) throws IOException {
         try {
             SdkBytes payload = SdkBytes.fromUtf8String(objectMapper.writeValueAsString(shadowState));
