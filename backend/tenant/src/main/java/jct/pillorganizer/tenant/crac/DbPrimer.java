@@ -33,8 +33,12 @@ public class DbPrimer implements OrderedResource {
         } catch (Exception ex) {
             // Exception likely: current tenant not defined
         }
-        Optional<LogicalDevice> logicalDevice = deviceService.get("DEVICE-DOES-NOT-EXIST");
-        log.atInfo().log("Database primed: %s", logicalDevice.toString());
+        try {
+            Optional<LogicalDevice> logicalDevice = deviceService.get("DEVICE-DOES-NOT-EXIST");
+            log.atInfo().log("Database primed: %s", logicalDevice.toString());
+        } catch (Exception ex) {
+            // Ignore result
+        }
     }
 
     @Override

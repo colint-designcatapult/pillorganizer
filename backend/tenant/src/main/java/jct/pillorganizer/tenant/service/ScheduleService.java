@@ -1,12 +1,16 @@
 package jct.pillorganizer.tenant.service;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.serde.ObjectMapper;
 
 import java.io.IOException;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
+import jct.pillorganizer.core.dto.ShadowStateDto;
+import jct.pillorganizer.tenant.dto.DeviceScheduleDTO;
 import jct.pillorganizer.tenant.dto.DeviceScheduleStateDTO;
+import jct.pillorganizer.tenant.exceptions.DeviceAccessException;
 import jct.pillorganizer.tenant.model.device.DeviceSchedule;
 import jct.pillorganizer.tenant.model.device.LogicalDevice;
 import jct.pillorganizer.tenant.model.device.ScheduleStatus;
@@ -33,31 +37,26 @@ public class ScheduleService {
     @Inject
     ObjectMapper objectMapper;
 
+    @Inject
+    IotShadowService shadowService;
+
+    public DeviceSchedule get(UUID id) {
+        return deviceScheduleRepository.findById(id)
+                .orElseThrow(() -> new DeviceAccessException("schedule not found"));
+    }
+
     /**
      * Returns the current scheduling state of the device: the applied schedule and any
      * pending requested schedule. If the device has no schedule, all fields are null.
      *
-     * @param device the logical device
+     * @param deviceIn the logical device
      * @return the current scheduling state
      */
     @Transactional
-    public DeviceScheduleStateDTO getSchedule(LogicalDevice device) {
-        DeviceSchedule currentSchedule = deviceScheduleRepository
-                .findByDeviceIdAndStatus(device.getId(), ScheduleStatus.APPLIED)
-                .stream().findFirst().orElse(null);
-
-        DeviceSchedule requestedSchedule = deviceScheduleRepository
-                .findByDeviceIdAndStatus(device.getId(), ScheduleStatus.PENDING)
-                .stream().findFirst().orElse(null);
-
-        BaseSchedule current = parseSchedule(currentSchedule);
-        UUID currentId = currentSchedule != null ? currentSchedule.getId() : null;
-
-        BaseSchedule requested = parseSchedule(requestedSchedule);
-        UUID requestedId = requestedSchedule != null ? requestedSchedule.getId() : null;
-        ScheduleStatus requestedStatus = requestedSchedule != null ? requestedSchedule.getStatus() : null;
-
-        return new DeviceScheduleStateDTO(currentId, current, requestedId, requested, requestedStatus);
+    public DeviceScheduleStateDTO getSchedule(LogicalDevice deviceIn) {
+        LogicalDevice device = logicalDeviceRepository.getById(deviceIn.getId())
+                .orElseThrow(() -> new DeviceAccessException("device not found"));
+        return createScheduleStateDTO(device);
     }
 
     /**
@@ -92,25 +91,102 @@ public class ScheduleService {
         DeviceSchedule saved = deviceScheduleRepository.save(pendingSchedule);
 
         device.setRequestedSchedule(saved);
-        logicalDeviceRepository.update(device);
+        device = logicalDeviceRepository.update(device);
 
         DeviceSchedule currentSchedule = deviceScheduleRepository
                 .findByDeviceIdAndStatus(device.getId(), ScheduleStatus.APPLIED)
                 .stream().findFirst().orElse(null);
-        BaseSchedule current = parseSchedule(currentSchedule);
-        UUID currentId = currentSchedule != null ? currentSchedule.getId() : null;
+        device.setCurrentSchedule(currentSchedule);
 
-        return new DeviceScheduleStateDTO(currentId, current, saved.getId(), newSchedule, ScheduleStatus.PENDING);
+        // Attempt to update the shadow state of the device
+        try {
+            DeviceScheduleStateDTO dto = createScheduleStateDTO(device);
+            shadowService.updateSchedule(device, dto.requestedSchedule());
+            return dto;
+        } catch (IOException ex) {
+            throw new IllegalArgumentException("Invalid schedule", ex);
+        }
     }
 
-    private BaseSchedule parseSchedule(DeviceSchedule deviceSchedule) {
-        if (deviceSchedule == null || deviceSchedule.getScheduleJson() == null) {
-            return null;
+    @Transactional
+    public void processScheduleDocument(String thingName, ShadowStateDto<DeviceScheduleDTO> shadowStateDto) {
+        log.atInfo().log("Processing schedule update for %s (version %d)", thingName, shadowStateDto.version());
+
+        DeviceScheduleDTO reported = shadowStateDto.state().reported();
+
+        if(reported != null) {
+            if(reported.id() == null) {
+                log.atWarning().log("Thing %s reported schedule with no ID", thingName);
+                return;
+            }
+            DeviceSchedule scheduleEntity = deviceScheduleRepository.findById(reported.id())
+                    .orElseThrow(() -> new IllegalStateException("Reported schedule does not exist"));
+
+            if(thingName == null) {
+                throw new IllegalArgumentException("No thing name provided");
+            }
+
+            if(scheduleEntity.getDevice() == null) {
+                throw new IllegalStateException("Reported schedule has no device for ID " + scheduleEntity.getId());
+            }
+
+            if(scheduleEntity.getDevice().getPhysicalDevice() == null) {
+                throw new IllegalStateException("Reported schedule has no physical device for ID " + scheduleEntity.getId());
+            }
+
+            if(!scheduleEntity.getDevice().getPhysicalDevice().getThingName().equals(thingName)) {
+                log.atWarning().log("Schedule entity device thing name did not match provided (%s != %s)",
+                        scheduleEntity.getDevice().getPhysicalDevice().getThingName(), thingName);
+                throw new DeviceAccessException("Attempted to update schedule for thing " + thingName);
+            }
+
+            if(scheduleEntity.getStatus() == ScheduleStatus.PENDING) {
+                // If the schedule is currently marked as pending the DB, we can conclude the schedule has been
+                // applied by the device. Update DB entities appropriately.
+                setActiveSchedule(scheduleEntity.getDevice(), scheduleEntity);
+            }
+        } else {
+            log.atWarning().log("Schedule doc has no reported or desired state");
         }
+    }
+
+    @Transactional
+    public void setActiveSchedule(LogicalDevice device, DeviceSchedule schedule) {
+        log.atInfo().log("Updating %s schedule to %s", device.getId(), schedule.getId());
+        DeviceSchedule currentSchedule = device.getCurrentSchedule();
+        DeviceSchedule requestedSchedule = device.getRequestedSchedule();
+        if(currentSchedule != null && !currentSchedule.getId().equals(schedule.getId())) {
+            // Current schedule is now obsolete, mark it as superseded
+            currentSchedule.setStatus(ScheduleStatus.SUPERSEDED);
+            deviceScheduleRepository.update(currentSchedule);
+        }
+
+        if(requestedSchedule != null && !requestedSchedule.getId().equals(schedule.getId())) {
+            // If another request is pending, supersede it
+            requestedSchedule.setStatus(ScheduleStatus.SUPERSEDED);
+            deviceScheduleRepository.update(requestedSchedule);
+        }
+
+
+        // Set new schedule as applied
+        schedule.setStatus(ScheduleStatus.APPLIED);
+        deviceScheduleRepository.update(schedule);
+
+        // Update device's current schedule pointer
+        device.setCurrentSchedule(schedule);
+        logicalDeviceRepository.updateCurrentSchedule(device.getId(), schedule);
+
+        // Clear requested schedule entry, it's obsolete
+        device.setRequestedSchedule(null);
+        logicalDeviceRepository.updateRequestedSchedule(device.getId(), null);
+    }
+
+    private BaseSchedule parseSchedule(String json) {
         try {
-            return objectMapper.readValue(deviceSchedule.getScheduleJson(), BaseSchedule.class);
+            return objectMapper.readValue(json, BaseSchedule.class);
         } catch (IOException e) {
-            log.atSevere().withCause(e).log("Failed to parse scheduleJson for device_schedule id=%s", deviceSchedule.getId());
+            log.atSevere().withCause(e)
+                    .log("Failed to parse schedule JSON (length=%d)", json != null ? json.length() : 0);
             return null;
         }
     }
@@ -121,5 +197,18 @@ public class ScheduleService {
         } catch (IOException e) {
             throw new IllegalStateException("Failed to serialize schedule", e);
         }
+    }
+
+    public DeviceScheduleStateDTO createScheduleStateDTO(LogicalDevice device) {
+        return new DeviceScheduleStateDTO(
+                device.getCurrentSchedule() != null ? createScheduleDTO(device.getCurrentSchedule()) : null,
+                device.getRequestedSchedule() != null ? createScheduleDTO(device.getRequestedSchedule()) : null,
+                device.getRequestedSchedule() != null ? device.getRequestedSchedule().getStatus() : null
+        );
+    }
+
+    public DeviceScheduleDTO createScheduleDTO(DeviceSchedule schedule) {
+        return new DeviceScheduleDTO(schedule.getId(), schedule.getTakeEffect(),
+                parseSchedule(schedule.getScheduleJson()));
     }
 }
