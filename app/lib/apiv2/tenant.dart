@@ -13,4 +13,12 @@ abstract class TenantApiClient {
   @GET("/api/v1/device/list")
   Future<List<DeviceAccessDto>> listDevices();
 
+  @GET("/api/v1/device/{id}/schedule")
+  Future<DeviceScheduleStateDto> getSchedule(@Path("id") String deviceId);
+
+  @POST("/api/v1/device/{id}/schedule")
+  Future<DeviceScheduleStateDto> setSchedule(
+      @Path("id") String deviceId,
+      @Body() SetScheduleRequestDto request);
+
 }
