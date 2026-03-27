@@ -1,4 +1,4 @@
-import 'package:app/api/schedule.dart';
+import 'package:app/apiv2/models/schedule.dart';
 import 'package:app/main.dart';
 import 'package:app/provider/new_medication_provider.dart';
 import 'package:app/provider/schedule_provider.dart';
@@ -29,10 +29,13 @@ class _MedicationCardEntryState extends ConsumerState<MedicationCardEntry> {
     });
   }
 
-  Widget _buildDose(BuildContext context, WidgetRef ref, DispenseTime time, Set<int>? checked, String imageUrl) {
-    bool selected = checked?.contains(time.id) ?? false;
+  Widget _buildDose(BuildContext context, WidgetRef ref, DayPeriod dayPeriod,
+      DosePeriodV2 entry, Set<int>? checked, String imageUrl) {
+    // Use DayPeriod.index (0=am, 1=pm) as synthetic toggle ID
+    final syntheticId = dayPeriod.index;
+    final selected = checked?.contains(syntheticId) ?? false;
     final notifier = ref.read(newMedicationProvider.notifier);
-    
+
     return RawChip(
       selectedColor: const Color(0xFFF1F2F6),
       backgroundColor: const Color(0xFFF1F2F6),
@@ -42,7 +45,7 @@ class _MedicationCardEntryState extends ConsumerState<MedicationCardEntry> {
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             SvgPicture.asset(imageUrl, width: 30.w, height: 30.h),
             SizedBox(width: 12.w),
-            Text(time.time.format(context),
+            Text(entry.time.format(context),
                 style: Theme.of(context).textTheme.titleSmall)
           ])),
       selected: selected,
@@ -53,32 +56,36 @@ class _MedicationCardEntryState extends ConsumerState<MedicationCardEntry> {
           ? BorderSide(color: Theme.of(context).primaryColor, width: 2.w)
           : BorderSide(color: const Color(0xFFF1F2F6), width: 2.w),
       onPressed: () {
-        notifier.toggleDispenseTime(time.id!);
+        notifier.toggleDispenseTime(syntheticId);
       },
     );
   }
 
-  Widget _buildForSchedule(BuildContext context, WidgetRef ref, SimpleSchedule sched, Set<int>? checked) {
+  Widget _buildForSchedule(BuildContext context, WidgetRef ref,
+      SimpleSchedule? sched, Set<int>? checked) {
+    final am = sched?.amPeriod;
+    final pm = sched?.pmPeriod;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            if (sched.am != null)
+            if (am != null)
               Expanded(
-                  child: _buildDose(context, ref, sched.am!, checked,
+                  child: _buildDose(context, ref, DayPeriod.am, am, checked,
                       'lib/assets/SVG/sun.svg')),
-            if (sched.am != null && sched.pm != null)
+            if (am != null && pm != null)
               SizedBox(
                 width: 26.w,
               ),
-            if (sched.pm != null)
+            if (pm != null)
               Expanded(
-                  child: _buildDose(context, ref, sched.pm!, checked,
+                  child: _buildDose(context, ref, DayPeriod.pm, pm, checked,
                       'lib/assets/SVG/moon.svg')),
           ],
         ),
-        if (sched.am == null && sched.pm == null) ...[
+        if (am == null && pm == null) ...[
           SizedBox(height: 12.h),
           Text(
             AppLocalizations.of(context)!.setMedicationTime,
@@ -191,21 +198,17 @@ class _MedicationCardEntryState extends ConsumerState<MedicationCardEntry> {
           SizedBox(height: 12.h),
           Builder(
             builder: (context) {
-              final deviceSchedule = scheduleState.asData?.value;
-
-              if (deviceSchedule == null || (deviceSchedule.amID == null && deviceSchedule.pmID == null)) {
-                return scheduleState.when(
-                  data: (_) => const SizedBox.shrink(),
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (err, stack) => Center(child: Text(err.toString())),
-                );
-              } else {
-                // Map SimpleScheduleDTO to SimpleSchedule domain model if needed, 
-                // or update _buildForSchedule to accept DTO.
-                // Assuming SimpleSchedule.fromDTO exists or using DTO directly.
-                return _buildForSchedule(context, ref, SimpleSchedule.fromDTO(deviceSchedule),
-                    medicationState.assignedDispenseTimes);
-              }
+              return scheduleState.when(
+                data: (state) {
+                  final effective = state.effectiveSchedule;
+                  final simpleSchedule =
+                      effective is SimpleSchedule ? effective : null;
+                  return _buildForSchedule(context, ref, simpleSchedule,
+                      medicationState.assignedDispenseTimes);
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (err, stack) => Center(child: Text(err.toString())),
+              );
             },
           ),
           SizedBox(height: 96.h),

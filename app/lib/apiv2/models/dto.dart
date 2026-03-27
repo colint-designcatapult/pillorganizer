@@ -68,22 +68,6 @@ class ProvisioningClaimRequestDto with ProvisioningClaimRequestDtoMappable {
   });
 }
 
-@MappableClass()
-class DosePeriodDto with DosePeriodDtoMappable {
-  final String dayOfWeek;
-  final String time;
-
-  DosePeriodDto({required this.dayOfWeek, required this.time});
-}
-
-@MappableClass()
-class SimpleScheduleDto with SimpleScheduleDtoMappable {
-  final String type;
-  final List<DosePeriodDto> bins;
-
-  SimpleScheduleDto({this.type = 'SIMPLE', required this.bins});
-}
-
 @MappableEnum(caseStyle: CaseStyle.upperCase)
 enum ScheduleStatus { pending, applied, rejected, superseded }
 
@@ -95,27 +79,67 @@ enum ScheduleTakeEffect {
   nextReload,
 }
 
+@MappableEnum()
+enum DayOfWeek {
+  @MappableValue('MONDAY') monday,
+  @MappableValue('TUESDAY') tuesday,
+  @MappableValue('WEDNESDAY') wednesday,
+  @MappableValue('THURSDAY') thursday,
+  @MappableValue('FRIDAY') friday,
+  @MappableValue('SATURDAY') saturday,
+  @MappableValue('SUNDAY') sunday,
+}
+
 @MappableClass()
 class DeviceScheduleStateDto with DeviceScheduleStateDtoMappable {
-  final String? currentScheduleId;
-  final SimpleScheduleDto? currentSchedule;
-  final String? requestedScheduleId;
-  final SimpleScheduleDto? requestedSchedule;
+  final DeviceScheduleDto? currentSchedule;
+  final DeviceScheduleDto? requestedSchedule;
   final ScheduleStatus? requestedStatus;
 
-  DeviceScheduleStateDto({
-    this.currentScheduleId,
+  const DeviceScheduleStateDto({
     this.currentSchedule,
-    this.requestedScheduleId,
     this.requestedSchedule,
     this.requestedStatus,
   });
 }
 
 @MappableClass()
+class DeviceScheduleDto with DeviceScheduleDtoMappable {
+  final String id;
+  final ScheduleTakeEffect takeEffect;
+  final BaseScheduleDto schedule;
+
+  const DeviceScheduleDto({
+    required this.id,
+    required this.takeEffect,
+    required this.schedule,
+  });
+}
+
+@MappableClass(discriminatorKey: 'type')
+abstract class BaseScheduleDto with BaseScheduleDtoMappable {
+  const BaseScheduleDto();
+}
+
+@MappableClass(discriminatorValue: 'SIMPLE')
+class SimpleScheduleDto extends BaseScheduleDto with SimpleScheduleDtoMappable {
+  final List<DosePeriodDto> bins;
+
+  const SimpleScheduleDto({required this.bins}) : super();
+}
+
+@MappableClass()
+class DosePeriodDto with DosePeriodDtoMappable {
+  final DayOfWeek dayOfWeek;
+  final String time;
+
+  const DosePeriodDto({required this.dayOfWeek, required this.time});
+}
+
+@MappableClass()
 class SetScheduleRequestDto with SetScheduleRequestDtoMappable {
-  final SimpleScheduleDto schedule;
+  final BaseScheduleDto schedule;
   final ScheduleTakeEffect takeEffect;
 
-  SetScheduleRequestDto({required this.schedule, required this.takeEffect});
+  const SetScheduleRequestDto({required this.schedule, required this.takeEffect});
 }

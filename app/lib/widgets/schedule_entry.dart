@@ -41,6 +41,9 @@ void deleteDevice(BuildContext context, DeviceMetadata? device) {
 }
 
 class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
+  bool _isUpdatingAM = false;
+  bool _isUpdatingPM = false;
+
   @override
   void initState() {
     super.initState();
@@ -62,18 +65,21 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
 
     final scheduleAsync = ref.watch(scheduleProvider);
     return scheduleAsync.when(
-      data: (deviceSchedule) {
+      data: (scheduleState) {
+        final effective = scheduleState.effectiveSchedule;
+        final simpleSchedule = effective is SimpleSchedule ? effective : null;
+
         return ScreenUtilWrapper(
           child: Column(
             mainAxisSize: MainAxisSize.max,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildTimeSetupSection(
-                  deviceSchedule,
+                  simpleSchedule,
                   targetDevice,
-                  false, // isLoading
-                  false, // isUpdatingAM
-                  false), // isUpdatingPM
+                  false,
+                  _isUpdatingAM,
+                  _isUpdatingPM),
               if (targetDevice.primaryUser) ...[
                 SizedBox(height: _sectionSpacing.h),
                 _buildTimezoneSection(targetDevice),
@@ -121,11 +127,11 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
           Row(
             children: [
               Expanded(
-                  child: _buildTimeBlock(DayPeriod.am, deviceSchedule?.am,
+                  child: _buildTimeBlock(DayPeriod.am, deviceSchedule?.amPeriod,
                       targetDevice, isUpdatingAMSchedule)),
               SizedBox(width: 20.w),
               Expanded(
-                  child: _buildTimeBlock(DayPeriod.pm, deviceSchedule?.pm,
+                  child: _buildTimeBlock(DayPeriod.pm, deviceSchedule?.pmPeriod,
                       targetDevice, isUpdatingPMSchedule)),
             ],
           ),
@@ -152,15 +158,15 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
     );
   }
 
-  Widget _buildTimeBlock(DayPeriod dayPeriod, DispenseTime? entry,
+  Widget _buildTimeBlock(DayPeriod dayPeriod, DosePeriodV2? entry,
       DeviceMetadata device, bool isUpdating) {
     return GestureDetector(
-        onTap: () {
+        onTap: () async {
           if (!device.primaryUser) {
             return;
           }
 
-          showDialog<TimeOfDay>(
+          final selectedTime = await showDialog<TimeOfDay>(
             context: context,
             builder: (BuildContext context) {
               return Dialog(
@@ -173,12 +179,31 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
                 ),
               );
             },
-          ).then((selectedTime) {
-            if (selectedTime != null) {
-              ref.read(scheduleProvider.notifier)
+          );
+
+          if (selectedTime != null && mounted) {
+            setState(() {
+              if (dayPeriod == DayPeriod.am) {
+                _isUpdatingAM = true;
+              } else {
+                _isUpdatingPM = true;
+              }
+            });
+            try {
+              await ref.read(scheduleProvider.notifier)
                   .updateTime(dayPeriod, selectedTime, device.id);
+            } finally {
+              if (mounted) {
+                setState(() {
+                  if (dayPeriod == DayPeriod.am) {
+                    _isUpdatingAM = false;
+                  } else {
+                    _isUpdatingPM = false;
+                  }
+                });
+              }
             }
-          });
+          }
         },
         child: Container(
             decoration: BoxDecoration(
