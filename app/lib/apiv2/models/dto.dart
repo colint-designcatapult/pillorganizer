@@ -67,3 +67,79 @@ class ProvisioningClaimRequestDto with ProvisioningClaimRequestDtoMappable {
     this.deviceId
   });
 }
+
+@MappableEnum(caseStyle: CaseStyle.upperCase)
+enum ScheduleStatus { pending, applied, rejected, superseded }
+
+@MappableEnum()
+enum ScheduleTakeEffect {
+  @MappableValue('IMMEDIATE')
+  immediate,
+  @MappableValue('NEXT_RELOAD')
+  nextReload,
+}
+
+@MappableEnum()
+enum DayOfWeek {
+  @MappableValue('MONDAY') monday,
+  @MappableValue('TUESDAY') tuesday,
+  @MappableValue('WEDNESDAY') wednesday,
+  @MappableValue('THURSDAY') thursday,
+  @MappableValue('FRIDAY') friday,
+  @MappableValue('SATURDAY') saturday,
+  @MappableValue('SUNDAY') sunday,
+}
+
+@MappableClass()
+class DeviceScheduleStateDto with DeviceScheduleStateDtoMappable {
+  final DeviceScheduleDto? currentSchedule;
+  final DeviceScheduleDto? requestedSchedule;
+  final ScheduleStatus? requestedStatus;
+
+  const DeviceScheduleStateDto({
+    this.currentSchedule,
+    this.requestedSchedule,
+    this.requestedStatus,
+  });
+}
+
+@MappableClass()
+class DeviceScheduleDto with DeviceScheduleDtoMappable {
+  final String id;
+  final ScheduleTakeEffect takeEffect;
+  final BaseScheduleDto schedule;
+
+  const DeviceScheduleDto({
+    required this.id,
+    required this.takeEffect,
+    required this.schedule,
+  });
+}
+
+@MappableClass(discriminatorKey: 'type')
+abstract class BaseScheduleDto with BaseScheduleDtoMappable {
+  const BaseScheduleDto();
+}
+
+@MappableClass(discriminatorValue: 'SIMPLE')
+class SimpleScheduleDto extends BaseScheduleDto with SimpleScheduleDtoMappable {
+  final List<DosePeriodDto> bins;
+
+  const SimpleScheduleDto({required this.bins}) : super();
+}
+
+@MappableClass()
+class DosePeriodDto with DosePeriodDtoMappable {
+  final DayOfWeek dayOfWeek;
+  final String time;
+
+  const DosePeriodDto({required this.dayOfWeek, required this.time});
+}
+
+@MappableClass()
+class SetScheduleRequestDto with SetScheduleRequestDtoMappable {
+  final BaseScheduleDto schedule;
+  final ScheduleTakeEffect takeEffect;
+
+  const SetScheduleRequestDto({required this.schedule, required this.takeEffect});
+}
