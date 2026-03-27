@@ -530,9 +530,12 @@ static void handle_door_close(int door_id)
     // Update flags
     s_device_state.doors &= ~(1 << door_id);
     bin_state->closed_at = app_rtc_get_relative_timestamp();
-    
-    // Fire event
-    ESP_ERROR_CHECK(supervisor_submit_event_block(EVENT_BIN_TAKEN, (intptr_t)door_id, 100));
+
+    if (taken_event) {
+        bin_state->status = TAKEN;
+        // Fire event
+        ESP_ERROR_CHECK(supervisor_submit_event_block(EVENT_BIN_TAKEN, (intptr_t)door_id, 100));
+    }
 
     update_device_state();
 }

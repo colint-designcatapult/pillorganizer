@@ -92,7 +92,6 @@ void supervisor_run()
 
     // Flag if the device is fully operational, or setup (provisioning)
     // Try to init the provisioning supervisor, returns true if needs provisioning
-    bool operational = !supervisor_provision_init();
     supervisor_state_t current_state = supervisor_provision_init() ? STATE_PROVISIONING : STATE_OPERATIONAL;
 
     if (current_state == STATE_OPERATIONAL) {
@@ -132,10 +131,13 @@ void supervisor_run()
         } else {
             // Timeout of 1 sec received
             // Pass to subordinate supervisor
-            if (operational) {
+            if (current_state == STATE_OPERATIONAL) {
                 supervisor_operation_tick();
-            } else {
+            } else if(current_state == STATE_PROVISIONING) {
                 supervisor_provision_tick();
+            } else {
+                // nothing?
+                // Should probably add a timeout here for reboot
             }
         }
     }
