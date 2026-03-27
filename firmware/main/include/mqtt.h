@@ -5,7 +5,7 @@
 esp_err_t mqtt_init();
 
 // Subscribe to a topic. MQTT client must be connected.
-esp_err_t mqtt_subscribe(const char* topic, int qos);
+esp_err_t mqtt_subscribe(const char* topic, int qos, int* out_id);
 
 esp_err_t mqtt_publish(const char* topic, const char* payload, int len, int qos, int retain);
 

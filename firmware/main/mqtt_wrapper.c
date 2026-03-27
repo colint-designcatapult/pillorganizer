@@ -119,10 +119,18 @@ esp_err_t mqtt_wrapper_publish(const char* topic, const char* payload, int len, 
     return (msg_id >= 0) ? ESP_OK : ESP_FAIL;
 }
 
-esp_err_t mqtt_wrapper_subscribe(const char* topic, int qos) {
+esp_err_t mqtt_wrapper_subscribe(const char* topic, int qos, int* out_id)
+{
+    if (out_id != NULL) {
+        *out_id = 0;
+    }
+
     if (!mqtt_wrapper_is_connected()) return ESP_ERR_INVALID_STATE;
 
     int msg_id = esp_mqtt_client_subscribe(mqtt_client, topic, qos);
+    if (out_id != NULL && msg_id >= 0) {
+        *out_id = msg_id;
+    }
     return (msg_id >= 0) ? ESP_OK : ESP_FAIL;
 }
 

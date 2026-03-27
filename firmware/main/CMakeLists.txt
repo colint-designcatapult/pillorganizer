@@ -24,6 +24,8 @@ idf_component_register(
         fleet_provision.c
         mqtt.c
         shadow_state.c
+        supervisor_operation.c
+        supervisor_provision.c
     INCLUDE_DIRS 
         ${CMAKE_CURRENT_LIST_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include

@@ -11,6 +11,7 @@
 #define BLINK_INTERVAL_TICKS    12
 #define MAX_BREATHE_STEPS       127
 #define TASK_TICK_RATE_MS       20
+#define FIREWORK_TICKS_PER_RING 3
 
 static atomic_uint_fast32_t s_led_task = ATOMIC_VAR_INIT(0); 
 static atomic_ullong s_led_param = ATOMIC_VAR_INIT(0);
@@ -123,6 +124,14 @@ void led_task(void* arg)
                         i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
                     }
                     break;
+                case LED_FIREWORK:
+                    IS31FL3730_set_brightness(MAX_BREATHE_STEPS);
+                    if (task == LED_BLINK) {
+                        apply_led_bitfields(param.blink.red, param.blink.green);
+                        i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
+                    }
+                    // For FIREWORK, the first tick handles setting the initial center dot
+                    break;
                 default:
                     break;
             }
@@ -181,7 +190,43 @@ void led_task(void* arg)
                 i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
                 break;
             }
-            
+            case LED_FIREWORK: {
+                uint8_t current_ring = step_ctr / FIREWORK_TICKS_PER_RING;
+                uint16_t r_mask = 0, g_mask = 0;
+                
+                uint8_t c_col = param.firework.center_bin / 2;
+                uint8_t c_row = param.firework.center_bin % 2;
+
+                // Dynamically calculate the maximum distance to the furthest edge
+                // Ternary operators are used here to avoid needing a max() macro
+                uint8_t max_col_dist = (c_col > (6 - c_col)) ? c_col : (6 - c_col);
+                uint8_t max_row_dist = (c_row > (1 - c_row)) ? c_row : (1 - c_row);
+                uint8_t max_dist = max_col_dist + max_row_dist;
+
+                // Determine target distance based on direction
+                // Use int8_t because implosion will eventually drive this negative
+                int8_t target_dist = param.firework.implode ? (max_dist - current_ring) : current_ring;
+
+                // Only evaluate LEDs if we have a valid positive distance
+                if (target_dist >= 0) {
+                    for (int i = 0; i < 14; i++) {
+                        uint8_t col = i / 2;
+                        uint8_t row = i % 2;
+                        uint8_t dist = abs(col - c_col) + abs(row - c_row);
+                        
+                        if (dist == target_dist) {
+                            r_mask |= (1 << i);
+                            g_mask |= (1 << i);
+                        }
+                    }
+                }
+
+                apply_led_bitfields(r_mask & param.firework.red, g_mask & param.firework.green);
+                i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
+                
+                step_ctr++;
+                break;
+            }
             case LED_IDLE:
             default:
                 break;
