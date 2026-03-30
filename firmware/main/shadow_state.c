@@ -55,8 +55,9 @@ void shadow_state_init()
 }
 
 static bool subscribe_to_shadow_topic(const char* shadow_name, ShadowTopicStringType_t topic_type, int* out_id) {
-    char topic_buf[SHADOW_TOPIC_MAX_LENGTH];
+    char topic_buf[SHADOW_TOPIC_MAX_LENGTH + 1];
     uint16_t topic_len = 0;
+    memset(topic_buf, 0, sizeof(topic_buf));
 
     ESP_LOGI(TAG, "Subscribing to shadow '%s' on topic type %d", shadow_name, topic_type);
 
@@ -96,11 +97,11 @@ void shadow_state_on_data(const char* topic, size_t topic_len, const char* paylo
         &p_shadow_name_out, &shadow_name_out_len
     );
 
-    char* shadow_name = (char*)malloc(shadow_name_out_len + 1);
-    memcpy(shadow_name, p_shadow_name_out, shadow_name_out_len);
-    shadow_name[shadow_name_out_len] = '\0';
-
     if (match_status == SHADOW_SUCCESS) {
+        char* shadow_name = (char*)malloc(shadow_name_out_len + 1);
+        memcpy(shadow_name, p_shadow_name_out, shadow_name_out_len);
+        shadow_name[shadow_name_out_len] = '\0';
+
         switch (message_type) {
             case ShadowMessageTypeUpdateDelta:
                 ESP_LOGI(TAG, "Shadow Delta (Config Change) received on topic %s", shadow_name);
@@ -114,9 +115,9 @@ void shadow_state_on_data(const char* topic, size_t topic_len, const char* paylo
                 ESP_LOGI(TAG, "Unhandled shadow message type: %d", message_type);
                 break;
         }
+        free((void*)shadow_name);
     }
 
-    free((void*)shadow_name);
 }
 
 static void schedule_delta_handler(const char* delta, size_t len)
@@ -331,7 +332,20 @@ cJSON* serialize_device_schedule(const device_schedule_t* sched) {
 
     // 3. Schedule object
     cJSON* schedule_obj = cJSON_AddObjectToObject(root, "schedule");
-    cJSON_AddStringToObject(schedule_obj, "type", TYPE_STRINGS[sched->type]);
+    
+    const char *type_str = "UNKNOWN";
+    /* Map sched->type (enum) to TYPE_STRINGS index safely.
+     * device_schedule_type_t is expected to be SCHED_NONE = 0, SCHED_SIMPLE = 1.
+     * TYPE_STRINGS[0] corresponds to SCHED_SIMPLE, so we subtract 1 after bounds checking.
+     */
+    if (sched->type > SCHED_NONE) {
+        size_t type_index = (size_t)(sched->type - 1U);
+        size_t type_count = sizeof(TYPE_STRINGS) / sizeof(TYPE_STRINGS[0]);
+        if (type_index < type_count) {
+            type_str = TYPE_STRINGS[type_index];
+        }
+    }
+    cJSON_AddStringToObject(schedule_obj, "type", type_str);
 
     // 4. Bins Array
     if (sched->type == SCHED_SIMPLE) {
