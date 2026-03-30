@@ -122,7 +122,7 @@ static void set_led_idle_task()
             .blink = {
                 .red = LED_ALL_DOORS,
                 // Exclude some bins to indicate the issue to the user
-                .green = LED_ALL_DOORS - ((int)flags)
+                .green = LED_ALL_DOORS & ~((int)flags)
             }
         });
     }
@@ -377,23 +377,34 @@ static void print_state(const device_state_t* state) {
 
 static void start_reload()
 {
-    // Set internal state
+    // Create temporary state object
+    // This state will be applied upon completion
+    device_state_t *future_state = (device_state_t *) malloc(sizeof(device_state_t));
+    if (future_state == NULL) {
+        ESP_LOGE(TAG, "Failed to allocate memory for future_state, aborting reload");
+        return;
+    }
+
+    memcpy(future_state, &s_device_state, sizeof(device_state_t));
+
+    // Apply current schedule to the future state
+    int rc = apply_schedule(&s_device_state.schedule, future_state, true);
+    if (rc != 0) {
+        ESP_LOGE(TAG, "apply_schedule failed (%d), aborting reload", rc);
+        free(future_state);
+        return;
+    }
+
+    // Set internal state only after successful preparation of future_state
     s_device_state.reload_state.stage = RELOAD_RELOADING;
     s_device_state.reload_state.progress = 0;
     s_device_state.reload_state.complete_mask = 0;
     s_device_state.reload_state.start_time = app_rtc_get_relative_timestamp();
-
-    // Create temporary state object
-    // This state will be applied upon completion
-    s_device_state.reload_state.future_state = (device_state_t*) malloc(sizeof(device_state_t));
-    memcpy(s_device_state.reload_state.future_state, &s_device_state, sizeof(device_state_t));
-
-    // Apply current schedule to the future state
-    apply_schedule(&s_device_state.schedule, s_device_state.reload_state.future_state, true);
+    s_device_state.reload_state.future_state = future_state;
 
     // Calculate bitmask required for reload to be complete
     for (int i = 0; i < 14; i++) {
-        bin_state_t* bs = &s_device_state.reload_state.future_state->bins[i];
+        bin_state_t *bs = &future_state->bins[i];
         ESP_LOGI(TAG, "Bin %d sched %lld %d", i, bs->scheduled_time, bs->status);
         if (bs->status == PENDING || bs->status == TAKE_NOW) {
             s_device_state.reload_state.complete_mask |= (1 << i);

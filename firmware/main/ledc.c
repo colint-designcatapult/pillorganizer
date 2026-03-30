@@ -6,6 +6,8 @@
 #include <stdatomic.h>
 #include "supervisor.h"
 #include "string.h"
+#include <stdlib.h>
+#include <string.h>
 
 // Define magic numbers for better readability
 #define PROGRESS_TICKS_PER_STEP 50

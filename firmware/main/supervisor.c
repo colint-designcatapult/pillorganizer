@@ -75,6 +75,9 @@ void supervisor_init()
 
     // Create error flags
     s_supervisor_error_group = xEventGroupCreate();
+    if (s_supervisor_error_group == NULL) {
+        ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
+    }
 
     // Create event queue
     s_supervisor_event_queue = xQueueCreate(16, sizeof(supervisor_event_t));

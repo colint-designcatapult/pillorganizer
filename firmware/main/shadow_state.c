@@ -4,6 +4,7 @@
 #include "supervisor.h"
 #include <shadow.h>
 #include <cJSON.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define TAG "MQTT_SHADOW"
@@ -327,8 +328,16 @@ cJSON* serialize_device_schedule(const device_schedule_t* sched) {
         cJSON_AddNullToObject(root, "id");
     }
     
-    // take_effect is an enum, so it's always present if type != SCHED_NONE
-    cJSON_AddStringToObject(root, "takeEffect", TAKE_EFFECT_STRINGS[sched->take_effect]);
+    // Map sched->take_effect (enum) to TAKE_EFFECT_STRINGS index safely.
+    const char *take_effect_str = "UNKNOWN";
+    {
+        size_t take_effect_count = sizeof(TAKE_EFFECT_STRINGS) / sizeof(TAKE_EFFECT_STRINGS[0]);
+        /* Guard against corrupted/uninitialized values that could be negative or out of range. */
+        if (sched->take_effect >= 0 && (size_t)sched->take_effect < take_effect_count) {
+            take_effect_str = TAKE_EFFECT_STRINGS[sched->take_effect];
+        }
+    }
+    cJSON_AddStringToObject(root, "takeEffect", take_effect_str);
 
     // 3. Schedule object
     cJSON* schedule_obj = cJSON_AddObjectToObject(root, "schedule");
@@ -358,8 +367,15 @@ cJSON* serialize_device_schedule(const device_schedule_t* sched) {
                 cJSON* bin_item = cJSON_CreateObject();
                 
                 // Add Day of Week
-                cJSON_AddStringToObject(bin_item, "dayOfWeek", 
-                    DAY_STRINGS[sched->schedule.simple_schedule.bins[i].day_of_week]);
+                {
+                    const char *day_str = "UNKNOWN";
+                    size_t day_count = sizeof(DAY_STRINGS) / sizeof(DAY_STRINGS[0]);
+                    uint8_t dow = sched->schedule.simple_schedule.bins[i].day_of_week;
+                    if (dow < day_count) {
+                        day_str = DAY_STRINGS[dow];
+                    }
+                    cJSON_AddStringToObject(bin_item, "dayOfWeek", day_str);
+                }
                 
                 // Format time as "HH:MM"
                 char time_str[8];
@@ -473,40 +489,66 @@ esp_err_t patch_schedule_from_delta(device_schedule_t* schedule, const char* del
     // 6. Update 'bins' array if present
     cJSON* bins_arr = cJSON_GetObjectItem(schedule_obj, "bins");
     if (cJSON_IsArray(bins_arr)) {
-        // AWS IoT Shadow arrays overwrite entirely. If "bins" is in the delta, 
-        // it contains the complete new array. We must clear the old one.
-        schedule->schedule.simple_schedule.bin_count = 0;
-        
+        // AWS IoT Shadow arrays overwrite entirely. If "bins" is in the delta,
+        // it contains the complete new array.
         int bin_count = cJSON_GetArraySize(bins_arr);
-        
-        // Loop through the array, ensuring we don't overflow the 14-bin limit
-        for (int i = 0; i < bin_count && schedule->schedule.simple_schedule.bin_count < 14; i++) {
+
+        // Reject schedules that exceed the 14-bin limit instead of silently truncating.
+        if (bin_count > 14) {
+            ESP_LOGW(TAG, "Rejecting schedule: bins array too large (%d > 14)", bin_count);
+            cJSON_Delete(root);
+            return ESP_ERR_INVALID_ARG;
+        }
+
+        // Parse into a temporary array so we don't partially update the schedule
+        device_bin_schedule_t tmp_bins[14];
+        uint8_t tmp_bin_count = 0;
+
+        for (int i = 0; i < bin_count; i++) {
             cJSON* bin_item = cJSON_GetArrayItem(bins_arr, i);
-            if (!cJSON_IsObject(bin_item)) continue;
+            if (!cJSON_IsObject(bin_item)) {
+                // Skip non-object entries
+                continue;
+            }
 
             cJSON* day_item = cJSON_GetObjectItem(bin_item, "dayOfWeek");
             cJSON* time_item = cJSON_GetObjectItem(bin_item, "time");
 
-            if (cJSON_IsString(day_item) && cJSON_IsString(time_item) && 
+            if (cJSON_IsString(day_item) && cJSON_IsString(time_item) &&
                 day_item->valuestring != NULL && time_item->valuestring != NULL) {
-                
-                uint8_t current_index = schedule->schedule.simple_schedule.bin_count;
-                device_bin_schedule_t* new_bin = &schedule->schedule.simple_schedule.bins[current_index];
-                
-                // Parse Day
+
+                if (tmp_bin_count >= 14) {
+                    // Should not happen due to bin_count check above, but guard anyway.
+                    ESP_LOGW(TAG, "Internal error: tmp_bin_count exceeded 14");
+                    break;
+                }
+
+                device_bin_schedule_t* new_bin = &tmp_bins[tmp_bin_count];
+
+                // Parse day of week from string
                 new_bin->day_of_week = parse_day_of_week(day_item->valuestring);
-                
-                // Parse "HH:MM" into integers securely
+
+                // Parse "HH:MM" into integers and validate ranges
                 unsigned int hour = 0, minute = 0;
-                if (sscanf(time_item->valuestring, "%2u:%2u", &hour, &minute) == 2) {
+                if (sscanf(time_item->valuestring, "%2u:%2u", &hour, &minute) == 2 &&
+                    hour < 24 && minute < 60) {
                     new_bin->hour = (uint8_t)hour;
                     new_bin->minute = (uint8_t)minute;
-                    
-                    schedule->schedule.simple_schedule.bin_count++;
+
+                    tmp_bin_count++;
                 } else {
-                    ESP_LOGW(TAG, "Failed to parse time string: %s", time_item->valuestring);
+                    ESP_LOGW(TAG, "Invalid time string in schedule bin: %s", time_item->valuestring);
+                    // Skip this bin; do not add it to the schedule
                 }
             }
+        }
+
+        // Now that parsing and validation are complete, overwrite the existing schedule.
+        schedule->schedule.simple_schedule.bin_count = tmp_bin_count;
+        if (tmp_bin_count > 0) {
+            memcpy(schedule->schedule.simple_schedule.bins,
+                   tmp_bins,
+                   tmp_bin_count * sizeof(device_bin_schedule_t));
         }
     }
 

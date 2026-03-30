@@ -322,7 +322,7 @@ cleanup:
 // Temporary POD structure to strip out pointers for safe blob storage
 typedef struct {
     bin_status_t status;
-    rtc_utc_timestamp_ms scheduled_time;
+    time_t scheduled_time;
     rtc_utc_timestamp_ms event_time;
 } bin_pod_state_t;
 

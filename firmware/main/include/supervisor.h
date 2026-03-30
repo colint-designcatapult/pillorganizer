@@ -128,7 +128,7 @@ typedef struct device_state_t {
     bin_state_t bins[14];
     // Schedule programmed on the device
     device_schedule_t schedule;
-    // Start of the "week" at 00:00:00 UTC as a Unix timestamp (seconds)
+    // Start of the "week" at local Monday 00:00:00 (device time zone), stored as a Unix timestamp (seconds)
     time_t epoch_week;
     // Non-authoritative copy of the device error flags
     int error_flags;
