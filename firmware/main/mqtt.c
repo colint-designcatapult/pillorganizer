@@ -105,7 +105,7 @@ esp_err_t mqtt_publish_device_state(device_state_t* state)
     cJSON *root = cJSON_CreateObject();
     if (!root) return ESP_ERR_NO_MEM;
 
-    uint64_t ts_ms = (uint64_t)app_rtc_calc_utc_time_ms(state->modified_at);
+    uint64_t ts_ms = (uint64_t)state->modified_at;
     cJSON_AddNumberToObject(root, "timestamp", (double)ts_ms);
     cJSON_AddNumberToObject(root, "battery", state->battery);
     cJSON_AddBoolToObject(root, "charging", state->charging);

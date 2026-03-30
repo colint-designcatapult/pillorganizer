@@ -134,6 +134,7 @@ static void schedule_delta_handler(const char* delta, size_t len)
     esp_err_t err;
     if ((err = patch_schedule_from_delta(read_in_sched, delta, len)) != ESP_OK) {
         ESP_LOGW(TAG, "Failed to process shadow schedule!");
+        free(read_in_sched);
         return;
     }
 

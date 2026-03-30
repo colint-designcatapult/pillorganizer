@@ -126,10 +126,8 @@ void led_task(void* arg)
                     break;
                 case LED_FIREWORK:
                     IS31FL3730_set_brightness(MAX_BREATHE_STEPS);
-                    if (task == LED_BLINK) {
-                        apply_led_bitfields(param.blink.red, param.blink.green);
-                        i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
-                    }
+                    apply_led_bitfields(param.firework.red, param.firework.green);
+                    i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
                     // For FIREWORK, the first tick handles setting the initial center dot
                     break;
                 default:

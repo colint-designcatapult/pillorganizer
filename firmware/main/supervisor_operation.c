@@ -101,7 +101,7 @@ static esp_err_t update_device_state()
     device_persistent_state_t pers;
 
     // Ensure struct is empty
-    memset(&pers, 0, sizeof(pdFREERTOS_ERRNO_EBADE));
+    memset(&pers, 0, sizeof(pers));
 
     // Copy fields
     pers.modified_at = s_device_state.modified_at;
@@ -489,17 +489,19 @@ static bool should_mark_taken(bin_state_t* bin_state)
         // Accept missed doses only if taken before the next scheduled dose
         bin_state_t* next_bin = get_next_scheduled_bin(bin_state->scheduled_time);
         if (!next_bin) {
+            // No future dose scheduled; keep previous behavior and accept
             return true;
         } else {
-            return next_bin->scheduled_time > bin_state->scheduled_time;
+            return current_sec < next_bin->scheduled_time;
         }
     } else if (bin_state->status == PENDING) {
         // Accept early doses only if taken after the previously scheduled dose
         bin_state_t* prev_bin = get_prev_scheduled_bin(bin_state->scheduled_time);
         if (!prev_bin) {
+            // No previous dose scheduled; keep previous behavior and accept
             return true;
         } else {
-            return prev_bin->scheduled_time < bin_state->scheduled_time;
+            return current_sec > prev_bin->scheduled_time;
         }
     }
 

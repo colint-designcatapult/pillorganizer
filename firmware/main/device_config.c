@@ -422,9 +422,9 @@ esp_err_t devcfg_get_device_state(device_persistent_state_t* state) {
         state->synced_at = (rtc_utc_timestamp_ms)sync_at;
     }
 
-    time_t epoch_week = 0;
-    if (nvs_get_i64(handle, "epoch_week", &epoch_week) == ESP_OK) {
-        state->synced_at = (time_t)sync_at;
+    uint64_t epoch_week = 0;
+    if (nvs_get_u64(handle, "epoch_week", &epoch_week) == ESP_OK) {
+        state->epoch_week = (time_t)epoch_week;
     }
 
     // Attempt to load schedule, ignore if it's missing but fail on real NVS errors

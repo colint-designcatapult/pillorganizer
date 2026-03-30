@@ -71,7 +71,7 @@ typedef struct {
     // Bin close timestamp
     rtc_relative_time_t closed_at;
     // The ID of the schedule this bin is programmed for.
-    char schedule_id[35];
+    char schedule_id[SCHEDULE_ID_SIZE];
 } bin_state_t;
 
 typedef enum {
