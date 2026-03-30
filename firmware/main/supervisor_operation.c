@@ -17,8 +17,7 @@ typedef enum {
     STATE_CONNECTING_MQTT,
     STATE_MQTT_CONNECTED,
     STATE_SHADOW_READY,
-    STATE_OPERATIONAL,
-    STATE_FAILSAFE
+    STATE_OPERATIONAL
 } supervisor_operation_state_t;
 
 static atomic_bool s_init = ATOMIC_VAR_INIT(false);
@@ -26,14 +25,7 @@ static supervisor_operation_state_t s_state;
 static device_state_t s_device_state;
 
 static int MISSED_THRESHOLD_SEC = 15 * 60;  // 15 minutes (15 * 60 seconds)
-
-static const char* get_failsafe_reason_str(device_failsafe_reason_t reason) {
-    switch(reason) {
-        case DEVICE_OPERATIONAL: return "OPERATIONAL";
-        case FAILSAFE_NO_SCHEDULE: return "FAILSAFE_NO_SCHEDULE";
-        default: return "UNKNOWN";
-    }
-}
+static int RELOAD_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes (5 * 60 seconds * 1000 ms)
 
 static const char* get_day_of_week_str(device_schedule_day_of_week_t day) {
     switch(day) {
@@ -85,6 +77,62 @@ static void print_schedule(const device_schedule_t* sched) {
     }
 }
 
+static void set_led_idle_task()
+{
+    device_error_flag_t flags = supervisor_get_error_flags();
+
+    if (flags == DEVERR_NONE) {
+        if (s_device_state.reload_state.stage == RELOAD_NONE) {
+
+            int16_t blink_mask = 0;
+            int16_t green_mask = 0;
+            for (int i = 0; i < 14; i++) {
+                bin_state_t* bs = &s_device_state.bins[i];
+                if (bs->status == TAKE_NOW) {
+                    blink_mask |= 1 << i;
+                    green_mask |= 1 << i;
+                }
+            }
+            
+            ledc_set_idle_task(LED_DEVICE_STATE, (led_task_param_t){
+                .device_state = {
+                    .red = 0x0000,
+                    .green = green_mask,
+                    .blink_mask = blink_mask
+                }
+            });
+        } else if (s_device_state.reload_state.stage == RELOAD_NEEDS_RELOAD) {
+            ledc_set_idle_task(LED_BREATHE, (led_task_param_t) {
+                        .blink = {
+                            .red = LED_ALL_DOORS,
+                            .green = LED_ALL_DOORS
+                        }
+                    });
+        } else if (s_device_state.reload_state.stage == RELOAD_RELOADING) {
+            ledc_set_idle_task(LED_DEVICE_STATE, (led_task_param_t) {
+                .device_state = {
+                    .red = s_device_state.reload_state.complete_mask & ~s_device_state.reload_state.progress,
+                    .green = s_device_state.reload_state.complete_mask & s_device_state.reload_state.progress,
+                    .blink_mask = s_device_state.reload_state.complete_mask & s_device_state.doors
+                }
+            });
+        }
+    } else {
+        ledc_set_idle_task(LED_BREATHE, (led_task_param_t) {
+            .blink = {
+                .red = LED_ALL_DOORS,
+                // Exclude some bins to indicate the issue to the user
+                .green = LED_ALL_DOORS - ((int)flags)
+            }
+        });
+    }
+}
+
+static void update_state_from_runtime(device_state_t* state)
+{
+    state->error_flags = (int)supervisor_get_error_flags();
+}
+
 static esp_err_t update_device_state()
 {
     esp_err_t err;
@@ -92,8 +140,10 @@ static esp_err_t update_device_state()
     // Mark updated at timestamp
     // Can fail if we can't get a valid time
     if ((err = app_rtc_get_utc_timestamp_ms(&s_device_state.modified_at)) != ESP_OK) {
-        return err;
+        return ESP_ERR_INVALID_STATE;
     }
+
+    update_state_from_runtime(&s_device_state);
 
     /* NVS Persistence */
 
@@ -119,6 +169,9 @@ static esp_err_t update_device_state()
     if ((err = devcfg_set_device_state(&pers)) != ESP_OK) {
         return err;
     }
+
+    /* Update LEDs */
+    set_led_idle_task();
 
     /* Notify supervisor of state change */
     return supervisor_submit_event(EVENT_STATE_CHANGED);
@@ -171,7 +224,7 @@ static time_t calculate_scheduled_time(const device_bin_schedule_t* bin_schedule
 }
 
 static void schedule_bin(int bin_id, device_bin_schedule_t* bin_schedule,
-        device_state_t* state)
+        device_state_t* state, bool force)
 {
     bin_state_t* bin_state = &state->bins[bin_id];
 
@@ -179,7 +232,7 @@ static void schedule_bin(int bin_id, device_bin_schedule_t* bin_schedule,
     time_t current_sec = time(NULL);
 
     // Check if we should update this bin
-    if (should_schedule_bin(bin_state, current_sec)) {
+    if (should_schedule_bin(bin_state, current_sec) || force) {
         if (bin_schedule != NULL) {
             // Schedule assigned to bin
             bin_state->scheduled_time = calculate_scheduled_time(bin_schedule, state->epoch_week);
@@ -239,20 +292,21 @@ static device_schedule_validation_t apply_schedule(const device_schedule_t* sche
         if (state->epoch_week < 1) {
             ESP_ERROR_CHECK(app_rtc_get_current_epoch_week(&state->epoch_week));
         }
+
         
         // Now loop through each day of week and assign to state
         for (int i = 0; i < 7; i++) {
             uint8_t periods_in_day = dow_ctr[i];
             if (periods_in_day == 0) {
                 // Nothing scheduled on this day!
-                schedule_bin(i * 2, NULL, state);
-                schedule_bin(i * 2 + 1, NULL, state);
+                schedule_bin(i * 2, NULL, state, force);
+                schedule_bin(i * 2 + 1, NULL, state, force);
             } else if(periods_in_day == 1) {
-                schedule_bin(i * 2, &bins[i * 2], state);
-                schedule_bin(i * 2 + 1, NULL, state);
+                schedule_bin(i * 2 + 1, &bins[i * 2], state, force);
+                schedule_bin(i * 2 , NULL, state, force);
             } else if(periods_in_day == 2) {
-                schedule_bin(i * 2, &bins[i * 2], state);
-                schedule_bin(i * 2 + 1, &bins[i * 2 + 1], state);
+                schedule_bin(i * 2 + 1, &bins[i * 2], state, force);
+                schedule_bin(i * 2, &bins[i * 2 + 1], state, force);
             } else {
                 return SCHED_ERR_TOO_MANY_PERIODS_IN_DAY;
             }
@@ -297,8 +351,7 @@ static void print_state(const device_state_t* state) {
     ESP_LOGI(TAG, "=== Device State ===");
     ESP_LOGI(TAG, "Modified At: %lld (Unix timestamp in ms)", state->modified_at);
     ESP_LOGI(TAG, "Battery: %d%% | Charging: %s", state->battery, state->charging ? "YES" : "NO");
-    ESP_LOGI(TAG, "Reloading: %s", state->reloading ? "YES" : "NO");
-    ESP_LOGI(TAG, "Failsafe Reason: %s", get_failsafe_reason_str(state->failsafe_reason));
+    ESP_LOGI(TAG, "Error Flags: 0x%04X", state->error_flags);
     ESP_LOGI(TAG, "Doors Bitfield: 0x%04X", state->doors);
     ESP_LOGI(TAG, "Epoch week: %lld (Unix timestamp UTC)", state->epoch_week);
 
@@ -322,17 +375,52 @@ static void print_state(const device_state_t* state) {
     ESP_LOGI(TAG, "====================");
 }
 
-static bool validate_state(const device_state_t* state, device_failsafe_reason_t* error_reason)
+static void start_reload()
 {
-    // Clear error
-    *error_reason = DEVICE_OPERATIONAL;
+    // Set internal state
+    s_device_state.reload_state.stage = RELOAD_RELOADING;
+    s_device_state.reload_state.progress = 0;
+    s_device_state.reload_state.complete_mask = 0;
+    s_device_state.reload_state.start_time = app_rtc_get_relative_timestamp();
 
-    if (state->schedule.type == SCHED_NONE) {
-        *error_reason = FAILSAFE_NO_SCHEDULE;
-        return false;
+    // Create temporary state object
+    // This state will be applied upon completion
+    s_device_state.reload_state.future_state = (device_state_t*) malloc(sizeof(device_state_t));
+    memcpy(s_device_state.reload_state.future_state, &s_device_state, sizeof(device_state_t));
+
+    // Apply current schedule to the future state
+    apply_schedule(&s_device_state.schedule, s_device_state.reload_state.future_state, true);
+
+    // Calculate bitmask required for reload to be complete
+    for (int i = 0; i < 14; i++) {
+        bin_state_t* bs = &s_device_state.reload_state.future_state->bins[i];
+        ESP_LOGI(TAG, "Bin %d sched %lld %d", i, bs->scheduled_time, bs->status);
+        if (bs->status == PENDING || bs->status == TAKE_NOW) {
+            s_device_state.reload_state.complete_mask |= (1 << i);
+        }
     }
 
-    return true;
+    ESP_LOGI(TAG, "Reload started, required mask: %x", s_device_state.reload_state.complete_mask);
+
+    // Ensure LEDs are configured for reload
+    set_led_idle_task();
+}
+
+static void cleanup_reload()
+{
+    if (s_device_state.reload_state.future_state != NULL) {
+        free(s_device_state.reload_state.future_state);
+        s_device_state.reload_state.future_state = NULL;
+    }
+}
+
+static void reload_complete()
+{
+    s_device_state.reload_state.stage = RELOAD_NONE;
+    memcpy(&s_device_state.bins, &s_device_state.reload_state.future_state->bins,
+         sizeof(s_device_state.bins));
+    cleanup_reload();
+    ESP_ERROR_CHECK(update_device_state());
 }
 
 static void check_state_transitions()
@@ -340,17 +428,29 @@ static void check_state_transitions()
     bool changed = false;
 
     if (!app_rtc_time_synced()) {
-        // Can't check state transitions if the time isn't accurate
+        supervisor_assert_error(DEVERR_NO_RTC_TIME);
+        return;
+    }
+
+    if (supervisor_get_error_flags() != DEVERR_NONE) {
+        // Device is in failsafe mode -- lock out state changes
         return;
     }
 
     time_t current_sec = time(NULL);
+    bool has_scheduled_in_future = false;
 
     for (int i = 0; i < 14; i++) {
         bin_state_t* bin_state = &s_device_state.bins[i];
 
         // If the bin has a scheduled time set
         if (bin_state->scheduled_time > 0) { 
+
+            // If the scheduled time is in the future, mark that there are still future scheduled 
+            if (bin_state->scheduled_time > (current_sec + MISSED_THRESHOLD_SEC) && !has_scheduled_in_future) {
+                has_scheduled_in_future = true;
+            }
+
             // Positive if the scheduled time has passed (past)
             // Negative if the scheduled time is yet to come (future)
             int64_t elapsed_sec = current_sec - bin_state->scheduled_time;
@@ -379,6 +479,13 @@ static void check_state_transitions()
                     changed = true;
                 }
             }
+        }
+    }
+
+    if (!has_scheduled_in_future) {
+        if (s_device_state.reload_state.stage == RELOAD_NONE) {
+            s_device_state.reload_state.stage = RELOAD_NEEDS_RELOAD;
+            changed = true;
         }
     }
 
@@ -411,26 +518,14 @@ static void load_state()
         }
     } else {
         // Failed to load state, trigger failsafe
-        s_device_state.failsafe_reason = FAILSAFE_STATE_CORRUPTED;
-        ESP_ERROR_CHECK(supervisor_submit_event_block(EVENT_FAILSAFE, (intptr_t)FAILSAFE_STATE_CORRUPTED, 100));
+        supervisor_assert_error(DEVERR_STATE_CORRUPTED);
     }
-        
+
     // Print loaded state
     print_state(&s_device_state);
 
     // Check for state changes on load
     check_state_transitions();
-}
-
-static void door_light_effect(int door_id, bool open, bool correct)
-{
-    led_task_param_t fw_param = {0};
-    fw_param.firework.red = correct ? 0x0000 : LED_ALL_DOORS;       
-    fw_param.firework.green = LED_ALL_DOORS; 
-    fw_param.firework.center_bin = (int)door_id;      
-    fw_param.firework.implode = !open;
-
-    ledc_set_task(LED_FIREWORK, fw_param, 500);
 }
 
 static bin_state_t* get_next_scheduled_bin(time_t after)
@@ -508,6 +603,17 @@ static bool should_mark_taken(bin_state_t* bin_state)
     return false;
 }
 
+static void door_light_effect(int door_id, bool open, bool correct)
+{
+    led_task_param_t fw_param = {0};
+    fw_param.firework.red = correct ? 0x0000 : LED_ALL_DOORS;       
+    fw_param.firework.green = LED_ALL_DOORS; 
+    fw_param.firework.center_bin = (int)door_id;      
+    fw_param.firework.implode = !open;
+
+    ledc_set_task(LED_FIREWORK, fw_param, 500);
+}
+
 static void handle_door_open(int door_id)
 {
     bin_state_t* bin_state = &s_device_state.bins[door_id];
@@ -519,34 +625,153 @@ static void handle_door_open(int door_id)
     s_device_state.doors |= 1 << door_id;
     bin_state->opened_at = app_rtc_get_relative_timestamp();
 
-    update_device_state();
-}
-
-static void handle_door_close(int door_id)
-{
-    bin_state_t* bin_state = &s_device_state.bins[door_id];
-    bool taken_event = should_mark_taken(bin_state);
-
-    door_light_effect(door_id, false, taken_event);
-
-    // Update flags
-    s_device_state.doors &= ~(1 << door_id);
-    bin_state->closed_at = app_rtc_get_relative_timestamp();
-
+    bin_state->flags |= BIN_FLAG_OPEN;
     if (taken_event) {
-        bin_state->status = TAKEN;
-        // Fire event
-        ESP_ERROR_CHECK(supervisor_submit_event_block(EVENT_BIN_TAKEN, (intptr_t)door_id, 100));
+        bin_state->flags |= BIN_FLAG_ON_TIME;
     }
 
     update_device_state();
 }
 
-static void update_state_from_runtime(device_state_t* state)
+static void handle_door_close(int door_id)
 {
-    state->battery = 100;
-    state->charging = false;
-    state->reloading = false;
+    
+    bin_state_t* bin_state = &s_device_state.bins[door_id];
+    bool taken_event = should_mark_taken(bin_state);
+    
+    door_light_effect(door_id, false, taken_event);
+    
+    // Update flags
+    s_device_state.doors &= ~(1 << door_id);
+    bin_state->closed_at = app_rtc_get_relative_timestamp();
+
+    bin_state->flags &= ~BIN_FLAG_OPEN;
+    bin_state->flags &= ~BIN_FLAG_ON_TIME;
+
+    if (taken_event) {
+        // Fire event
+        ESP_ERROR_CHECK(supervisor_submit_event_block(EVENT_BIN_TAKEN, (intptr_t)door_id, 100));
+    }
+
+    update_device_state();
+
+}
+
+static void handle_reload_fsm(const supervisor_event_t* event)
+{
+    switch (s_device_state.reload_state.stage) {
+        case RELOAD_NONE:
+            break;
+        case RELOAD_NEEDS_RELOAD:
+            if (event->id == EVENT_DOOR_OPENED) {
+                // Start reload
+                start_reload();
+            }
+            break;
+        case RELOAD_RELOADING:
+            if (event->id == EVENT_DOOR_CLOSED) {
+                int door_id = (int)event->payload;
+                s_device_state.reload_state.progress |= (1 << door_id);
+
+                if (s_device_state.reload_state.progress == s_device_state.reload_state.complete_mask) {
+                    // Reload complete!
+                    supervisor_submit_event(EVENT_RELOAD_COMPLETE);
+                    ESP_LOGI(TAG, "Reload complete");
+                }
+
+                set_led_idle_task();
+            } else if (event->id == EVENT_RELOAD_TIMEOUT) {
+                s_device_state.reload_state.stage = RELOAD_NEEDS_RELOAD;
+                cleanup_reload();
+
+                // Failed effect -- blink all red for 6 seconds
+                ledc_set_task(LED_BLINK, (led_task_param_t) {
+                    .breathe = {
+                        .red = LED_ALL_DOORS,
+                        .green = 0x0000
+                    }
+                }, 6000);
+            } else if (event->id == EVENT_RELOAD_COMPLETE) {
+                // Reload complete!
+                reload_complete();
+
+                ledc_set_task(LED_BLINK, (led_task_param_t) {
+                    .breathe = {
+                        .red = 0x0000,
+                        .green = LED_ALL_DOORS
+                    }
+                }, 6000);
+            }
+            break;
+    }
+}
+
+static void handle_device_event_bin(device_event_type_t event_type, int bin_id)
+{
+    device_event_t devev = {
+        .timestamp = 0,
+        .event_type = event_type,
+        .bin_id = bin_id
+    };
+
+    if (app_rtc_get_utc_timestamp_ms(&devev.timestamp) != ESP_OK) {
+        supervisor_assert_error(DEVERR_NO_RTC_TIME);
+        return;
+    }
+
+    switch (devev.event_type) {
+        case DEVEVT_DOOR_OPENED:
+            handle_door_open(devev.bin_id);
+            break;
+        case DEVEVT_DOOR_CLOSED:
+            handle_door_close(devev.bin_id);
+            break;
+        case DEVEVT_TAKEN:
+            s_device_state.bins[devev.bin_id].status = TAKEN;
+            s_device_state.bins[devev.bin_id].event_time = devev.timestamp;
+            ESP_ERROR_CHECK(update_device_state());
+            break;
+
+        default:
+            break;
+    }
+}
+
+static void handle_device_event_nobin(device_event_type_t event_type)
+{
+    handle_device_event_bin(event_type, 0);
+}
+
+static void handle_device_event(const supervisor_event_t* ev)
+{
+    switch (ev->id) {
+        case EVENT_DOOR_OPENED:
+            handle_device_event_bin(DEVEVT_DOOR_OPENED, (int)ev->payload);
+            break;
+        case EVENT_DOOR_CLOSED:
+            handle_device_event_bin(DEVEVT_DOOR_CLOSED, (int)ev->payload);
+            break;
+        case EVENT_BIN_TAKEN:
+            handle_device_event_bin(DEVEVT_TAKEN, (int)ev->payload);
+            break;
+        case EVENT_BIN_MISSED:
+            handle_device_event_bin(DEVEVT_MISSED, (int)ev->payload);
+            break;
+        case EVENT_BIN_TAKE_NOW:
+            handle_device_event_bin(DEVEVT_TAKE_NOW, (int)ev->payload);
+            break;
+        case EVENT_RELOAD_START:
+            handle_device_event_nobin(DEVEVT_RELOAD_START); 
+            break;
+        case EVENT_RELOAD_COMPLETE:
+            handle_device_event_nobin(DEVEVT_RELOAD_END);
+            break; 
+        case EVENT_RELOAD_TIMEOUT:
+            handle_device_event_nobin(DEVEVT_ACTION_TIMEOUT);
+            break; 
+        default:
+            break;
+    }
 }
 
 void supervisor_operation_init()
@@ -572,56 +797,27 @@ bool supervisor_operation_is_initialized()
 void supervisor_operation_event(const supervisor_event_t* event)
 {
     // Unconditional events 
-    if (event->id == EVENT_FAILSAFE) {
-        // We are requested to go into failsafe mode
-        // Drop everything and handle this first
-        s_state = STATE_FAILSAFE;
-
-        // Check if a reason is specified
-        device_failsafe_reason_t reason = (device_failsafe_reason_t)event->payload;
-        if (reason != DEVICE_OPERATIONAL) {
-            // Set the reason in the device state so we can report it to the user
-            s_device_state.failsafe_reason = reason;
-        }
-
-        // Start lighting effect
-        ledc_set_task(LED_BREATHE, (led_task_param_t) {
-            .blink = {
-                .red = LED_ALL_DOORS,
-                // Exclude some bins to indicate the issue to the user
-                .green = LED_ALL_DOORS - (int)s_device_state.failsafe_reason
-            }
-        }, 0);
-    } else if(event->id == EVENT_DOOR_OPENED) {
-        handle_door_open((int)event->payload);
-    } else if(event->id == EVENT_DOOR_CLOSED) {
-        handle_door_close((int)event->payload);
-    } else if(event->id == EVENT_BIN_TAKE_NOW) {
-        // Start breathing effect on the specific bin
-        ledc_set_task(LED_BREATHE, (led_task_param_t) {
-                .breathe = {
-                    .red = 0x0000,
-                    .green = (1 << (int)event->payload)
-                }
-        }, 0);
-    } else if(event->id == EVENT_BIN_TAKEN) {
-        // Blink for 6 seconds to indicate taken
-        ledc_set_task(LED_BLINK, (led_task_param_t) {
-                .breathe = {
-                    .red = 0x0000,
-                    .green = (1 << (int)event->payload)
-                }
-        }, 6000);
-    } else if(event->id == EVENT_BIN_MISSED) {
-        // Blink for 1 minute to indicate missed
-        ledc_set_task(LED_BLINK, (led_task_param_t) {
-                .breathe = {
-                    .red = (1 << (int)event->payload),
-                    .green = (1 << (int)event->payload)
-                }
-        }, 60000);
+    if (event->id == EVENT_ERROR_CONDITION) {
+        ESP_LOGW(TAG, "Received error condition: 0x%x", (int)event->payload);
+        // Attempt to update internal state
+        update_device_state();
+    } else if(event->id == EVENT_ERROR_CLEARED) {
+        ESP_LOGI(TAG, "Error condition cleared: 0x%x", (int)event->payload);
+        update_device_state();
+    } else if(event->id == EVENT_TIME_SYNCED) {
+        // Clear time sync error condition
+        supervisor_clear_error(DEVERR_NO_RTC_TIME);
+    } else if (event->id == EVENT_LED_EFFECT_COMPLETE) {
+        set_led_idle_task();
     }
 
+    // Handle medication reload FSM 
+    handle_reload_fsm(event);
+
+    // Handle device events
+    handle_device_event(event);
+
+    // Bootstrap events
     switch (s_state) {
         case STATE_CONNECTING_NETIF:
             if (event->id == EVENT_NETIF_CONNECTED) {
@@ -687,7 +883,17 @@ void supervisor_operation_event(const supervisor_event_t* event)
 
 void supervisor_operation_tick()
 {
+    // Check reload timeout
+    if (s_device_state.reload_state.stage == RELOAD_RELOADING) {
+        int64_t dur = app_rtc_calc_duration_ms(s_device_state.reload_state.start_time, 
+            app_rtc_get_relative_timestamp());
+        if (dur > RELOAD_TIMEOUT_MS) {
+            ESP_ERROR_CHECK(supervisor_submit_event(EVENT_RELOAD_TIMEOUT));
+        }
+    }
+
     check_state_transitions();
+    set_led_idle_task();
 }
 
 esp_err_t supervisor_operation_get_schedule(device_schedule_t* sched)

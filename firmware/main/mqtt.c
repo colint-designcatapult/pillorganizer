@@ -109,7 +109,7 @@ esp_err_t mqtt_publish_device_state(device_state_t* state)
     cJSON_AddNumberToObject(root, "timestamp", (double)ts_ms);
     cJSON_AddNumberToObject(root, "battery", state->battery);
     cJSON_AddBoolToObject(root, "charging", state->charging);
-    cJSON_AddBoolToObject(root, "reloading", state->reloading);
+    cJSON_AddBoolToObject(root, "reloading", state->reload_state.stage != RELOAD_NONE); 
     cJSON_AddNumberToObject(root, "doors", state->doors);
 
     cJSON *bins_array = cJSON_AddArrayToObject(root, "bins");

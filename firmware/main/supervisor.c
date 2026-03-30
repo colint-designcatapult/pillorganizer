@@ -21,6 +21,7 @@
 #define TAG "SUPERVISOR"
 
 static QueueHandle_t s_supervisor_event_queue = NULL;
+static EventGroupHandle_t s_supervisor_error_group = NULL;
 
 // Whether a reset is requested, survives restarts
 RTC_NOINIT_ATTR uint32_t reset_pending;
@@ -68,9 +69,12 @@ static void supervisor_check_wifi_reset()
 }
 
 void supervisor_init()
-{
+{       
     // Check if reset is requested and execute it if requested
     supervisor_check_factory_reset();
+
+    // Create error flags
+    s_supervisor_error_group = xEventGroupCreate();
 
     // Create event queue
     s_supervisor_event_queue = xQueueCreate(16, sizeof(supervisor_event_t));
@@ -176,4 +180,21 @@ void supervisor_factory_reset()
 esp_err_t supervisor_get_schedule(device_schedule_t* sched)
 {
     return supervisor_operation_get_schedule(sched);
+}
+
+void supervisor_assert_error(device_error_flag_t error)
+{
+    xEventGroupSetBits(s_supervisor_error_group, error);
+    ESP_ERROR_CHECK(supervisor_submit_event_block(EVENT_ERROR_CONDITION, (intptr_t)error, 1000));
+}
+
+void supervisor_clear_error(device_error_flag_t error)
+{
+    xEventGroupClearBits(s_supervisor_error_group, error);
+    ESP_ERROR_CHECK(supervisor_submit_event_block(EVENT_ERROR_CLEARED, (intptr_t)error, 0));
+}
+
+device_error_flag_t supervisor_get_error_flags()
+{
+    return (device_error_flag_t)xEventGroupGetBits(s_supervisor_error_group);
 }

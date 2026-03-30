@@ -5,6 +5,7 @@
 #include "i2c_dev.h"
 #include <stdatomic.h>
 #include "supervisor.h"
+#include "string.h"
 
 // Define magic numbers for better readability
 #define PROGRESS_TICKS_PER_STEP 50
@@ -13,7 +14,15 @@
 #define TASK_TICK_RATE_MS       20
 #define FIREWORK_TICKS_PER_RING 3
 
-static atomic_uint_fast32_t s_led_task = ATOMIC_VAR_INIT(0); 
+#define FADE_IN_DURATION_MS     500
+#define FADE_IN_TICKS           (FADE_IN_DURATION_MS / TASK_TICK_RATE_MS)
+
+// Atomic stores for the background "Idle" task
+static atomic_uint_fast32_t s_led_idle_task = ATOMIC_VAR_INIT(LED_IDLE); 
+static atomic_ullong s_led_idle_param = ATOMIC_VAR_INIT(0);
+
+// Atomic stores for the currently running task
+static atomic_uint_fast32_t s_led_task = ATOMIC_VAR_INIT(LED_IDLE); 
 static atomic_ullong s_led_param = ATOMIC_VAR_INIT(0);
 static atomic_uint_fast32_t s_led_duration = ATOMIC_VAR_INIT(0);
 static atomic_bool s_reset = ATOMIC_VAR_INIT(true);
@@ -31,12 +40,42 @@ void ledc_init(void)
 
 void ledc_set_task(led_task_t task, led_task_param_t param, uint32_t duration_ms)
 {
+    // 1. Check if the new active state perfectly matches the current active state
+    led_task_t current_task = (led_task_t)atomic_load_explicit(&s_led_task, memory_order_relaxed);
+    uint64_t current_param = atomic_load_explicit(&s_led_param, memory_order_relaxed);
+    uint32_t current_duration = atomic_load_explicit(&s_led_duration, memory_order_relaxed);
+
+    if (current_task == task && current_param == param.raw && current_duration == duration_ms) {
+        return; // Task is already running with these parameters, skip reset
+    }
+
+    // 2. State is different, proceed with the update
     atomic_store_explicit(&s_led_task, task, memory_order_relaxed);
     atomic_store_explicit(&s_led_param, param.raw, memory_order_relaxed);
     atomic_store_explicit(&s_led_duration, duration_ms, memory_order_relaxed);
     
     // Use memory_order_release to ensure the parameter writes finish before the flag flips
     atomic_store_explicit(&s_reset, true, memory_order_release); 
+}
+
+void ledc_set_idle_task(led_task_t task, led_task_param_t param)
+{
+    // 1. Check if the new state perfectly matches the current idle state
+    led_task_t current_idle_task = (led_task_t)atomic_load_explicit(&s_led_idle_task, memory_order_relaxed);
+    uint64_t current_idle_param = atomic_load_explicit(&s_led_idle_param, memory_order_relaxed);
+
+    if (current_idle_task == task && current_idle_param == param.raw) {
+        return; // State hasn't changed, bail out to prevent resetting the animation
+    }
+
+    // 2. State is different, proceed with the update
+    atomic_store_explicit(&s_led_idle_task, task, memory_order_relaxed);
+    atomic_store_explicit(&s_led_idle_param, param.raw, memory_order_relaxed);
+
+    // If there is no timed effect currently running, update the live state immediately
+    if (atomic_load_explicit(&s_led_duration, memory_order_relaxed) == 0) {
+        ledc_set_task(task, param, 0);
+    }
 }
 
 static void apply_led_bitfields(uint16_t red, uint16_t green)
@@ -79,11 +118,14 @@ static void apply_led_bitfields(uint16_t red, uint16_t green)
 
 void led_task(void* arg)
 {
-    led_task_t prev_task = LED_IDLE; // Keep track of the previous state
+    led_task_t prev_task = LED_IDLE; 
     int8_t step = 1;
     uint32_t step_ctr = 0;
     uint32_t duration_ticks = 0;
     uint32_t elapsed_ticks = 0;
+    
+    // NEW: Track the fade-in state
+    uint32_t fade_ticks_remaining = 0;
 
     for(;;) {
         // 1. Thread-safe read and reset of the flag using atomic_exchange
@@ -104,10 +146,16 @@ void led_task(void* arg)
                 step_ctr = 0;
             }
 
+            // NEW: If this reset was triggered by an EXTERNAL call (not our internal fade logic),
+            // cancel any ongoing fade-in so the new animation gets full brightness immediately.
+            if (fade_ticks_remaining != FADE_IN_TICKS) {
+                fade_ticks_remaining = 0;
+            }
+
             // Task Initialization 
             switch (task) {
                 case LED_IDLE:
-                    apply_led_bitfields(0, 0);
+                    apply_led_bitfields(0, 0); // Completely off
                     IS31FL3730_set_brightness(0);
                     i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);   
                     break;
@@ -116,11 +164,15 @@ void led_task(void* arg)
                     apply_led_bitfields(param.breathe.red, param.breathe.green);
                     i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);   
                     break;
+                case LED_DEVICE_STATE:
                 case LED_BLINK:
                 case LED_PROGRESS:
                     IS31FL3730_set_brightness(MAX_BREATHE_STEPS);
                     if (task == LED_BLINK) {
                         apply_led_bitfields(param.blink.red, param.blink.green);
+                        i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
+                    } else if (task == LED_DEVICE_STATE) {
+                        apply_led_bitfields(param.device_state.red, param.device_state.green);
                         i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
                     }
                     break;
@@ -128,26 +180,36 @@ void led_task(void* arg)
                     IS31FL3730_set_brightness(MAX_BREATHE_STEPS);
                     apply_led_bitfields(param.firework.red, param.firework.green);
                     i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
-                    // For FIREWORK, the first tick handles setting the initial center dot
                     break;
                 default:
                     break;
             }
             
-            prev_task = task; // Save for the next iteration
+            prev_task = task; 
         }
 
         // 3. Handle Duration Expiration
-        if (task != LED_IDLE && duration_ticks > 0) {
+        if (duration_ticks > 0) {
             elapsed_ticks++;
             if (elapsed_ticks >= duration_ticks) {
-                ledc_set_task(LED_IDLE, (led_task_param_t){0}, 0);
+                // FALLBACK LOGIC: Read current configured idle state and transition to it
+                led_task_t idle_t = (led_task_t)atomic_load_explicit(&s_led_idle_task, memory_order_relaxed);
+                led_task_param_t idle_p;
+                idle_p.raw = atomic_load_explicit(&s_led_idle_param, memory_order_relaxed);
+                
+                ledc_set_task(idle_t, idle_p, 0); // 0 duration sets it indefinitely
                 supervisor_submit_event(EVENT_LED_EFFECT_COMPLETE);
+                
+                // NEW: Trigger the fade-in override, but skip it if the idle task is off or breathing
+                if (idle_t != LED_IDLE && idle_t != LED_BREATHE) {
+                    fade_ticks_remaining = FADE_IN_TICKS;
+                }
+                
                 continue; // Skip the tick logic and re-evaluate state immediately
             }
         }
 
-        // 4. Tick Animation Logic (Using a switch for readability)
+        // 4. Tick Animation Logic
         switch (task) {
             case LED_BREATHE:
                 if (step_ctr >= MAX_BREATHE_STEPS) step = -1;
@@ -162,6 +224,26 @@ void led_task(void* arg)
                 if (step_ctr % BLINK_INTERVAL_TICKS == 0) {
                     bool on = (step_ctr / BLINK_INTERVAL_TICKS) % 2 == 0;
                     apply_led_bitfields(on ? param.blink.red : 0, on ? param.blink.green : 0);
+                    i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
+                }
+                step_ctr++;
+                break;
+
+            case LED_DEVICE_STATE: 
+                // Checks to see if we need to flip the blink phase
+                if (step_ctr % BLINK_INTERVAL_TICKS == 0) {
+                    bool blink_on = (step_ctr / BLINK_INTERVAL_TICKS) % 2 == 0;
+                    
+                    uint16_t r_mask = param.device_state.red;
+                    uint16_t g_mask = param.device_state.green;
+                    
+                    // If we're in the 'OFF' phase of a blink, mask out the blinking LEDs
+                    if (!blink_on) {
+                        r_mask &= ~(param.device_state.blink_mask);
+                        g_mask &= ~(param.device_state.blink_mask);
+                    }
+                    
+                    apply_led_bitfields(r_mask, g_mask);
                     i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
                 }
                 step_ctr++;
@@ -195,17 +277,12 @@ void led_task(void* arg)
                 uint8_t c_col = param.firework.center_bin / 2;
                 uint8_t c_row = param.firework.center_bin % 2;
 
-                // Dynamically calculate the maximum distance to the furthest edge
-                // Ternary operators are used here to avoid needing a max() macro
                 uint8_t max_col_dist = (c_col > (6 - c_col)) ? c_col : (6 - c_col);
                 uint8_t max_row_dist = (c_row > (1 - c_row)) ? c_row : (1 - c_row);
                 uint8_t max_dist = max_col_dist + max_row_dist;
 
-                // Determine target distance based on direction
-                // Use int8_t because implosion will eventually drive this negative
                 int8_t target_dist = param.firework.implode ? (max_dist - current_ring) : current_ring;
 
-                // Only evaluate LEDs if we have a valid positive distance
                 if (target_dist >= 0) {
                     for (int i = 0; i < 14; i++) {
                         uint8_t col = i / 2;
@@ -228,6 +305,19 @@ void led_task(void* arg)
             case LED_IDLE:
             default:
                 break;
+        }
+
+        // 5. NEW: Process the Fade-in Override
+        // This intercepts the end of the loop and enforces a lower brightness 
+        // until the 500ms duration has fully elapsed.
+        if (fade_ticks_remaining > 0) {
+            uint32_t elapsed_fade = FADE_IN_TICKS - fade_ticks_remaining;
+            uint8_t brightness = (MAX_BREATHE_STEPS * elapsed_fade) / FADE_IN_TICKS;
+            
+            IS31FL3730_set_brightness(brightness);
+            i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
+            
+            fade_ticks_remaining--;
         }
 
         vTaskDelay(pdMS_TO_TICKS(TASK_TICK_RATE_MS));
