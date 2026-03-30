@@ -4,10 +4,14 @@
 #include <string.h>
 #include <sys/param.h>
 #include <nvs.h>
+#include <cJSON.h>
 
 #define TAG "devcfg"
 
 static uint8_t s_mac[6];
+
+#define NVS_DEV_STATE_NS "dev_state"
+#define NVS_DEV_SCHEDULE_NS "dev_sched"
 
 void devcfg_init()
 {
@@ -189,4 +193,278 @@ const char* devcfg_get_permanent_key(void)
 
     nvs_close(h);
     return key;
+}
+
+
+// New macro: logs the error and jumps to the cleanup block to ensure nvs_close is called
+#define CHECK_GOTO(x) do { \
+    err = (x); \
+    if (err != ESP_OK) { \
+        ESP_LOGE(TAG, "NVS Error %s at line %d", esp_err_to_name(err), __LINE__); \
+        goto cleanup; \
+    } \
+} while(0)
+
+/**
+ * @brief Saves a device schedule to NVS atomically.
+ */
+esp_err_t devcfg_set_device_schedule(const device_schedule_t* sched) {
+    if (!sched) return ESP_ERR_INVALID_ARG;
+
+    nvs_handle_t handle;
+    esp_err_t err = nvs_open(NVS_DEV_SCHEDULE_NS, NVS_READWRITE, &handle);
+    if (err != ESP_OK) return err;
+
+    // 1. Transaction Start (Invalidate)
+    CHECK_GOTO(nvs_set_u8(handle, "sch_valid", 0));
+    CHECK_GOTO(nvs_commit(handle));
+
+    // 2. Write Fields
+    CHECK_GOTO(nvs_set_str(handle, "sch_id", sched->id));
+    CHECK_GOTO(nvs_set_u8(handle, "sch_type", (uint8_t)sched->type));
+    CHECK_GOTO(nvs_set_u8(handle, "sch_eff", (uint8_t)sched->take_effect));
+
+    if (sched->type == SCHED_SIMPLE) {
+        uint8_t bin_count = sched->schedule.simple_schedule.bin_count;
+        if (bin_count > 14) bin_count = 14; 
+        
+        CHECK_GOTO(nvs_set_u8(handle, "sch_bcnt", bin_count));
+
+        char key[16];
+        for (uint8_t i = 0; i < bin_count; i++) {
+            snprintf(key, sizeof(key), "sch_b_%d", i);
+            CHECK_GOTO(nvs_set_blob(handle, key, 
+                                   &sched->schedule.simple_schedule.bins[i], 
+                                   sizeof(device_bin_schedule_t)));
+        }
+    }
+    CHECK_GOTO(nvs_commit(handle));
+
+    // 3. Transaction Commit (Validate)
+    CHECK_GOTO(nvs_set_u8(handle, "sch_valid", 1));
+    CHECK_GOTO(nvs_commit(handle));
+
+    ESP_LOGI(TAG, "Schedule saved successfully.");
+
+cleanup:
+    // This guarantees the handle is always closed, success or fail
+    nvs_close(handle);
+    return err;
+}
+
+/**
+ * @brief Loads a device schedule from NVS. 
+ */
+esp_err_t devcfg_get_device_schedule(device_schedule_t* sched) {
+    if (!sched) return ESP_ERR_INVALID_ARG;
+
+    // Zero out struct so missing fields default to 0/null
+    memset(sched, 0, sizeof(device_schedule_t));
+
+    nvs_handle_t handle;
+    esp_err_t err = nvs_open(NVS_DEV_SCHEDULE_NS, NVS_READONLY, &handle);
+    if (err != ESP_OK) {
+        return (err == ESP_ERR_NVS_NOT_FOUND) ? ESP_OK : err;
+    }
+
+    // 1. Transaction Check (STRICT)
+    uint8_t valid = 0;
+    err = nvs_get_u8(handle, "sch_valid", &valid);
+    if (err != ESP_OK || valid == 0) {
+        ESP_LOGE(TAG, "Schedule corrupted or incomplete transaction.");
+        err = ESP_ERR_NVS_NOT_FOUND;
+        goto cleanup;
+    }
+
+    // 2. Load Fields Gracefully
+    size_t id_len = SCHEDULE_ID_SIZE;
+    err = nvs_get_str(handle, "sch_id", sched->id, &id_len);
+    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) goto cleanup;
+
+    uint8_t type_val = 0;
+    if (nvs_get_u8(handle, "sch_type", &type_val) == ESP_OK) {
+        sched->type = (device_schedule_type_t)type_val;
+    }
+
+    uint8_t eff_val = 0;
+    if (nvs_get_u8(handle, "sch_eff", &eff_val) == ESP_OK) {
+        sched->take_effect = (device_schedule_take_effect_t)eff_val;
+    }
+
+    if (sched->type == SCHED_SIMPLE) {
+        uint8_t bin_count = 0;
+        if (nvs_get_u8(handle, "sch_bcnt", &bin_count) == ESP_OK) {
+            if (bin_count > 14) bin_count = 14; 
+            sched->schedule.simple_schedule.bin_count = bin_count;
+
+            char key[16];
+            for (uint8_t i = 0; i < bin_count; i++) {
+                snprintf(key, sizeof(key), "sch_b_%d", i);
+                size_t blob_len = sizeof(device_bin_schedule_t);
+                err = nvs_get_blob(handle, key, 
+                                   &sched->schedule.simple_schedule.bins[i], 
+                                   &blob_len);
+                
+                // If a specific bin is missing, ignore. If it's a real error, bail out.
+                if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) goto cleanup;
+            }
+        }
+    }
+
+    ESP_LOGI(TAG, "Schedule %s loaded (missing fields defaulted to 0).", sched->id);
+    err = ESP_OK; // Reset error before exit
+
+cleanup:
+    nvs_close(handle);
+    return err;
+}
+
+// Temporary POD structure to strip out pointers for safe blob storage
+typedef struct {
+    bin_status_t status;
+    time_t scheduled_time;
+    rtc_utc_timestamp_ms event_time;
+} bin_pod_state_t;
+
+/**
+ * @brief Saves device state to NVS atomically.
+ */
+esp_err_t devcfg_set_device_state(const device_persistent_state_t* state) {
+    if (!state) return ESP_ERR_INVALID_ARG;
+
+    nvs_handle_t handle;
+    esp_err_t err = nvs_open(NVS_DEV_STATE_NS, NVS_READWRITE, &handle);
+    if (err != ESP_OK) return err;
+
+    // 1. Transaction Start (Invalidate)
+    CHECK_GOTO(nvs_set_u8(handle, "state_valid", 0));
+    CHECK_GOTO(nvs_commit(handle));
+
+    // 2. Write Fields
+    CHECK_GOTO(nvs_set_u64(handle, "modified_at", (uint64_t)state->modified_at));
+    CHECK_GOTO(nvs_set_u64(handle, "synced_at", (uint64_t)state->synced_at));
+    CHECK_GOTO(nvs_set_u64(handle, "epoch_week", (time_t)state->epoch_week));
+    CHECK_GOTO(devcfg_set_device_schedule(&state->schedule));
+    
+
+    bin_pod_state_t bins_pod[14];
+    for (int i = 0; i < 14; i++) {
+        bins_pod[i].status = state->bins[i].status;
+        bins_pod[i].scheduled_time = state->bins[i].scheduled_time;
+        bins_pod[i].event_time = state->bins[i].event_time;
+
+        char key[16];
+        snprintf(key, sizeof(key), "bin_sch_%d", i);
+        
+        // Save the string if it is not empty. 
+        // (Removed the parent schedule ID optimization)
+        if (state->bins[i].schedule_id[0] != '\0') {
+            CHECK_GOTO(nvs_set_str(handle, key, state->bins[i].schedule_id));
+        } else {
+            // Manual check: Erase but ignore ESP_ERR_NVS_NOT_FOUND
+            esp_err_t erase_err = nvs_erase_key(handle, key);
+            if (erase_err != ESP_OK && erase_err != ESP_ERR_NVS_NOT_FOUND) {
+                err = erase_err;
+                ESP_LOGE(TAG, "NVS Erase Error %s at line %d", esp_err_to_name(err), __LINE__);
+                goto cleanup;
+            }
+        }
+    }
+
+    CHECK_GOTO(nvs_set_blob(handle, "bins_pod", bins_pod, sizeof(bins_pod)));
+    CHECK_GOTO(nvs_commit(handle));
+
+    // 3. Transaction Commit (Validate)
+    CHECK_GOTO(nvs_set_u8(handle, "state_valid", 1));
+    CHECK_GOTO(nvs_commit(handle));
+
+    ESP_LOGI(TAG, "Device state saved successfully.");
+
+cleanup:
+    nvs_close(handle);
+    return err;
+}
+
+/**
+ * @brief Loads device state from NVS. 
+ */
+esp_err_t devcfg_get_device_state(device_persistent_state_t* state) {
+    if (!state) return ESP_ERR_INVALID_ARG;
+
+    // Zero out buffers so any missing fields naturally default to 0/null
+    memset(state, 0, sizeof(device_persistent_state_t));
+
+    nvs_handle_t handle;
+    esp_err_t err = nvs_open(NVS_DEV_STATE_NS, NVS_READONLY, &handle);
+    if (err != ESP_OK) {
+        // If the namespace doesn't exist at all (e.g., fresh device), return OK 
+        // with the safely zeroed state.
+        return (err == ESP_ERR_NVS_NOT_FOUND) ? ESP_OK : err;
+    }
+
+    // 1. Transaction Check (STRICT)
+    uint8_t valid = 0;
+    err = nvs_get_u8(handle, "state_valid", &valid);
+    if (err != ESP_OK || valid == 0) {
+        ESP_LOGE(TAG, "Device state corrupted or incomplete transaction.");
+        err = ESP_ERR_NVS_NOT_FOUND; 
+        goto cleanup;
+    }
+
+    // 2. Load Fields Gracefully
+    uint64_t mod_at = 0;
+    if (nvs_get_u64(handle, "modified_at", &mod_at) == ESP_OK) {
+        state->modified_at = (rtc_utc_timestamp_ms)mod_at;
+    }
+
+    uint64_t sync_at = 0;
+    if (nvs_get_u64(handle, "synced_at", &sync_at) == ESP_OK) {
+        state->synced_at = (rtc_utc_timestamp_ms)sync_at;
+    }
+
+    uint64_t epoch_week = 0;
+    if (nvs_get_u64(handle, "epoch_week", &epoch_week) == ESP_OK) {
+        state->epoch_week = (time_t)epoch_week;
+    }
+
+    // Attempt to load schedule, ignore if it's missing but fail on real NVS errors
+    err = devcfg_get_device_schedule(&state->schedule);
+    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) goto cleanup;
+
+    bin_pod_state_t bins_pod[14];
+    size_t req_size = sizeof(bins_pod);
+    err = nvs_get_blob(handle, "bins_pod", bins_pod, &req_size);
+
+    if (err == ESP_OK && req_size == sizeof(bins_pod)) {
+        for (int i = 0; i < 14; i++) {
+            state->bins[i].status = bins_pod[i].status;
+            state->bins[i].scheduled_time = bins_pod[i].scheduled_time;
+            state->bins[i].event_time = bins_pod[i].event_time;
+
+            char key[16];
+            snprintf(key, sizeof(key), "bin_sch_%d", i);
+            
+            size_t str_len = SCHEDULE_ID_SIZE;
+            esp_err_t str_err = nvs_get_str(handle, key, state->bins[i].schedule_id, &str_len);
+            
+            if (str_err == ESP_OK) {
+                // Ensure null termination just in case
+                state->bins[i].schedule_id[SCHEDULE_ID_SIZE - 1] = '\0';
+            } else if (str_err != ESP_ERR_NVS_NOT_FOUND) {
+                // Only bail out on actual hardware/corruption errors for strings
+                ESP_LOGE(TAG, "NVS Read Error %s at line %d", esp_err_to_name(str_err), __LINE__);
+                err = str_err;
+                goto cleanup;
+            }
+        }
+    } else if (err != ESP_ERR_NVS_NOT_FOUND && err != ESP_OK) {
+        goto cleanup;
+    }
+
+    ESP_LOGI(TAG, "Device state loaded (missing fields defaulted to 0).");
+    err = ESP_OK; // Reset error to ensure we return success if we intentionally skipped missing fields
+
+cleanup:
+    nvs_close(handle);
+    return err;
 }

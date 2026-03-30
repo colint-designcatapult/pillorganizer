@@ -63,6 +63,7 @@ typedef struct {
     int32_t mad;           // Scaled Mean Absolute Deviation
     int32_t open_baseline; // The EMA recorded right before the door opened
     door_state_t state;
+    uint8_t debounce_cnt;  // NEW: Tracks consecutive readings for state changes
     bool initialized;
 } ch_stats_t;
 
@@ -118,16 +119,16 @@ static void ulp_event_task(void *arg)
                     
                     esp_err_t err;
                     if (ch_stats[i].state == DOOR_OPEN) {
-                        //err = supervisor_submit_event_block(EVENT_DOOR_OPENED, (void*)i, pdMS_TO_TICKS(10));
+                        err = supervisor_submit_event_block(EVENT_DOOR_OPENED, (intptr_t)i, pdMS_TO_TICKS(10));
                     } else {
-                        //err = supervisor_submit_event_block(EVENT_DOOR_CLOSED, (void*)i, pdMS_TO_TICKS(10));
+                        err = supervisor_submit_event_block(EVENT_DOOR_CLOSED, (intptr_t)i, pdMS_TO_TICKS(10));
                     }
 
                     // Only commit the last known state if we submitted the event, that way we can try submitting
                     // the event again.
-                    //if (err == ESP_OK) {
+                    if (err == ESP_OK) {
                         last_known_state[i] = ch_stats[i].state;
-                    //}
+                    }
                 }
             }
         }
@@ -216,66 +217,104 @@ static bool process_ulp_events(uint32_t* values)
     }
 
     /* ==========================================================
-     * Door Channel Processing
+     * Door Channel Processing (with Ambient Rejection & Debounce)
      * ========================================================== */
     bool should_wake_main_cpu = false;
+    
+    #define AMBIENT_CHANGE_THRESHOLD 3 // If 3+ doors change at once, it's a room light change
+    #define DEBOUNCE_SAMPLES         2 // Require N consecutive readings to change state
 
-    // Only process door channels
+    int candidate_state_changes = 0;
+
+    /* --- PASS 1: Tally potential state changes --- */
     for (int ch = ADC_DOOR_CHANNEL_START; ch <= ADC_DOOR_CHANNEL_END; ch++) {
-
         int door = ch - ADC_DOOR_CHANNEL_START;
         ch_stats_t* stats = &ch_stats[door];
         
-        // Grab the value from the 1-indexed offset
         int32_t val = local_buffer[ch] & 0xFFFF;
-        int32_t s_val = val * SCALE_FACTOR; // Scale up to preserve precision
+        int32_t s_val = val * SCALE_FACTOR;
 
         if (!stats->initialized) {
             stats->ema = s_val;
-            stats->mad = 5 * SCALE_FACTOR; // Seed with a small assumed variance
+            stats->mad = 5 * SCALE_FACTOR;
             stats->state = DOOR_CLOSED;
+            stats->debounce_cnt = 0;
             stats->initialized = true;
             continue;
         }
 
         if (stats->state == DOOR_CLOSED) {
             int32_t diff = s_val - stats->ema;
-            int32_t abs_diff = (diff > 0) ? diff : -diff;
+            int32_t threshold = stats->mad * 5; 
+            if (diff > threshold) {
+                candidate_state_changes++;
+            }
+        } else { // DOOR_OPEN
+            int32_t close_threshold = stats->open_baseline + (stats->mad * 2);
+            if (s_val < close_threshold) {
+                candidate_state_changes++;
+            }
+        }
+    }
 
-            // Threshold: Current EMA + (K * MAD). 
-            // K=5 is roughly equivalent to 4 standard deviations.
+    /* --- PASS 2: Apply Logic based on Tally --- */
+    bool is_ambient_event = (candidate_state_changes >= AMBIENT_CHANGE_THRESHOLD);
+
+    for (int ch = ADC_DOOR_CHANNEL_START; ch <= ADC_DOOR_CHANNEL_END; ch++) {
+        int door = ch - ADC_DOOR_CHANNEL_START;
+        ch_stats_t* stats = &ch_stats[door];
+        
+        int32_t val = local_buffer[ch] & 0xFFFF;
+        int32_t s_val = val * SCALE_FACTOR;
+
+        if (is_ambient_event) {
+            // GLOBAL LIGHT CHANGE: Do not open/close doors!
+            // Instead, fast-adapt the EMA to the new room lighting.
+            stats->ema = s_val;
+            stats->debounce_cnt = 0; // Reset any pending debounces
+            continue;
+        }
+
+        // NORMAL PROCESSING (Local changes)
+        if (stats->state == DOOR_CLOSED) {
+            int32_t diff = s_val - stats->ema;
+            int32_t abs_diff = (diff > 0) ? diff : -diff;
             int32_t threshold = stats->mad * 5; 
 
             if (diff > threshold) {
-                // SHARP INCREASE DETECTED: Door opened!
-                stats->state = DOOR_OPEN;
-                
-                // Freeze the baseline so we know what "closed" looks like
-                stats->open_baseline = stats->ema; 
-                should_wake_main_cpu = true;
+                // Potential OPEN detected
+                stats->debounce_cnt++;
+                if (stats->debounce_cnt >= DEBOUNCE_SAMPLES) {
+                    stats->state = DOOR_OPEN;
+                    stats->open_baseline = stats->ema; 
+                    stats->debounce_cnt = 0;
+                    should_wake_main_cpu = true;
+                }
             } else {
-                // Update EMA and MAD
+                // Normal variance, no state change. Update baselines.
+                stats->debounce_cnt = 0; // Reset debounce if signal drops
                 stats->ema += (diff >> ALPHA_SHIFT);
                 stats->mad += ((abs_diff - stats->mad) >> ALPHA_SHIFT);
 
-                // Raise the floor to ignore baseline ESP32 ADC noise!
-                // Minimum ~30 ADC units of variance.
                 if (stats->mad < (30 * SCALE_FACTOR)) {
                     stats->mad = 30 * SCALE_FACTOR;
                 }           
-             }
-        } else {
-            // DOOR IS OPEN: Wait for value to drop back near the stored baseline.
-            // We consider it closed if it drops within 2 MADs of the old closed baseline.
+            }
+        } else { // DOOR_OPEN
             int32_t close_threshold = stats->open_baseline + (stats->mad * 2);
 
             if (s_val < close_threshold) {
-                // VOLTAGE DROPPED: Door closed!
-                stats->state = DOOR_CLOSED;
-                
-                // Fast-reset the EMA to the current lighting to sync immediately
-                stats->ema = s_val; 
-                should_wake_main_cpu = true;
+                // Potential CLOSE detected
+                stats->debounce_cnt++;
+                if (stats->debounce_cnt >= DEBOUNCE_SAMPLES) {
+                    stats->state = DOOR_CLOSED;
+                    stats->ema = s_val; // Fast sync to new closed lighting
+                    stats->debounce_cnt = 0;
+                    should_wake_main_cpu = true;
+                }
+            } else {
+                // Still open
+                stats->debounce_cnt = 0; 
             }
         }
     }

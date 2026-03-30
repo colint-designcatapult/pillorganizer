@@ -142,8 +142,8 @@ static void handle_create_keys_response(const char* payload, size_t len, bool is
         FleetProvisioning_GetRegisterThingTopic(s_ctx->pub_topic, sizeof(s_ctx->pub_topic), FleetProvisioningJson, FleetProvisioningPublish, TEMPLATE_NAME, TEMPLATE_NAME_LENGTH, &topic_len);
         s_ctx->pub_topic[topic_len] = '\0';
 
-        mqtt_wrapper_subscribe(s_ctx->reg_acc_topic, 1);
-        mqtt_wrapper_subscribe(s_ctx->reg_rej_topic, 1);
+        mqtt_wrapper_subscribe(s_ctx->reg_acc_topic, 1, NULL);
+        mqtt_wrapper_subscribe(s_ctx->reg_rej_topic, 1, NULL);
         
     } else {
         ESP_LOGE(TAG, "Missing required fields in CreateKeys response");
@@ -202,8 +202,8 @@ static void provisioning_mqtt_event_handler(void *handler_args, esp_event_base_t
                 s_ctx->state = PROV_STATE_SUB_CREATE_KEYS;
                 s_ctx->sub_ack_count = 0;
                 
-                esp_err_t err1 = mqtt_wrapper_subscribe(FP_JSON_CREATE_KEYS_ACCEPTED_TOPIC, 1);
-                esp_err_t err2 = mqtt_wrapper_subscribe(FP_JSON_CREATE_KEYS_REJECTED_TOPIC, 1);
+                esp_err_t err1 = mqtt_wrapper_subscribe(FP_JSON_CREATE_KEYS_ACCEPTED_TOPIC, 1, NULL);
+                esp_err_t err2 = mqtt_wrapper_subscribe(FP_JSON_CREATE_KEYS_REJECTED_TOPIC, 1, NULL);
                 
                 if (err1 != ESP_OK || err2 != ESP_OK) {
                     ESP_LOGE(TAG, "CRITICAL: Failed to queue subscriptions! (err1:%d, err2:%d)", err1, err2);

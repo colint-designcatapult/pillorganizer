@@ -21,9 +21,9 @@ static void cleanup_certs()
     s_key_pem = NULL;
 }
 
-esp_err_t mqtt_subscribe(const char* topic, int qos)
+esp_err_t mqtt_subscribe(const char* topic, int qos, int* out_id)
 {
-    return mqtt_wrapper_subscribe(topic, qos);
+    return mqtt_wrapper_subscribe(topic, qos, out_id);
 }
 
 esp_err_t mqtt_publish(const char* topic, const char* payload, int len, int qos, int retain)
@@ -40,6 +40,10 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             break;
         case MQTT_EVENT_DATA:
             shadow_state_on_data(event->topic, event->topic_len, event->data, event->data_len);
+            break;
+        case MQTT_EVENT_SUBSCRIBED:
+            ESP_LOGI(TAG, "MQTT Subscribed to msg_id %d", event->msg_id);
+            shadow_state_on_subscribe(event->msg_id);
             break;
         case MQTT_EVENT_DISCONNECTED:
             ESP_LOGI(TAG, "MQTT Disconnected");
@@ -101,11 +105,11 @@ esp_err_t mqtt_publish_device_state(device_state_t* state)
     cJSON *root = cJSON_CreateObject();
     if (!root) return ESP_ERR_NO_MEM;
 
-    uint64_t ts_ms = (uint64_t)app_rtc_calc_utc_time_ms(state->timestamp);
+    uint64_t ts_ms = (uint64_t)state->modified_at;
     cJSON_AddNumberToObject(root, "timestamp", (double)ts_ms);
     cJSON_AddNumberToObject(root, "battery", state->battery);
     cJSON_AddBoolToObject(root, "charging", state->charging);
-    cJSON_AddBoolToObject(root, "reloading", state->reloading);
+    cJSON_AddBoolToObject(root, "reloading", state->reload_state.stage != RELOAD_NONE); 
     cJSON_AddNumberToObject(root, "doors", state->doors);
 
     cJSON *bins_array = cJSON_AddArrayToObject(root, "bins");

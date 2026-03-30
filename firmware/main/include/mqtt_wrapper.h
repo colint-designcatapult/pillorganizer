@@ -26,7 +26,7 @@ esp_err_t mqtt_wrapper_disconnect(void);
 esp_err_t mqtt_wrapper_publish(const char* topic, const char* payload, int len, int qos, int retain);
 
 // Subscribes to a topic (thread-safe)
-esp_err_t mqtt_wrapper_subscribe(const char* topic, int qos);
+esp_err_t mqtt_wrapper_subscribe(const char* topic, int qos, int* out_id);
 
 // Checks if we are currently connected
 bool mqtt_wrapper_is_connected(void);
