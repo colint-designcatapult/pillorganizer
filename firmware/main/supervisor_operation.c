@@ -112,7 +112,7 @@ static esp_err_t update_device_state()
         pers.bins[i].status = s_device_state.bins[i].status;
         pers.bins[i].scheduled_time = s_device_state.bins[i].scheduled_time;
         pers.bins[i].event_time = s_device_state.bins[i].event_time;
-        strncpy(pers.bins[i].schedule_id, s_device_state.bins[i].schedule_id, SCHEDULE_ID_SIZE);
+        snprintf(pers.bins[i].schedule_id, sizeof(pers.bins[i].schedule_id), "%s", s_device_state.bins[i].schedule_id);
     }
 
     // Save state to NVS
@@ -198,7 +198,7 @@ static void schedule_bin(int bin_id, device_bin_schedule_t* bin_schedule,
             bin_state->status = DISABLED;
             bin_state->scheduled_time = -1;
         }
-        strncpy(bin_state->schedule_id, state->schedule.id, SCHEDULE_ID_SIZE);
+        snprintf(bin_state->schedule_id, sizeof(bin_state->schedule_id), "%s", state->schedule.id);
     }
 }
 
@@ -287,7 +287,7 @@ static void process_schedule_delta(const device_schedule_t* sched)
     ESP_LOGW(TAG, "Schedule %s rejected: %d", sched->id, validation);
 
     // Update current schedule with rejection info
-    strncpy(s_device_state.schedule.rejected_id, sched->id, SCHEDULE_ID_SIZE);
+    snprintf(s_device_state.schedule.rejected_id, sizeof(s_device_state.schedule.rejected_id), "%s", sched->id);
     s_device_state.schedule.rejected_reason = validation;
 }
 

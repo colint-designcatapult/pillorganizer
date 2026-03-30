@@ -39,6 +39,7 @@ static shadow_state_ctx_t s_shadows[] = {
 
 static char s_thing_name[128] = { 0 };
 static size_t s_thing_name_len = 0;
+static bool s_shadow_ready_sent = false;
 
 static esp_err_t patch_schedule_from_delta(device_schedule_t* sched, const char* delta, size_t size);
 char* generate_aws_shadow_reported(const device_schedule_t* sched);
@@ -178,6 +179,7 @@ static bool shadow_state_on_connect_ctx(shadow_state_ctx_t* ctx) {
     memset(ctx->subs, 0, sizeof(ctx->subs));
     memset(ctx->sub_state, false, sizeof(ctx->sub_state));
     ctx->connection_subbed = false;
+    s_shadow_ready_sent = false;
 
 
     if (!subscribe_to_shadow_topic(ctx->shadow_name, ShadowTopicStringTypeUpdateDelta,
@@ -223,6 +225,11 @@ static void shadow_state_on_subscribe_ctx(shadow_state_ctx_t* ctx, int sub_id)
 
 void shadow_state_on_subscribe(int sub_id)
 {
+    // Check if shadow state already ready
+    if (s_shadow_ready_sent) {
+        return;
+    }
+
     bool all_subscribed = true;
     for (int i = 0; i < NUM_SHADOWS; i++) {
         shadow_state_on_subscribe_ctx(&s_shadows[i], sub_id);
@@ -233,7 +240,7 @@ void shadow_state_on_subscribe(int sub_id)
 
     if (all_subscribed) {
         ESP_ERROR_CHECK(supervisor_submit_event(EVENT_SHADOW_READY));
-        all_subscribed = false;
+        s_shadow_ready_sent = true;
     }
 }
 
@@ -426,8 +433,7 @@ esp_err_t patch_schedule_from_delta(device_schedule_t* schedule, const char* del
     // 2. Update 'id' if present
     cJSON* id_item = cJSON_GetObjectItem(state, "id");
     if (cJSON_IsString(id_item) && id_item->valuestring != NULL) {
-        strncpy(schedule->id, id_item->valuestring, SCHEDULE_ID_SIZE - 1);
-        schedule->id[SCHEDULE_ID_SIZE - 1] = '\0'; // Ensure null-termination
+        snprintf(schedule->id, sizeof(schedule->id), "%s", id_item->valuestring);
     }
 
     // 3. Update 'takeEffect' if present

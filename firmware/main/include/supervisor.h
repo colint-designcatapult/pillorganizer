@@ -76,8 +76,10 @@ typedef struct {
 
 typedef enum {
     DEVICE_OPERATIONAL,
-    FAILSAFE_NO_SCHEDULE,
-    FAILSAFE_STATE_CORRUPTED
+    FAILSAFE_NEED_RELOAD,           // Device is empty and needs to be reloaded with medication
+    FAILSAFE_NO_SCHEDULE,           // Device isn't programmed with a schedule
+    FAILSAFE_STATE_CORRUPTED,       // Existing state exists in NVS, but corrupted
+    FAILSAFE_NO_RTC_TIME            // Accurate real-time clock time unavailable when needed
 } device_failsafe_reason_t;
 
 #define SECONDS_PER_WEEK 604800

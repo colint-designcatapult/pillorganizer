@@ -95,8 +95,8 @@ typedef enum {
 
 typedef struct {
     bin_status_t status;
-    // Unix timestamp (UTC) in milliseconds of the scheduled time the medication in this bin is taken at.
-    rtc_utc_timestamp_ms scheduled_time;
+    // Unix timestamp (UTC) in seconds of the scheduled time the medication in this bin is taken at.
+    time_t scheduled_time;
     // Unix timestamp (UTC) in milliseconds of the last recorded update to this bin's state.
     rtc_utc_timestamp_ms event_time;
     // The ID of the schedule this bin is programmed for.
