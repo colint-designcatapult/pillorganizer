@@ -147,6 +147,7 @@ class _LaunchPageLoginState extends ConsumerState<LaunchPageLogin> {
   }
 
   bool _handleAuthFailure(dynamic err) {
+    if (!mounted) return false;
     // Only clear loading if the manual sign-in flow isn't already running.
     final shouldClearLoading = _loginFuture == null;
     if (err is Exception) {
@@ -156,7 +157,7 @@ class _LaunchPageLoginState extends ConsumerState<LaunchPageLogin> {
       });
       return false;
     } else {
-      if (mounted && shouldClearLoading) setState(() => _isLoading = false);
+      if (shouldClearLoading) setState(() => _isLoading = false);
       return false;
     }
   }
