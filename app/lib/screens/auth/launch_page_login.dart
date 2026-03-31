@@ -108,10 +108,10 @@ class _LaunchPageLoginState extends ConsumerState<LaunchPageLogin> {
                     ],
                   )))),
           if (_isLoading)
-            const Positioned.fill(
+            Positioned.fill(
               child: ColoredBox(
-                color: Color(0x80000000),
-                child: Center(
+                color: const Color(0x80000000),
+                child: const Center(
                   child: CircularProgressIndicator(color: Colors.white),
                 ),
               ),
@@ -133,7 +133,8 @@ class _LaunchPageLoginState extends ConsumerState<LaunchPageLogin> {
 
   Future<bool> _handleAuthSuccess(bool status) async {
     if (!status) {
-      if (mounted) setState(() => _isLoading = false);
+      // Only clear loading if the manual sign-in flow isn't already running.
+      if (mounted && _loginFuture == null) setState(() => _isLoading = false);
       return false;
     }
     // If the user manually tapped Sign In while the auto-check was running,
@@ -146,15 +147,16 @@ class _LaunchPageLoginState extends ConsumerState<LaunchPageLogin> {
   }
 
   bool _handleAuthFailure(dynamic err) {
+    // Only clear loading if the manual sign-in flow isn't already running.
+    final shouldClearLoading = _loginFuture == null;
     if (err is Exception) {
       setState(() {
-        _isLoading = false;
+        if (shouldClearLoading) _isLoading = false;
         _checkAuthFuture = Future.error(err);
       });
       return false;
     } else {
-      print('Unhandled error type: $err');
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted && shouldClearLoading) setState(() => _isLoading = false);
       return false;
     }
   }
