@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/service/amplify_service.dart';
@@ -34,38 +35,56 @@ Future<MqttServerClient?> mqttClient(Ref ref) async {
 
     final clientName = '${device.thingName}/user/$userid';
 
-  final client = MqttServerClient.withPort(mqttEndpoint, clientName, 443);
-
   AmplifyService amplifyService = AmplifyService();
-  client.websocketHeader = {
+  final websocketHeader = {
     "x-jwt": await amplifyService.getIdToken(),
     "x-device-id": device.id,
     "x-tenant-id": device.tenantId
   };
 
-  // Enable WebSockets
-  client.useWebSocket = true;
-  client.websocketProtocols = MqttClientConstants.protocolsSingleDefault;
-  client.setProtocolV311(); // AWS IoT Core prefers MQTT v3.1.1
+  const maxRetries = 5;
+  const baseDelay = Duration(seconds: 5);
+  const maxDelay = Duration(minutes: 5);
 
-  client.logging(on: true);
-  client.keepAlivePeriod = 20;
-  client.connectTimeoutPeriod = 30;
-  client.autoReconnect = true;
+  MqttServerClient? connected;
+  Object? lastError;
 
+  for (int attempt = 0; attempt <= maxRetries; attempt++) {
+    // Recreate the client each attempt — disconnect() leaves it unusable.
+    final attempt_client = MqttServerClient.withPort(mqttEndpoint, clientName, 443);
+    attempt_client.websocketHeader = websocketHeader;
+    attempt_client.useWebSocket = true;
+    attempt_client.websocketProtocols = MqttClientConstants.protocolsSingleDefault;
+    attempt_client.setProtocolV311();
+    attempt_client.logging(on: true);
+    attempt_client.keepAlivePeriod = 20;
+    attempt_client.connectTimeoutPeriod = 30;
+    attempt_client.autoReconnect = true;
 
-  try {
-    await client.connect();
-  } catch (e) {
-    client.disconnect();
-    throw Exception('MQTT Connection failed: $e');
+    try {
+      await attempt_client.connect();
+      connected = attempt_client;
+      break;
+    } catch (e) {
+      attempt_client.disconnect();
+      lastError = e;
+      if (attempt >= maxRetries) break;
+      final delayMs = min(
+        baseDelay.inMilliseconds * pow(2, attempt).toInt(),
+        maxDelay.inMilliseconds,
+      );
+      await Future.delayed(Duration(milliseconds: delayMs));
+    }
   }
 
+  if (connected == null) {
+    throw Exception('MQTT Connection failed after $maxRetries attempts: $lastError');
+  }
 
   // Clean up when the provider is disposed (e.g., user leaves the screen)
   ref.onDispose(() {
-    client.disconnect();
+    connected!.disconnect();
   });
 
-  return client;
+  return connected;
 }
