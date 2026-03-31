@@ -25,6 +25,7 @@ class LaunchPageLogin extends ConsumerStatefulWidget {
 class _LaunchPageLoginState extends ConsumerState<LaunchPageLogin> {
   Future<bool>? _checkAuthFuture;
   Future<void>? _loginFuture;
+  bool _isLoading = false;
   final AmplifyService _amplifyService = AmplifyService();
 
   @override
@@ -33,11 +34,13 @@ class _LaunchPageLoginState extends ConsumerState<LaunchPageLogin> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFBFD2DB),
-      body: KeyboardDismissWrapper(
-          child: SingleChildScrollView(
-              child: SizedBox(
-                  height: MediaQuery.of(context).size.height,
-                  child: Column(
+      body: Stack(
+        children: [
+          KeyboardDismissWrapper(
+              child: SingleChildScrollView(
+                  child: SizedBox(
+                      height: MediaQuery.of(context).size.height,
+                      child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.max,
@@ -104,6 +107,17 @@ class _LaunchPageLoginState extends ConsumerState<LaunchPageLogin> {
                       ),
                     ],
                   )))),
+          if (_isLoading)
+            const Positioned.fill(
+              child: ColoredBox(
+                color: Color(0x80000000),
+                child: Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -118,27 +132,41 @@ class _LaunchPageLoginState extends ConsumerState<LaunchPageLogin> {
   }
 
   Future<bool> _handleAuthSuccess(bool status) async {
-    if (status) {
-      _handleSuccessfulLogin();
+    if (!status) {
+      if (mounted) setState(() => _isLoading = false);
+      return false;
     }
-    return status;
+    // If the user manually tapped Sign In while the auto-check was running,
+    // _loginFuture is already set. Don't navigate — let _performSignIn handle it.
+    if (_loginFuture == null) {
+      await _handleSuccessfulLogin();
+      if (mounted) setState(() => _isLoading = false);
+    }
+    return true;
   }
 
   bool _handleAuthFailure(dynamic err) {
     if (err is Exception) {
       setState(() {
+        _isLoading = false;
         _checkAuthFuture = Future.error(err);
       });
       return false;
     } else {
       print('Unhandled error type: $err');
+      if (mounted) setState(() => _isLoading = false);
       return false;
     }
   }
 
   void _checkAuthStatus() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      // Guard: don't start a background Amplify fetchAuthSession if sign-in
+      // via signInWithWebUI is already in flight. Concurrent Amplify auth
+      // operations can cause the SDK to auto sign-out after sign-in completes.
+      if (_loginFuture != null) return;
       try {
+        setState(() => _isLoading = true);
         var future = ref.read(authenticationProvider.notifier)
             .checkAuthStatus()
             .then((value) => _handleAuthSuccess(value))
@@ -155,19 +183,25 @@ class _LaunchPageLoginState extends ConsumerState<LaunchPageLogin> {
 
   void _signInWithAmplify() {
     setState(() {
+      _isLoading = true;
       _loginFuture = _performSignIn();
     });
   }
 
   Future<void> _performSignIn() async {
-    final isSignedIn = await _amplifyService.signInWithWebUI();
-    if (isSignedIn) {
-      _handleSuccessfulLogin();
+    try {
+      final isSignedIn = await _amplifyService.signInWithWebUI();
+      if (isSignedIn) {
+        await _handleSuccessfulLogin();
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _handleSuccessfulLogin() async {
+  Future<void> _handleSuccessfulLogin() async {
     final route = await TakecareLinkUtil.handlePostAuthNavigation(context, ref);
+    if (!mounted) return;
     Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => false);
   }
 

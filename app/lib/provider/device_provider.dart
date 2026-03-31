@@ -13,22 +13,26 @@ part 'device_provider.g.dart';
 class DeviceList extends _$DeviceList {
   @override
   FutureOr<List<DeviceMetadata>> build() async {
-    final devices = await _fetchDevices();
+    try {
+      final devices = await _fetchDevices();
 
-    // If no devices are found, start a timer to retry
-    if (devices.isEmpty) {
+      // If no devices are found, start a timer to retry
+      if (devices.isEmpty) {
+        final timer = Timer(const Duration(seconds: 5), () {
+          ref.invalidateSelf();
+        });
+        ref.onDispose(timer.cancel);
+      }
+
+      return devices;
+    } catch (e) {
+      // Retry on error after 5 seconds
       final timer = Timer(const Duration(seconds: 5), () {
-        // ref.invalidateSelf() tells Riverpod to discard the current state
-        // and run this build() method again from scratch.
         ref.invalidateSelf();
       });
-
-      // Crucial: Clean up the timer if the provider is disposed or
-      // invalidated before the 5 seconds are up.
       ref.onDispose(timer.cancel);
+      rethrow;
     }
-
-    return devices;
   }
 
   Future<void> refresh() async {

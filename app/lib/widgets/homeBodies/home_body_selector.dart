@@ -39,7 +39,7 @@ class HomeBodySelector extends ConsumerWidget {
     final bool isEmpty = false;
     final bool isOwner = activeDevice?.primaryUser ?? false;
 
-    if (isLoadingDevices) {
+    if (isLoadingDevices || deviceListAsync.hasError) {
       return const HomeLoadingBody();
     }
 
