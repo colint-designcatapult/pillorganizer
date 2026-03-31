@@ -188,6 +188,7 @@ class _FirstLaunchPageState extends ConsumerState<FirstLaunchPage> {
 
   void _checkAuthStatus() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (!mounted) return;
       try {
         setState(() => _isLoading = true);
         var future = ref.read(authenticationProvider.notifier)

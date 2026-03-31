@@ -167,6 +167,7 @@ class _LaunchPageLoginState extends ConsumerState<LaunchPageLogin> {
       // via signInWithWebUI is already in flight. Concurrent Amplify auth
       // operations can cause the SDK to auto sign-out after sign-in completes.
       if (_loginFuture != null) return;
+      if (!mounted) return;
       try {
         setState(() => _isLoading = true);
         var future = ref.read(authenticationProvider.notifier)
