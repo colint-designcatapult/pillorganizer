@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/service/amplify_service.dart';
 import 'package:mqtt_client/mqtt_client.dart';
@@ -23,7 +22,7 @@ Duration? _mqttRetry(int retryCount, Object error) {
   return Duration(seconds: secs < capSecs ? secs : capSecs);
 }
 
-@Riverpod(retry: _mqttRetry)
+@riverpod(retry: _mqttRetry)
 class MqttClient extends _$MqttClient {
   MqttServerClient? _activeClient;
   int _failureCount = 0;
@@ -38,7 +37,7 @@ class MqttClient extends _$MqttClient {
 
     // Once the retry budget is exhausted, stop permanently.
     // Only a manual reconnect() call can reset this.
-    if (_failureCount > _maxRetries) {
+    if (_failureCount >= _maxRetries) {
       print('[MQTT] Retry budget exhausted — not attempting connection');
       return null;
     }
