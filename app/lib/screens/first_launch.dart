@@ -18,6 +18,7 @@ class FirstLaunchPage extends ConsumerStatefulWidget {
 
 class _FirstLaunchPageState extends ConsumerState<FirstLaunchPage> {
   Future<bool>? _checkAuthFuture;
+  bool _isLoading = false;
   final AmplifyService _amplifyService = AmplifyService();
 
   @override
@@ -30,7 +31,9 @@ class _FirstLaunchPageState extends ConsumerState<FirstLaunchPage> {
     return Scaffold(
       backgroundColor: Theme.of(context).primaryColor,
       resizeToAvoidBottomInset: true,
-      body: Center(
+      body: Stack(
+        children: [
+        Center(
         child: SingleChildScrollView(
             child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -134,21 +137,31 @@ class _FirstLaunchPageState extends ConsumerState<FirstLaunchPage> {
                         ],
                       );
                     } else {
-                      return const CircularProgressIndicator(
-                        color: Colors.white,
-                      );
+                      return const SizedBox.shrink();
                     }
                   },
                 ))
           ],
         )),
-      ),
+        ),
+        if (_isLoading)
+          Positioned.fill(
+            child: ColoredBox(
+              color: const Color(0x80000000),
+              child: const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              ),
+            ),
+          ),
+      ]),
     );
   }
 
   Future<bool> _handleAuthSuccess(bool status) async {
     if (status) {
       _handleSuccessfulAuth();
+    } else {
+      if (mounted) setState(() => _isLoading = false);
     }
     return status;
   }
@@ -162,18 +175,22 @@ class _FirstLaunchPageState extends ConsumerState<FirstLaunchPage> {
 
   bool _handleAuthFailure(dynamic err) {
     if (err is Exception) {
-      setState(() {
+      if (mounted) setState(() {
+        _isLoading = false;
         _checkAuthFuture = Future.error(err);
       });
       return false;
     } else {
+      if (mounted) setState(() => _isLoading = false);
       return false;
     }
   }
 
   void _checkAuthStatus() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (!mounted) return;
       try {
+        setState(() => _isLoading = true);
         var future = ref.read(authenticationProvider.notifier)
             .checkAuthStatus()
             .then((value) => _handleAuthSuccess(value))
@@ -189,9 +206,16 @@ class _FirstLaunchPageState extends ConsumerState<FirstLaunchPage> {
   }
 
   void _signInWithAmplify() async {
-    final isSignedIn = await _amplifyService.signInWithWebUI();
-    if (isSignedIn) {
-      _handleSuccessfulAuth();
+    setState(() => _isLoading = true);
+    try {
+      final isSignedIn = await _amplifyService.signInWithWebUI();
+      if (isSignedIn && mounted) {
+        _handleSuccessfulAuth();
+      } else {
+        if (mounted) setState(() => _isLoading = false);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
