@@ -31,7 +31,10 @@ class MqttClient extends _$MqttClient {
   @override
   Future<MqttServerClient?> build() async {
     final device = ref.watch(activeDeviceProvider);
-    ref.onDispose(() => _activeClient?.disconnect());
+
+    // Disconnect any client from a previous build before starting fresh.
+    _activeClient?.disconnect();
+    _activeClient = null;
 
     // Once the retry budget is exhausted, stop permanently.
     // Only a manual reconnect() call can reset this.
@@ -51,13 +54,19 @@ class MqttClient extends _$MqttClient {
       return null;
     }
 
-    final idpart = idToken.split(".")[1];
-    final base64s = base64.decode(base64Url.normalize(idpart));
-    final Map<String, dynamic> jwtClaims = jsonDecode(utf8.decode(base64s));
+    final String? userid;
+    try {
+      final idpart = idToken.split(".")[1];
+      final base64s = base64.decode(base64Url.normalize(idpart));
+      final Map<String, dynamic> jwtClaims = jsonDecode(utf8.decode(base64s));
+      userid = jwtClaims["userId"] as String?;
+    } catch (e) {
+      print('[MQTT] Failed to parse JWT: $e — aborting');
+      return null;
+    }
 
-    final userid = jwtClaims["userId"] as String?;
     if (userid == null) {
-      print('[MQTT] JWT has no "userId" claim — aborting. Available: ${jwtClaims.keys.toList()}');
+      print('[MQTT] JWT has no "userId" claim — aborting');
       return null;
     }
 
@@ -78,6 +87,8 @@ class MqttClient extends _$MqttClient {
     client.connectTimeoutPeriod = 30;
     client.autoReconnect = true;
 
+    ref.onDispose(client.disconnect);
+
     try {
       await client.connect();
       print('[MQTT] Connected successfully');
@@ -85,7 +96,6 @@ class MqttClient extends _$MqttClient {
       _activeClient = client;
       return client;
     } catch (e) {
-      client.disconnect();
       _failureCount++;
       print('[MQTT] Connection failed (attempt $_failureCount/$_maxRetries): $e');
       rethrow; // Riverpod retries with exponential backoff via _mqttRetry
