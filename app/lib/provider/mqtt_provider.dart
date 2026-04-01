@@ -49,7 +49,7 @@ Future<MqttServerClient?> mqttClient(Ref ref) async {
   MqttServerClient? connected;
   Object? lastError;
 
-  for (int attempt = 0; attempt <= maxRetries; attempt++) {
+  for (int attempt = 0; attempt < maxRetries; attempt++) {
     // Recreate the client each attempt — disconnect() leaves it unusable.
     final attemptClient = MqttServerClient.withPort(mqttEndpoint, clientName, 443);
     attemptClient.websocketHeader = websocketHeader;
@@ -68,7 +68,7 @@ Future<MqttServerClient?> mqttClient(Ref ref) async {
     } catch (e) {
       attemptClient.disconnect();
       lastError = e;
-      if (attempt >= maxRetries) break;
+      if (attempt >= maxRetries - 1) break;
       final delayMs = min(
         baseDelay.inMilliseconds * pow(2, attempt).toInt(),
         maxDelay.inMilliseconds,
