@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/service/amplify_service.dart';
 import 'package:mqtt_client/mqtt_client.dart';
@@ -11,80 +12,91 @@ part 'mqtt_provider.g.dart';
 
 final String mqttEndpoint = "wss://ws-mqtt.app.healthesolutions.ca/mqtt";
 
-@riverpod
-Future<MqttServerClient?> mqttClient(Ref ref) async {
-  final device = ref.watch(activeDeviceProvider);
+const _maxRetries = 5;
 
-  if(device == null) {
-    return null;
-  }
+/// Exponential backoff: 5s → 10s → 20s → 40s → 80s, then give up.
+Duration? _mqttRetry(int retryCount, Object error) {
+  if (retryCount >= _maxRetries) return null;
+  const baseSecs = 5;
+  const capSecs = 300; // 5 minutes
+  final secs = (baseSecs * pow(2, retryCount)).toInt();
+  return Duration(seconds: secs < capSecs ? secs : capSecs);
+}
 
-  if(device.thingName == null) {
-    return null;
-  }
+@Riverpod(retry: _mqttRetry)
+class MqttClient extends _$MqttClient {
+  MqttServerClient? _activeClient;
+  int _failureCount = 0;
 
-    String? idToken = await AmplifyService().getIdToken();
-    if (idToken == null) {
+  @override
+  Future<MqttServerClient?> build() async {
+    final device = ref.watch(activeDeviceProvider);
+    ref.onDispose(() => _activeClient?.disconnect());
+
+    // Once the retry budget is exhausted, stop permanently.
+    // Only a manual reconnect() call can reset this.
+    if (_failureCount > _maxRetries) {
+      print('[MQTT] Retry budget exhausted — not attempting connection');
       return null;
     }
-    String idpart = idToken.split(".")[1];
-    final base64s = base64.decode(base64Url.normalize(idpart));
-    final jsonstr = utf8.decode(base64s);
-    final String userid = jsonDecode(jsonstr)["userId"];
 
+    if (device == null || device.thingName == null) {
+      print('[MQTT] No device or thingName — skipping connection');
+      return null;
+    }
+
+    final idToken = await AmplifyService().getIdToken();
+    if (idToken == null) {
+      print('[MQTT] getIdToken() returned null — aborting');
+      return null;
+    }
+
+    final idpart = idToken.split(".")[1];
+    final base64s = base64.decode(base64Url.normalize(idpart));
+    final Map<String, dynamic> jwtClaims = jsonDecode(utf8.decode(base64s));
+
+    final userid = jwtClaims["userId"] as String?;
+    if (userid == null) {
+      print('[MQTT] JWT has no "userId" claim — aborting. Available: ${jwtClaims.keys.toList()}');
+      return null;
+    }
 
     final clientName = '${device.thingName}/user/$userid';
+    print('[MQTT] Connecting: clientName=$clientName, x-device-id=${device.id}, x-tenant-id=${device.tenantId}');
 
-  AmplifyService amplifyService = AmplifyService();
-  final websocketHeader = {
-    "x-jwt": await amplifyService.getIdToken(),
-    "x-device-id": device.id,
-    "x-tenant-id": device.tenantId
-  };
-
-  const maxRetries = 5;
-  const baseDelay = Duration(seconds: 5);
-  const maxDelay = Duration(minutes: 5);
-
-  MqttServerClient? connected;
-  Object? lastError;
-
-  for (int attempt = 0; attempt < maxRetries; attempt++) {
-    // Recreate the client each attempt — disconnect() leaves it unusable.
-    final attemptClient = MqttServerClient.withPort(mqttEndpoint, clientName, 443);
-    attemptClient.websocketHeader = websocketHeader;
-    attemptClient.useWebSocket = true;
-    attemptClient.websocketProtocols = MqttClientConstants.protocolsSingleDefault;
-    attemptClient.setProtocolV311();
-    attemptClient.logging(on: true);
-    attemptClient.keepAlivePeriod = 20;
-    attemptClient.connectTimeoutPeriod = 30;
-    attemptClient.autoReconnect = true;
+    final client = MqttServerClient.withPort(mqttEndpoint, clientName, 443);
+    client.websocketHeader = {
+      "x-jwt": idToken,
+      "x-device-id": device.id,
+      "x-tenant-id": device.tenantId,
+    };
+    client.useWebSocket = true;
+    client.websocketProtocols = MqttClientConstants.protocolsSingleDefault;
+    client.setProtocolV311();
+    client.logging(on: true);
+    client.keepAlivePeriod = 20;
+    client.connectTimeoutPeriod = 30;
+    client.autoReconnect = true;
 
     try {
-      await attemptClient.connect();
-      connected = attemptClient;
-      break;
+      await client.connect();
+      print('[MQTT] Connected successfully');
+      _failureCount = 0;
+      _activeClient = client;
+      return client;
     } catch (e) {
-      attemptClient.disconnect();
-      lastError = e;
-      if (attempt >= maxRetries - 1) break;
-      final delayMs = min(
-        baseDelay.inMilliseconds * pow(2, attempt).toInt(),
-        maxDelay.inMilliseconds,
-      );
-      await Future.delayed(Duration(milliseconds: delayMs));
+      client.disconnect();
+      _failureCount++;
+      print('[MQTT] Connection failed (attempt $_failureCount/$_maxRetries): $e');
+      rethrow; // Riverpod retries with exponential backoff via _mqttRetry
     }
   }
 
-  if (connected == null) {
-    throw Exception('MQTT Connection failed after $maxRetries attempts: $lastError');
+  /// Manually trigger a reconnect, resetting the retry counter.
+  void reconnect() {
+    _activeClient?.disconnect();
+    _activeClient = null;
+    _failureCount = 0;
+    ref.invalidateSelf();
   }
-
-  // Clean up when the provider is disposed (e.g., user leaves the screen)
-  ref.onDispose(() {
-    connected!.disconnect();
-  });
-
-  return connected;
 }
