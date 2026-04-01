@@ -62,9 +62,11 @@ class Pillbox extends ConsumerWidget {
                         isDeviceLoading: deviceStateAsync.isLoading,
                         isDeviceActive: isDeviceActive,
                         isToday: day.toUpperCase() == currentDayOfWeek.toUpperCase(),
-                        // 4. Safely fall back to disabled status if state is null
-                        dayStatus: deviceState?.bins[dayIndex] ?? BinStatus.disabled,
-                        nightStatus: deviceState?.bins[nightIndex] ?? BinStatus.disabled,
+                        dayStatus: deviceState?.bins[dayIndex]?.binStatus ?? BinStatus.disabled,
+                        nightStatus: deviceState?.bins[nightIndex]?.binStatus ?? BinStatus.disabled,
+                        doors: deviceState?.doors,
+                        dayBinIndex: dayIndex,
+                        nightBinIndex: nightIndex,
                       ),
                     ],
                   );

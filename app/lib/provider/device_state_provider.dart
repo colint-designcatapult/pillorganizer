@@ -46,7 +46,8 @@ Stream<DeviceState?> deviceState(Ref ref) async* {
             final dynamic decodedJson = jsonDecode(jsonString);
 
             DeviceStateDTO dto = DeviceStateDTO.fromJson(decodedJson);
-            yield DeviceState.fromDTO(dto);
+            // Use the device ID from the subscription context
+            yield DeviceState.fromDTO(dto, deviceId: device.id);
           } catch (e, st) {
             print('Failed to parse MQTT message: $e');
             // We intentionally do not throw the error here, so the 'await for' loop continues

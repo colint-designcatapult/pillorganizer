@@ -9,6 +9,9 @@ class BinColumn extends StatelessWidget {
   final BinStatus nightStatus;
   final bool isDeviceActive;
   final bool isDeviceLoading;
+  final int? doors;
+  final int dayBinIndex;
+  final int nightBinIndex;
 
   const BinColumn(
       {Key? key,
@@ -16,7 +19,10 @@ class BinColumn extends StatelessWidget {
       required this.dayStatus,
       required this.nightStatus,
       required this.isDeviceActive,
-      required this.isDeviceLoading})
+      required this.isDeviceLoading,
+      this.doors,
+      required this.dayBinIndex,
+      required this.nightBinIndex})
       : super(key: key);
 
   @override
@@ -38,6 +44,7 @@ class BinColumn extends StatelessWidget {
                     icon: 'moon',
                     status: nightStatus,
                     isDeviceActive: isDeviceActive,
+                    isOpen: _isBinOpen(nightBinIndex),
                   ),
                 ),
                 SizedBox(height: 10.0.h),
@@ -47,9 +54,16 @@ class BinColumn extends StatelessWidget {
                     icon: 'sun',
                     status: dayStatus,
                     isDeviceActive: isDeviceActive,
+                    isOpen: _isBinOpen(dayBinIndex),
                   ),
                 ),
               ],
             )));
+  }
+
+  /// Check if a specific bin is physically open based on the doors bitfield
+  bool _isBinOpen(int binIndex) {
+    if (doors == null) return false;
+    return (doors! & (1 << binIndex)) != 0;
   }
 }

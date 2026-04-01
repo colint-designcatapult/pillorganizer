@@ -8,6 +8,7 @@ class BinContainer extends StatelessWidget {
   final String icon;
   final BinStatus status;
   final bool isDeviceActive;
+  final bool isOpen;
 
   const BinContainer({
     super.key,
@@ -15,18 +16,18 @@ class BinContainer extends StatelessWidget {
     required this.icon,
     required this.status,
     required this.isDeviceActive,
+    this.isOpen = false,
   });
 
   @override
   Widget build(BuildContext context) {
-
     Color backgroundColor = isDeviceActive
         ? (isToday ? const Color(0xFF206B8B) : const Color(0xFFBFD2DB))
         : Colors.white;
 
     String iconName = isDeviceActive ? (isToday ? '${icon}White' : icon) : icon;
 
-    String binStatusIconPath = getBinStatusIcon(status, isDeviceActive);
+    String binStatusIconPath = getBinStatusIcon(status, isDeviceActive, isOpen);
 
     return Container(
       // 108 is the padding on each side of the pillbox and the padding between the column
@@ -64,7 +65,11 @@ class BinContainer extends StatelessWidget {
     );
   }
 
-  String getBinStatusIcon(BinStatus status, bool isActive) {
+  String getBinStatusIcon(BinStatus status, bool isActive, bool isOpen) {
+    // If bin is physically open, always show green
+    if (isOpen) {
+      return 'lib/assets/SVG/greenlight.svg';
+    }
     if (isActive) {
       switch (status) {
         case BinStatus.missed:
@@ -74,9 +79,8 @@ class BinContainer extends StatelessWidget {
           return 'lib/assets/SVG/greenlight.svg';
         case BinStatus.disabled:
         case BinStatus.pending:
+        case BinStatus.noRecord:
           return 'lib/assets/SVG/offlight.svg';
-        default:
-          return 'lib/assets/SVG/redlight.svg';
       }
     } else {
       return 'lib/assets/SVG/cancelIcon.svg';
