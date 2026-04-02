@@ -68,102 +68,8 @@ static RTC_DATA_ATTR ch_stats_t ch_stats[ADC_NUM_DOOR_CHANNELS];
 
 static void init_ulp_program(void);
 static void start_ulp_program(void);
-static uint32_t process_ulp_events(void);
 
-static void IRAM_ATTR ulp_isr_handler(void *arg)
-{
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    vTaskNotifyGiveFromISR(ulp_task_handle, &xHigherPriorityTaskWoken);
-    
-    if (xHigherPriorityTaskWoken) {
-        portYIELD_FROM_ISR();
-    }
-}
-
-static void ulp_event_task(void *arg)
-{
-    while (1) {
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
-        // Process the new events (or retrieve state updated during wake stub)
-        uint32_t wake_reasons = process_ulp_events();
-
-        // 1. Handle Battery
-        if (wake_reasons & WAKE_REASON_BATTERY) {
-            //supervisor_submit_event_block(EVENT_MUX_BATTERY_CHANGE, (intptr_t)battery_status, pdMS_TO_TICKS(10));
-        }
-
-        // 2. Handle Doors based on RTC state vs known state
-        for (int i = 0; i < ADC_NUM_DOOR_CHANNELS; i++) {
-            if (ch_stats[i].state != rtc_last_known_state[i]) {
-                
-                ESP_LOGI(TAG, "Door %d | STATE: %s | Real ADC: %ld | MAD: %ld", 
-                         i, 
-                         ch_stats[i].state == DOOR_OPEN ? "OPEN" : "CLOSED",
-                         ch_stats[i].ema / SCALE_FACTOR, 
-                         ch_stats[i].mad / SCALE_FACTOR);
-                
-                esp_err_t err;
-                if (ch_stats[i].state == DOOR_OPEN) {
-                    err = supervisor_submit_event_block(EVENT_DOOR_OPENED, (intptr_t)i, pdMS_TO_TICKS(10));
-                } else {
-                    err = supervisor_submit_event_block(EVENT_DOOR_CLOSED, (intptr_t)i, pdMS_TO_TICKS(10));
-                }
-
-                // Sync the state once successful
-                if (err == ESP_OK) {
-                    rtc_last_known_state[i] = ch_stats[i].state;
-                }
-            }
-        }
-    }
-}
-
-
-void mux_init()
-{
-    /* 1. Setup the FreeRTOS processing task */
-    xTaskCreate(ulp_event_task, "ulp_event_task", 4096, NULL, 5, &ulp_task_handle);
-
-    /* 2. Register the ULP callback using the official ESP-IDF API 
-     * This attaches our handler safely behind the scenes without 
-     * colliding with the Brownout detector.
-     */
-    ESP_ERROR_CHECK(ulp_isr_register(ulp_isr_handler, NULL));
-    
-    /* 3. Enable the specific ULP interrupt bit in the RTC controller so it fires */
-    REG_SET_BIT(RTC_CNTL_INT_ENA_REG, RTC_CNTL_ULP_CP_INT_ENA);
-
-    ESP_LOGI(TAG, "MUX driver initialized");
-}
-
-void mux_prep_deep_sleep()
-{
-    /* Clean up the interrupt enable bit so we don't leak logic on the next wake cycle */
-    REG_CLR_BIT(RTC_CNTL_INT_ENA_REG, RTC_CNTL_ULP_CP_INT_ENA);
-    
-    ESP_ERROR_CHECK(esp_sleep_enable_ulp_wakeup());
-}
-
-void mux_fresh_boot()
-{
-    init_ulp_program();
-    start_ulp_program();
-}
-
-void mux_wake_deep_sleep()
-{
-    // It's safe to process events now
-}
-
-bool RTC_IRAM_ATTR mux_wake_deep_sleep_early()
-{
-    // Process events and return true ONLY if it warrants a full wake up
-    uint32_t wake_reasons = process_ulp_events();
-    return (wake_reasons > 0);
-}
-
-static uint32_t process_ulp_events(void)
+static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
 {    
     uint32_t wake_flags = WAKE_REASON_NONE;
 
@@ -183,22 +89,15 @@ static uint32_t process_ulp_events(void)
     uint32_t bat_end_val   = local_buffer[16];
     uint32_t vbus_val      = local_buffer[15];
 
-    battery_state_t prev_state = battery_get_state();
-    battery_submit_adc_readings(bat_start_val, bat_end_val, vbus_val);
-    battery_state_t new_state = battery_get_state();
-
-    if (prev_state.presence != new_state.presence ||
-        prev_state.charge_state != new_state.charge_state ||
-        prev_state.level != new_state.level ||
-        prev_state.usb_power_connected != new_state.usb_power_connected) {
-        
+    // Delegate EVERYTHING to the battery module! It returns true if the state meaningfully changed.
+    if (battery_submit_adc_readings(bat_start_val, bat_end_val, vbus_val)) {
         wake_flags |= WAKE_REASON_BATTERY;
     }
 
-    // If no battery connected, but the battery signal on the front end or tail end is high
-    //  suppress the readings as the battery detection signal is present
-    if (new_state.presence == BATTERY_PRESENCE_DISCONNECTED && (bat_start_val > 1500 || bat_end_val > 1500)) {
-        return wake_flags; // Return whatever flags we gathered, but skip doors
+    // 2. Inhibit door logic if no battery is present AND the pulse is currently HIGH
+    if (battery_get_presence() == BATTERY_PRESENCE_DISCONNECTED && (bat_start_val > 1500 || bat_end_val > 1500)) {
+        // Throw away these ULP reads so they don't corrupt the EMA/MAD door baselines.
+        return wake_flags; 
     }
 
     /* ==========================================================
@@ -213,7 +112,7 @@ static uint32_t process_ulp_events(void)
         int door = ch - ADC_DOOR_CHANNEL_START;
         ch_stats_t* stats = &ch_stats[door];
         
-        int32_t s_val = local_buffer[ch] * SCALE_FACTOR;
+        int32_t s_val = local_buffer[ch] * SCALE_FACTOR; 
 
         if (!stats->initialized) {
             stats->ema = s_val;
@@ -283,6 +182,99 @@ static uint32_t process_ulp_events(void)
     }
     
     return wake_flags;
+}
+
+static void IRAM_ATTR ulp_isr_handler(void *arg)
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    vTaskNotifyGiveFromISR(ulp_task_handle, &xHigherPriorityTaskWoken);
+    
+    if (xHigherPriorityTaskWoken) {
+        portYIELD_FROM_ISR();
+    }
+}
+
+static void ulp_event_task(void *arg)
+{
+    while (1) {
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+        // Process the new events (or retrieve state updated during wake stub)
+        uint32_t wake_reasons = process_ulp_events();
+
+        // 1. Handle Battery
+        if (wake_reasons & WAKE_REASON_BATTERY) {
+            ESP_ERROR_CHECK(supervisor_submit_event_block(EVENT_BATTERY_CHANGE, 0, pdMS_TO_TICKS(100)));
+        }
+
+        // 2. Handle Doors based on RTC state vs known state
+        for (int i = 0; i < ADC_NUM_DOOR_CHANNELS; i++) {
+            if (ch_stats[i].state != rtc_last_known_state[i]) {
+                
+                ESP_LOGI(TAG, "Door %d | STATE: %s | Real ADC: %ld | MAD: %ld", 
+                         i, 
+                         ch_stats[i].state == DOOR_OPEN ? "OPEN" : "CLOSED",
+                         ch_stats[i].ema / SCALE_FACTOR, 
+                         ch_stats[i].mad / SCALE_FACTOR);
+                
+                esp_err_t err;
+                if (ch_stats[i].state == DOOR_OPEN) {
+                    err = supervisor_submit_event_block(EVENT_DOOR_OPENED, (intptr_t)i, pdMS_TO_TICKS(10));
+                } else {
+                    err = supervisor_submit_event_block(EVENT_DOOR_CLOSED, (intptr_t)i, pdMS_TO_TICKS(10));
+                }
+
+                // Sync the state once successful
+                if (err == ESP_OK) {
+                    rtc_last_known_state[i] = ch_stats[i].state;
+                }
+            }
+        }
+    }
+}
+
+
+void mux_init()
+{
+    /* 1. Setup the FreeRTOS processing task pinned to Core 0 (PRO CPU) */
+    xTaskCreatePinnedToCore(ulp_event_task, "ulp_event_task", 4096, NULL, 5, &ulp_task_handle, 0);
+
+    /* 2. Register the ULP callback using the official ESP-IDF API 
+     * This attaches our handler safely behind the scenes without 
+     * colliding with the Brownout detector.
+     */
+    ESP_ERROR_CHECK(ulp_isr_register(ulp_isr_handler, NULL));
+    
+    /* 3. Enable the specific ULP interrupt bit in the RTC controller so it fires */
+    REG_SET_BIT(RTC_CNTL_INT_ENA_REG, RTC_CNTL_ULP_CP_INT_ENA);
+
+    ESP_LOGI(TAG, "MUX driver initialized");
+}
+
+void mux_prep_deep_sleep()
+{
+    /* Clean up the interrupt enable bit so we don't leak logic on the next wake cycle */
+    REG_CLR_BIT(RTC_CNTL_INT_ENA_REG, RTC_CNTL_ULP_CP_INT_ENA);
+    
+    ESP_ERROR_CHECK(esp_sleep_enable_ulp_wakeup());
+}
+
+void mux_fresh_boot()
+{
+    init_ulp_program();
+    start_ulp_program();
+}
+
+void mux_wake_deep_sleep()
+{
+    // Nothing here. 
+}
+
+bool RTC_IRAM_ATTR mux_wake_deep_sleep_early()
+{
+    // Process events and return true ONLY if it warrants a full wake up
+    uint32_t wake_reasons = process_ulp_events();
+    return (wake_reasons > 0);
 }
 
 static void init_ulp_program(void)

@@ -31,8 +31,8 @@ typedef struct {
 
 void battery_init();
 
-// Submit raw ADC values for battery start/end and VBUS
-void battery_submit_adc_readings(uint32_t bat_start, uint32_t bat_end, uint32_t vbus);
+// Submit raw ADC values for battery start/end and VBUS. Returns true if state changed.
+bool battery_submit_adc_readings(uint32_t bat_start, uint32_t bat_end, uint32_t vbus);
 
 // Submit /CHG pin state
 void battery_submit_charge_pin(bool charge_pin_active);
@@ -42,6 +42,9 @@ void battery_submit_pgood_pin(bool pgood_active);
 
 // Retrieve a copy of the current hardware battery state
 battery_state_t battery_get_state(void);
+
+// Retrieve just the presence field (safe for RTC_IRAM_ATTR)
+battery_presence_t battery_get_presence(void);
 
 // Format battery state into a string
 const char* battery_status_str(battery_state_t state);

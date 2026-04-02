@@ -169,11 +169,8 @@ void gpio_task(void *pvParameters)
             int level = gpio_get_level(io_num);
             
             if (io_num == BAT_PGOOD_PIN) {
-                ESP_LOGI(TAG, "PGOOD: %d", level);
-                // Notify battery subsystem, note that this pin is active low so we invert the boolean
                 battery_submit_pgood_pin(!((bool) level));
             } else if (io_num == BAT_CHARGE_PIN) {
-                ESP_LOGI(TAG, "CHARGE: %d", level);
                 battery_submit_charge_pin(!((bool) level));
             }
         }
@@ -184,17 +181,9 @@ static void app_init_gpio(void)
 {
     gpio_config_t io_conf = { 0 };
 
-    // TEST POINTS
-	memset(&io_conf, 0, sizeof(io_conf));
-	io_conf.intr_type = GPIO_INTR_DISABLE;
-    io_conf.mode = GPIO_MODE_OUTPUT;
-    io_conf.pin_bit_mask = ((1ULL << TP47)|(1ULL << VBAT_MEAS_PIN)|(1ULL << TP18));
-    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;  
-    gpio_config(&io_conf);
-
     gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
-    xTaskCreate(gpio_task, "gpio_task", 2048, NULL, 10, NULL);
+    //start gpio task pinned to PRO CPU to prevent Core 1 RTC bus limitations
+    xTaskCreatePinnedToCore(gpio_task, "gpio_task", 2048, NULL, 10, NULL, 0);
 
 	// BAT_PGOOD_PIN
 	memset(&io_conf, 0, sizeof(io_conf));
@@ -214,7 +203,7 @@ static void app_init_gpio(void)
     io_conf.pull_up_en = GPIO_PULLUP_ENABLE;  
     gpio_config(&io_conf);
 
-    gpio_install_isr_service(0);
+    gpio_install_isr_service(ESP_INTR_FLAG_IRAM); 
 
     // Hook the ISR handler for specific gpio pins
     gpio_isr_handler_add(BAT_PGOOD_PIN, gpio_isr_handler, (void*) BAT_PGOOD_PIN);
@@ -250,7 +239,6 @@ static void app_init_gpio(void)
     gpio_config(&io_conf);
 
     // Attach the interrupt
-    gpio_install_isr_service(ESP_INTR_FLAG_IRAM); 
     gpio_isr_handler_add(RESET_BTN, reset_btn_isr_handler, NULL);
 }
 
