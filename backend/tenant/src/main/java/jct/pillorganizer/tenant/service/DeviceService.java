@@ -227,8 +227,10 @@ public class DeviceService {
 
     @Transactional
     public DeviceAccessDto updateNickname(User user, LogicalDevice device, String nickname) {
+        DeviceAccessDto access = getUserDevice(user, device)
+                .orElseThrow(() -> new DeviceAccessException("No access to device"));
         logicalDeviceRepository.updateNickname(device.getId(), nickname);
-        return getUserDevice(user, device).orElseThrow(() -> new DeviceAccessException("No access to device"));
+        return access;
     }
 
 }
