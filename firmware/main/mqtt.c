@@ -108,6 +108,10 @@ esp_err_t mqtt_publish_device_state(device_state_t* state)
     uint64_t ts_ms = (uint64_t)state->modified_at;
     cJSON_AddNumberToObject(root, "timestamp", (double)ts_ms);
     cJSON *bat_obj = cJSON_CreateObject();
+    if (!bat_obj) {
+        cJSON_Delete(root);
+        return ESP_ERR_NO_MEM;
+    }
     cJSON_AddNumberToObject(bat_obj, "v", state->battery.usb_power_connected ? 1 : 0);
     cJSON_AddNumberToObject(bat_obj, "p", state->battery.power_good ? 1 : 0);
     cJSON_AddNumberToObject(bat_obj, "b", (int)state->battery.presence);

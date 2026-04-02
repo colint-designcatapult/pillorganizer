@@ -38,14 +38,27 @@ static void notify_state_change()
 
 void battery_init()
 {
-    if (s_battery_state.presence == BATTERY_PRESENCE_UNKNOWN) {
-        int charge_level = gpio_get_level(BAT_CHARGE_PIN);
-        int pgood_level = gpio_get_level(BAT_PGOOD_PIN);
+    int charge_level = gpio_get_level(BAT_CHARGE_PIN);
+    int pgood_level = gpio_get_level(BAT_PGOOD_PIN);
 
-        // Note: pins are active low
-        s_battery_state.charge_state = (charge_level == 0) ? BATTERY_CHARGE_CHARGING : BATTERY_CHARGE_NOT_CHARGING;
-        s_battery_state.power_good = (pgood_level == 0);
-        
+    // Note: pins are active low
+    battery_charge_state_t new_charge_state =
+        (charge_level == 0) ? BATTERY_CHARGE_CHARGING : BATTERY_CHARGE_NOT_CHARGING;
+    bool new_power_good = (pgood_level == 0);
+
+    bool state_changed = false;
+
+    if (s_battery_state.charge_state != new_charge_state) {
+        s_battery_state.charge_state = new_charge_state;
+        state_changed = true;
+    }
+
+    if (s_battery_state.power_good != new_power_good) {
+        s_battery_state.power_good = new_power_good;
+        state_changed = true;
+    }
+
+    if (state_changed) {
         notify_state_change();
     }
 }

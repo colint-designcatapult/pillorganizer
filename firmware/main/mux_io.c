@@ -19,9 +19,7 @@
 #include "pill_pins.h"
 #include "esp_log.h"
 #include "supervisor.h"
-#include <stdatomic.h>
-#include <esp_adc/adc_cali_scheme.h>
-#include <battery.h>
+#include "battery.h"
 
 #define TAG "MUX_IO"
 
