@@ -20,7 +20,6 @@ import jct.pillorganizer.tenant.dto.DeviceStateDTO;
 import jct.pillorganizer.tenant.dto.UpdateDeviceNickname;
 import jct.pillorganizer.tenant.exceptions.DeviceAccessException;
 import jct.pillorganizer.tenant.model.device.LogicalDevice;
-import jct.pillorganizer.tenant.model.device.ProvisionRecord;
 import jct.pillorganizer.tenant.model.user.User;
 import jct.pillorganizer.tenant.service.DeviceProvisionService;
 import jct.pillorganizer.tenant.service.DeviceService;
