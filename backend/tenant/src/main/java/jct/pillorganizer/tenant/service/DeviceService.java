@@ -1,15 +1,13 @@
 package jct.pillorganizer.tenant.service;
 
-import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
 import jct.pillorganizer.core.TenantDetails;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
-import jct.pillorganizer.core.dto.DeviceClaimEligibilityDto;
-import jct.pillorganizer.core.dto.DeviceEligibilityCheckDto;
 import jct.pillorganizer.core.service.TenantService;
 import jct.pillorganizer.core.uid.UuidService;
+import jct.pillorganizer.tenant.dto.UpdateDeviceNickname;
 import jct.pillorganizer.tenant.exceptions.DeviceAccessException;
 import jct.pillorganizer.tenant.mapper.DeviceMapper;
 import jct.pillorganizer.tenant.model.device.DeviceClass;
@@ -24,7 +22,6 @@ import lombok.extern.flogger.Flogger;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -169,6 +166,12 @@ public class DeviceService {
                 .collect(Collectors.toList());
     }
 
+    public Optional<DeviceAccessDto> getUserDevice(User user, LogicalDevice device) {
+        TenantDetails tenantDetails = tenantService.getCurrentTenant().orElse(null);
+        return deviceUserRepository.findByUserAndDevice(user, device)
+                .map(du -> deviceMapper.toAccessDTO(du, tenantDetails));
+    }
+
     @Transactional
     public void addUserAccess(User user, LogicalDevice device) {
         Optional<DeviceUser> existing = deviceUserRepository.findByUserAndDevice(user, device);
@@ -222,5 +225,10 @@ public class DeviceService {
         return logicalDeviceRepository.findById(id);
     }
 
+    @Transactional
+    public DeviceAccessDto updateNickname(User user, LogicalDevice device, String nickname) {
+        logicalDeviceRepository.updateNickname(device.getId(), nickname);
+        return getUserDevice(user, device).orElseThrow(() -> new DeviceAccessException("No access to device"));
+    }
 
 }

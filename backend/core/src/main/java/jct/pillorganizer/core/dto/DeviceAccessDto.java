@@ -1,18 +1,19 @@
 package jct.pillorganizer.core.dto;
 
 import io.micronaut.serde.annotation.Serdeable;
+import jakarta.annotation.Nullable;
 
 @Serdeable
 public record DeviceAccessDto(
         String deviceId,
-        String claimId,
+        @Nullable String claimId,
         String nickname,
-        String serialNo,
-        String modelId,
+        @Nullable String serialNo,
+        @Nullable String modelId,
         String tenantId,
         String apiBase,
         boolean primaryUser,
-        String thingName,
+        @Nullable String thingName,
         String tenantName
 ) {
 }
