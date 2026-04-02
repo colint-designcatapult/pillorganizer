@@ -27,10 +27,15 @@ Duration? _nextRetryDelay(int failureCount) {
 class MqttClient extends _$MqttClient {
   MqttServerClient? _activeClient;
   int _failureCount = 0;
+  Timer? _retryTimer;
 
   @override
   Future<MqttServerClient?> build() async {
     final device = ref.watch(activeDeviceProvider);
+
+    // Cancel any pending retry timer from a previous build.
+    _retryTimer?.cancel();
+    _retryTimer = null;
 
     // Disconnect any client from a previous build before starting fresh.
     _activeClient?.disconnect();
@@ -38,7 +43,7 @@ class MqttClient extends _$MqttClient {
 
     // Once the retry budget is exhausted, stop permanently.
     // Only a manual reconnect() call can reset this.
-    if (_failureCount >= _maxRetries) {
+    if (_failureCount > _maxRetries) {
       print('[MQTT] Retry budget exhausted — not attempting connection');
       return null;
     }
@@ -96,13 +101,16 @@ class MqttClient extends _$MqttClient {
       _activeClient = client;
       return client;
     } catch (e) {
+      client.disconnect();
       _failureCount++;
       print('[MQTT] Connection failed (attempt $_failureCount/$_maxRetries): $e');
-      final delay = _nextRetryDelay(_failureCount);
+      // Use failureCount - 1 as the exponent so the first retry is 5s,
+      // matching the documented 5→10→20→40→80s schedule.
+      final delay = _nextRetryDelay(_failureCount - 1);
       if (delay != null) {
         print('[MQTT] Retrying in ${delay.inSeconds}s');
-        final timer = Timer(delay, () => ref.invalidateSelf());
-        ref.onDispose(timer.cancel);
+        _retryTimer = Timer(delay, () => ref.invalidateSelf());
+        ref.onDispose(() => _retryTimer?.cancel());
       } else {
         print('[MQTT] Retry budget exhausted — giving up');
       }
@@ -112,6 +120,8 @@ class MqttClient extends _$MqttClient {
 
   /// Manually trigger a reconnect, resetting the retry counter.
   void reconnect() {
+    _retryTimer?.cancel();
+    _retryTimer = null;
     _activeClient?.disconnect();
     _activeClient = null;
     _failureCount = 0;
