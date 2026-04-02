@@ -10,8 +10,10 @@
 
 #define TAG "BATTERY"
 
-// Protects s_battery_state from concurrent Task/ISR mutations
-static portMUX_TYPE s_battery_lock = portMUX_INITIALIZER_UNLOCKED;
+// Protects s_battery_state from concurrent Task/ISR mutations.
+// Stored in RTC memory because battery state updates can run from the
+// deep-sleep wake-stub path before normal DRAM globals are guaranteed valid.
+static RTC_DATA_ATTR portMUX_TYPE s_battery_lock = portMUX_INITIALIZER_UNLOCKED;
 
 // Default state. Saved in RTC to persist deep sleep.
 static RTC_DATA_ATTR battery_state_t s_battery_state = {
@@ -141,6 +143,7 @@ bool RTC_IRAM_ATTR battery_submit_adc_readings(uint32_t bat_start, uint32_t bat_
                     
                     if (s_battery_state.charge_state != BATTERY_CHARGE_UNKNOWN) {
                         s_battery_state.charge_state = BATTERY_CHARGE_UNKNOWN;
+                        state_changed = true;
                     }
                 }
             }

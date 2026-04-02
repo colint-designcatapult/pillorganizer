@@ -154,8 +154,16 @@ static QueueHandle_t gpio_evt_queue = NULL;
 static void IRAM_ATTR gpio_isr_handler(void* arg)
 {
     uint32_t gpio_num = (uint32_t) arg;
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    BaseType_t send_result;
+
     // Send the GPIO number that triggered the interrupt to the queue
-    xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
+    send_result = xQueueSendFromISR(gpio_evt_queue, &gpio_num, &xHigherPriorityTaskWoken);
+
+    // If a higher-priority task was unblocked, request a context switch now.
+    if ((send_result == pdPASS) && (xHigherPriorityTaskWoken == pdTRUE)) {
+        portYIELD_FROM_ISR();
+    }
 }
 
 void gpio_task(void *pvParameters)
