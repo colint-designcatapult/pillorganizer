@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -14,15 +15,15 @@ final String mqttEndpoint = "wss://ws-mqtt.app.healthesolutions.ca/mqtt";
 const _maxRetries = 5;
 
 /// Exponential backoff: 5s → 10s → 20s → 40s → 80s, then give up.
-Duration? _mqttRetry(int retryCount, Object error) {
-  if (retryCount >= _maxRetries) return null;
+Duration? _nextRetryDelay(int failureCount) {
+  if (failureCount >= _maxRetries) return null;
   const baseSecs = 5;
   const capSecs = 300; // 5 minutes
-  final secs = (baseSecs * pow(2, retryCount)).toInt();
+  final secs = (baseSecs * pow(2, failureCount)).toInt();
   return Duration(seconds: secs < capSecs ? secs : capSecs);
 }
 
-@riverpod(retry: _mqttRetry)
+@riverpod
 class MqttClient extends _$MqttClient {
   MqttServerClient? _activeClient;
   int _failureCount = 0;
@@ -97,7 +98,15 @@ class MqttClient extends _$MqttClient {
     } catch (e) {
       _failureCount++;
       print('[MQTT] Connection failed (attempt $_failureCount/$_maxRetries): $e');
-      rethrow; // Riverpod retries with exponential backoff via _mqttRetry
+      final delay = _nextRetryDelay(_failureCount);
+      if (delay != null) {
+        print('[MQTT] Retrying in ${delay.inSeconds}s');
+        final timer = Timer(delay, () => ref.invalidateSelf());
+        ref.onDispose(timer.cancel);
+      } else {
+        print('[MQTT] Retry budget exhausted — giving up');
+      }
+      return null;
     }
   }
 
