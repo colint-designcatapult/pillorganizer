@@ -12,9 +12,9 @@ part 'mqtt_provider.g.dart';
 
 final String mqttEndpoint = "wss://ws-mqtt.app.healthesolutions.ca/mqtt";
 
-const _maxRetries = 5;
+const _maxRetries = 2;
 
-/// Exponential backoff: 5s → 10s → 20s → 40s → 80s, then give up.
+/// Exponential backoff: 5s → 10s → failure.
 Duration? _nextRetryDelay(int failureCount) {
   if (failureCount >= _maxRetries) return null;
   const baseSecs = 5;
