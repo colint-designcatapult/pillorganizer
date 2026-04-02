@@ -10,6 +10,7 @@
 #include <freertos/FreeRTOS.h>
 #include "rtc.h"
 #include "device_config.h"
+#include "battery.h"
 
 
 /* --- EVENTS (State Transition Edges) --- */
@@ -48,7 +49,8 @@ typedef enum {
     EVENT_ERROR_CLEARED,
     EVENT_SCHEDULE_DELTA_RECEIVED,
     EVENT_RELOAD_TIMEOUT,
-    EVENT_RELOAD_COMPLETE
+    EVENT_RELOAD_COMPLETE,
+    EVENT_BATTERY_CHANGE
 } supervisor_event_id_t;
 
 typedef struct {
@@ -115,10 +117,8 @@ typedef struct device_state_t {
     rtc_utc_timestamp_ms modified_at;
     // Time state last synced
     rtc_utc_timestamp_ms synced_at;
-    // Battery percentage, out of 100
-    uint8_t battery;
-    // Battery charging status
-    bool charging;
+    // Battery status
+    battery_state_t battery;
     // State of the device reload process
     device_reload_state_t reload_state;
     // An integer acting as a bitfield to track door states

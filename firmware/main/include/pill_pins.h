@@ -55,4 +55,4 @@
 #define RESET_BTN               GPIO_NUM_36
 
 #define TP47                    GPIO_NUM_4
-#define VBAT_MEAS_PIN           GPIO_NUM_5
+#define VBAT_MEAS_PIN           GPIO_NUM_34
