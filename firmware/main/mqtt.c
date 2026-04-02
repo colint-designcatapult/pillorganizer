@@ -112,10 +112,10 @@ esp_err_t mqtt_publish_device_state(device_state_t* state)
         cJSON_Delete(root);
         return ESP_ERR_NO_MEM;
     }
-    cJSON_AddNumberToObject(bat_obj, "v", state->battery.usb_power_connected ? 1 : 0);
-    cJSON_AddNumberToObject(bat_obj, "p", state->battery.power_good ? 1 : 0);
-    cJSON_AddNumberToObject(bat_obj, "b", (int)state->battery.presence);
-    cJSON_AddNumberToObject(bat_obj, "c", (int)state->battery.charge_state);
+    cJSON_AddNumberToObject(bat_obj, "usb", state->battery.usb_power_connected ? 1 : 0);
+    cJSON_AddNumberToObject(bat_obj, "pg", state->battery.power_good ? 1 : 0);
+    cJSON_AddNumberToObject(bat_obj, "con", state->battery.presence == BATTERY_PRESENCE_CONNECTED ? 1 : 0);
+    cJSON_AddNumberToObject(bat_obj, "chg", (int)state->battery.charge_state == BATTERY_CHARGE_CHARGING ? 1 : 0);
     
     int pct = 0;
     switch(state->battery.level) {
@@ -124,7 +124,7 @@ esp_err_t mqtt_publish_device_state(device_state_t* state)
         case BATTERY_LEVEL_SHUTOFF: pct = 3; break;
         default: pct = 0; break;
     }
-    cJSON_AddNumberToObject(bat_obj, "l", pct);
+    cJSON_AddNumberToObject(bat_obj, "pct", pct);
     cJSON_AddItemToObject(root, "battery", bat_obj);
     cJSON_AddBoolToObject(root, "reloading", state->reload_state.stage != RELOAD_NONE); 
     cJSON_AddNumberToObject(root, "doors", state->doors);
