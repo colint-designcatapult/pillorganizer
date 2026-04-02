@@ -852,6 +852,7 @@ void supervisor_operation_event(const supervisor_event_t* event)
             break;
         case STATE_CONNECTING_MQTT:
             if (event->id == EVENT_MQTT_CONNECTED) {
+                mqtt_publish_device_state(&s_device_state);
                 shadow_state_on_connect();
                 s_state = STATE_MQTT_CONNECTED;
             }

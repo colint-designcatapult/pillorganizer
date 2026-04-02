@@ -29,7 +29,7 @@ class DosePeriodArea extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dosePeriodsRaw = ref.watch(deviceStateProvider.select((s) => s.value?.dosePeriods));
+    final List<DosePeriod> dosePeriodsRaw = const [];
     final activeDevice = ref.watch(activeDeviceProvider);
     final isOwner = activeDevice?.primaryUser ?? false;
     final deviceNotice = ref.watch(deviceNoticeProvider);

@@ -18,7 +18,7 @@ class DeviceNoticeNotifier extends _$DeviceNoticeNotifier {
         if (status == DeviceConnectionStatus.offline) {
           return DeviceNotice.disconnected;
         } else if (status == DeviceConnectionStatus.online &&
-            (deviceState?.dosePeriods.isEmpty ?? true)) {
+            (deviceState?.errors.contains(DeviceErrorFlag.noSchedule) ?? true)) {
           return DeviceNotice.empty;
         } else {
           return DeviceNotice.none;

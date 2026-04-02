@@ -128,6 +128,12 @@ esp_err_t mqtt_publish_device_state(device_state_t* state)
     cJSON_AddItemToObject(root, "battery", bat_obj);
     cJSON_AddBoolToObject(root, "reloading", state->reload_state.stage != RELOAD_NONE); 
     cJSON_AddNumberToObject(root, "doors", state->doors);
+    cJSON_AddNumberToObject(root, "epoch_week", state->epoch_week);
+    cJSON_AddNumberToObject(root, "error_flags", state->error_flags);
+
+    if (state->schedule.id[0] != '\0') {
+        cJSON_AddStringToObject(root, "schedule_id", state->schedule.id);
+    }
 
     cJSON *bins_array = cJSON_AddArrayToObject(root, "bins");
     for (int i = 0; i < 14; i++) {
@@ -150,6 +156,10 @@ esp_err_t mqtt_publish_device_state(device_state_t* state)
         if (state->bins[i].event_time > 0) {
             cJSON_AddNumberToObject(bin_obj, "event_time", (double)state->bins[i].event_time);
         }
+
+        if (state->bins[i].schedule_id[0] != '\0') {
+            cJSON_AddStringToObject(bin_obj, "schedule_id", state->bins[i].schedule_id);
+        }   
         
         cJSON_AddItemToArray(bins_array, bin_obj);
     }
