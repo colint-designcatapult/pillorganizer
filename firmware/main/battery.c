@@ -93,13 +93,9 @@ battery_state_t battery_get_state(void)
     return copy;
 }
 
-battery_presence_t battery_get_presence()
+battery_presence_t RTC_IRAM_ATTR battery_get_presence()
 {
-    battery_presence_t presence;
-    portENTER_CRITICAL(&s_battery_lock);
-    presence = s_battery_state.presence;
-    portEXIT_CRITICAL(&s_battery_lock);
-    return presence;
+    return s_battery_state.presence;
 }
 
 bool RTC_IRAM_ATTR battery_submit_adc_readings(uint32_t bat_start, uint32_t bat_end, uint32_t vbus)
@@ -151,7 +147,7 @@ bool RTC_IRAM_ATTR battery_submit_adc_readings(uint32_t bat_start, uint32_t bat_
         }
     }
 
-// 3. Battery Level Debouncing (10 Sequential Readings)
+    // 3. Battery Level Debouncing (10 Sequential Readings)
     if (s_battery_state.presence == BATTERY_PRESENCE_CONNECTED || s_battery_state.presence == BATTERY_PRESENCE_UNKNOWN) {
         
         battery_level_t reading_level;
@@ -256,6 +252,11 @@ void battery_submit_pgood_pin(bool pgood_active)
     if (should_notify) {
         notify_state_change();
     }
+}
+
+bool RTC_IRAM_ATTR battery_is_pulse_high(uint32_t bat_start, uint32_t bat_end)
+{
+    return (bat_start > BAT_PULSE_ADC_THRESHOLD) || (bat_end > BAT_PULSE_ADC_THRESHOLD);
 }
 
 const char* battery_status_str(battery_state_t state)

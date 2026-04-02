@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <stdbool.h>
+#include <esp_sleep.h>
 
 typedef enum {
     BATTERY_PRESENCE_UNKNOWN,
@@ -44,7 +45,9 @@ void battery_submit_pgood_pin(bool pgood_active);
 battery_state_t battery_get_state(void);
 
 // Retrieve just the presence field (safe for RTC_IRAM_ATTR)
-battery_presence_t battery_get_presence(void);
+battery_presence_t RTC_IRAM_ATTR battery_get_presence(void);
+
+bool RTC_IRAM_ATTR battery_is_pulse_high(uint32_t bat_start, uint32_t bat_end);
 
 // Format battery state into a string
 const char* battery_status_str(battery_state_t state);

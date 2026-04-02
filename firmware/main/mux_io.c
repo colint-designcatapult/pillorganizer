@@ -95,7 +95,7 @@ static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
     }
 
     // 2. Inhibit door logic if no battery is present AND the pulse is currently HIGH
-    if (battery_get_presence() == BATTERY_PRESENCE_DISCONNECTED && (bat_start_val > 1500 || bat_end_val > 1500)) {
+    if (battery_get_presence() == BATTERY_PRESENCE_DISCONNECTED && battery_is_pulse_high(bat_start_val, bat_end_val)) {
         // Throw away these ULP reads so they don't corrupt the EMA/MAD door baselines.
         return wake_flags; 
     }
