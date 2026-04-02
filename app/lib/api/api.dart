@@ -763,21 +763,41 @@ class DosePeriodDTO {
 }
 
 @JsonSerializable()
+class BinDTO {
+  final int id;
+  final String status;
+  final int? scheduledTime;
+  final int? eventTime;
+
+  BinDTO({
+    required this.id,
+    required this.status,
+    this.scheduledTime,
+    this.eventTime,
+  });
+
+  factory BinDTO.fromJson(Map<String, dynamic> json) =>
+      _$BinDTOFromJson(json);
+}
+
+@JsonSerializable()
 class DeviceStateDTO {
-  final String id;
+  final String? id;
   final int? lastSync;
-  final int? bins;
+  final List<BinDTO>? bins;
   final List<DosePeriodDTO>? dosePeriods;
   final int? battery;
   final bool? charging;
+  final int? doors;
 
   DeviceStateDTO(
-      {required this.id,
+      {this.id,
       this.lastSync,
       this.bins,
       this.dosePeriods,
       this.battery,
-      this.charging});
+      this.charging,
+      this.doors});
 
   factory DeviceStateDTO.fromJson(Map<String, dynamic> json) =>
       _$DeviceStateDTOFromJson(json);

@@ -8,7 +8,7 @@ import 'package:app/api/api.dart'; // For DTOs if they are still there
 part 'device.mapper.dart';
 
 @MappableEnum(caseStyle: CaseStyle.upperCase)
-enum BinStatus { disabled, taken, missed, pending, takeNow }
+enum BinStatus { disabled, taken, missed, pending, takeNow, noRecord }
 
 @MappableEnum(caseStyle: CaseStyle.upperCase)
 enum EventType { opened, closed, missed }
@@ -151,10 +151,11 @@ List<BinStatus> decodePackedStatus(int? bins) {
 class DeviceState extends Equatable with DeviceStateMappable {
   final String id;
   final DateTime? lastSync;
-  final List<BinStatus> bins;
+  final List<BinState> bins;
   final List<DosePeriod> dosePeriods;
   final int? battery;
   final bool? charging;
+  final int? doors;
 
   const DeviceState({
     required this.id,
@@ -163,26 +164,87 @@ class DeviceState extends Equatable with DeviceStateMappable {
     required this.dosePeriods,
     this.battery,
     this.charging,
+    this.doors,
   });
 
-  factory DeviceState.fromDTO(DeviceStateDTO dto) {
+  factory DeviceState.fromDTO(DeviceStateDTO dto, {String? deviceId}) {
+    // Use lastSync from DTO, or fallback to current time if not provided
+    // (e.g., when receiving from MQTT, the firmware doesn't send lastSync)
     DateTime? lastSeen = dto.lastSync != null
         ? DateTime.fromMillisecondsSinceEpoch(dto.lastSync!, isUtc: true)
-        : null;
+        : DateTime.now(); // Use now for MQTT messages
+
+    // Convert BinDTO list to BinState list
+    List<BinState> binStates = [];
+    if (dto.bins != null) {
+      for (final binDto in dto.bins!) {
+        // Parse status string to BinStatus enum
+        final statusStr = binDto.status.toLowerCase();
+        BinStatus binStatus = BinStatus.disabled; // Default fallback
+        try {
+          binStatus = BinStatus.values.byName(statusStr);
+        } catch (e) {
+          print('Failed to parse BinStatus: $statusStr, defaulting to disabled');
+        }
+
+        // Convert timestamps
+        DateTime? scheduledTimeUTC;
+        DateTime? scheduledTimeLocal;
+        if (binDto.scheduledTime != null && binDto.scheduledTime! > 0) {
+          scheduledTimeUTC = DateTime.fromMillisecondsSinceEpoch(
+              binDto.scheduledTime! * 1000,
+              isUtc: true);
+          scheduledTimeLocal = scheduledTimeUTC.toLocal();
+        }
+
+        DateTime? eventTimeLocal;
+        if (binDto.eventTime != null && binDto.eventTime! > 0) {
+          eventTimeLocal = DateTime.fromMillisecondsSinceEpoch(
+              binDto.eventTime!,
+              isUtc: false);
+        }
+
+        binStates.add(
+          BinState(
+            id: DeviceBinID(id: deviceId ?? 'unknown', binID: binDto.id),
+            binStatus: binStatus,
+            scheduledTime: scheduledTimeUTC,
+            scheduledTimeLocal: scheduledTimeLocal,
+            schedule: null, // Not provided in MQTT payload
+            event: eventTimeLocal != null
+                ? BinEvent(
+                    id: binDto.id,
+                    bin: binDto.id,
+                    time: eventTimeLocal.toUtc(),
+                    timeLocal: eventTimeLocal,
+                    eventType: null, // Not provided in MQTT payload
+                  )
+                : null,
+          ),
+        );
+      }
+    }
 
     return DeviceState(
-      id: dto.id.toString(),
+      id: dto.id ?? deviceId ?? 'unknown',
       lastSync: lastSeen,
-      bins: decodePackedStatus(dto.bins),
+      bins: binStates,
       dosePeriods: dto.dosePeriods?.map((e) => DosePeriod.fromDTO(e)).toList() ??
           List<DosePeriod>.empty(),
       battery: dto.battery,
       charging: dto.charging,
+      doors: dto.doors,
     );
   }
 
+  /// Check if a specific bin is physically open based on the doors bitfield
+  bool isBinOpen(int binIndex) {
+    if (doors == null) return false;
+    return (doors! & (1 << binIndex)) != 0;
+  }
+
   @override
-  List<Object?> get props => [id, lastSync, bins, dosePeriods];
+  List<Object?> get props => [id, lastSync, bins, dosePeriods, battery, charging, doors];
 }
 
 enum DeviceModel {
