@@ -26,6 +26,7 @@ idf_component_register(
         shadow_state.c
         supervisor_operation.c
         supervisor_provision.c
+        battery.c
     INCLUDE_DIRS 
         ${CMAKE_CURRENT_LIST_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include

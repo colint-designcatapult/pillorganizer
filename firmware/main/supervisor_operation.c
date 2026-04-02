@@ -131,6 +131,7 @@ static void set_led_idle_task()
 static void update_state_from_runtime(device_state_t* state)
 {
     state->error_flags = (int)supervisor_get_error_flags();
+    state->battery = battery_get_state();
 }
 
 static esp_err_t update_device_state()
@@ -350,7 +351,7 @@ static void print_state(const device_state_t* state) {
 
     ESP_LOGI(TAG, "=== Device State ===");
     ESP_LOGI(TAG, "Modified At: %lld (Unix timestamp in ms)", state->modified_at);
-    ESP_LOGI(TAG, "Battery: %d%% | Charging: %s", state->battery, state->charging ? "YES" : "NO");
+    ESP_LOGI(TAG, "Battery: %s", battery_status_str(state->battery));
     ESP_LOGI(TAG, "Error Flags: 0x%04X", state->error_flags);
     ESP_LOGI(TAG, "Doors Bitfield: 0x%04X", state->doors);
     ESP_LOGI(TAG, "Epoch week: %lld (Unix timestamp UTC)", state->epoch_week);
@@ -820,6 +821,10 @@ void supervisor_operation_event(const supervisor_event_t* event)
         supervisor_clear_error(DEVERR_NO_RTC_TIME);
     } else if (event->id == EVENT_LED_EFFECT_COMPLETE) {
         set_led_idle_task();
+    } else if (event->id == EVENT_BATTERY_CHANGE) {
+        s_device_state.battery = battery_get_state();
+        ESP_LOGI(TAG, "New battery state: %s", battery_status_str(s_device_state.battery));
+        update_device_state();
     }
 
     // Handle medication reload FSM 

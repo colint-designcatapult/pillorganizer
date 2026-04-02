@@ -19,6 +19,9 @@
 #include "pill_pins.h"
 #include "esp_log.h"
 #include "supervisor.h"
+#include <stdatomic.h>
+#include <esp_adc/adc_cali_scheme.h>
+#include <battery.h>
 
 #define TAG "MUX_IO"
 
@@ -26,35 +29,31 @@ extern const uint8_t ulp_main_bin_start[] asm("_binary_ulp_main_bin_start");
 extern const uint8_t ulp_main_bin_end[]   asm("_binary_ulp_main_bin_end");
 
 /* Declare our ULP variables */
-extern uint32_t ulp_adc_readings;
-extern uint32_t ulp_data_ready;
+extern uint32_t ulp_adc_readings_0;
+extern uint32_t ulp_adc_readings_1;
+extern uint32_t ulp_active_buffer;
 
 static TaskHandle_t ulp_task_handle = NULL;
 
 #define ADC_READINGS 17
 #define ADC_DOOR_CHANNEL_START 1
-#define ADC_DOOR_CHANNEL_END 15
+#define ADC_DOOR_CHANNEL_END 14
 #define ADC_NUM_DOOR_CHANNELS (ADC_DOOR_CHANNEL_END - ADC_DOOR_CHANNEL_START + 1)
 
 #define SCALE_FACTOR 256  // Scales integers to give us "decimal" precision
 #define ALPHA_SHIFT 3     // Equivalent to an alpha of 1/8 for smoothing
 
-/* --- Battery Detection Macros --- */
-// ADC value that represents the threshold between the BQ24074's LOW and HIGH pulse.
-#define BAT_ADC_THRESHOLD 1500 
-
-// Number of consecutive fully-HIGH sweeps required to assume a battery was plugged back in.
-// 5 sweeps * 200ms wakeup = ~1 second of steady DC voltage.
-#define BAT_CONSECUTIVE_HIGHS_FOR_CONNECTED 5 
-
-/* State tracking for battery presence. Must survive deep sleep. */
-static RTC_DATA_ATTR uint32_t consecutive_bat_highs = 0;
-static RTC_DATA_ATTR bool battery_connected = true; // Assume true until proven false
+/* --- Wake Reasons Bitmask --- */
+#define WAKE_REASON_NONE    0
+#define WAKE_REASON_DOOR    (1 << 0)
+#define WAKE_REASON_BATTERY (1 << 1)
 
 typedef enum {
     DOOR_CLOSED = 0,
     DOOR_OPEN = 1
 } door_state_t;
+
+static RTC_DATA_ATTR door_state_t rtc_last_known_state[ADC_NUM_DOOR_CHANNELS] = {DOOR_CLOSED};
 
 /* State tracking for each channel. 
  * Must be in RTC_DATA_ATTR to survive deep sleep. */
@@ -71,17 +70,10 @@ static RTC_DATA_ATTR ch_stats_t ch_stats[ADC_NUM_DOOR_CHANNELS];
 
 static void init_ulp_program(void);
 static void start_ulp_program(void);
-static bool process_ulp_events(uint32_t* values);
+static uint32_t process_ulp_events(void);
 
-/* ==========================================================
- * ESP-IDF Managed Callback for ULP events while awake 
- * ========================================================== */
 static void IRAM_ATTR ulp_isr_handler(void *arg)
 {
-    /* * Because we are using the official API, the ESP-IDF internal 
-     * RTC dispatcher automatically clears the hardware flags and 
-     * bypasses the ESP32 clock-domain bug! We just wake the task.
-     */
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     vTaskNotifyGiveFromISR(ulp_task_handle, &xHigherPriorityTaskWoken);
     
@@ -90,45 +82,39 @@ static void IRAM_ATTR ulp_isr_handler(void *arg)
     }
 }
 
-/* ==========================================================
- * FreeRTOS Task to handle the events off the ISR context
- * ========================================================== */
 static void ulp_event_task(void *arg)
 {
-    static door_state_t last_known_state[ADC_NUM_DOOR_CHANNELS] = {DOOR_CLOSED};
-
     while (1) {
-        /* Block indefinitely (0 CPU cycles) until the ISR callback notifies us */
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        if (process_ulp_events(&ulp_adc_readings)) {
 
-                uint32_t bat_start_val = (&ulp_adc_readings)[0] & 0xFFFF;
-                uint32_t bat_end_val   = (&ulp_adc_readings)[16] & 0xFFFF;
+        // Process the new events (or retrieve state updated during wake stub)
+        uint32_t wake_reasons = process_ulp_events();
 
-            ESP_LOGI(TAG, "Battery! %ld", bat_start_val);
+        // 1. Handle Battery
+        if (wake_reasons & WAKE_REASON_BATTERY) {
+            //supervisor_submit_event_block(EVENT_MUX_BATTERY_CHANGE, (intptr_t)battery_status, pdMS_TO_TICKS(10));
+        }
 
-            for (int i = 0; i < ADC_NUM_DOOR_CHANNELS; i++) {
-                if (ch_stats[i].state != last_known_state[i]) {
-                    // State changed!
+        // 2. Handle Doors based on RTC state vs known state
+        for (int i = 0; i < ADC_NUM_DOOR_CHANNELS; i++) {
+            if (ch_stats[i].state != rtc_last_known_state[i]) {
+                
+                ESP_LOGI(TAG, "Door %d | STATE: %s | Real ADC: %ld | MAD: %ld", 
+                         i, 
+                         ch_stats[i].state == DOOR_OPEN ? "OPEN" : "CLOSED",
+                         ch_stats[i].ema / SCALE_FACTOR, 
+                         ch_stats[i].mad / SCALE_FACTOR);
+                
+                esp_err_t err;
+                if (ch_stats[i].state == DOOR_OPEN) {
+                    err = supervisor_submit_event_block(EVENT_DOOR_OPENED, (intptr_t)i, pdMS_TO_TICKS(10));
+                } else {
+                    err = supervisor_submit_event_block(EVENT_DOOR_CLOSED, (intptr_t)i, pdMS_TO_TICKS(10));
+                }
 
-                    ESP_LOGI(TAG, "Door %d | STATE: %s | Real ADC: %ld | MAD: %ld", 
-                             i, 
-                             ch_stats[i].state == DOOR_OPEN ? "OPEN" : "CLOSED",
-                             ch_stats[i].ema / SCALE_FACTOR, 
-                             ch_stats[i].mad / SCALE_FACTOR);
-                    
-                    esp_err_t err;
-                    if (ch_stats[i].state == DOOR_OPEN) {
-                        err = supervisor_submit_event_block(EVENT_DOOR_OPENED, (intptr_t)i, pdMS_TO_TICKS(10));
-                    } else {
-                        err = supervisor_submit_event_block(EVENT_DOOR_CLOSED, (intptr_t)i, pdMS_TO_TICKS(10));
-                    }
-
-                    // Only commit the last known state if we submitted the event, that way we can try submitting
-                    // the event again.
-                    if (err == ESP_OK) {
-                        last_known_state[i] = ch_stats[i].state;
-                    }
+                // Sync the state once successful
+                if (err == ESP_OK) {
+                    rtc_last_known_state[i] = ch_stats[i].state;
                 }
             }
         }
@@ -169,70 +155,67 @@ void mux_fresh_boot()
 
 void mux_wake_deep_sleep()
 {
-
-    //process_ulp_events(wake_event_flags, wake_readings, wake_prev_readings);
+    // It's safe to process events now
 }
 
 bool RTC_IRAM_ATTR mux_wake_deep_sleep_early()
 {
-    return process_ulp_events(&ulp_adc_readings);
+    // Process events and return true ONLY if it warrants a full wake up
+    uint32_t wake_reasons = process_ulp_events();
+    return (wake_reasons > 0);
 }
 
-static bool process_ulp_events(uint32_t* values)
+static uint32_t process_ulp_events(void)
 {    
-    uint32_t local_buffer[ADC_READINGS];
-    memcpy(local_buffer, values, sizeof(local_buffer));
+    uint32_t wake_flags = WAKE_REASON_NONE;
 
-    // Let ULP know it can continue
-    ulp_data_ready = 0;
+    /* Read from the INACTIVE buffer to prevent race conditions */
+    uint32_t active_buf = ulp_active_buffer & 0xFFFF;
+    uint32_t* values = (active_buf == 0) ? &ulp_adc_readings_1 : &ulp_adc_readings_0;
+
+    uint32_t local_buffer[ADC_READINGS];
+    for (int i = 0; i < ADC_READINGS; i++) {
+        local_buffer[i] = values[i] & 0xFFFF; // ULP stores data in lower 16 bits
+    }
 
     /* ==========================================================
      * Battery Presence & Square Wave Filtering
      * ========================================================== */
-    uint32_t bat_start_val = local_buffer[0] & 0xFFFF;
-    uint32_t bat_end_val   = local_buffer[16] & 0xFFFF;
+    uint32_t bat_start_val = local_buffer[0];
+    uint32_t bat_end_val   = local_buffer[16];
+    uint32_t vbus_val      = local_buffer[15];
 
-    bool start_is_high = (bat_start_val > BAT_ADC_THRESHOLD);
-    bool end_is_high   = (bat_end_val > BAT_ADC_THRESHOLD);
+    battery_state_t prev_state = battery_get_state();
+    battery_submit_adc_readings(bat_start_val, bat_end_val, vbus_val);
+    battery_state_t new_state = battery_get_state();
 
-    // 1. Determine battery presence based on steady DC vs pulsing
-    if (!start_is_high || !end_is_high) {
-        // A real battery never drops LOW. If we see a LOW, we are seeing the 2Hz pulse.
-        consecutive_bat_highs = 0;
-        battery_connected = false;
-    } else {
-        // Both readings are HIGH. Is it a real battery, or just the HIGH phase of the pulse?
-        if (consecutive_bat_highs < BAT_CONSECUTIVE_HIGHS_FOR_CONNECTED) {
-            consecutive_bat_highs++;
-        } else {
-            // We've seen steady HIGHs for a full second. The battery is connected.
-            battery_connected = true;
-        }
+    if (prev_state.presence != new_state.presence ||
+        prev_state.charge_state != new_state.charge_state ||
+        prev_state.level != new_state.level ||
+        prev_state.usb_power_connected != new_state.usb_power_connected) {
+        
+        wake_flags |= WAKE_REASON_BATTERY;
     }
 
-    // 2. Inhibit door logic if no battery is present AND the pulse is currently HIGH
-    if (!battery_connected && (start_is_high || end_is_high)) {
-        // Throw away these ULP reads so they don't corrupt the EMA/MAD door baselines.
-        return false; 
+    // If no battery connected, but the battery signal on the front end or tail end is high
+    //  suppress the readings as the battery detection signal is present
+    if (new_state.presence == BATTERY_PRESENCE_DISCONNECTED && (bat_start_val > 1500 || bat_end_val > 1500)) {
+        return wake_flags; // Return whatever flags we gathered, but skip doors
     }
 
     /* ==========================================================
-     * Door Channel Processing (with Ambient Rejection & Debounce)
+     * Door Channel Processing
      * ========================================================== */
-    bool should_wake_main_cpu = false;
-    
-    #define AMBIENT_CHANGE_THRESHOLD 3 // If 3+ doors change at once, it's a room light change
-    #define DEBOUNCE_SAMPLES         2 // Require N consecutive readings to change state
+    #define AMBIENT_CHANGE_THRESHOLD 3 
+    #define DEBOUNCE_SAMPLES         2 
 
     int candidate_state_changes = 0;
 
-    /* --- PASS 1: Tally potential state changes --- */
     for (int ch = ADC_DOOR_CHANNEL_START; ch <= ADC_DOOR_CHANNEL_END; ch++) {
         int door = ch - ADC_DOOR_CHANNEL_START;
         ch_stats_t* stats = &ch_stats[door];
         
-        int32_t val = local_buffer[ch] & 0xFFFF;
-        int32_t s_val = val * SCALE_FACTOR;
+        int32_t s_val = local_buffer[ch] * SCALE_FACTOR;
 
         if (!stats->initialized) {
             stats->ema = s_val;
@@ -245,54 +228,40 @@ static bool process_ulp_events(uint32_t* values)
 
         if (stats->state == DOOR_CLOSED) {
             int32_t diff = s_val - stats->ema;
-            int32_t threshold = stats->mad * 5; 
-            if (diff > threshold) {
-                candidate_state_changes++;
-            }
-        } else { // DOOR_OPEN
-            int32_t close_threshold = stats->open_baseline + (stats->mad * 2);
-            if (s_val < close_threshold) {
-                candidate_state_changes++;
-            }
+            if (diff > (stats->mad * 5)) candidate_state_changes++;
+        } else {
+            if (s_val < (stats->open_baseline + (stats->mad * 2))) candidate_state_changes++;
         }
     }
 
-    /* --- PASS 2: Apply Logic based on Tally --- */
     bool is_ambient_event = (candidate_state_changes >= AMBIENT_CHANGE_THRESHOLD);
 
     for (int ch = ADC_DOOR_CHANNEL_START; ch <= ADC_DOOR_CHANNEL_END; ch++) {
         int door = ch - ADC_DOOR_CHANNEL_START;
         ch_stats_t* stats = &ch_stats[door];
         
-        int32_t val = local_buffer[ch] & 0xFFFF;
-        int32_t s_val = val * SCALE_FACTOR;
+        int32_t s_val = local_buffer[ch] * SCALE_FACTOR;
 
         if (is_ambient_event) {
-            // GLOBAL LIGHT CHANGE: Do not open/close doors!
-            // Instead, fast-adapt the EMA to the new room lighting.
             stats->ema = s_val;
-            stats->debounce_cnt = 0; // Reset any pending debounces
+            stats->debounce_cnt = 0; 
             continue;
         }
 
-        // NORMAL PROCESSING (Local changes)
         if (stats->state == DOOR_CLOSED) {
             int32_t diff = s_val - stats->ema;
             int32_t abs_diff = (diff > 0) ? diff : -diff;
-            int32_t threshold = stats->mad * 5; 
 
-            if (diff > threshold) {
-                // Potential OPEN detected
+            if (diff > (stats->mad * 5)) {
                 stats->debounce_cnt++;
                 if (stats->debounce_cnt >= DEBOUNCE_SAMPLES) {
                     stats->state = DOOR_OPEN;
                     stats->open_baseline = stats->ema; 
                     stats->debounce_cnt = 0;
-                    should_wake_main_cpu = true;
+                    wake_flags |= WAKE_REASON_DOOR;
                 }
             } else {
-                // Normal variance, no state change. Update baselines.
-                stats->debounce_cnt = 0; // Reset debounce if signal drops
+                stats->debounce_cnt = 0; 
                 stats->ema += (diff >> ALPHA_SHIFT);
                 stats->mad += ((abs_diff - stats->mad) >> ALPHA_SHIFT);
 
@@ -300,26 +269,22 @@ static bool process_ulp_events(uint32_t* values)
                     stats->mad = 30 * SCALE_FACTOR;
                 }           
             }
-        } else { // DOOR_OPEN
-            int32_t close_threshold = stats->open_baseline + (stats->mad * 2);
-
-            if (s_val < close_threshold) {
-                // Potential CLOSE detected
+        } else {
+            if (s_val < (stats->open_baseline + (stats->mad * 2))) {
                 stats->debounce_cnt++;
                 if (stats->debounce_cnt >= DEBOUNCE_SAMPLES) {
                     stats->state = DOOR_CLOSED;
-                    stats->ema = s_val; // Fast sync to new closed lighting
+                    stats->ema = s_val; 
                     stats->debounce_cnt = 0;
-                    should_wake_main_cpu = true;
+                    wake_flags |= WAKE_REASON_DOOR;
                 }
             } else {
-                // Still open
                 stats->debounce_cnt = 0; 
             }
         }
     }
     
-    return should_wake_main_cpu;
+    return wake_flags;
 }
 
 static void init_ulp_program(void)
@@ -368,4 +333,3 @@ static void start_ulp_program(void)
     esp_err_t err = ulp_run(&ulp_entry - RTC_SLOW_MEM);
     ESP_ERROR_CHECK(err);
 }
-

@@ -1,7 +1,7 @@
 /*
  * ULP Assembly to poll channels via a CD4067B MUX
  * Sequence: Ch14, Ch0-13, Ch15, Ch14 (17 samples total)
- * Features 4x oversampling and DYNAMIC ATTENUATION.
+ * Features 4x oversampling, DYNAMIC ATTENUATION, and DOUBLE BUFFERING.
  */
 #include "soc/rtc_cntl_reg.h"
 #include "soc/rtc_io_reg.h"
@@ -15,16 +15,23 @@
     #define ADC_ATTEN_SHIFT (MUX_ADC_CHANNEL * 2)
 
 .bss
-    .global adc_readings
-adc_readings: 
+    /* Buffer 0 */
+    .global adc_readings_0
+adc_readings_0: 
     .skip 68   /* 17 elements * 4 bytes each */
+
+    /* Buffer 1 */
+    .global adc_readings_1
+adc_readings_1: 
+    .skip 68   
+
+    /* Tracks which buffer the ULP is currently filling (0 or 1) */
+    .global active_buffer
+active_buffer:
+    .long 0
 
     .global current_sequence_idx
 current_sequence_idx: 
-    .long 0
-
-    .global data_ready
-data_ready:
     .long 0
 
 .text
@@ -107,17 +114,15 @@ delay_10ms:
      * Dynamic ADC Attenuation Switching
      * ========================================================== */
 set_attenuation:
-    move r0, r1                  /* Copy target MUX channel into r0 */
-    sub r0, r0, 14               /* Is it channel 14? */
-    jump set_atten_11db, eq      /* If yes, jump to 11dB config */
+    move r0, r1                  
+    sub r0, r0, 14               
+    jump set_atten_11db, eq      
 
 set_atten_0db:
-    /* For all other channels, set ADC attenuation to 0dB (Write '0') */
     WRITE_RTC_REG(SENS_SAR_ATTEN1_REG, ADC_ATTEN_SHIFT, 2, 0)
     jump read_adc
 
 set_atten_11db:
-    /* For Channel 14, set ADC attenuation to 11dB (Write '3') */
     WRITE_RTC_REG(SENS_SAR_ATTEN1_REG, ADC_ATTEN_SHIFT, 2, 3)
 
 read_adc:
@@ -125,9 +130,9 @@ read_adc:
      * 4x Oversampling
      * ========================================================== */
     adc r0, 0, adc_channel + 1
-    wait 4000                   
+    wait 4000                  
 
-    move r1, 0                  
+    move r1, 0                 
     
     adc r0, 0, adc_channel + 1  
     add r1, r1, r0
@@ -144,10 +149,25 @@ read_adc:
     adc r0, 0, adc_channel + 1  
     add r1, r1, r0
 
-    rsh r1, r1, 2               
+    rsh r1, r1, 2              
 
-    move r3, adc_readings
-    add r3, r3, r2              
+    /* ==========================================================
+     * Write to Double Buffer
+     * ========================================================== */
+    move r3, active_buffer
+    ld r0, r3, 0
+    and r0, r0, 1
+    jumpr write_buf_1, 1, ge   /* If active_buffer >= 1, jump to write_buf_1 */
+
+write_buf_0:
+    move r3, adc_readings_0
+    jump do_write
+
+write_buf_1:
+    move r3, adc_readings_1
+
+do_write:
+    add r3, r3, r2              /* Add word offset (r2) */
     st r1, r3, 0
 
 next_channel:
@@ -161,15 +181,14 @@ next_channel:
     jump channel_loop           
 
 exit:
-    move r3, data_ready
-    move r0, 1
+    /* Flip active_buffer (0 -> 1, 1 -> 0) */
+    move r3, active_buffer
+    ld r0, r3, 0
+    add r0, r0, 1
+    and r0, r0, 1
     st r0, r3, 0
     
+    /* Wake the CPU. Notice wait_for_cpu is entirely removed. */
     wake
-
-wait_for_cpu:
-    move r3, data_ready
-    ld r0, r3, 0
-    jumpr wait_for_cpu, 1, ge  
 
     jump entry

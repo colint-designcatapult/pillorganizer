@@ -29,6 +29,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/semphr.h>
+#include "battery.h"
 
 #define TAG "MAIN"
 
@@ -148,10 +149,40 @@ void reset_button_task(void *pvParameters)
     }
 }
 
+static QueueHandle_t gpio_evt_queue = NULL;
+
+static void IRAM_ATTR gpio_isr_handler(void* arg)
+{
+    uint32_t gpio_num = (uint32_t) arg;
+    // Send the GPIO number that triggered the interrupt to the queue
+    xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
+}
+
+void gpio_task(void *pvParameters)
+{
+    gpio_num_t io_num;
+    for(;;) {
+        // Wait indefinitely for an item to appear in the queue
+        if(xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
+            
+            // Read the current state of the pin
+            int level = gpio_get_level(io_num);
+            
+            if (io_num == BAT_PGOOD_PIN) {
+                ESP_LOGI(TAG, "PGOOD: %d", level);
+                // Notify battery subsystem, note that this pin is active low so we invert the boolean
+                battery_submit_pgood_pin(!((bool) level));
+            } else if (io_num == BAT_CHARGE_PIN) {
+                ESP_LOGI(TAG, "CHARGE: %d", level);
+                battery_submit_charge_pin(!((bool) level));
+            }
+        }
+    }
+}
+
 static void app_init_gpio(void)
 {
     gpio_config_t io_conf = { 0 };
-
 
     // TEST POINTS
 	memset(&io_conf, 0, sizeof(io_conf));
@@ -161,6 +192,9 @@ static void app_init_gpio(void)
     io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE;  
     gpio_config(&io_conf);
+
+    gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
+    xTaskCreate(gpio_task, "gpio_task", 2048, NULL, 10, NULL);
 
 	// BAT_PGOOD_PIN
 	memset(&io_conf, 0, sizeof(io_conf));
@@ -173,12 +207,18 @@ static void app_init_gpio(void)
 
 	// BAT_CHARGE_PIN
 	memset(&io_conf, 0, sizeof(io_conf));
-	io_conf.intr_type = GPIO_INTR_POSEDGE;
+	io_conf.intr_type = GPIO_INTR_ANYEDGE;
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pin_bit_mask = (1ULL << BAT_CHARGE_PIN);
     io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
     io_conf.pull_up_en = GPIO_PULLUP_ENABLE;  
     gpio_config(&io_conf);
+
+    gpio_install_isr_service(0);
+
+    // Hook the ISR handler for specific gpio pins
+    gpio_isr_handler_add(BAT_PGOOD_PIN, gpio_isr_handler, (void*) BAT_PGOOD_PIN);
+    gpio_isr_handler_add(BAT_CHARGE_PIN, gpio_isr_handler, (void*) BAT_CHARGE_PIN);
 
     // IS31 CS
     memset(&io_conf, 0, sizeof(io_conf));
@@ -190,6 +230,7 @@ static void app_init_gpio(void)
     gpio_config(&io_conf);
     // Hold this at high
     gpio_set_level(IS31_CS, 1);
+
 
     // Prevent GPIO36 voltage glitch
     // WORKAROUND for ESP32 Errata 3.11
@@ -230,7 +271,11 @@ static void app_init_hw()
 
     // Initialize LED controller
     ledc_init();
+
+    // Initialize battery 
+    battery_init();
 }
+
 
 void app_main(void)
 {

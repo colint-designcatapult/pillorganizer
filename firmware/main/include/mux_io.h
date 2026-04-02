@@ -5,6 +5,7 @@
  */
 #pragma once
 #include <stdbool.h>
+#include <stdint.h>
 
 void mux_init();
 void mux_fresh_boot();
