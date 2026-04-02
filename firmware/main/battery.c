@@ -30,6 +30,7 @@ static RTC_DATA_ATTR uint32_t s_last_charge_toggle_ticks = 0;
 #define BAT_CONSECUTIVE_READINGS_FOR_LEVEL  10
 static RTC_DATA_ATTR uint32_t s_consecutive_level_readings = 0;
 static RTC_DATA_ATTR battery_level_t s_pending_level = BATTERY_LEVEL_UNKNOWN;
+static RTC_DATA_ATTR battery_charge_state_t s_raw_charge_state = BATTERY_CHARGE_UNKNOWN;
 
 static char s_status_str_buffer[64] = {0};
 
@@ -58,6 +59,15 @@ void battery_init()
     bool should_notify = false;
 
     portENTER_CRITICAL(&s_battery_lock);
+    
+    // Track the raw pin state
+    s_raw_charge_state = new_charge_state;
+    
+    // Clamp the initial logical state if battery is disconnected
+    if (s_battery_state.presence == BATTERY_PRESENCE_DISCONNECTED) {
+        new_charge_state = BATTERY_CHARGE_NOT_CHARGING;
+    }
+
     if (s_battery_state.charge_state != new_charge_state) {
         s_battery_state.charge_state = new_charge_state;
         should_notify = true;
@@ -184,7 +194,8 @@ void battery_submit_charge_pin(bool charge_pin_active)
     
     portENTER_CRITICAL(&s_battery_lock);
     
-    if (s_battery_state.charge_state != new_charge_state) {
+    // Evaluate logic based on the RAW pin state
+    if (s_raw_charge_state != new_charge_state) {
         
         // Detect BQ24074 2Hz square wave bouncing when battery is missing 
         if (s_last_charge_toggle_ticks != 0) {
@@ -193,7 +204,7 @@ void battery_submit_charge_pin(bool charge_pin_active)
             if (diff < pdMS_TO_TICKS(1000)) {
                 s_chg_bounce_count++;
                 
-                // Require 4 rapid toggles to confirm a bounce, rather than a single fast charge termination
+                // Require 4 rapid toggles to confirm a bounce
                 if (s_chg_bounce_count >= 4) {
                     if (s_battery_state.presence != BATTERY_PRESENCE_DISCONNECTED) {
                         s_battery_state.presence = BATTERY_PRESENCE_DISCONNECTED;
@@ -213,10 +224,13 @@ void battery_submit_charge_pin(bool charge_pin_active)
         }
 
         s_last_charge_toggle_ticks = now;
-        s_battery_state.charge_state = new_charge_state;
+        s_raw_charge_state = new_charge_state; // Update our raw tracker
 
-        // Only dispatch a standard CHG pin event if we believe a battery is actually there
-        if (s_battery_state.presence != BATTERY_PRESENCE_DISCONNECTED) {
+        // Enforce the clamping rule on the public state
+        if (s_battery_state.presence == BATTERY_PRESENCE_DISCONNECTED) {
+            s_battery_state.charge_state = BATTERY_CHARGE_NOT_CHARGING;
+        } else {
+            s_battery_state.charge_state = new_charge_state;
             should_notify = true;
         }
     }
