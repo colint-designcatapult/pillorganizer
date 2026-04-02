@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -11,25 +12,30 @@ part 'mqtt_provider.g.dart';
 
 final String mqttEndpoint = "wss://ws-mqtt.app.healthesolutions.ca/mqtt";
 
-const _maxRetries = 5;
+const _maxRetries = 2;
 
-/// Exponential backoff: 5s → 10s → 20s → 40s → 80s, then give up.
-Duration? _mqttRetry(int retryCount, Object error) {
-  if (retryCount >= _maxRetries) return null;
+/// Exponential backoff: 5s → 10s → failure.
+Duration? _nextRetryDelay(int failureCount) {
+  if (failureCount >= _maxRetries) return null;
   const baseSecs = 5;
   const capSecs = 300; // 5 minutes
-  final secs = (baseSecs * pow(2, retryCount)).toInt();
+  final secs = (baseSecs * pow(2, failureCount)).toInt();
   return Duration(seconds: secs < capSecs ? secs : capSecs);
 }
 
-@riverpod(retry: _mqttRetry)
+@riverpod
 class MqttClient extends _$MqttClient {
   MqttServerClient? _activeClient;
   int _failureCount = 0;
+  Timer? _retryTimer;
 
   @override
   Future<MqttServerClient?> build() async {
     final device = ref.watch(activeDeviceProvider);
+
+    // Cancel any pending retry timer from a previous build.
+    _retryTimer?.cancel();
+    _retryTimer = null;
 
     // Disconnect any client from a previous build before starting fresh.
     _activeClient?.disconnect();
@@ -37,7 +43,7 @@ class MqttClient extends _$MqttClient {
 
     // Once the retry budget is exhausted, stop permanently.
     // Only a manual reconnect() call can reset this.
-    if (_failureCount >= _maxRetries) {
+    if (_failureCount > _maxRetries) {
       print('[MQTT] Retry budget exhausted — not attempting connection');
       return null;
     }
@@ -95,14 +101,27 @@ class MqttClient extends _$MqttClient {
       _activeClient = client;
       return client;
     } catch (e) {
+      client.disconnect();
       _failureCount++;
       print('[MQTT] Connection failed (attempt $_failureCount/$_maxRetries): $e');
-      rethrow; // Riverpod retries with exponential backoff via _mqttRetry
+      // Use failureCount - 1 as the exponent so the first retry is 5s,
+      // matching the documented 5→10→20→40→80s schedule.
+      final delay = _nextRetryDelay(_failureCount - 1);
+      if (delay != null) {
+        print('[MQTT] Retrying in ${delay.inSeconds}s');
+        _retryTimer = Timer(delay, () => ref.invalidateSelf());
+        ref.onDispose(() => _retryTimer?.cancel());
+      } else {
+        print('[MQTT] Retry budget exhausted — giving up');
+      }
+      return null;
     }
   }
 
   /// Manually trigger a reconnect, resetting the retry counter.
   void reconnect() {
+    _retryTimer?.cancel();
+    _retryTimer = null;
     _activeClient?.disconnect();
     _activeClient = null;
     _failureCount = 0;
