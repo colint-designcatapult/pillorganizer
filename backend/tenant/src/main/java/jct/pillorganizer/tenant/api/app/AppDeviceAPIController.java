@@ -2,8 +2,6 @@ package jct.pillorganizer.tenant.api.app;
 
 import java.text.ParseException;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 import io.micronaut.http.HttpResponse;
@@ -12,23 +10,17 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.tenant.auth.AuthService;
 import jct.pillorganizer.tenant.auth.DeviceABAC;
 import jct.pillorganizer.tenant.auth.DeviceABACIDType;
-import jct.pillorganizer.tenant.dto.AssignDeviceDTO;
 import jct.pillorganizer.tenant.dto.DeviceStateDTO;
-import jct.pillorganizer.tenant.dto.DeviceUserDTO;
-import jct.pillorganizer.tenant.dto.UpdateDeviceUserSettings;
+import jct.pillorganizer.tenant.dto.UpdateDeviceNickname;
 import jct.pillorganizer.tenant.exceptions.DeviceAccessException;
-import jct.pillorganizer.tenant.exceptions.DeviceProvisionNotFoundException;
 import jct.pillorganizer.tenant.model.device.LogicalDevice;
-import jct.pillorganizer.tenant.model.device.ProvisionRecord;
 import jct.pillorganizer.tenant.model.user.User;
-import jct.pillorganizer.tenant.repo.LogicalDeviceRepository;
 import jct.pillorganizer.tenant.service.DeviceProvisionService;
 import jct.pillorganizer.tenant.service.DeviceService;
 import lombok.extern.flogger.Flogger;
@@ -79,14 +71,18 @@ public class AppDeviceAPIController {
         throw new IllegalStateException("not implemented");
     }
 
-    @Operation(summary = "Updates device basic settings", description = "Updates non-schedule settings for a device, including timezone, name, and notification token.")
-    @Put("/{id}")
+    @Operation(summary = "Updates the device nickname")
+    @Post("/{id}/nickname")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     @DeviceABAC
-    public DeviceUserDTO setDeviceSettings(
+    public DeviceAccessDto setDeviceNickname(
             @DeviceABAC(idType = DeviceABACIDType.DEVICE) @PathVariable("id") String deviceID,
-            @Body UpdateDeviceUserSettings dto) {
-        throw new RuntimeException("not implemented");
+            @Body @Valid UpdateDeviceNickname dto,
+            User user) {
+        LogicalDevice device = deviceService.get(deviceID)
+                .orElseThrow(() -> new DeviceAccessException("No device"));
+
+        return deviceService.updateNickname(user, device, dto.deviceName());
     }
 
     @Operation(summary = "Get device state on a particular date")
