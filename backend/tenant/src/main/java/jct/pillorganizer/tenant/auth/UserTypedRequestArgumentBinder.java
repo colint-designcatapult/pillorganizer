@@ -6,8 +6,7 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.bind.binders.TypedRequestArgumentBinder;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.tenant.model.user.User;
-
-import java.util.Optional;
+import jct.pillorganizer.tenant.service.RequestCacheService;
 
 @Singleton
 public class UserTypedRequestArgumentBinder implements TypedRequestArgumentBinder<User> {
@@ -19,7 +18,6 @@ public class UserTypedRequestArgumentBinder implements TypedRequestArgumentBinde
 
     @Override
     public BindingResult<User> bind(ArgumentConversionContext<User> context, HttpRequest<?> source) {
-        Optional<User> user = source.getAttribute(UserFilter.USER_ENTITY_ATTRIBUTE, User.class);
-        return () -> user;
+        return () -> RequestCacheService.getUser(source);
     }
 }

@@ -7,6 +7,7 @@ import jct.pillorganizer.core.TenantDetails;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.core.service.TenantService;
 import jct.pillorganizer.core.uid.UuidService;
+import jct.pillorganizer.tenant.auth.AuthService;
 import jct.pillorganizer.tenant.exceptions.DeviceAccessException;
 import jct.pillorganizer.tenant.mapper.DeviceMapper;
 import jct.pillorganizer.tenant.model.device.DeviceClass;
@@ -157,6 +158,7 @@ public class DeviceService {
         return device;
     }
 
+
     public List<DeviceAccessDto> getUserDevices(User user) {
         TenantDetails tenantDetails = tenantService.getCurrentTenant().orElse(null);
         return deviceUserRepository.findByUserId(user.getId())
@@ -224,13 +226,10 @@ public class DeviceService {
         return logicalDeviceRepository.findById(id);
     }
 
-    @Transactional
-    public DeviceAccessDto updateNickname(User user, LogicalDevice device, String nickname) {
-        getUserAccess(user, device).orElseThrow(() -> new DeviceAccessException("No access to device"));
-        DeviceAccessDto access = getUserDevice(user, device)
-                .orElseThrow(() -> new DeviceAccessException("No access to device"));
+    public LogicalDevice updateNickname(LogicalDevice device, String nickname) {
+        device.setNickname(nickname);
         logicalDeviceRepository.updateNickname(device.getId(), nickname);
-        return access;
+        return device;
     }
 
 }

@@ -305,28 +305,13 @@ class DeviceServiceSpec extends BaseIntegrationSpec {
         def user = userService.ensureExists("user-nick-1")
         def record = deviceService.provision(user, "device-nick-1", "serial-nick-1", "claim-nick-1", "thing-nick-1")
         def logicalDevice = record.logicalDevice
-        tenantService.getCurrentTenant() >> Optional.of(jct.pillorganizer.core.TenantDetails.TEST_TENANT)
+        tenantService.getCurrentTenant() >> Optional.of(TenantDetails.TEST_TENANT)
 
         when:
-        deviceService.updateNickname(user, logicalDevice, "My Pill Box")
+        deviceService.updateNickname(logicalDevice, "My Pill Box")
 
         then:
         deviceService.get("device-nick-1").get().nickname == "My Pill Box"
-    }
-
-    def "should throw when updating nickname for device user has no access to"() {
-        given:
-        def user1 = userService.ensureExists("user-nick-2")
-        def user2 = userService.ensureExists("user-nick-3")
-        def record = deviceService.provision(user1, "device-nick-2", "serial-nick-2", "claim-nick-2", "thing-nick-2")
-        def logicalDevice = record.logicalDevice
-        tenantService.getCurrentTenant() >> Optional.of(jct.pillorganizer.core.TenantDetails.TEST_TENANT)
-
-        when:
-        deviceService.updateNickname(user2, logicalDevice, "Hacked Name")
-
-        then:
-        thrown(jct.pillorganizer.tenant.exceptions.DeviceAccessException)
     }
 
     def "should return not eligible when user is not primary for claim eligibility"() {

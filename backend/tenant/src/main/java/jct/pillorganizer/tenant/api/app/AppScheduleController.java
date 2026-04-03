@@ -12,8 +12,7 @@ import jakarta.inject.Inject;
 import jct.pillorganizer.tenant.auth.AuthService;
 import jct.pillorganizer.tenant.dto.DeviceScheduleStateDTO;
 import jct.pillorganizer.tenant.dto.SetScheduleRequestDTO;
-import jct.pillorganizer.tenant.exceptions.DeviceAccessException;
-import jct.pillorganizer.tenant.model.device.LogicalDevice;
+import jct.pillorganizer.tenant.model.user.User;
 import jct.pillorganizer.tenant.service.DeviceService;
 import jct.pillorganizer.tenant.service.ScheduleService;
 import lombok.extern.flogger.Flogger;
@@ -26,29 +25,25 @@ public class AppScheduleController {
     AuthService authService;
 
     @Inject
-    DeviceService deviceService;
-
-    @Inject
     ScheduleService scheduleService;
 
     @Operation(summary = "Get the current and pending schedule for a device")
     @Get("/{id}/schedule")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public DeviceScheduleStateDTO dispenseTimes(@PathVariable("id") String deviceID) {
-        authService.accessDevice(deviceID);
-        LogicalDevice device = deviceService.get(deviceID)
-                .orElseThrow(() -> new DeviceAccessException("Device not found: " + deviceID));
-        return scheduleService.getSchedule(device);
+        return scheduleService.getSchedule(authService.accessDevice(deviceID, false));
     }
 
     @Operation(summary = "Request a new schedule for a device")
     @Post("/{id}/schedule")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public DeviceScheduleStateDTO updateDispenseTime(@PathVariable("id") String deviceID,
-                                                      @Body SetScheduleRequestDTO dto) {
-        authService.accessDevice(deviceID);
-        LogicalDevice device = deviceService.get(deviceID)
-                .orElseThrow(() -> new DeviceAccessException("Device not found: " + deviceID));
-        return scheduleService.setSchedule(device, dto.schedule(), dto.takeEffect(), authService.getUser());
+                                                     @Body SetScheduleRequestDTO dto, User user) {
+        return scheduleService.setSchedule(
+                authService.accessDevice(deviceID, true),
+                dto.schedule(),
+                dto.takeEffect(),
+                user
+        );
     }
 }
