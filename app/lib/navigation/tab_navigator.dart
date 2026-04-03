@@ -105,8 +105,10 @@ class _TabNavigatorState extends ConsumerState<TabNavigator> {
     });
 
     return Scaffold(
-      body: Stack(
-        children: [
+      body: SafeArea(
+        bottom: true,
+        child: Stack(
+          children: [
           _getTabWidget(_currentTab),
           Positioned(
             left: 20.w,
@@ -206,6 +208,7 @@ class _TabNavigatorState extends ConsumerState<TabNavigator> {
             ),
           ),
         ],
+        ),
       ),
     );
   }
