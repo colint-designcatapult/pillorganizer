@@ -1,11 +1,9 @@
 import 'dart:async';
 
-import 'package:app/api/intreceptors/auth-interceptors.dart';
 import 'package:app/apiv2/models/device.dart';
 import 'package:app/apiv2/models/dto.dart';
-import 'package:app/apiv2/tenant.dart';
 import 'package:app/provider/control_plane_providers.dart';
-import 'package:dio/dio.dart';
+import 'package:app/provider/tenant_providers.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:timezone/standalone.dart' as tz;
 
@@ -68,12 +66,7 @@ class DeviceList extends _$DeviceList {
     // Persist to backend using the device's own apiBase so this works
     // regardless of which device is currently active.
     try {
-      final dio = Dio(BaseOptions(
-        baseUrl: device.apiBase,
-        connectTimeout: const Duration(seconds: 10),
-      ));
-      dio.interceptors.add(JwtAuthInterceptor(dio: dio));
-      await TenantApiClient(dio)
+      await tenantClientForUrl(device.apiBase)
           .updateDeviceNickname(id, UpdateDeviceSettingsDto(deviceName: newName));
     } catch (e) {
       // Revert optimistic update so UI stays in sync with server.
