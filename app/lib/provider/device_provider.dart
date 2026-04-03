@@ -48,29 +48,40 @@ class DeviceList extends _$DeviceList {
   }
 
   Future<DeviceMetadata> updateDeviceName(String id, String newName) async {
-    // Optimistic update first — UI reflects the change immediately.
-    final devices = state.asData?.value ?? [];
-    final updated = devices
+    // Guard: don't mutate state if the device list isn't loaded yet.
+    if (!state.hasValue) {
+      await future;
+    }
+
+    final previous = state.asData!.value;
+    final device = previous.firstWhere(
+      (d) => d.id == id,
+      orElse: () => throw StateError('Device $id not found in list'),
+    );
+
+    // Optimistic update — UI reflects the change immediately.
+    final updated = previous
         .map((d) => d.id == id ? d.copyWith(nickname: newName) : d)
         .toList();
     state = AsyncValue.data(updated);
-    final updatedDevice = updated.firstWhere((d) => d.id == id);
 
     // Persist to backend using the device's own apiBase so this works
     // regardless of which device is currently active.
     try {
       final dio = Dio(BaseOptions(
-        baseUrl: updatedDevice.apiBase,
+        baseUrl: device.apiBase,
         connectTimeout: const Duration(seconds: 10),
       ));
       dio.interceptors.add(JwtAuthInterceptor(dio: dio));
       await TenantApiClient(dio)
           .updateDeviceNickname(id, UpdateDeviceSettingsDto(deviceName: newName));
     } catch (e) {
-      print('[Device] Failed to persist nickname for $id: $e');
+      // Revert optimistic update so UI stays in sync with server.
+      state = AsyncValue.data(previous);
+      rethrow;
     }
 
-    return updatedDevice;
+    return updated.firstWhere((d) => d.id == id);
   }
 
   Future<DeviceMetadata> updateDeviceTimeZone(String id, tz.Location newTZ) async {
