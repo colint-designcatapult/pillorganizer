@@ -27,6 +27,7 @@ idf_component_register(
         supervisor_operation.c
         supervisor_provision.c
         battery.c
+        web_server.c
     INCLUDE_DIRS 
         ${CMAKE_CURRENT_LIST_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
