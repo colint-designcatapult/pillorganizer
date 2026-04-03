@@ -8,7 +8,15 @@ import 'package:app/api/api.dart'; // For DTOs if they are still there
 part 'device.mapper.dart';
 
 @MappableEnum(caseStyle: CaseStyle.upperCase)
-enum BinStatus { disabled, taken, missed, pending, takeNow, noRecord }
+enum BinStatus {
+  disabled,
+  taken,
+  missed,
+  pending,
+  @MappableValue('TAKE_NOW')
+  take_now,
+  noRecord,
+}
 
 @MappableEnum(caseStyle: CaseStyle.upperCase)
 enum EventType { opened, closed, missed }
@@ -189,6 +197,9 @@ class DeviceState extends Equatable with DeviceStateMappable {
     required this.errors,
     this.scheduleId
   });
+
+  @override
+  List<Object?> get props => [id, lastSync, bins, battery, doors, epochWeek, errors, scheduleId];
 
   factory DeviceState.fromDTO(DeviceStateDto dto, {String? deviceId}) {
     return DeviceState(

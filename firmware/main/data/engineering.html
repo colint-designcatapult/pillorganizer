@@ -30,6 +30,7 @@
                         <div><form action="/reboot" method="post"><button class='error' type="submit">Reboot</button></form></div>
                         <div><form action="/reset" method="post"><button class='error' type="submit">Factory Reset</button></form></div>
                         <div><button class='error' onclick="clearNVS()">Clear Schedule NVS</button></div>
+                        <div><button class='warning' onclick="recalcSchedule()">Recalculate Schedule</button></div>
                     </div>
 
                 </div>
@@ -235,6 +236,18 @@ message EngineeringAllBins {
                             alert("Failed to clear NVS data");
                         });
                 }
+            }
+
+            function recalcSchedule() {
+                fetch('/recalc-schedule', { method: 'POST' })
+                    .then(response => response.text())
+                    .then(data => {
+                        alert(data);
+                    })
+                    .catch(err => {
+                        console.error("Failed to recalculate schedule:", err);
+                        alert("Failed to recalculate schedule");
+                    });
             }
 
         </script>

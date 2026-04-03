@@ -362,7 +362,7 @@ class DosePeriodArea extends ConsumerWidget {
           ? _formatTakenAtTime(context, period.takenAtTime)
           : format;
       return AppLocalizations.of(context)!.doseTakenAt(takenTime);
-    } else if (period.status == BinStatus.takeNow) {
+    } else if (period.status == BinStatus.take_now) {
       return AppLocalizations.of(context)!.doseTakeNow;
     } else if (period.status == BinStatus.pending) {
       return AppLocalizations.of(context)!.doseTakeAt;
