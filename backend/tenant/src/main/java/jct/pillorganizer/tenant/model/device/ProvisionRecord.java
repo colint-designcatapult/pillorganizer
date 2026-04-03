@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.annotation.*;
 import io.micronaut.serde.annotation.Serdeable;
-import jct.pillorganizer.tenant.model.user.BaseUser;
 import jct.pillorganizer.tenant.model.user.User;
 import lombok.Getter;
 import lombok.Setter;

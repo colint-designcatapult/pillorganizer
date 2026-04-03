@@ -8,8 +8,12 @@ import jct.pillorganizer.tenant.model.user.User;
 import jct.pillorganizer.tenant.projection.UserProfileView;
 import jct.pillorganizer.tenant.repo.UserRepository;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.function.Function;
+import jct.pillorganizer.tenant.repo.DeviceUserRepository;
+import jct.pillorganizer.tenant.model.device.DeviceUser;
 
 @Singleton
 public class UserService {
@@ -20,6 +24,8 @@ public class UserService {
     private DeviceMapper deviceMapper;
     @Inject
     TenantService tenantService;
+    @Inject
+    DeviceUserRepository deviceUserRepository;
 
     public User upsert(String userId, String name, String email) {
         return repository.upsert(userId, name, email);
@@ -42,8 +48,15 @@ public class UserService {
                 user.getDevices()
                         .stream()
                         .map(d -> deviceMapper.toAccessDTO(d, tenantService.getCurrentTenant().get()))
-                        .collect(Collectors.toList())
-        ));
+                        .collect(Collectors.toList())));
+    }
+
+    public Map<String, DeviceUser> getDeviceUserMap(String userId) {
+        return deviceUserRepository.findByUserId(userId).stream()
+                .collect(Collectors.toMap(
+                        deviceUser -> deviceUser.getDevice().getId(),
+                        Function.identity(),
+                        (existing, replacement) -> existing));
     }
 
 }
