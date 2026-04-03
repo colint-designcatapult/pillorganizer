@@ -1,14 +1,21 @@
 import 'package:app/apiv2/models/dto.dart';
 import 'package:app/service/time_service.dart';
 import 'package:dart_mappable/dart_mappable.dart';
-import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:app/api/api.dart'; // For DTOs if they are still there
 
 part 'device.mapper.dart';
 
 @MappableEnum(caseStyle: CaseStyle.upperCase)
-enum BinStatus { disabled, taken, missed, pending, takeNow, noRecord }
+enum BinStatus {
+  disabled,
+  taken,
+  missed,
+  pending,
+  @MappableValue('TAKE_NOW')
+  take_now,
+  noRecord,
+}
 
 @MappableEnum(caseStyle: CaseStyle.upperCase)
 enum EventType { opened, closed, missed }
@@ -169,7 +176,7 @@ List<BinStatus> decodePackedStatus(int? bins) {
 }
 
 @MappableClass()
-class DeviceState extends Equatable with DeviceStateMappable {
+class DeviceState with DeviceStateMappable {
   final String id;
   final DateTime? lastSync;
   final List<BinState> bins;

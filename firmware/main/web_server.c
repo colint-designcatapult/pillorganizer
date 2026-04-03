@@ -132,6 +132,35 @@ static esp_err_t reset_handler(httpd_req_t *req)
 }
 
 /**
+ * Handler for POST /recalc-schedule
+ * Manually recalculates the current schedule (useful after clearing NVS mid-week)
+ */
+static esp_err_t recalc_schedule_handler(httpd_req_t *req)
+{
+    ESP_LOGI(TAG, "Manual schedule recalculation requested via web interface");
+    
+    extern esp_err_t supervisor_operation_recalculate_schedule(void);
+    
+    esp_err_t err = supervisor_operation_recalculate_schedule();
+    
+    if (err == ESP_OK) {
+        const char resp[] = "Schedule recalculated successfully.";
+        httpd_resp_set_type(req, "text/plain");
+        httpd_resp_send(req, resp, -1);
+    } else if (err == ESP_ERR_NOT_FOUND) {
+        const char resp[] = "No schedule to recalculate.";
+        httpd_resp_set_type(req, "text/plain");
+        httpd_resp_send(req, resp, -1);
+    } else {
+        const char resp[] = "Failed to recalculate schedule.";
+        httpd_resp_set_type(req, "text/plain");
+        httpd_resp_send(req, resp, -1);
+    }
+    
+    return ESP_OK;
+}
+
+/**
  * Initialize the HTTP web server
  */
 esp_err_t web_server_init(void)
@@ -143,7 +172,7 @@ esp_err_t web_server_init(void)
     
     // Configure and create the httpd server
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.max_uri_handlers = 5;  // root, version, clear-nvs, reboot, reset
+    config.max_uri_handlers = 6;  // root, version, clear-nvs, reboot, reset, recalc-schedule
     
     ESP_LOGI(TAG, "Starting web server on port %d", config.server_port);
     
@@ -192,6 +221,14 @@ esp_err_t web_server_init(void)
         .user_ctx = NULL,
     };
     httpd_register_uri_handler(server, &reset);
+    
+    httpd_uri_t recalc_schedule = {
+        .uri      = "/recalc-schedule",
+        .method   = HTTP_POST,
+        .handler  = recalc_schedule_handler,
+        .user_ctx = NULL,
+    };
+    httpd_register_uri_handler(server, &recalc_schedule);
     
     ESP_LOGI(TAG, "Web server initialized successfully");
     return ESP_OK;

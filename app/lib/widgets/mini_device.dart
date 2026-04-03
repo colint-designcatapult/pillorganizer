@@ -25,7 +25,7 @@ class _StateLed extends State<StateLed> {
     Image? image;
     bool shouldBlink = false;
     BinStatus? status = widget.binStatus;
-    if (status == BinStatus.takeNow) {
+    if (status == BinStatus.take_now) {
       image = imageGreen;
       shouldBlink = true;
     } else if (status == BinStatus.taken) {

@@ -86,17 +86,20 @@ static void set_led_idle_task()
 
             int16_t blink_mask = 0;
             int16_t green_mask = 0;
+            int16_t red_mask = 0;
             for (int i = 0; i < 14; i++) {
                 bin_state_t* bs = &s_device_state.bins[i];
                 if (bs->status == TAKE_NOW) {
                     blink_mask |= 1 << i;
                     green_mask |= 1 << i;
+                } else if (bs->status == MISSED) {
+                    red_mask |= 1 << i;
                 }
             }
             
             ledc_set_idle_task(LED_DEVICE_STATE, (led_task_param_t){
                 .device_state = {
-                    .red = 0x0000,
+                    .red = red_mask,
                     .green = green_mask,
                     .blink_mask = blink_mask
                 }
@@ -921,4 +924,31 @@ esp_err_t supervisor_operation_get_schedule(device_schedule_t* sched)
 
     memcpy(sched, &s_device_state.schedule, sizeof(device_schedule_t));
     return ESP_OK;
+}
+
+esp_err_t supervisor_operation_recalculate_schedule(void)
+{
+    if (!supervisor_operation_is_initialized()) {
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    if (s_device_state.schedule.type == SCHED_SIMPLE) {
+        // Recalculate epoch_week from current time first
+        ESP_ERROR_CHECK(app_rtc_get_current_epoch_week(&s_device_state.epoch_week));
+        ESP_LOGI(TAG, "Updated epoch_week on manual recalculation request: %lld", s_device_state.epoch_week);
+        
+        // Force recalculate the current schedule with fresh epoch_week
+        device_schedule_validation_t validation = apply_schedule(&s_device_state.schedule, &s_device_state, true);
+        if (validation == SCHED_VALID) {
+            ESP_LOGI(TAG, "Manually recalculated schedule on engineering request");
+            ESP_ERROR_CHECK(update_device_state());
+            return ESP_OK;
+        } else {
+            ESP_LOGW(TAG, "Failed to recalculate schedule: %d", validation);
+            return ESP_FAIL;
+        }
+    } else {
+        ESP_LOGW(TAG, "No simple schedule to recalculate");
+        return ESP_ERR_NOT_FOUND;
+    }
 }

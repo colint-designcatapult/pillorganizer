@@ -16,7 +16,7 @@ class CircularBinStatusIndicator extends StatelessWidget {
 
     switch (status) {
       case BinStatus.taken:
-      case BinStatus.takeNow:
+      case BinStatus.take_now:
         color = const Color(0xFF7CAC7B);
         border = const Color(0xFF4D7B50);
         break;
