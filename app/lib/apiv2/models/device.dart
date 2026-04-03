@@ -1,7 +1,6 @@
 import 'package:app/apiv2/models/dto.dart';
 import 'package:app/service/time_service.dart';
 import 'package:dart_mappable/dart_mappable.dart';
-import 'package:flutter/material.dart';
 import 'package:app/api/api.dart'; // For DTOs if they are still there
 
 part 'device.mapper.dart';
@@ -221,9 +220,6 @@ class DeviceState with DeviceStateMappable {
     if (doors == null) return false;
     return (doors! & (1 << binIndex)) != 0;
   }
-
-  @override
-  List<Object?> get props => [id, lastSync, bins, battery, doors, epochWeek, errors, scheduleId];
 }
 
 enum DeviceModel {
