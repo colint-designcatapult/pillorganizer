@@ -207,7 +207,7 @@ class SquareButton extends StatelessWidget {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.all(const Radius.circular(4.0).r),
@@ -221,25 +221,30 @@ class SquareButton extends StatelessWidget {
           ],
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            SizedBox(height: 14.h),
+            SizedBox(height: 12.h),
             Icon(
               icon,
               size: 50.h,
               color: color,
             ),
-            SizedBox(height: 8.h),
-            SizedBox(
-                height: 60.h,
-                child: Align(
-                    alignment: Alignment.center,
-                    child: Text(label,
-                        textAlign: TextAlign.center,
-                        style:
-                            Theme.of(context).textTheme.displaySmall?.copyWith(
-                                  color: color,
-                                )))),
+            SizedBox(height: 12.h),
+            Expanded(
+              child: Align(
+                alignment: Alignment.center,
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        color: color,
+                      ),
+                ),
+              ),
+            ),
+            SizedBox(height: 4.h),
           ],
         ),
       ),
