@@ -20,9 +20,9 @@ IconData batteryIcon(BatteryState bat) {
   } else if (bat.charging) {
     return PhosphorIconsRegular.batteryCharging;
   } else if (bat.percent < 5) {
-    return PhosphorIconsRegular.batteryLow;
-  } else if (bat.percent < 20) {
     return PhosphorIconsRegular.batteryEmpty;
+  } else if (bat.percent < 20) {
+    return PhosphorIconsRegular.batteryLow;
   } else if (bat.percent <= 100) {
     return PhosphorIconsRegular.batteryFull;
   }
@@ -37,7 +37,7 @@ String batteryText(BatteryState bat) {
   } else if (!bat.charging && bat.chargerConnected) {
     return "Not charging";
   } else if (bat.percent < 5) {
-    return "Battery critically low";
+    return "Critical low battery";
   } else if (bat.percent < 20) {
     return "Low battery";
   }

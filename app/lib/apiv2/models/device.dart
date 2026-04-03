@@ -112,7 +112,7 @@ class BinState with BinStateMappable {
       id: dto.id,
       status: dto.status != null ? BinStatusMapper.fromValue(dto.status) : BinStatus.noRecord,
       scheduledTime: dto.scheduledTime != null ? DateTime.fromMillisecondsSinceEpoch(
-          dto.scheduledTime!,
+          dto.scheduledTime! * 1000,
           isUtc: true
       ) : null,
       scheduleId: dto.scheduleId
@@ -214,9 +214,6 @@ class DeviceState extends Equatable with DeviceStateMappable {
     if (doors == null) return false;
     return (doors! & (1 << binIndex)) != 0;
   }
-
-  @override
-  List<Object?> get props => [id, lastSync, bins, battery, doors];
 }
 
 enum DeviceModel {
