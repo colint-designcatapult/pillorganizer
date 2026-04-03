@@ -6,12 +6,16 @@ import io.micronaut.security.rules.SecurityRule;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
+import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.tenant.auth.AuthService;
 import jct.pillorganizer.tenant.dto.UpdateDeviceNickname;
 import jct.pillorganizer.tenant.model.device.LogicalDevice;
+import jct.pillorganizer.tenant.model.user.User;
 import jct.pillorganizer.tenant.service.DeviceProvisionService;
 import jct.pillorganizer.tenant.service.DeviceService;
 import lombok.extern.flogger.Flogger;
+
+import java.util.List;
 
 /**
  * API endpoints for the app to configure and view device information and state.
@@ -26,8 +30,12 @@ public class AppDeviceAPIController {
     @Inject
     AuthService authService;
 
-    @Inject
-    private DeviceProvisionService deviceProvisionService;
+    @Operation(summary = "Lists devices that the user has access to")
+    @Get("/list")
+    @Secured(SecurityRule.IS_AUTHENTICATED)
+    public List<DeviceAccessDto> listDeviceUser(User user) {
+        return deviceService.getUserDevices(user);
+    }
 
     @Operation(summary = "Updates the device nickname")
     @Post("/{id}/nickname")

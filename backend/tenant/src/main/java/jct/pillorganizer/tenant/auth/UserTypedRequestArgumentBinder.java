@@ -18,6 +18,6 @@ public class UserTypedRequestArgumentBinder implements TypedRequestArgumentBinde
 
     @Override
     public BindingResult<User> bind(ArgumentConversionContext<User> context, HttpRequest<?> source) {
-        return RequestCacheService::getUser;
+        return () -> RequestCacheService.getUser(source);
     }
 }

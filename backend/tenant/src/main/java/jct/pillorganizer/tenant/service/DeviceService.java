@@ -43,8 +43,6 @@ public class DeviceService {
     DeviceUserRepository deviceUserRepository;
     @Inject
     TenantService tenantService;
-    @Inject
-    private AuthService authService;
 
     @Transactional
     public ProvisionRecord provision(User user, String deviceId, String serialNo, String claimId, String thingName) {

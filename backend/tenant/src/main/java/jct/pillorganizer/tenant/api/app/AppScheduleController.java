@@ -25,9 +25,6 @@ public class AppScheduleController {
     AuthService authService;
 
     @Inject
-    DeviceService deviceService;
-
-    @Inject
     ScheduleService scheduleService;
 
     @Operation(summary = "Get the current and pending schedule for a device")
