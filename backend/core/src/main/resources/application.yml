@@ -31,10 +31,6 @@ micronaut:
           jwks:
             cognito:
               url: https://cognito-idp.${aws.region}.amazonaws.com/${aws.cognito.public-pool}/.well-known/jwks.json
-endpoints:
-  health:
-    enabled: true
-    sensitive: false
 app:
   iot-core:
     arn-prefix: "arn:aws:iot:ca-central-1:114829892869"
