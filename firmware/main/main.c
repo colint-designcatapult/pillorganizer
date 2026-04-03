@@ -30,6 +30,7 @@
 #include <freertos/task.h>
 #include <freertos/semphr.h>
 #include "battery.h"
+#include "web_server.h"
 
 #define TAG "MAIN"
 
@@ -310,6 +311,9 @@ void app_main(void)
 
     // Initialize networking
     network_init();
+
+    // Initialize the web server for testing/engineering
+    web_server_init();
 
     // Hand off business logic to the supervisor
     supervisor_run();

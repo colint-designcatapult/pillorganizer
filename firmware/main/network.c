@@ -28,6 +28,7 @@ static void network_wifi_event_handler(void* arg, esp_event_base_t event_base,
         // Once connected and an IP is assigned, print it out
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
         ESP_LOGI(TAG, "Successfully connected! Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
+        ESP_LOGI(TAG, "Access engineering interface at: http://" IPSTR, IP2STR(&event->ip_info.ip));
         ESP_ERROR_CHECK(supervisor_submit_event(EVENT_NETIF_CONNECTED));
     }
 }
