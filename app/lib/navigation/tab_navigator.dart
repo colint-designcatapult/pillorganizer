@@ -39,7 +39,9 @@ class _TabNavigatorState extends ConsumerState<TabNavigator> {
     if (!hasDevice) {
       return [TabType.home, TabType.account];
     } else if (isOwner) {
-      return [TabType.home, TabType.pills, TabType.devices, TabType.account];
+      // TODO: Re-enable pills tab when medications API is ready
+      // return [TabType.home, TabType.pills, TabType.devices, TabType.account];
+      return [TabType.home, TabType.devices, TabType.account];
     } else {
       return [TabType.home, TabType.devices, TabType.account];
     }
