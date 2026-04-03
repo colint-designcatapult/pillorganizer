@@ -22,6 +22,7 @@ public interface LogicalDeviceRepository extends CrudRepository<LogicalDevice, S
     @Join(value = "requestedSchedule", type = Join.Type.LEFT_FETCH)
     Optional<LogicalDevice> getById(String id);
 
+    void updateNickname(@Id String logicalDeviceId, String nickname);
     void updateCurrentSchedule(@Id String logicalDeviceId, DeviceSchedule currentSchedule);
     void updateRequestedSchedule(@Id String logicalDeviceId, DeviceSchedule requestedSchedule);
 }

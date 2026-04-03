@@ -46,10 +46,10 @@ public class DeviceABACInterceptor implements MethodInterceptor<Object, Object> 
     }
 
     private Object authorizeByDeviceID(Object id, MethodInvocationContext<Object, Object> context) {
-        if(id instanceof Long) {
-            return authorizeByDeviceID((long)id, context);
+        if(id instanceof String) {
+            return authorizeByDeviceID((String)id, context);
         } else {
-            throw new IllegalArgumentException("ID not long");
+            throw new IllegalArgumentException("Unsupported device ID type; expected String");
         }
     }
 
