@@ -21,4 +21,9 @@ abstract class TenantApiClient {
       @Path("id") String deviceId,
       @Body() SetScheduleRequestDto request);
 
+  @POST("/api/v1/device/{id}/nickname")
+  Future<DeviceAccessDto> updateDeviceNickname(
+      @Path("id") String deviceId,
+      @Body() UpdateDeviceSettingsDto request);
+
 }

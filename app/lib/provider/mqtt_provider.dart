@@ -105,7 +105,7 @@ class MqttClient extends _$MqttClient {
       _failureCount++;
       print('[MQTT] Connection failed (attempt $_failureCount/$_maxRetries): $e');
       // Use failureCount - 1 as the exponent so the first retry is 5s,
-      // matching the documented 5→10→20→40→80s schedule.
+      // matching the documented 5s → 10s → failure schedule.
       final delay = _nextRetryDelay(_failureCount - 1);
       if (delay != null) {
         print('[MQTT] Retrying in ${delay.inSeconds}s');

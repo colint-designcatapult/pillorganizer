@@ -214,6 +214,9 @@ class DeviceState extends Equatable with DeviceStateMappable {
     if (doors == null) return false;
     return (doors! & (1 << binIndex)) != 0;
   }
+
+  @override
+  List<Object?> get props => [id, lastSync, bins, battery, doors, epochWeek, errors, scheduleId];
 }
 
 enum DeviceModel {
