@@ -198,3 +198,10 @@ class DeviceStateDto with DeviceStateDtoMappable {
     this.epochWeek
   });
 }
+
+@MappableClass()
+class UpdateDeviceSettingsDto with UpdateDeviceSettingsDtoMappable {
+  final String? deviceName;
+
+  const UpdateDeviceSettingsDto({this.deviceName});
+}

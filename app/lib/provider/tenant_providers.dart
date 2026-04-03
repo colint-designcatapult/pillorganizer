@@ -45,15 +45,18 @@ TenantApiClient tenantClient(Ref ref) {
   return TenantApiClient(dio);
 }
 
-@riverpod
-TenantApiClient? activeTenantClient(Ref ref) {
-  final DeviceMetadata? device = ref.watch(activeDeviceProvider);
-  if (device == null) return null;
-
+TenantApiClient tenantClientForUrl(String baseUrl) {
   final dio = Dio(BaseOptions(
-    baseUrl: device.apiBase,
+    baseUrl: baseUrl,
     connectTimeout: const Duration(seconds: 10),
   ));
   dio.interceptors.add(JwtAuthInterceptor(dio: dio));
   return TenantApiClient(dio);
+}
+
+@riverpod
+TenantApiClient? activeTenantClient(Ref ref) {
+  final DeviceMetadata? device = ref.watch(activeDeviceProvider);
+  if (device == null) return null;
+  return tenantClientForUrl(device.apiBase);
 }

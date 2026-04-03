@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:app/apiv2/models/device.dart';
 import 'package:app/apiv2/models/dto.dart';
 import 'package:app/provider/control_plane_providers.dart';
-import 'package:app/service/time_service.dart';
+import 'package:app/provider/tenant_providers.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:timezone/standalone.dart' as tz;
 
@@ -46,7 +46,35 @@ class DeviceList extends _$DeviceList {
   }
 
   Future<DeviceMetadata> updateDeviceName(String id, String newName) async {
-    throw UnimplementedError();
+    // Guard: don't mutate state if the device list isn't loaded yet.
+    if (!state.hasValue) {
+      await future;
+    }
+
+    final previous = state.asData!.value;
+    final device = previous.firstWhere(
+      (d) => d.id == id,
+      orElse: () => throw StateError('Device $id not found in list'),
+    );
+
+    // Optimistic update — UI reflects the change immediately.
+    final updated = previous
+        .map((d) => d.id == id ? d.copyWith(nickname: newName) : d)
+        .toList();
+    state = AsyncValue.data(updated);
+
+    // Persist to backend using the device's own apiBase so this works
+    // regardless of which device is currently active.
+    try {
+      await tenantClientForUrl(device.apiBase)
+          .updateDeviceNickname(id, UpdateDeviceSettingsDto(deviceName: newName));
+    } catch (e) {
+      // Revert optimistic update so UI stays in sync with server.
+      state = AsyncValue.data(previous);
+      rethrow;
+    }
+
+    return updated.firstWhere((d) => d.id == id);
   }
 
   Future<DeviceMetadata> updateDeviceTimeZone(String id, tz.Location newTZ) async {
