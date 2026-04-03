@@ -33,7 +33,6 @@ class HomeBodySelector extends ConsumerWidget {
 
     //final bool isDisconnected = deviceNotice == DeviceNotice.disconnected;
     final bool isDisconnected = false;
-    final dosePeriods = deviceStateAsync.value?.dosePeriods ?? [];
     //final bool isEmpty =
     //    !dosePeriods.any((element) => element.medicationIDs.isNotEmpty);
     final bool isEmpty = false;

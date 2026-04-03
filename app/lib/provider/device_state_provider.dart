@@ -1,13 +1,12 @@
 import 'dart:convert';
 
-import 'package:app/api/api.dart';
 import 'package:app/apiv2/models/device.dart';
-import 'package:app/provider/time_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../apiv2/models/dto.dart';
 import 'mqtt_provider.dart';
 
 part 'device_state_provider.g.dart';
@@ -43,9 +42,9 @@ Stream<DeviceState?> deviceState(Ref ref) async* {
           try {
             final payload = message.payload as MqttPublishMessage;
             final String jsonString = utf8.decode(payload.payload.message);
-            final dynamic decodedJson = jsonDecode(jsonString);
 
-            DeviceStateDTO dto = DeviceStateDTO.fromJson(decodedJson);
+            DeviceStateDto dto = DeviceStateDtoMapper.fromJson(jsonString);
+
             // Use the device ID from the subscription context
             yield DeviceState.fromDTO(dto, deviceId: device.id);
           } catch (e, st) {

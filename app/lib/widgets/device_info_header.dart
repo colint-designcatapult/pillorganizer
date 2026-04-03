@@ -14,22 +14,35 @@ import 'package:app/apiv2/models/device.dart';
 import '../provider/selected_device_provider.dart';
 
 
-IconData batteryIcon(int level, bool? charging) {
-  if (charging == true) {
+IconData batteryIcon(BatteryState bat) {
+  if (!bat.batteryConnected) {
+    return PhosphorIconsRegular.batteryWarning;
+  } else if (bat.charging) {
     return PhosphorIconsRegular.batteryCharging;
-  } else if (level == 0) {
+  } else if (bat.percent < 5) {
     return PhosphorIconsRegular.batteryEmpty;
-  } else if (level <= 20) {
+  } else if (bat.percent < 20) {
     return PhosphorIconsRegular.batteryLow;
-  } else if (level <= 50) {
-    return PhosphorIconsRegular.batteryMedium;
-  } else if (level <= 80) {
-    return PhosphorIconsRegular.batteryHigh;
+  } else if (bat.percent <= 100) {
+    return PhosphorIconsRegular.batteryFull;
   }
-
-  return PhosphorIconsRegular.batteryFull;
+  return PhosphorIconsRegular.batteryWarning;
 }
 
+String batteryText(BatteryState bat) {
+  if (!bat.batteryConnected) {
+    return "No battery";
+  } else if (bat.charging) {
+    return "Charging";
+  } else if (!bat.charging && bat.chargerConnected) {
+    return "Not charging";
+  } else if (bat.percent < 5) {
+    return "Critical low battery";
+  } else if (bat.percent < 20) {
+    return "Low battery";
+  }
+  return "";
+}
 
 class DeviceInfoHeader extends ConsumerWidget {
   const DeviceInfoHeader({super.key});
@@ -40,8 +53,6 @@ class DeviceInfoHeader extends ConsumerWidget {
     final deviceStateAsync = ref.watch(deviceStateProvider);
     final deviceListAsync = ref.watch(deviceListProvider);
 
-    int? batteryLevel;
-    bool? batteryCharging;
     DeviceState? deviceState = deviceStateAsync.value;
     int numberOfDevices = deviceListAsync.value?.length ?? 0;
     bool isOwner = activeDevice?.primaryUser ?? false;
@@ -51,11 +62,6 @@ class DeviceInfoHeader extends ConsumerWidget {
     String? tenantName = activeDevice?.showTenant == true
         ? activeDevice?.tenantName
         : null;
-
-    if (deviceState != null) {
-      batteryLevel = deviceState.battery;
-      batteryCharging = deviceState.charging;
-    }
 
     /*
     if (deviceState == null) {
@@ -180,7 +186,7 @@ class DeviceInfoHeader extends ConsumerWidget {
           Column(
             children: [SizedBox(height: 8.h), const SwitchDevice()],
           ),
-        if (batteryLevel != null)
+        if (deviceState?.battery != null)
           Column(
             children: [
               SizedBox(height: 8.h),
@@ -192,13 +198,20 @@ class DeviceInfoHeader extends ConsumerWidget {
                         ?.copyWith(color: Colors.white)),
                 SizedBox(width: 8.w),
                 Icon(
-                  batteryIcon(batteryLevel, batteryCharging),
+                  batteryIcon(deviceState!.battery!),
                   size: 20.h,
                   color: Colors.white,
                 ),
                 SizedBox(width: 8.w),
+                if (deviceState!.battery!.chargerConnected)
+                  Icon(
+                    PhosphorIconsRegular.plugsConnected,
+                    size: 20.h,
+                    color: Colors.white,
+                  ),
+                SizedBox(width: 8.w),
                 Text(
-                  "${batteryLevel.toString()} %",
+                  batteryText(deviceState!.battery!),
                   style: Theme.of(context)
                       .textTheme
                       .displaySmall

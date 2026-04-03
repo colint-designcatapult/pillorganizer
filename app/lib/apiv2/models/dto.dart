@@ -143,3 +143,58 @@ class SetScheduleRequestDto with SetScheduleRequestDtoMappable {
 
   const SetScheduleRequestDto({required this.schedule, required this.takeEffect});
 }
+
+@MappableClass()
+class DeviceBatteryStateDto with DeviceBatteryStateDtoMappable {
+  final int? usb;
+  final int? pg;
+  final int? con;
+  final int? chg;
+  final int? pct;
+
+  DeviceBatteryStateDto({
+    this.usb,
+    this.pg,
+    this.con,
+    this.chg,
+    this.pct
+  });
+}
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class DeviceBinStatusDto with DeviceBinStatusDtoMappable {
+  final int id;
+  final String? status;
+  final int? scheduledTime;
+  final String? scheduleId;
+
+  DeviceBinStatusDto({
+    required this.id,
+    this.status,
+    this.scheduledTime,
+    this.scheduleId
+  });
+}
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
+class DeviceStateDto with DeviceStateDtoMappable {
+  final int timestamp;
+  final DeviceBatteryStateDto? battery;
+  final bool? reloading;
+  final int? doors;
+  final List<DeviceBinStatusDto>? bins;
+  final String? scheduleId;
+  final int? errorFlags;
+  final int? epochWeek;
+
+  DeviceStateDto({
+    required this.timestamp,
+    this.battery,
+    this.reloading,
+    this.doors,
+    this.bins,
+    this.scheduleId,
+    this.errorFlags,
+    this.epochWeek
+  });
+}

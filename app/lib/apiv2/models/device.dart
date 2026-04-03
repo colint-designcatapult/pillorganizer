@@ -17,6 +17,9 @@ enum DeviceConnectionStatus { undefined, offline, online, loading }
 
 enum DeviceNotice { none, disconnected, empty }
 
+enum DeviceErrorFlag { noSchedule, stateCorrupted, noRtcTime }
+
+
 @MappableClass()
 class BinEvent with BinEventMappable {
   final int id;
@@ -67,36 +70,54 @@ class BinSchedule with BinScheduleMappable {
 }
 
 @MappableClass()
+class BatteryState with BatteryStateMappable {
+  final bool batteryConnected;
+  final bool charging;
+  final bool chargerConnected;
+  final int percent;
+
+  const BatteryState({
+    required this.batteryConnected,
+    required this.charging,
+    required this.chargerConnected,
+    required this.percent,
+  });
+
+  factory BatteryState.fromDTO(DeviceBatteryStateDto dto) {
+    return BatteryState(
+        batteryConnected: (dto.con ?? 0) == 1,
+        charging: (dto.chg ?? 0) == 1,
+        chargerConnected: (dto.usb ?? 0) == 1 || (dto.pg ?? 0) == 1,
+        percent: dto.pct ?? 0
+    );
+  }
+}
+
+@MappableClass()
 class BinState with BinStateMappable {
-  final DeviceBinID id;
-  final BinStatus? binStatus;
+  final int id;
+  final BinStatus status;
   final DateTime? scheduledTime;
-  final DateTime? scheduledTimeLocal;
-  final BinSchedule? schedule;
-  final BinEvent? event;
+  final String? scheduleId;
 
   const BinState({
     required this.id,
-    this.binStatus,
+    required this.status,
     this.scheduledTime,
-    this.scheduledTimeLocal,
-    this.schedule,
-    this.event,
+    this.scheduleId
   });
 
-  factory BinState.fromDTO({required BinStateDTO dto}) {
-    DateTime scheduledTimeUTC = timeService.serverTime(dto.scheduledTime * 1000);
+  factory BinState.fromDTO(DeviceBinStatusDto dto) {
     return BinState(
       id: dto.id,
-      binStatus: BinStatus.values.byName(dto.binStatus.toLowerCase()),
-      scheduledTime: scheduledTimeUTC,
-      scheduledTimeLocal: timeService.serverTimeToLocal(dto.scheduledTime * 1000),
-      schedule: dto.schedule != null ? BinSchedule.fromDTO(dto: dto.schedule!) : null,
-      event: dto.event != null ? BinEvent.fromDTO(dto: dto.event!) : null,
+      status: dto.status != null ? BinStatusMapper.fromValue(dto.status) : BinStatus.noRecord,
+      scheduledTime: dto.scheduledTime != null ? DateTime.fromMillisecondsSinceEpoch(
+          dto.scheduledTime! * 1000,
+          isUtc: true
+      ) : null,
+      scheduleId: dto.scheduleId
     );
   }
-
-  static TimeService timeService = TimeService();
 }
 
 @MappableClass()
@@ -152,88 +173,39 @@ class DeviceState extends Equatable with DeviceStateMappable {
   final String id;
   final DateTime? lastSync;
   final List<BinState> bins;
-  final List<DosePeriod> dosePeriods;
-  final int? battery;
-  final bool? charging;
+  final BatteryState? battery;
   final int? doors;
+  final DateTime? epochWeek;
+  final Set<DeviceErrorFlag> errors;
+  final String? scheduleId;
 
   const DeviceState({
     required this.id,
     this.lastSync,
     required this.bins,
-    required this.dosePeriods,
     this.battery,
-    this.charging,
     this.doors,
+    this.epochWeek,
+    required this.errors,
+    this.scheduleId
   });
 
-  factory DeviceState.fromDTO(DeviceStateDTO dto, {String? deviceId}) {
-    // Use lastSync from DTO, or fallback to current time if not provided
-    // (e.g., when receiving from MQTT, the firmware doesn't send lastSync)
-    DateTime? lastSeen = dto.lastSync != null
-        ? DateTime.fromMillisecondsSinceEpoch(dto.lastSync!, isUtc: true)
-        : DateTime.now(); // Use now for MQTT messages
-
-    // Convert BinDTO list to BinState list
-    List<BinState> binStates = [];
-    if (dto.bins != null) {
-      for (final binDto in dto.bins!) {
-        // Parse status string to BinStatus enum
-        final statusStr = binDto.status.toLowerCase();
-        BinStatus binStatus = BinStatus.disabled; // Default fallback
-        try {
-          binStatus = BinStatus.values.byName(statusStr);
-        } catch (e) {
-          print('Failed to parse BinStatus: $statusStr, defaulting to disabled');
-        }
-
-        // Convert timestamps
-        DateTime? scheduledTimeUTC;
-        DateTime? scheduledTimeLocal;
-        if (binDto.scheduledTime != null && binDto.scheduledTime! > 0) {
-          scheduledTimeUTC = DateTime.fromMillisecondsSinceEpoch(
-              binDto.scheduledTime! * 1000,
-              isUtc: true);
-          scheduledTimeLocal = scheduledTimeUTC.toLocal();
-        }
-
-        DateTime? eventTimeLocal;
-        if (binDto.eventTime != null && binDto.eventTime! > 0) {
-          eventTimeLocal = DateTime.fromMillisecondsSinceEpoch(
-              binDto.eventTime!,
-              isUtc: false);
-        }
-
-        binStates.add(
-          BinState(
-            id: DeviceBinID(id: deviceId ?? 'unknown', binID: binDto.id),
-            binStatus: binStatus,
-            scheduledTime: scheduledTimeUTC,
-            scheduledTimeLocal: scheduledTimeLocal,
-            schedule: null, // Not provided in MQTT payload
-            event: eventTimeLocal != null
-                ? BinEvent(
-                    id: binDto.id,
-                    bin: binDto.id,
-                    time: eventTimeLocal.toUtc(),
-                    timeLocal: eventTimeLocal,
-                    eventType: null, // Not provided in MQTT payload
-                  )
-                : null,
-          ),
-        );
-      }
-    }
-
+  factory DeviceState.fromDTO(DeviceStateDto dto, {String? deviceId}) {
     return DeviceState(
-      id: dto.id ?? deviceId ?? 'unknown',
-      lastSync: lastSeen,
-      bins: binStates,
-      dosePeriods: dto.dosePeriods?.map((e) => DosePeriod.fromDTO(e)).toList() ??
-          List<DosePeriod>.empty(),
-      battery: dto.battery,
-      charging: dto.charging,
+      id: deviceId!,
+      lastSync: DateTime.fromMillisecondsSinceEpoch(dto.timestamp, isUtc: true),
+      bins: dto.bins?.map((e) => BinState.fromDTO(e)).toList() ?? List.empty(),
+      battery: dto.battery != null ? BatteryState.fromDTO(dto.battery!) : null,
       doors: dto.doors,
+        epochWeek: dto.epochWeek != null
+            ? DateTime.fromMillisecondsSinceEpoch(dto.epochWeek! * 1000, isUtc: true)
+            : null,
+        errors: {...(dto.errorFlags != null ? [
+          if ((dto.errorFlags! & (1 << 0)) != 0) DeviceErrorFlag.noSchedule,
+          if ((dto.errorFlags! & (1 << 1)) != 0) DeviceErrorFlag.stateCorrupted,
+          if ((dto.errorFlags! & (1 << 2)) != 0) DeviceErrorFlag.noRtcTime,
+        ] : const [])},
+        scheduleId: dto.scheduleId
     );
   }
 
@@ -242,9 +214,6 @@ class DeviceState extends Equatable with DeviceStateMappable {
     if (doors == null) return false;
     return (doors! & (1 << binIndex)) != 0;
   }
-
-  @override
-  List<Object?> get props => [id, lastSync, bins, dosePeriods, battery, charging, doors];
 }
 
 enum DeviceModel {
