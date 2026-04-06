@@ -126,7 +126,21 @@ esp_err_t mqtt_publish_device_state(device_state_t* state)
     }
     cJSON_AddNumberToObject(bat_obj, "pct", pct);
     cJSON_AddItemToObject(root, "battery", bat_obj);
-    cJSON_AddBoolToObject(root, "reloading", state->reload_state.stage != RELOAD_NONE); 
+    cJSON *reload_obj = cJSON_CreateObject();
+    if (!reload_obj) {
+        cJSON_Delete(root);
+        return ESP_ERR_NO_MEM;
+    }
+    if (state->reload_state.stage == RELOAD_NONE) {
+        cJSON_AddBoolToObject(reload_obj, "needed", false);
+    } else if (state->reload_state.stage == RELOAD_NEEDS_RELOAD) {
+        cJSON_AddBoolToObject(reload_obj, "needed", true);
+    } else {
+        cJSON_AddBoolToObject(reload_obj, "needed", true);
+        cJSON_AddNumberToObject(reload_obj, "progress", state->reload_state.progress);
+        cJSON_AddNumberToObject(reload_obj, "complete_mask", state->reload_state.complete_mask);
+    }
+    cJSON_AddItemToObject(root, "reload", reload_obj);
     cJSON_AddNumberToObject(root, "doors", state->doors);
     cJSON_AddNumberToObject(root, "epoch_week", state->epoch_week);
     cJSON_AddNumberToObject(root, "error_flags", state->error_flags);

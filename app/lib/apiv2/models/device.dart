@@ -174,6 +174,32 @@ List<BinStatus> decodePackedStatus(int? bins) {
   return out;
 }
 
+List<bool> _bitmaskToBoolList(int mask) {
+  // 14 bits correspond to the 14 physical pill bins on the device
+  return List.generate(14, (i) => ((mask >> i) & 1) == 1);
+}
+
+@MappableClass()
+class ReloadState with ReloadStateMappable {
+  final bool needed;
+  final List<bool>? progress;
+  final List<bool>? completeMask;
+
+  const ReloadState({
+    required this.needed,
+    this.progress,
+    this.completeMask,
+  });
+
+  factory ReloadState.fromDTO(ReloadStateDto dto) {
+    return ReloadState(
+      needed: dto.needed,
+      progress: dto.progress != null ? _bitmaskToBoolList(dto.progress!) : null,
+      completeMask: dto.completeMask != null ? _bitmaskToBoolList(dto.completeMask!) : null,
+    );
+  }
+}
+
 @MappableClass()
 class DeviceState with DeviceStateMappable {
   final String id;
@@ -184,6 +210,7 @@ class DeviceState with DeviceStateMappable {
   final DateTime? epochWeek;
   final Set<DeviceErrorFlag> errors;
   final String? scheduleId;
+  final ReloadState? reloadState;
 
   const DeviceState({
     required this.id,
@@ -193,7 +220,8 @@ class DeviceState with DeviceStateMappable {
     this.doors,
     this.epochWeek,
     required this.errors,
-    this.scheduleId
+    this.scheduleId,
+    this.reloadState,
   });
 
   factory DeviceState.fromDTO(DeviceStateDto dto, {String? deviceId}) {
@@ -211,7 +239,8 @@ class DeviceState with DeviceStateMappable {
           if ((dto.errorFlags! & (1 << 1)) != 0) DeviceErrorFlag.stateCorrupted,
           if ((dto.errorFlags! & (1 << 2)) != 0) DeviceErrorFlag.noRtcTime,
         ] : const [])},
-        scheduleId: dto.scheduleId
+        scheduleId: dto.scheduleId,
+        reloadState: dto.reload != null ? ReloadState.fromDTO(dto.reload!) : null,
     );
   }
 

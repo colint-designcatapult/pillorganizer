@@ -177,10 +177,23 @@ class DeviceBinStatusDto with DeviceBinStatusDtoMappable {
 }
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)
+class ReloadStateDto with ReloadStateDtoMappable {
+  final bool needed;
+  final int? progress;
+  final int? completeMask;
+
+  ReloadStateDto({
+    required this.needed,
+    this.progress,
+    this.completeMask,
+  });
+}
+
+@MappableClass(caseStyle: CaseStyle.snakeCase)
 class DeviceStateDto with DeviceStateDtoMappable {
   final int timestamp;
   final DeviceBatteryStateDto? battery;
-  final bool? reloading;
+  final ReloadStateDto? reload;
   final int? doors;
   final List<DeviceBinStatusDto>? bins;
   final String? scheduleId;
@@ -190,7 +203,7 @@ class DeviceStateDto with DeviceStateDtoMappable {
   DeviceStateDto({
     required this.timestamp,
     this.battery,
-    this.reloading,
+    this.reload,
     this.doors,
     this.bins,
     this.scheduleId,
