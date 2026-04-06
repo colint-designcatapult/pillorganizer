@@ -583,7 +583,6 @@ static void load_state()
         s_device_state.modified_at = pers.modified_at;
         s_device_state.schedule = pers.schedule;
         s_device_state.epoch_week = pers.epoch_week;
-        s_device_state.schedule_length_days = pers.schedule_length_days;
 
         // Copy bin state
         for (uint8_t i = 0; i < 14; i++) {
@@ -592,6 +591,9 @@ static void load_state()
             s_device_state.bins[i].scheduled_time = pers.bins[i].scheduled_time;
             s_device_state.bins[i].event_time = pers.bins[i].event_time;
         }
+
+        // Recalculate schedule_length_days from loaded schedule (derived value, not persisted)
+        s_device_state.schedule_length_days = calculate_schedule_length_days(&s_device_state.schedule);
     } else {
         // Failed to load state, trigger failsafe
         supervisor_assert_error(DEVERR_STATE_CORRUPTED);
