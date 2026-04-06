@@ -15,7 +15,9 @@ import jct.pillorganizer.core.dto.DeviceEligibilityCheckDto;
 import lombok.Getter;
 import reactor.core.publisher.Mono;
 
+import java.net.ConnectException;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.List;
 
 import static io.micronaut.http.HttpHeaders.AUTHORIZATION;
@@ -58,6 +60,17 @@ public class TenantClient {
     public Mono<DeviceClaimEligibilityDto> getDeviceClaimEligibility(String deviceId, String serialNumber) {
         return Mono.from(httpClient.retrieve(HttpRequest.POST(makeUri("/internal/user/device_claim_eligibility"),
                 new DeviceEligibilityCheckDto(deviceId, serialNumber)), Argument.of(DeviceClaimEligibilityDto.class)));
+    }
+
+    public static boolean isConnectionInitializationFailure(Throwable ex) {
+        Throwable cause = ex;
+        while (cause != null) {
+            if (cause instanceof UnknownHostException || cause instanceof ConnectException) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        return false;
     }
 
 }
