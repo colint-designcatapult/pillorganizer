@@ -79,7 +79,8 @@ public class IotCustomAuthorizer extends MicronautRequestHandler<IotCoreCustomAu
         }
 
         Optional<IotAuthorizerService.IotAuthorization> authorization =
-                this.authorizerService.authorizeIot(jwt, tenantId, deviceId).blockOptional(Duration.ofSeconds(5));
+                this.authorizerService.authorizeIot(jwt, tenantId, deviceId)
+                        .blockOptional(Duration.ofSeconds(10));
 
         return authorization.map(docs -> {
             IotCoreCustomAuthorizerResponse resp = new IotCoreCustomAuthorizerResponse(true, docs.principalId(),
