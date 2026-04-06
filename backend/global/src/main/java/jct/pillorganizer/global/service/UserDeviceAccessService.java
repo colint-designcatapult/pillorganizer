@@ -1,6 +1,7 @@
 package jct.pillorganizer.global.service;
 
-import io.micronaut.http.client.exceptions.HttpClientException;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
@@ -26,10 +27,28 @@ public class UserDeviceAccessService {
                         // Merge the results (getDeviceAccess returns list, merge list into flux)
                         .flatMapMany(Flux::fromIterable)
                         // Keep going on HTTP error
-                        .onErrorResume(
-                                ex -> ex instanceof HttpClientException,
-                                ex -> Mono.empty()
-                        )
+                        .onErrorResume(ex -> {
+                            // 1. Swallow connection initiation failures
+                            if (TenantClient.isConnectionInitializationFailure(ex)) {
+                                log.atFine().log("Ignoring unreachable tenant (Connection Failed): {}", tenant.getTenantDetails().getApiBase());
+                                return Mono.empty();
+                            }
+
+                            // 2. Swallow authorization errors (401 Unauthorized, 403 Forbidden)
+                            if (ex instanceof HttpClientResponseException) {
+                                HttpClientResponseException httpEx = (HttpClientResponseException) ex;
+                                HttpStatus status = httpEx.getStatus();
+
+                                if (status == HttpStatus.UNAUTHORIZED || status == HttpStatus.FORBIDDEN) {
+                                    log.atFine().log("Ignoring tenant due to Auth error (%s): %s", status.getCode(), tenant.getTenantDetails().getApiBase());
+                                    return Mono.empty();
+                                }
+                            }
+
+                            // 3. Propagate all other errors (Read timeouts, 500 Server Errors, etc.)
+                            log.atFine().withCause(ex).log("Propagating error for tenant: %s", tenant.getTenantDetails().getApiBase());
+                            return Mono.error(ex);
+                        })
                 );
     }
 
