@@ -132,6 +132,8 @@ typedef struct device_state_t {
     time_t epoch_week;
     // Non-authoritative copy of the device error flags
     int error_flags;
+    // Length of the schedule in days (e.g., 7 for a weekly schedule)
+    uint8_t schedule_length_days;
 } device_state_t;
 
 typedef enum {

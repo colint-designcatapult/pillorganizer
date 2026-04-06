@@ -115,6 +115,8 @@ typedef struct {
     bin_persistent_state_t bins[14];
     // Start of the "week" (Monday 00:00:00 in the device's local time zone) as a Unix timestamp (seconds)
     time_t epoch_week;
+    // Length of the schedule in days (e.g., 7 for a weekly schedule)
+    uint8_t schedule_length_days;
 } device_persistent_state_t;
 
 

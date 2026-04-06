@@ -56,6 +56,31 @@ static const char* get_take_effect_str(device_schedule_take_effect_t effect) {
     }
 }
 
+static uint8_t calculate_schedule_length_days(const device_schedule_t* sched)
+{
+    if (!sched || sched->type != SCHED_SIMPLE) {
+        return 0;
+    }
+
+    uint8_t max_day_of_week = 0;
+    bool found_any = false;
+
+    for (uint8_t i = 0; i < sched->schedule.simple_schedule.bin_count; i++) {
+        const device_bin_schedule_t* bs = &sched->schedule.simple_schedule.bins[i];
+        if (bs->day_of_week > max_day_of_week) {
+            max_day_of_week = bs->day_of_week;
+        }
+        found_any = true;
+    }
+
+    if (!found_any) {
+        return 0;
+    }
+
+    // Return max_day + 1 (if last day is Friday=4, schedule length is 5 days)
+    return max_day_of_week + 1;
+}
+
 static void print_schedule(const device_schedule_t* sched) {
     if (!sched) return;
 
@@ -164,6 +189,7 @@ static esp_err_t update_device_state()
     pers.synced_at = s_device_state.synced_at;
     pers.schedule = s_device_state.schedule; 
     pers.epoch_week = s_device_state.epoch_week;
+    pers.schedule_length_days = s_device_state.schedule_length_days;
     for (int i = 0; i < 14; i++) {
         pers.bins[i].status = s_device_state.bins[i].status;
         pers.bins[i].scheduled_time = s_device_state.bins[i].scheduled_time;
@@ -339,6 +365,10 @@ static void process_schedule_delta(const device_schedule_t* sched)
         // Copy updated state from the applied copy 
         memcpy(&s_device_state, &state_copy, sizeof(device_state_t));
 
+        // Calculate and store the schedule length
+        s_device_state.schedule_length_days = calculate_schedule_length_days(&s_device_state.schedule);
+        ESP_LOGI(TAG, "Schedule length calculated: %d days", s_device_state.schedule_length_days);
+
         ESP_ERROR_CHECK(update_device_state());
         ESP_ERROR_CHECK(shadow_state_report_schedule(&s_device_state.schedule));
         return;
@@ -393,6 +423,29 @@ static void start_reload()
 
     memcpy(future_state, &s_device_state, sizeof(device_state_t));
 
+    // Calculate new epoch_week from current time
+    time_t new_epoch_week;
+    if (app_rtc_get_current_epoch_week(&new_epoch_week) != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to get current epoch week, aborting reload");
+        free(future_state);
+        return;
+    }
+
+    // If stored epoch_week equals newly calculated epoch_week,
+    // advance it by schedule_length_days to move to next cycle
+    if (future_state->epoch_week == new_epoch_week) {
+        // Calculate the number of seconds to add (schedule_length_days * 86400)
+        time_t schedule_length_seconds = (time_t)s_device_state.schedule_length_days * 86400;
+        new_epoch_week += schedule_length_seconds;
+        ESP_LOGI(TAG, "Epoch week was current week, advancing by %d days", s_device_state.schedule_length_days);
+    } else {
+        ESP_LOGI(TAG, "Epoch week was different (stale), using newly calculated week");
+    }
+
+    // Update future_state with the new epoch_week for schedule calculation
+    future_state->epoch_week = new_epoch_week;
+    ESP_LOGI(TAG, "Reload: epoch_week set to %lld", new_epoch_week);
+
     // Apply current schedule to the future state
     int rc = apply_schedule(&s_device_state.schedule, future_state, true);
     if (rc != 0) {
@@ -434,9 +487,14 @@ static void cleanup_reload()
 static void reload_complete()
 {
     s_device_state.reload_state.stage = RELOAD_NONE;
+    
+    // Copy the calculated epoch_week and bin states from future_state
+    s_device_state.epoch_week = s_device_state.reload_state.future_state->epoch_week;
     memcpy(&s_device_state.bins, &s_device_state.reload_state.future_state->bins,
          sizeof(s_device_state.bins));
+    
     cleanup_reload();
+    ESP_LOGI(TAG, "Reload complete: epoch_week updated to %lld", s_device_state.epoch_week);
     ESP_ERROR_CHECK(update_device_state());
 }
 
@@ -525,6 +583,7 @@ static void load_state()
         s_device_state.modified_at = pers.modified_at;
         s_device_state.schedule = pers.schedule;
         s_device_state.epoch_week = pers.epoch_week;
+        s_device_state.schedule_length_days = pers.schedule_length_days;
 
         // Copy bin state
         for (uint8_t i = 0; i < 14; i++) {
@@ -952,5 +1011,23 @@ esp_err_t supervisor_operation_recalculate_schedule(void)
     } else {
         ESP_LOGW(TAG, "No simple schedule to recalculate");
         return ESP_ERR_NOT_FOUND;
+    }
+}
+
+esp_err_t supervisor_operation_trigger_reload(void)
+{
+    if (!supervisor_operation_is_initialized()) {
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    // Manually transition reload state to RELOAD_NEEDS_RELOAD
+    if (s_device_state.reload_state.stage == RELOAD_NONE) {
+        s_device_state.reload_state.stage = RELOAD_NEEDS_RELOAD;
+        ESP_LOGI(TAG, "Manual reload triggered via engineering interface");
+        ESP_ERROR_CHECK(update_device_state());
+        return ESP_OK;
+    } else {
+        ESP_LOGW(TAG, "Reload already in progress (stage: %d)", s_device_state.reload_state.stage);
+        return ESP_ERR_INVALID_STATE;
     }
 }

@@ -161,6 +161,31 @@ static esp_err_t recalc_schedule_handler(httpd_req_t *req)
 }
 
 /**
+ * Handler for POST /trigger-reload
+ * Manually triggers the reload state (allows testing reload without waiting for all doses to pass)
+ */
+static esp_err_t trigger_reload_handler(httpd_req_t *req)
+{
+    ESP_LOGI(TAG, "Manual reload trigger requested via web interface");
+    
+    extern esp_err_t supervisor_operation_trigger_reload(void);
+    
+    esp_err_t err = supervisor_operation_trigger_reload();
+    
+    if (err == ESP_OK) {
+        const char resp[] = "Reload triggered successfully. Open a bin to start refilling.";
+        httpd_resp_set_type(req, "text/plain");
+        httpd_resp_send(req, resp, -1);
+    } else {
+        const char resp[] = "Failed to trigger reload. Reload may already be in progress.";
+        httpd_resp_set_type(req, "text/plain");
+        httpd_resp_send(req, resp, -1);
+    }
+    
+    return ESP_OK;
+}
+
+/**
  * Initialize the HTTP web server
  */
 esp_err_t web_server_init(void)
@@ -172,7 +197,7 @@ esp_err_t web_server_init(void)
     
     // Configure and create the httpd server
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.max_uri_handlers = 6;  // root, version, clear-nvs, reboot, reset, recalc-schedule
+    config.max_uri_handlers = 7;  // root, version, clear-nvs, reboot, reset, recalc-schedule, trigger-reload
     
     ESP_LOGI(TAG, "Starting web server on port %d", config.server_port);
     
@@ -229,6 +254,14 @@ esp_err_t web_server_init(void)
         .user_ctx = NULL,
     };
     httpd_register_uri_handler(server, &recalc_schedule);
+    
+    httpd_uri_t trigger_reload = {
+        .uri      = "/trigger-reload",
+        .method   = HTTP_POST,
+        .handler  = trigger_reload_handler,
+        .user_ctx = NULL,
+    };
+    httpd_register_uri_handler(server, &trigger_reload);
     
     ESP_LOGI(TAG, "Web server initialized successfully");
     return ESP_OK;

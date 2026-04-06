@@ -31,6 +31,7 @@
                         <div><form action="/reset" method="post"><button class='error' type="submit">Factory Reset</button></form></div>
                         <div><button class='error' onclick="clearNVS()">Clear Schedule NVS</button></div>
                         <div><button class='warning' onclick="recalcSchedule()">Recalculate Schedule</button></div>
+                        <div><button class='warning' onclick="triggerReload()">Trigger Reload</button></div>
                     </div>
 
                 </div>
@@ -247,6 +248,18 @@ message EngineeringAllBins {
                     .catch(err => {
                         console.error("Failed to recalculate schedule:", err);
                         alert("Failed to recalculate schedule");
+                    });
+            }
+
+            function triggerReload() {
+                fetch('/trigger-reload', { method: 'POST' })
+                    .then(response => response.text())
+                    .then(data => {
+                        alert(data);
+                    })
+                    .catch(err => {
+                        console.error("Failed to trigger reload:", err);
+                        alert("Failed to trigger reload");
                     });
             }
 

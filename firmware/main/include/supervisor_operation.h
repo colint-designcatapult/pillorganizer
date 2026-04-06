@@ -7,3 +7,4 @@ void supervisor_operation_tick();
 
 esp_err_t supervisor_operation_get_schedule(device_schedule_t* sched);
 esp_err_t supervisor_operation_recalculate_schedule(void);
+esp_err_t supervisor_operation_trigger_reload(void);
