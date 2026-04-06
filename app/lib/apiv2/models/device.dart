@@ -21,7 +21,7 @@ enum EventType { opened, closed, missed }
 
 enum DeviceConnectionStatus { undefined, offline, online, loading }
 
-enum DeviceNotice { none, disconnected, empty }
+enum DeviceError { none, disconnected, needsReload, noSchedule, stateCorrupted, noRtcTime }
 
 enum DeviceErrorFlag { noSchedule, stateCorrupted, noRtcTime }
 

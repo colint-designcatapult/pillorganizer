@@ -1,0 +1,37 @@
+import 'package:app/apiv2/models/device.dart';
+import 'package:app/provider/device_connection_status_provider.dart';
+import 'package:app/provider/device_state_provider.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'device_error_provider.g.dart';
+
+@riverpod
+DeviceError deviceError(DeviceErrorRef ref) {
+  final status = ref.watch(deviceConnectionStatusProvider);
+  if (status == DeviceConnectionStatus.offline) {
+    return DeviceError.disconnected;
+  }
+
+  final stateAsync = ref.watch(deviceStateProvider);
+  return stateAsync.maybeWhen(
+    data: (state) {
+      if (state == null) return DeviceError.none;
+      
+      if (state.errors.isNotEmpty) {
+        final firstError = state.errors.first;
+        return switch (firstError) {
+          DeviceErrorFlag.noSchedule => DeviceError.noSchedule,
+          DeviceErrorFlag.stateCorrupted => DeviceError.stateCorrupted,
+          DeviceErrorFlag.noRtcTime => DeviceError.noRtcTime,
+        };
+      }
+      
+      if (state.reloadState?.needed == true) {
+        return DeviceError.needsReload;
+      }
+      
+      return DeviceError.none;
+    },
+    orElse: () => DeviceError.none,
+  );
+}

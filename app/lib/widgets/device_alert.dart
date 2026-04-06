@@ -7,7 +7,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../apiv2/models/device.dart';
 
 class DeviceAlert extends StatelessWidget {
-  final DeviceNotice notice;
+  final DeviceError notice;
   final Function onReload;
   final Future<void>? Function() reloadFuture;
 
@@ -20,7 +20,7 @@ class DeviceAlert extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (notice != DeviceNotice.none) {
+    if (notice != DeviceError.none) {
       return Padding(
         padding: EdgeInsets.symmetric(
           horizontal: 10.w,
@@ -33,7 +33,7 @@ class DeviceAlert extends StatelessWidget {
     }
   }
 
-  Widget _buildNotice(BuildContext context, DeviceNotice notice) {
+  Widget _buildNotice(BuildContext context, DeviceError notice) {
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(4.0).r,
@@ -47,7 +47,7 @@ class DeviceAlert extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 6.0).w,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       _getTitle(notice, context),
@@ -66,7 +66,7 @@ class DeviceAlert extends StatelessWidget {
               ),
             ),
             ButtonIcon(
-              isDisabled: notice == DeviceNotice.disconnected,
+              isDisabled: notice == DeviceError.disconnected,
               icon: _getIcon(notice),
               label: _getAction(notice, context),
               onPressed: () => onReload(),
@@ -77,45 +77,69 @@ class DeviceAlert extends StatelessWidget {
     );
   }
 
-  String _getTitle(DeviceNotice notice, BuildContext context) {
+  String _getTitle(DeviceError notice, BuildContext context) {
     switch (notice) {
-      case DeviceNotice.disconnected:
+      case DeviceError.disconnected:
         return AppLocalizations.of(context)!.noticeDisconnected;
-      case DeviceNotice.empty:
-        return AppLocalizations.of(context)!.noticeEmpty;
+      case DeviceError.needsReload:
+        return AppLocalizations.of(context)!.noticeNeedsReload;
+      case DeviceError.noSchedule:
+        return AppLocalizations.of(context)!.noticeNoSchedule;
+      case DeviceError.stateCorrupted:
+        return AppLocalizations.of(context)!.noticeStateCorrupted;
+      case DeviceError.noRtcTime:
+        return AppLocalizations.of(context)!.noticeNoRtcTime;
       default:
         return '';
     }
   }
 
-  String _getDescription(DeviceNotice notice, BuildContext context) {
+  String _getDescription(DeviceError notice, BuildContext context) {
     switch (notice) {
-      case DeviceNotice.disconnected:
+      case DeviceError.disconnected:
         return AppLocalizations.of(context)!.noticeDisconnectedSubtitle;
-      case DeviceNotice.empty:
-        return AppLocalizations.of(context)!.noticeEmptySubtitle;
+      case DeviceError.needsReload:
+        return AppLocalizations.of(context)!.noticeNeedsReloadSubtitle;
+      case DeviceError.noSchedule:
+        return AppLocalizations.of(context)!.noticeNoScheduleSubtitle;
+      case DeviceError.stateCorrupted:
+        return AppLocalizations.of(context)!.noticeStateCorruptedSubtitle;
+      case DeviceError.noRtcTime:
+        return AppLocalizations.of(context)!.noticeNoRtcTimeSubtitle;
       default:
         return '';
     }
   }
 
-  Icon _getIcon(DeviceNotice notice) {
+  Icon _getIcon(DeviceError notice) {
     switch (notice) {
-      case DeviceNotice.disconnected:
+      case DeviceError.disconnected:
         return Icon(PhosphorIconsBold.plugs, color: Colors.black, size: 20.h);
-      case DeviceNotice.empty:
-        return Icon(PhosphorIconsBold.pill, color: Colors.black, size: 20.h);
+      case DeviceError.needsReload:
+        return Icon(PhosphorIconsBold.arrowsClockwise, color: Colors.black, size: 20.h);
+      case DeviceError.noSchedule:
+        return Icon(PhosphorIconsBold.calendarX, color: Colors.black, size: 20.h);
+      case DeviceError.stateCorrupted:
+        return Icon(PhosphorIconsBold.warningCircle, color: Colors.black, size: 20.h);
+      case DeviceError.noRtcTime:
+        return Icon(PhosphorIconsBold.clockAfternoon, color: Colors.black, size: 20.h);
       default:
-        return Icon(PhosphorIconsBold.pill, color: Colors.black, size: 20.h);
+        return Icon(PhosphorIconsBold.warningCircle, color: Colors.black, size: 20.h);
     }
   }
 
-  String _getAction(DeviceNotice notice, BuildContext context) {
+  String _getAction(DeviceError notice, BuildContext context) {
     switch (notice) {
-      case DeviceNotice.disconnected:
+      case DeviceError.disconnected:
         return AppLocalizations.of(context)!.noticeDisconnectedAction;
-      case DeviceNotice.empty:
-        return AppLocalizations.of(context)!.noticeEmptyAction;
+      case DeviceError.needsReload:
+        return AppLocalizations.of(context)!.noticeNeedsReloadAction;
+      case DeviceError.noSchedule:
+        return AppLocalizations.of(context)!.noticeNoScheduleAction;
+      case DeviceError.stateCorrupted:
+        return AppLocalizations.of(context)!.noticeStateCorruptedAction;
+      case DeviceError.noRtcTime:
+        return AppLocalizations.of(context)!.noticeNoRtcTimeAction;
       default:
         return "";
     }

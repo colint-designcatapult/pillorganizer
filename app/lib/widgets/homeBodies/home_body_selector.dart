@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
 import 'package:app/apiv2/models/device.dart';
-import '../../provider/device_notice_provider.dart';
+import '../../provider/device_error_provider.dart';
 import '../../provider/device_state_provider.dart';
 import '../../provider/selected_device_provider.dart';
 import 'home_body.dart';
@@ -18,7 +18,7 @@ class HomeBodySelector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final deviceNotice = ref.watch(deviceNoticeProvider);
+    final deviceError = ref.watch(deviceErrorProvider);
     final activeDevice = ref.watch(activeDeviceProvider);
     final deviceStateAsync = ref.watch(deviceStateProvider);
     final deviceListAsync = ref.watch(deviceListProvider);

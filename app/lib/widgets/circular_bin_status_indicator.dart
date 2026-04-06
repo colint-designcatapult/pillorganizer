@@ -5,9 +5,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CircularBinStatusIndicator extends StatelessWidget {
   final BinStatus status;
-  final DeviceNotice deviceStatus;
+  final DeviceError deviceError;
   const CircularBinStatusIndicator(
-      {super.key, required this.status, required this.deviceStatus});
+      {super.key, required this.status, required this.deviceError});
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +33,7 @@ class CircularBinStatusIndicator extends StatelessWidget {
       height: 20.h,
       width: 20.h,
       decoration:
-          status != BinStatus.disabled && deviceStatus != DeviceNotice.empty
+          status != BinStatus.disabled && deviceError != DeviceError.needsReload
               ? BoxDecoration(
                   shape: BoxShape.circle,
                   color: color,
@@ -42,7 +42,7 @@ class CircularBinStatusIndicator extends StatelessWidget {
               : null,
       child: Visibility(
           visible: status == BinStatus.disabled ||
-              deviceStatus == DeviceNotice.empty,
+              deviceError == DeviceError.needsReload,
           child: SvgPicture.asset(
             'lib/assets/SVG/cancelIcon.svg',
             height: 20.h,
