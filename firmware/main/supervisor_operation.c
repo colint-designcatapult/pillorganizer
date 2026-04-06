@@ -92,6 +92,8 @@ static void set_led_idle_task()
                 if (bs->status == TAKE_NOW) {
                     blink_mask |= 1 << i;
                     green_mask |= 1 << i;
+                } else if (bs->status == TAKEN) {
+                    green_mask |= 1 << i;
                 } else if (bs->status == MISSED) {
                     red_mask |= 1 << i;
                 }
