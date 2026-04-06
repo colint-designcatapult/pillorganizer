@@ -1,6 +1,9 @@
 package jct.pillorganizer.global.service
 
 import io.micronaut.http.client.exceptions.HttpClientException
+import io.micronaut.http.client.exceptions.HttpClientResponseException
+import io.micronaut.http.client.exceptions.ReadTimeoutException
+import jct.pillorganizer.core.TenantDetails
 import jct.pillorganizer.core.dto.DeviceAccessDto
 import jct.pillorganizer.global.BaseIntegrationSpec
 import jct.pillorganizer.global.client.TenantClient
@@ -41,8 +44,9 @@ class UserDeviceAccessServiceSpec extends BaseIntegrationSpec {
         def result = service.getUserDeviceAccess().collectList().block()
 
         then:
+        1 * tenant2.getTenantDetails() >> TenantDetails.TEST_TENANT
         1 * tenant1.getDeviceAccess() >> Mono.just([device1])
-        1 * tenant2.getDeviceAccess() >> Mono.error(new HttpClientException("Error"))
+        1 * tenant2.getDeviceAccess() >> Mono.error(new UnknownHostException("Error"))
         result.size() == 1
         result.contains(device1)
     }
