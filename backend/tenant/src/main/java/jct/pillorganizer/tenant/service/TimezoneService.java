@@ -1,7 +1,7 @@
 package jct.pillorganizer.tenant.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micronaut.core.type.Argument;
+import io.micronaut.json.JsonMapper;
 import jakarta.inject.Singleton;
 import lombok.extern.flogger.Flogger;
 
@@ -20,13 +20,12 @@ public class TimezoneService {
 
     private final Map<String, String> zones;
 
-    public TimezoneService() {
-        try (InputStream is = TimezoneService.class.getClassLoader()
-                .getResourceAsStream("posix_tz_db.json")) {
+    public TimezoneService(JsonMapper objectMapper) {
+        try (InputStream is = TimezoneService.class.getResourceAsStream("/posix_tz_db.json")) {
             if (is == null) {
                 throw new IllegalStateException("posix_tz_db.json not found in classpath");
             }
-            zones = new ObjectMapper().readValue(is, new TypeReference<>() {});
+            zones = objectMapper.readValue(is.readAllBytes(), Argument.mapOf(String.class, String.class));
             log.atInfo().log("Loaded %d IANA timezone entries", zones.size());
         } catch (IOException e) {
             throw new IllegalStateException("Failed to load POSIX TZ database", e);

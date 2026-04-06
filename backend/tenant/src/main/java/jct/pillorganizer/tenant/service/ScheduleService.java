@@ -67,17 +67,15 @@ public class ScheduleService {
      * it is marked as SUPERSEDED. The new schedule is stored in the database and the device's
      * {@code requestedSchedule} pointer is updated.
      *
-     * @param device      the logical device
-     * @param newSchedule the new schedule requested by the user
-     * @param takeEffect  when the device should apply the schedule
-     * @param user        the user making the request
+     * @param device       the logical device
+     * @param newSchedule  the new schedule requested by the user
+     * @param takeEffect   when the device should apply the schedule
+     * @param timezoneIana IANA timezone identifier for the device (e.g. {@code America/Toronto})
+     * @param user         the user making the request
      * @return the updated scheduling state
      */
     @Transactional
     public DeviceScheduleStateDTO setSchedule(LogicalDevice device, BaseSchedule newSchedule, ScheduleTakeEffect takeEffect, String timezoneIana, User user) {
-        if (timezoneIana == null || timezoneIana.isBlank()) {
-            throw new IllegalArgumentException("timezoneIana is required");
-        }
         String timezonePosix = timezoneService.toPosix(timezoneIana);
 
         deviceScheduleRepository.findByDeviceIdAndStatus(device.getId(), ScheduleStatus.PENDING)

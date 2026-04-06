@@ -1,12 +1,14 @@
 package jct.pillorganizer.tenant.service
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import io.micronaut.jackson.databind.JacksonDatabindMapper
 import spock.lang.Specification
 import spock.lang.Subject
 
 class TimezoneServiceSpec extends Specification {
 
     @Subject
-    TimezoneService timezoneService = new TimezoneService()
+    TimezoneService timezoneService = new TimezoneService(new JacksonDatabindMapper(new ObjectMapper()))
 
     def "should convert known IANA timezone to POSIX string"() {
         expect:

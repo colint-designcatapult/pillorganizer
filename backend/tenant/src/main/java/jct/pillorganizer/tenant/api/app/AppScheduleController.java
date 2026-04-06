@@ -2,6 +2,7 @@ package jct.pillorganizer.tenant.api.app;
 
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
+import jakarta.validation.Valid;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
@@ -38,7 +39,7 @@ public class AppScheduleController {
     @Post("/{id}/schedule")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public DeviceScheduleStateDTO updateDispenseTime(@PathVariable("id") String deviceID,
-                                                     @Body SetScheduleRequestDTO dto, User user) {
+                                                     @Body @Valid SetScheduleRequestDTO dto, User user) {
         return scheduleService.setSchedule(
                 authService.accessDevice(deviceID, true),
                 dto.schedule(),
