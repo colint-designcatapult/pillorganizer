@@ -2,6 +2,7 @@ package jct.pillorganizer.tenant.model.device;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.data.annotation.Id;
@@ -51,4 +52,12 @@ public class DeviceSchedule {
     @Relation(value = Relation.Kind.MANY_TO_ONE)
     @JsonIgnore
     private User createdBy;
+
+    /** IANA timezone identifier, e.g. {@code America/New_York}. */
+    @Nullable
+    private String timezoneIana;
+
+    /** POSIX TZ string derived from {@link #timezoneIana}, e.g. {@code EST5EDT,M3.2.0,M11.1.0}. */
+    @Nullable
+    private String timezonePosix;
 }
