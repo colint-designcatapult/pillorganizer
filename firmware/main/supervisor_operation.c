@@ -1020,10 +1020,16 @@ esp_err_t supervisor_operation_trigger_reload(void)
         return ESP_ERR_INVALID_STATE;
     }
 
-    // Manually transition reload state to RELOAD_NEEDS_RELOAD
     if (s_device_state.reload_state.stage == RELOAD_NONE) {
-        s_device_state.reload_state.stage = RELOAD_NEEDS_RELOAD;
-        ESP_LOGI(TAG, "Manual reload triggered via engineering interface");
+        // Reset all bins to DISABLED status with scheduled_time = 0
+        // This disables all future schedules, forcing check_state_transitions()
+        // to automatically trigger RELOAD_NEEDS_RELOAD on the next tick
+        for (int i = 0; i < 14; i++) {
+            s_device_state.bins[i].status = DISABLED;
+            s_device_state.bins[i].scheduled_time = 0;
+        }
+        
+        ESP_LOGI(TAG, "Manual reload triggered via engineering interface - reset all bins to DISABLED");
         ESP_ERROR_CHECK(update_device_state());
         return ESP_OK;
     } else {
