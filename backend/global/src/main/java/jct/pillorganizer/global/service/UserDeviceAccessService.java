@@ -1,7 +1,6 @@
 package jct.pillorganizer.global.service;
 
 import io.micronaut.http.HttpStatus;
-import io.micronaut.http.client.exceptions.HttpClientException;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -41,13 +40,13 @@ public class UserDeviceAccessService {
                                 HttpStatus status = httpEx.getStatus();
 
                                 if (status == HttpStatus.UNAUTHORIZED || status == HttpStatus.FORBIDDEN) {
-                                    log.atFine().log("Ignoring tenant due to Auth error ({}): {}", status.getCode(), tenant.getTenantDetails().getApiBase());
+                                    log.atFine().log("Ignoring tenant due to Auth error (%s): %s", status.getCode(), tenant.getTenantDetails().getApiBase());
                                     return Mono.empty();
                                 }
                             }
 
                             // 3. Propagate all other errors (Read timeouts, 500 Server Errors, etc.)
-                            log.atFine().log("Propagating error for tenant: {}", tenant.getTenantDetails().getApiBase(), ex);
+                            log.atFine().withCause(ex).log("Propagating error for tenant: %s", tenant.getTenantDetails().getApiBase());
                             return Mono.error(ex);
                         })
                 );
