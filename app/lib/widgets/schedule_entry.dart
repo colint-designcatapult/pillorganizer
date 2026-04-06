@@ -127,10 +127,12 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
           Row(
             children: [
               Expanded(
+                  flex: 1,
                   child: _buildTimeBlock(DayPeriod.am, deviceSchedule?.amPeriod,
                       targetDevice, isUpdatingAMSchedule)),
-              SizedBox(width: 20.w),
+              SizedBox(width: 12.w),
               Expanded(
+                  flex: 1,
                   child: _buildTimeBlock(DayPeriod.pm, deviceSchedule?.pmPeriod,
                       targetDevice, isUpdatingPMSchedule)),
             ],
@@ -244,14 +246,10 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
                         child: const Center(child: CircularProgressIndicator()),
                       )
                     : Padding(
-                        padding:
-                            AppLocalizations.of(context)!.localeName == 'fr'
-                                ? EdgeInsets.fromLTRB(2.w, 16.h, 2.w, 16.h)
-                                : EdgeInsets.fromLTRB(14.w, 16.h, 14.w, 16.h),
-                        child: Row(
-                          mainAxisAlignment: device.primaryUser
-                              ? MainAxisAlignment.spaceBetween
-                              : MainAxisAlignment.center,
+                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 12.h),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Text(
                               entry != null
@@ -259,25 +257,30 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
                                       .format(context)
                                       .replaceAll(RegExp(r'[APap][Mm]$'), '')
                                   : AppLocalizations.of(context)!.setTime,
+                              textAlign: TextAlign.center,
                               style: AppLocalizations.of(context)!.localeName ==
                                       'fr'
                                   ? Theme.of(context).textTheme.bodySmall
                                   : Theme.of(context).textTheme.labelSmall,
                             ),
-                            if (device.primaryUser)
-                              Row(children: [
-                                SvgPicture.asset(
-                                  'lib/assets/SVG/PencilSimpleLine.svg',
-                                  width: 20.w,
-                                  height: 20.h,
-                                ),
-                                SizedBox(width: 4.w),
-                                if (entry != null)
+                            if (device.primaryUser && entry != null) ...[
+                              SizedBox(height: 8.h),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SvgPicture.asset(
+                                    'lib/assets/SVG/PencilSimpleLine.svg',
+                                    width: 16.w,
+                                    height: 16.h,
+                                  ),
+                                  SizedBox(width: 4.w),
                                   Text(AppLocalizations.of(context)!.edit,
-                                      overflow: TextOverflow.ellipsis,
-                                      style:
-                                          Theme.of(context).textTheme.bodySmall)
-                              ])
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall)
+                                ],
+                              )
+                            ]
                           ],
                         )),
               ],
