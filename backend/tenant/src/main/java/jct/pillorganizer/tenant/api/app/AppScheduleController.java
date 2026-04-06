@@ -43,6 +43,7 @@ public class AppScheduleController {
                 authService.accessDevice(deviceID, true),
                 dto.schedule(),
                 dto.takeEffect(),
+                dto.timezoneIana(),
                 user
         );
     }

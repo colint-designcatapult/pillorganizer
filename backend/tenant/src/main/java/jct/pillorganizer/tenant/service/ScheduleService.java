@@ -40,6 +40,9 @@ public class ScheduleService {
     @Inject
     IotShadowService shadowService;
 
+    @Inject
+    TimezoneService timezoneService;
+
     public DeviceSchedule get(UUID id) {
         return deviceScheduleRepository.findById(id)
                 .orElseThrow(() -> new DeviceAccessException("schedule not found"));
@@ -71,7 +74,12 @@ public class ScheduleService {
      * @return the updated scheduling state
      */
     @Transactional
-    public DeviceScheduleStateDTO setSchedule(LogicalDevice device, BaseSchedule newSchedule, ScheduleTakeEffect takeEffect, User user) {
+    public DeviceScheduleStateDTO setSchedule(LogicalDevice device, BaseSchedule newSchedule, ScheduleTakeEffect takeEffect, String timezoneIana, User user) {
+        if (timezoneIana == null || timezoneIana.isBlank()) {
+            throw new IllegalArgumentException("timezoneIana is required");
+        }
+        String timezonePosix = timezoneService.toPosix(timezoneIana);
+
         deviceScheduleRepository.findByDeviceIdAndStatus(device.getId(), ScheduleStatus.PENDING)
                 .forEach(existing -> {
                     existing.setStatus(ScheduleStatus.SUPERSEDED);
@@ -86,17 +94,19 @@ public class ScheduleService {
         pendingSchedule.setScheduleJson(scheduleJson);
         pendingSchedule.setStatus(ScheduleStatus.PENDING);
         pendingSchedule.setTakeEffect(takeEffect);
+        pendingSchedule.setTimezoneIana(timezoneIana);
+        pendingSchedule.setTimezonePosix(timezonePosix);
         pendingSchedule.setCreatedBy(user);
 
         DeviceSchedule saved = deviceScheduleRepository.save(pendingSchedule);
 
         device.setRequestedSchedule(saved);
-        device = logicalDeviceRepository.update(device);
+        logicalDeviceRepository.updateRequestedSchedule(device.getId(), saved);
 
-        DeviceSchedule currentSchedule = deviceScheduleRepository
-                .findByDeviceIdAndStatus(device.getId(), ScheduleStatus.APPLIED)
-                .stream().findFirst().orElse(null);
-        device.setCurrentSchedule(currentSchedule);
+        if(device.getPhysicalDevice() == null) {
+            // There is no physical device for which to update the schedule
+            return createScheduleStateDTO(device);
+        }
 
         // Attempt to update the shadow state of the device
         try {
@@ -209,6 +219,7 @@ public class ScheduleService {
 
     public DeviceScheduleDTO createScheduleDTO(DeviceSchedule schedule) {
         return new DeviceScheduleDTO(schedule.getId(), schedule.getTakeEffect(),
-                parseSchedule(schedule.getScheduleJson()));
+                parseSchedule(schedule.getScheduleJson()),
+                schedule.getTimezoneIana(), schedule.getTimezonePosix());
     }
 }

@@ -9,5 +9,6 @@ import java.util.UUID;
 
 @Serdeable
 @Introspected
-public record DeviceScheduleDTO(UUID id, ScheduleTakeEffect takeEffect, BaseSchedule schedule) {
+public record DeviceScheduleDTO(UUID id, ScheduleTakeEffect takeEffect, BaseSchedule schedule,
+                                String timezoneIana, String timezonePosix) {
 }

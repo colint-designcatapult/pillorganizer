@@ -15,5 +15,6 @@ import jct.pillorganizer.tenant.model.schedule.BaseSchedule;
 @Introspected
 public record SetScheduleRequestDTO(
         BaseSchedule schedule,
-        ScheduleTakeEffect takeEffect
+        ScheduleTakeEffect takeEffect,
+        String timezoneIana
 ) {}
