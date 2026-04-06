@@ -1,6 +1,6 @@
-import 'dart:async';
 import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/device_state_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'device_connection_status_provider.g.dart';
@@ -11,36 +11,24 @@ bool isOnlineFromLastSeen(DateTime? lastSeen) {
 }
 
 @riverpod
-class DeviceConnectionStatusNotifier extends _$DeviceConnectionStatusNotifier {
-  Timer? _offlineTimer;
+DeviceConnectionStatus deviceConnectionStatus(Ref ref) {
+  final deviceStateAsync = ref.watch(deviceStateProvider);
 
-  @override
-  DeviceConnectionStatus build() {
-    final deviceStateAsync = ref.watch(deviceStateProvider);
-
-    ref.onDispose(() => _offlineTimer?.cancel());
-
-    return deviceStateAsync.when(
-      data: (state) {
-        if (state == null) return DeviceConnectionStatus.loading;
-        
-        if (isOnlineFromLastSeen(state.lastSync)) {
-          _offlineTimer?.cancel();
-          return DeviceConnectionStatus.online;
-        } else {
-          _scheduleOfflineTimer();
-          return DeviceConnectionStatus.loading;
-        }
-      },
-      loading: () => DeviceConnectionStatus.loading,
-      error: (_, __) => DeviceConnectionStatus.offline,
-    );
+  // If the provider is currently loading, we are in a 'loading' connection status.
+  if (deviceStateAsync.isLoading) {
+    return DeviceConnectionStatus.loading;
   }
 
-  void _scheduleOfflineTimer() {
-    _offlineTimer?.cancel();
-    _offlineTimer = Timer(const Duration(seconds: 15), () {
-      state = DeviceConnectionStatus.offline;
-    });
-  }
+  return deviceStateAsync.when(
+    data: (state) {
+      if (state == null || !isOnlineFromLastSeen(state.lastSync)) {
+        return DeviceConnectionStatus.offline;
+      }
+      return DeviceConnectionStatus.online;
+    },
+    // This case is handled when data is not yet available, but isLoading check above
+    // also handles refreshes/reloads.
+    loading: () => DeviceConnectionStatus.loading,
+    error: (_, __) => DeviceConnectionStatus.offline,
+  );
 }
