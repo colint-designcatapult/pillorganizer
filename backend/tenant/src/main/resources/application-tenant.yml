@@ -49,3 +49,4 @@ aws:
   services:
     iotdataplane:
       endpoint-override: ${AWS_IOT_DATAPLANE_ENDPOINT:https://a22nzy0lm1nh8l-ats.iot.ca-central-1.amazonaws.com}
+      http-client: url-connection-client
