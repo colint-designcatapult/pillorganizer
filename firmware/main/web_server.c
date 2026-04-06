@@ -7,6 +7,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <esp_system.h>
+#include "supervisor.h"
 
 #define TAG "WEB_SERVER"
 
@@ -32,44 +33,6 @@ static esp_err_t root_handler(httpd_req_t *req)
     
     // Send the entire HTML file
     httpd_resp_send(req, (const char *)engineering_html_start, html_size);
-    
-    return ESP_OK;
-}
-
-/**
- * Handler for POST /clear-nvs
- * Clears scheduling data (dev_state and dev_sched namespaces) while preserving WiFi/IoT credentials
- */
-static esp_err_t clear_nvs_handler(httpd_req_t *req)
-{
-    ESP_LOGI(TAG, "Clearing schedule data from NVS");
-    
-    // Clear the device state namespace (bin statuses)
-    nvs_handle_t handle;
-    esp_err_t err = nvs_open("dev_state", NVS_READWRITE, &handle);
-    if (err == ESP_OK) {
-        nvs_erase_all(handle);
-        nvs_commit(handle);
-        nvs_close(handle);
-        ESP_LOGI(TAG, "Cleared dev_state namespace");
-    }
-    
-    // Clear the device schedule namespace
-    err = nvs_open("dev_sched", NVS_READWRITE, &handle);
-    if (err == ESP_OK) {
-        nvs_erase_all(handle);
-        nvs_commit(handle);
-        nvs_close(handle);
-        ESP_LOGI(TAG, "Cleared dev_sched namespace");
-    }
-    
-    const char resp[] = "Schedule data cleared. Bins reset to DISABLED state. Device will reboot shortly.";
-    httpd_resp_set_type(req, "text/plain");
-    httpd_resp_send(req, resp, -1);
-    
-    // Reboot the device
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    esp_restart();
     
     return ESP_OK;
 }
@@ -132,38 +95,24 @@ static esp_err_t reset_handler(httpd_req_t *req)
 }
 
 /**
- * Handler for POST /recalc-schedule
- * Manually recalculates the current schedule (useful after clearing NVS mid-week)
+ * Handler for POST /reset-pending-bins
+ * Resets future-dated bins to PENDING state while preserving past dose history
+ * Useful for re-testing state transitions after changing schedules
  */
-static esp_err_t recalc_schedule_handler(httpd_req_t *req)
+static esp_err_t reset_pending_bins_handler(httpd_req_t *req)
 {
-    ESP_LOGI(TAG, "Manual schedule recalculation requested via web interface");
+    ESP_LOGI(TAG, "Reset pending bins requested via web interface");
     
-    extern esp_err_t supervisor_operation_recalculate_schedule(void);
+    // Submit event to supervisor thread - thread-safe and prevents race conditions
+    supervisor_submit_event(EVENT_RESET_PENDING_BINS);
     
-    esp_err_t err = supervisor_operation_recalculate_schedule();
-    
-    if (err == ESP_OK) {
-        const char resp[] = "Schedule recalculated successfully.";
-        httpd_resp_set_type(req, "text/plain");
-        httpd_resp_send(req, resp, -1);
-    } else if (err == ESP_ERR_NOT_FOUND) {
-        const char resp[] = "No schedule to recalculate.";
-        httpd_resp_set_type(req, "text/plain");
-        httpd_resp_send(req, resp, -1);
-    } else {
-        const char resp[] = "Failed to recalculate schedule.";
-        httpd_resp_set_type(req, "text/plain");
-        httpd_resp_send(req, resp, -1);
-    }
+    const char resp[] = "Pending bins reset submitted. Processing on supervisor thread...";
+    httpd_resp_set_type(req, "text/plain");
+    httpd_resp_send(req, resp, -1);
     
     return ESP_OK;
 }
 
-/**
- * Handler for POST /trigger-reload
- * Manually triggers the reload state (allows testing reload without waiting for all doses to pass)
- */
 static esp_err_t trigger_reload_handler(httpd_req_t *req)
 {
     ESP_LOGI(TAG, "Manual reload trigger requested via web interface");
@@ -197,7 +146,7 @@ esp_err_t web_server_init(void)
     
     // Configure and create the httpd server
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.max_uri_handlers = 7;  // root, version, clear-nvs, reboot, reset, recalc-schedule, trigger-reload
+    config.max_uri_handlers = 6;  // root, version, reboot, reset, trigger-reload, reset-pending-bins
     
     ESP_LOGI(TAG, "Starting web server on port %d", config.server_port);
     
@@ -223,14 +172,6 @@ esp_err_t web_server_init(void)
     };
     httpd_register_uri_handler(server, &version);
     
-    httpd_uri_t clear_nvs = {
-        .uri      = "/clear-nvs",
-        .method   = HTTP_POST,
-        .handler  = clear_nvs_handler,
-        .user_ctx = NULL,
-    };
-    httpd_register_uri_handler(server, &clear_nvs);
-    
     httpd_uri_t reboot = {
         .uri      = "/reboot",
         .method   = HTTP_POST,
@@ -247,14 +188,6 @@ esp_err_t web_server_init(void)
     };
     httpd_register_uri_handler(server, &reset);
     
-    httpd_uri_t recalc_schedule = {
-        .uri      = "/recalc-schedule",
-        .method   = HTTP_POST,
-        .handler  = recalc_schedule_handler,
-        .user_ctx = NULL,
-    };
-    httpd_register_uri_handler(server, &recalc_schedule);
-    
     httpd_uri_t trigger_reload = {
         .uri      = "/trigger-reload",
         .method   = HTTP_POST,
@@ -262,6 +195,14 @@ esp_err_t web_server_init(void)
         .user_ctx = NULL,
     };
     httpd_register_uri_handler(server, &trigger_reload);
+
+    httpd_uri_t reset_pending_bins = {
+        .uri      = "/reset-pending-bins",
+        .method   = HTTP_POST,
+        .handler  = reset_pending_bins_handler,
+        .user_ctx = NULL,
+    };
+    httpd_register_uri_handler(server, &reset_pending_bins);
     
     ESP_LOGI(TAG, "Web server initialized successfully");
     return ESP_OK;

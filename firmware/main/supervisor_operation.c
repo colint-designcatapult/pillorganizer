@@ -943,6 +943,25 @@ void supervisor_operation_event(const supervisor_event_t* event)
             } else if (event->id == EVENT_STATE_CHANGED) {
                 print_state(&s_device_state);            
                 ESP_ERROR_CHECK(mqtt_publish_device_state(&s_device_state));
+            } else if (event->id == EVENT_RECALC_SCHEDULE) {
+                // Safely recalculate schedule without changing epoch_week
+                ESP_LOGI(TAG, "[ENGINEERING] Recalculating schedule from web interface");
+                if (s_device_state.schedule.type == SCHED_SIMPLE) {
+                    device_schedule_validation_t validation = apply_schedule(&s_device_state.schedule, &s_device_state, true);
+                    if (validation == SCHED_VALID) {
+                        ESP_LOGI(TAG, "Schedule recalculated successfully");
+                        ESP_ERROR_CHECK(update_device_state());
+                        check_state_transitions();
+                    } else {
+                        ESP_LOGW(TAG, "Failed to recalculate schedule: %d", validation);
+                    }
+                } else {
+                    ESP_LOGW(TAG, "No valid schedule to recalculate");
+                }
+            } else if (event->id == EVENT_RESET_PENDING_BINS) {
+                // Reset future-dated bins to PENDING for re-testing
+                ESP_LOGI(TAG, "[ENGINEERING] Resetting pending bins from web interface");
+                supervisor_operation_reset_pending_bins();
             }
             break;
         default:
@@ -1036,4 +1055,50 @@ esp_err_t supervisor_operation_trigger_reload(void)
         ESP_LOGW(TAG, "Reload already in progress (stage: %d)", s_device_state.reload_state.stage);
         return ESP_ERR_INVALID_STATE;
     }
+}
+
+esp_err_t supervisor_operation_reset_pending_bins(void)
+{
+    if (!supervisor_operation_is_initialized()) {
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    time_t current_sec = time(NULL);
+
+    if (!app_rtc_time_synced()) {
+        ESP_LOGE(TAG, "Cannot reset bins: RTC time not synced");
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    // Step 1: Recalculate all scheduled times based on current schedule
+    // This picks up any schedule changes even for bins that are TAKEN/MISSED/NO_RECORD
+    if (s_device_state.schedule.type == SCHED_SIMPLE) {
+        device_schedule_validation_t validation = apply_schedule(&s_device_state.schedule, &s_device_state, true);
+        if (validation != SCHED_VALID) {
+            ESP_LOGE(TAG, "Failed to recalculate schedule during bin reset: %d", validation);
+            return ESP_FAIL;
+        }
+    } else {
+        ESP_LOGE(TAG, "No valid schedule to apply");
+        return ESP_FAIL;
+    }
+
+    // Step 2: Reset only future-dated bins to PENDING
+    // This allows re-testing without factory reset, while preserving past dose history
+    int reset_count = 0;
+    for (int i = 0; i < 14; i++) {
+        if (s_device_state.bins[i].scheduled_time > current_sec) {
+            s_device_state.bins[i].status = PENDING;
+            reset_count++;
+            ESP_LOGI(TAG, "[ENGINEERING] Bin %d reset to PENDING (scheduled: %lld, now: %lld)",
+                     i, (long long)s_device_state.bins[i].scheduled_time, (long long)current_sec);
+        }
+    }
+
+    ESP_LOGI(TAG, "[ENGINEERING] Reset %d bins to PENDING for re-testing", reset_count);
+    
+    ESP_ERROR_CHECK(update_device_state());
+    check_state_transitions();
+    
+    return ESP_OK;
 }
