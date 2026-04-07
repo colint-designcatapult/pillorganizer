@@ -467,6 +467,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noticeDisconnectedAction => 'Reconnect';
 
   @override
+  String get noticePhoneDisconnected => 'Service disconnected';
+
+  @override
+  String get noticePhoneDisconnectedSubtitle =>
+      'Your phone cannot connect to our service. Please check your internet connection.';
+
+  @override
+  String get noticePhoneDisconnectedAction => 'Retry';
+
+  @override
   String get noticeEmpty => 'Organizer Empty?';
 
   @override
@@ -475,6 +485,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noticeEmptyAction => 'Fill Now';
+
+  @override
+  String get noticeNeedsReload => 'Reload Required';
+
+  @override
+  String get noticeNeedsReloadSubtitle =>
+      'Your device state needs to be re-synchronized.';
+
+  @override
+  String get noticeNeedsReloadAction => 'Reload Now';
+
+  @override
+  String get noticeNoSchedule => 'No Schedule Found';
+
+  @override
+  String get noticeNoScheduleSubtitle =>
+      'Your device does not have a medication schedule.';
+
+  @override
+  String get noticeNoScheduleAction => 'Set Schedule';
+
+  @override
+  String get noticeStateCorrupted => 'Device State Corrupt';
+
+  @override
+  String get noticeStateCorruptedSubtitle =>
+      'The internal state of your device is corrupted.';
+
+  @override
+  String get noticeStateCorruptedAction => 'Reset Device';
+
+  @override
+  String get noticeNoRtcTime => 'Device Clock Error';
+
+  @override
+  String get noticeNoRtcTimeSubtitle =>
+      'The device clock is not set correctly.';
+
+  @override
+  String get noticeNoRtcTimeAction => 'Sync Time';
 
   @override
   String get noticeNoMeds => 'You don\'t have any medications entered.';

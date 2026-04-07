@@ -1,6 +1,7 @@
 import 'dart:io';
 
 
+import 'package:app/provider/device_connection_status_provider.dart';
 import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/device_state_provider.dart';
 import 'package:app/widgets/switch_device.dart';
@@ -52,6 +53,7 @@ class DeviceInfoHeader extends ConsumerWidget {
     final activeDevice = ref.watch(activeDeviceProvider);
     final deviceStateAsync = ref.watch(deviceStateProvider);
     final deviceListAsync = ref.watch(deviceListProvider);
+    final deviceConnectionStatus = ref.watch(deviceConnectionStatusProvider);
 
     DeviceState? deviceState = deviceStateAsync.value;
     int numberOfDevices = deviceListAsync.value?.length ?? 0;
@@ -186,7 +188,7 @@ class DeviceInfoHeader extends ConsumerWidget {
           Column(
             children: [SizedBox(height: 8.h), const SwitchDevice()],
           ),
-        if (deviceState?.battery != null)
+        if (deviceState?.battery != null && deviceConnectionStatus == DeviceConnectionStatus.online)
           Column(
             children: [
               SizedBox(height: 8.h),

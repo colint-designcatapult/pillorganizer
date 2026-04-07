@@ -1,5 +1,5 @@
 import 'package:app/apiv2/models/device.dart';
-import 'package:app/provider/device_notice_provider.dart';
+import 'package:app/provider/device_error_provider.dart';
 import 'package:app/provider/device_state_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/time_provider.dart';
@@ -20,7 +20,7 @@ class Pillbox extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final deviceStateAsync = ref.watch(deviceStateProvider);
     final minuteBasedTime = ref.watch(minuteBasedTimeProvider);
-    final deviceNotice = ref.watch(deviceNoticeProvider);
+    final deviceError = ref.watch(deviceErrorProvider);
 
     final List<String> daysOfWeek =
     DayOfWeek.values.map((e) => e.displayName(context).toString()).toList();
@@ -29,7 +29,7 @@ class Pillbox extends ConsumerWidget {
         AppLocalizations.of(context)!.localeName == 'fr' ? 'fr' : 'en')
         .format(minuteBasedTime);
 
-    final bool isDeviceActive = deviceNotice != DeviceNotice.disconnected;
+    final bool isDeviceActive = deviceError != DeviceError.disconnected;
 
     return SizedBox(
         height: 250.h,

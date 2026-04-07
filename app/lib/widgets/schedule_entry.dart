@@ -1,5 +1,6 @@
 import 'package:app/apiv2/models/device.dart';
 import 'package:app/apiv2/models/schedule.dart';
+import 'package:app/provider/device_connection_status_provider.dart';
 import 'package:app/provider/schedule_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
@@ -13,6 +14,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'device_alert_popup.dart';
+
 const double _sectionSpacing = 32.0;
 const double _titleSubtitleSpacing = 8.0;
 const double _subtitleContentSpacing = 16.0;
@@ -21,12 +24,14 @@ class ScheduleEntry extends ConsumerStatefulWidget {
   final bool showRemovalSection;
   final bool showAddDeviceSection;
   final DeviceMetadata? device;
+  final bool ignoreOffline;
 
   const ScheduleEntry({
     super.key,
     this.showRemovalSection = true,
     this.showAddDeviceSection = true,
     this.device,
+    this.ignoreOffline = false
   });
 
   @override
@@ -58,6 +63,7 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
   @override
   Widget build(BuildContext context) {
     final targetDevice = widget.device ?? ref.watch(activeDeviceProvider);
+    final connectionStatus = ref.watch(deviceConnectionStatusProvider);
 
     if (targetDevice == null) {
       return const SizedBox.shrink();
@@ -74,15 +80,49 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
             mainAxisSize: MainAxisSize.max,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTimeSetupSection(
-                  simpleSchedule,
-                  targetDevice,
-                  false,
-                  _isUpdatingAM,
-                  _isUpdatingPM),
-              if (targetDevice.primaryUser) ...[
-                SizedBox(height: _sectionSpacing.h),
-                _buildTimezoneSection(targetDevice),
+              if (widget.ignoreOffline || connectionStatus == DeviceConnectionStatus.online) ...[
+                _buildTimeSetupSection(
+                    simpleSchedule,
+                    targetDevice,
+                    false,
+                    _isUpdatingAM,
+                    _isUpdatingPM),
+                if (targetDevice.primaryUser) ...[
+                  SizedBox(height: _sectionSpacing.h),
+                  _buildTimezoneSection(targetDevice),
+                ],
+              ] else ...[
+                Card(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
+                    elevation: 0, // Matched with headers inset dialog elevation
+                    child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20.r),
+                          border: Border.all(color: const Color(0xFFBFD2DB), width: 1.w),
+                        ),
+                        child: Padding(
+                            padding: EdgeInsets.all(20.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Device offline",
+                                  style: Theme.of(context).textTheme.titleSmall,
+                                ),
+                                SizedBox(height: _titleSubtitleSpacing.h),
+                                Text(
+                                  "Schedule and timezone changes can only be made while your device is connected.",
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            )
+                        )
+                    )
+                )
               ],
               if (widget.showRemovalSection) ...[
                 SizedBox(height: _sectionSpacing.h),

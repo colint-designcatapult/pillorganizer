@@ -14,7 +14,7 @@ import 'package:intl/intl.dart';
 import 'package:timezone/standalone.dart' as tz;
 
 import '../apiv2/models/device.dart';
-import '../../provider/device_notice_provider.dart';
+import '../../provider/device_error_provider.dart';
 import '../../provider/device_state_provider.dart';
 import '../../provider/medication_provider.dart';
 import '../../provider/selected_device_provider.dart';
@@ -32,7 +32,7 @@ class DosePeriodArea extends ConsumerWidget {
     final List<DosePeriod> dosePeriodsRaw = const [];
     final activeDevice = ref.watch(activeDeviceProvider);
     final isOwner = activeDevice?.primaryUser ?? false;
-    final deviceNotice = ref.watch(deviceNoticeProvider);
+    final deviceError = ref.watch(deviceErrorProvider);
 
     final now = DateTime.now();
 
@@ -56,7 +56,7 @@ class DosePeriodArea extends ConsumerWidget {
         .reversed
         .toList();
 
-    if (deviceNotice != DeviceNotice.empty &&
+    if (deviceError != DeviceError.needsReload &&
         (dosePeriods == null || dosePeriods.isEmpty)) {
       return SliverToBoxAdapter(
           child: Padding(
@@ -89,7 +89,7 @@ class DosePeriodArea extends ConsumerWidget {
       return list.firstWhereOrNull((m) => m.id == id);
     }
 
-    final deviceNotice = ref.watch(deviceNoticeProvider);
+    final deviceError = ref.watch(deviceErrorProvider);
 
     if (period != null && period.medicationIDs.isNotEmpty) {
       bool hasMissingMedications = false;
@@ -128,7 +128,7 @@ class DosePeriodArea extends ConsumerWidget {
           if (period.medicationIDs.isNotEmpty) ...[
             ...period.medicationIDs
                 .map((e) => _buildMed(
-                    context, ref, period, getMedByID(e), deviceNotice))
+                    context, ref, period, getMedByID(e), deviceError))
                 .toList(growable: false),
           ] else ...[
             IndexNewPills(onAdd: () => addNewPillUpdate())
@@ -178,7 +178,7 @@ class DosePeriodArea extends ConsumerWidget {
   }
 
   Widget _buildMed(BuildContext context, WidgetRef ref, DosePeriod period, ScheduledMedication? med,
-      DeviceNotice deviceNotice) {
+      DeviceError deviceError) {
     final activeDevice = ref.watch(activeDeviceProvider);
     final deviceID = activeDevice?.id ?? "";
     final bool isOwner = activeDevice?.primaryUser ?? false;
@@ -250,7 +250,7 @@ class DosePeriodArea extends ConsumerWidget {
                                               fontWeight: FontWeight.w600)),
                                   Text(
                                       _buildSubtitle(
-                                          context, ref, period, deviceNotice),
+                                          context, ref, period, deviceError),
                                       style: Theme.of(context)
                                           .textTheme
                                           .displaySmall)
@@ -260,7 +260,7 @@ class DosePeriodArea extends ConsumerWidget {
                     ),
                     CircularBinStatusIndicator(
                         status: period.status,
-                        deviceStatus: deviceNotice),
+                        deviceError: deviceError),
                     if (isOwner) ...[
                       SizedBox(
                         width: 22.w,
@@ -348,14 +348,14 @@ class DosePeriodArea extends ConsumerWidget {
   }
 
   String _buildSubtitle(
-      BuildContext context, WidgetRef ref, DosePeriod period, DeviceNotice deviceNotice) {
+      BuildContext context, WidgetRef ref, DosePeriod period, DeviceError deviceError) {
     if (period.scheduledTime == null) {
       return "";
     }
     String format = _formatTimeInDeviceTimezone(context, ref, period.scheduledTime);
 
     if (period.status == BinStatus.disabled ||
-        deviceNotice == DeviceNotice.empty) {
+        deviceError == DeviceError.needsReload) {
       return AppLocalizations.of(context)!.doseRefill;
     } else if (period.status == BinStatus.taken) {
       final takenTime = period.takenAtTime != null
