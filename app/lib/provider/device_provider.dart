@@ -1,4 +1,4 @@
-import 'dart:async';
+
 
 import 'package:app/apiv2/models/device.dart';
 import 'package:app/apiv2/models/dto.dart';
@@ -13,26 +13,7 @@ part 'device_provider.g.dart';
 class DeviceList extends _$DeviceList {
   @override
   FutureOr<List<DeviceMetadata>> build() async {
-    try {
-      final devices = await _fetchDevices();
-
-      // If no devices are found, start a timer to retry
-      if (devices.isEmpty) {
-        final timer = Timer(const Duration(seconds: 5), () {
-          ref.invalidateSelf();
-        });
-        ref.onDispose(timer.cancel);
-      }
-
-      return devices;
-    } catch (e) {
-      // Retry on error after 5 seconds
-      final timer = Timer(const Duration(seconds: 5), () {
-        ref.invalidateSelf();
-      });
-      ref.onDispose(timer.cancel);
-      rethrow;
-    }
+    return await _fetchDevices();
   }
 
   Future<void> refresh() async {

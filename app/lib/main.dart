@@ -23,7 +23,7 @@ import 'screens/auth/patient_confirmation.dart';
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
 
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   tz.initializeTimeZones();
   DeepLinkService().initialize();

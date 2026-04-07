@@ -12,49 +12,61 @@ part 'mqtt_provider.g.dart';
 final String mqttEndpoint = "wss://ws-mqtt.app.healthesolutions.ca/mqtt";
 
 Duration? _mqttRetry(int retryCount, Object error) {
-  if (retryCount >= 3) return null;
-  return Duration(seconds: retryCount * 3);
+  // Never retry
+  return null;
+}
+
+@riverpod
+Future<String?> mqttClientName(Ref ref) async {
+  final device = ref.watch(activeDeviceProvider);
+  if (device == null || device.thingName == null) {
+    return null;
+  }
+
+  final idToken = await AmplifyService().getIdToken();
+  if (idToken == null) {
+    return null;
+  }
+
+  final String? userid;
+  try {
+    final idpart = idToken.split(".")[1];
+    final base64s = base64.decode(base64Url.normalize(idpart));
+    final Map<String, dynamic> jwtClaims = jsonDecode(utf8.decode(base64s));
+    userid = jwtClaims["userId"] as String?;
+  } catch (e) {
+    return null;
+  }
+
+  if (userid == null) {
+    return null;
+  }
+
+  return '${device.thingName}/user/$userid';
 }
 
 @Riverpod(retry: _mqttRetry)
 class MqttClient extends _$MqttClient {
   @override
   Future<MqttServerClient?> build() async {
-    // Only rebuild if the selected device ID changes.
-    // This stops background list refreshes from resetting the connection.
-    ref.watch(activeDeviceProvider.select((d) => d?.id));
+    // Only rebuild if the resolved client Name changes.
+    // This stops background list refreshes from resetting the connection,
+    // because Riverpod won't notify listeners if the final string is identical.
+    final clientName = await ref.watch(mqttClientNameProvider.future);
 
-    // Get the full device object.
+    if (clientName == null) {
+      print('[MQTT] clientName is null — skipping connection');
+      return null;
+    }
+
+    // Get the dependencies using ref.read so they don't trigger direct rebuilds.
     final device = ref.read(activeDeviceProvider);
-
-    if (device == null || device.thingName == null) {
-      print('[MQTT] No device or thingName — skipping connection');
-      return null;
-    }
-
     final idToken = await AmplifyService().getIdToken();
-    if (idToken == null) {
-      print('[MQTT] getIdToken() returned null — aborting');
+
+    if (device == null || idToken == null) {
       return null;
     }
 
-    final String? userid;
-    try {
-      final idpart = idToken.split(".")[1];
-      final base64s = base64.decode(base64Url.normalize(idpart));
-      final Map<String, dynamic> jwtClaims = jsonDecode(utf8.decode(base64s));
-      userid = jwtClaims["userId"] as String?;
-    } catch (e) {
-      print('[MQTT] Failed to parse JWT — aborting');
-      return null;
-    }
-
-    if (userid == null) {
-      print('[MQTT] JWT has no "userId" claim — aborting');
-      return null;
-    }
-
-    final clientName = '${device.thingName}/user/$userid';
     print('[MQTT] Connecting: clientName=$clientName');
 
     final client = MqttServerClient.withPort(mqttEndpoint, clientName, 443,
@@ -70,11 +82,33 @@ class MqttClient extends _$MqttClient {
     client.logging(on: true);
     client.keepAlivePeriod = 20;
     client.connectTimeoutPeriod = 30;
-    client.autoReconnect = true;
+    
+    // Disable inner auto-reconnect so the MQTT client doesn't enter an endless
+    // reconnect loop with stale tokens. Failure bridging is now governed upstream.
+    client.autoReconnect = false;
+
+    // Track if we intentionally disconnected to avoid false positive error states
+    bool isIntentionalDisconnect = false;
 
     // Riverpod 3.0 handles disposal semantics.
     // When the provider is invalidated or destroyed, this will run.
-    ref.onDispose(client.disconnect);
+    ref.onDispose(() {
+      isIntentionalDisconnect = true;
+      client.disconnect();
+    });
+
+    // Gracefully handle forceful server disconnects (or network drops)
+    client.onDisconnected = () {
+      if (!isIntentionalDisconnect) {
+        print('[MQTT] Disconnected unexpectedly.');
+        // Update the provider state to error so the UI actively reflects the Drop
+        // and doesn't sit frozen with a dead `AsyncData` client.
+        state = AsyncValue.error(
+          Exception('MQTT server forcefully disconnected.'),
+          StackTrace.current,
+        );
+      }
+    };
 
     try {
       await client.connect();
@@ -83,9 +117,6 @@ class MqttClient extends _$MqttClient {
     } catch (e) {
       print('[MQTT] Initial connection failed: $e');
       client.disconnect();
-      // Rethrow so the provider enters an error state.
-      // Riverpod 3.0 will now automatically retry according to 
-      // the policy defined in ProviderScope (3 retries, then stop).
       rethrow;
     }
   }

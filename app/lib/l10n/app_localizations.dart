@@ -926,6 +926,24 @@ abstract class AppLocalizations {
   /// **'Reconnect'**
   String get noticeDisconnectedAction;
 
+  /// No description provided for @noticePhoneDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Service disconnected'**
+  String get noticePhoneDisconnected;
+
+  /// No description provided for @noticePhoneDisconnectedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone cannot connect to our service. Please check your internet connection.'**
+  String get noticePhoneDisconnectedSubtitle;
+
+  /// No description provided for @noticePhoneDisconnectedAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get noticePhoneDisconnectedAction;
+
   /// No description provided for @noticeEmpty.
   ///
   /// In en, this message translates to:

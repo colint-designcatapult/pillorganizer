@@ -467,6 +467,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noticeDisconnectedAction => 'Reconnect';
 
   @override
+  String get noticePhoneDisconnected => 'Service disconnected';
+
+  @override
+  String get noticePhoneDisconnectedSubtitle =>
+      'Your phone cannot connect to our service. Please check your internet connection.';
+
+  @override
+  String get noticePhoneDisconnectedAction => 'Retry';
+
+  @override
   String get noticeEmpty => 'Organizer Empty?';
 
   @override

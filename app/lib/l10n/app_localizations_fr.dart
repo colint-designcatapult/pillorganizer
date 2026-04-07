@@ -469,6 +469,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noticeDisconnectedAction => 'Reconnexion';
 
   @override
+  String get noticePhoneDisconnected => 'Service déconnecté';
+
+  @override
+  String get noticePhoneDisconnectedSubtitle =>
+      'Votre téléphone ne peut pas se connecter à notre service. Veuillez vérifier votre connexion Internet.';
+
+  @override
+  String get noticePhoneDisconnectedAction => 'Réessayer';
+
+  @override
   String get noticeEmpty => 'Pilulier vide?';
 
   @override

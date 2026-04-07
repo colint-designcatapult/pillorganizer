@@ -81,6 +81,8 @@ class DeviceAlert extends StatelessWidget {
     switch (notice) {
       case DeviceError.disconnected:
         return AppLocalizations.of(context)!.noticeDisconnected;
+      case DeviceError.phoneDisconnected:
+        return AppLocalizations.of(context)!.noticePhoneDisconnected;
       case DeviceError.needsReload:
         return AppLocalizations.of(context)!.noticeNeedsReload;
       case DeviceError.noSchedule:
@@ -98,6 +100,8 @@ class DeviceAlert extends StatelessWidget {
     switch (notice) {
       case DeviceError.disconnected:
         return AppLocalizations.of(context)!.noticeDisconnectedSubtitle;
+      case DeviceError.phoneDisconnected:
+        return AppLocalizations.of(context)!.noticePhoneDisconnectedSubtitle;
       case DeviceError.needsReload:
         return AppLocalizations.of(context)!.noticeNeedsReloadSubtitle;
       case DeviceError.noSchedule:
@@ -115,6 +119,8 @@ class DeviceAlert extends StatelessWidget {
     switch (notice) {
       case DeviceError.disconnected:
         return Icon(PhosphorIconsBold.plugs, color: Colors.black, size: 20.h);
+      case DeviceError.phoneDisconnected:
+        return Icon(PhosphorIconsBold.cloudSlash, color: Colors.black, size: 20.h);
       case DeviceError.needsReload:
         return Icon(PhosphorIconsBold.arrowsClockwise, color: Colors.black, size: 20.h);
       case DeviceError.noSchedule:
@@ -132,6 +138,8 @@ class DeviceAlert extends StatelessWidget {
     switch (notice) {
       case DeviceError.disconnected:
         return AppLocalizations.of(context)!.noticeDisconnectedAction;
+      case DeviceError.phoneDisconnected:
+        return AppLocalizations.of(context)!.noticePhoneDisconnectedAction;
       case DeviceError.needsReload:
         return AppLocalizations.of(context)!.noticeNeedsReloadAction;
       case DeviceError.noSchedule:

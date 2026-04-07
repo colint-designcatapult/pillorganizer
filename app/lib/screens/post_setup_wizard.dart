@@ -66,6 +66,7 @@ class PostSetupWizard extends ConsumerWidget {
                   const ScheduleEntry(
                     showRemovalSection: false,
                     showAddDeviceSection: false,
+                    ignoreOffline: true,
                   ),
                   SizedBox(height: 72),
                 ],

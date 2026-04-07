@@ -1,4 +1,5 @@
 import 'package:app/provider/device_state_provider.dart';
+import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/time_provider.dart';
 import 'package:app/widgets/dose_period_area.dart';
 import 'package:app/widgets/pillbox/pill_box.dart';
@@ -7,6 +8,8 @@ import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+
+import '../../provider/device_error_provider.dart';
 
 class HomeBody extends ConsumerWidget {
   const HomeBody({super.key});
@@ -45,8 +48,8 @@ class HomeBody extends ConsumerWidget {
                   ),
                 ),
               ),
+
               SliverToBoxAdapter(child: Pillbox()),
-              DosePeriodArea(),
             ],
           ),
         ),
