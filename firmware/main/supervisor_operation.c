@@ -444,7 +444,7 @@ static void start_reload()
 
     // Update future_state with the new epoch_week for schedule calculation
     future_state->epoch_week = new_epoch_week;
-    ESP_LOGI(TAG, "Reload: epoch_week set to %lld", new_epoch_week);
+    ESP_LOGI(TAG, "Reload: epoch_week set to %lld", (long long)new_epoch_week);
 
     // Apply current schedule to the future state
     int rc = apply_schedule(&s_device_state.schedule, future_state, true);
