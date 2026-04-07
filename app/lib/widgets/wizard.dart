@@ -224,15 +224,17 @@ class WizardStep extends StatelessWidget {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: const Color(0xFFBFD2DB),
-      body: SingleChildScrollView(
-        physics: canScroll
-            ? const AlwaysScrollableScrollPhysics()
-            : const NeverScrollableScrollPhysics(),
-        child: Container(
-          constraints: BoxConstraints.expand(
-            height: MediaQuery.of(context).size.height,
-          ),
-          child: Stack(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: canScroll
+              ? const AlwaysScrollableScrollPhysics()
+              : const NeverScrollableScrollPhysics(),
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height -
+                  MediaQuery.of(context).viewPadding.top,
+            ),
+            child: Stack(
             children: [
               Column(
                 mainAxisAlignment: MainAxisAlignment.start,
@@ -287,7 +289,7 @@ class WizardStep extends StatelessWidget {
                       child: Padding(
                         padding: EdgeInsets.only(
                           top: 8.h,
-                          bottom: navFooterHeight,
+                          bottom: navFooterHeight + MediaQuery.of(context).padding.bottom,
                         ),
                         child: AnimatedSwitcher(
                           duration: const Duration(milliseconds: 350),
@@ -320,8 +322,10 @@ class WizardStep extends StatelessWidget {
           ),
         ),
       ),
+      ),
       bottomNavigationBar: Container(
         color: Theme.of(context).secondaryHeaderColor,
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
         child: Row(
           children: [
             Expanded(
