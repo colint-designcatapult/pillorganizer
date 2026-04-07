@@ -38,9 +38,6 @@ class MyDevicesScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                FilledButton(onPressed: () {
-                  Navigator.of(context).push(ProvisionFlowPage.route());
-                }, child: const Text('Start Provision (test)')),
                 Flexible(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0).w,

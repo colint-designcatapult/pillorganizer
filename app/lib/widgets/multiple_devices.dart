@@ -205,6 +205,7 @@ class MultipleDevices extends ConsumerWidget {
                                       height: 24.h,
                                     ),
                               onPressed: () {
+                                activeDeviceNotifier.selectDevice(device);
                                 showMaterialModalBottomSheet(
                                   context: context,
                                   backgroundColor: Colors.transparent,

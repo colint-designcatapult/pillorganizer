@@ -106,7 +106,20 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
                         ),
                         child: Padding(
                             padding: EdgeInsets.all(20.0),
-                            child: Text('Cannot change device settings while offline.')
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Device offline",
+                                  style: Theme.of(context).textTheme.titleSmall,
+                                ),
+                                SizedBox(height: _titleSubtitleSpacing.h),
+                                Text(
+                                  "Schedule and timezone changes can only be made while your device is connected.",
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            )
                         )
                     )
                 )
