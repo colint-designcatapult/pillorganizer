@@ -189,7 +189,7 @@ static esp_err_t update_device_state()
     pers.synced_at = s_device_state.synced_at;
     pers.schedule = s_device_state.schedule; 
     pers.epoch_week = s_device_state.epoch_week;
-    pers.schedule_length_days = s_device_state.schedule_length_days;
+
     for (int i = 0; i < 14; i++) {
         pers.bins[i].status = s_device_state.bins[i].status;
         pers.bins[i].scheduled_time = s_device_state.bins[i].scheduled_time;
