@@ -91,7 +91,8 @@ typedef enum {
     DEVERR_NONE             =  0,
     DEVERR_NO_SCHEDULE      =  (1 << 0),
     DEVERR_STATE_CORRUPTED  =  (1 << 1),
-    DEVERR_NO_RTC_TIME      =  (1 << 2)
+    DEVERR_NO_RTC_TIME      =  (1 << 2),
+    DEVERR_OUTBOX_FULL      =  (1 << 3)
 } device_error_flag_t;
 
 #define SECONDS_PER_WEEK 604800
@@ -146,6 +147,8 @@ typedef enum {
     DEVEVT_RELOAD_START,
     DEVEVT_RELOAD_END,
     DEVEVT_ACTION_TIMEOUT,
+    DEVEVT_DOOR_LEFT_OPEN,
+    DEVEVT_ERROR,
 } device_event_type_t;
 
 typedef struct {

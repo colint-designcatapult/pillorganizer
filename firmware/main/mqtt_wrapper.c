@@ -112,6 +112,18 @@ esp_err_t mqtt_wrapper_disconnect(void) {
     return ESP_OK;
 }
 
+esp_err_t mqtt_wrapper_publish_with_id(const char* topic, const char* payload, int len, int qos, int retain, int* out_msg_id) {
+    if (!mqtt_wrapper_is_connected()) return ESP_ERR_INVALID_STATE;
+
+    int msg_id = esp_mqtt_client_publish(mqtt_client, topic, payload, len, qos, retain);
+    if (msg_id < 0) return ESP_FAIL;
+
+    if (out_msg_id != NULL) {
+        *out_msg_id = msg_id;
+    }
+    return ESP_OK;
+}
+
 esp_err_t mqtt_wrapper_publish(const char* topic, const char* payload, int len, int qos, int retain) {
     if (!mqtt_wrapper_is_connected()) return ESP_ERR_INVALID_STATE;
     

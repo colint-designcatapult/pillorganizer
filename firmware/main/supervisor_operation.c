@@ -6,6 +6,7 @@
 #include "ledc.h"
 #include "network.h"
 #include "shadow_state.h"
+#include "event_outbox.h"
 #include <stdatomic.h>
 
 #define TAG "SUPERVISOR_OPERATION"
@@ -810,16 +811,25 @@ static void handle_reload_fsm(const supervisor_event_t* event)
 
 static void handle_device_event_bin(device_event_type_t event_type, int bin_id)
 {
-    device_event_t devev = {
-        .timestamp = 0,
-        .event_type = event_type,
-        .bin_id = bin_id
-    };
+    rtc_utc_timestamp_ms ts = 0;
 
-    if (app_rtc_get_utc_timestamp_ms(&devev.timestamp) != ESP_OK) {
+    if (app_rtc_get_utc_timestamp_ms(&ts) != ESP_OK) {
+        /* Cannot timestamp the event: enter failsafe and discard. */
         supervisor_assert_error(DEVERR_NO_RTC_TIME);
         return;
     }
+
+    /* Push to outbox unconditionally, regardless of MQTT connection state. */
+    esp_err_t push_err = event_outbox_push(ts, event_type, bin_id, 0);
+    if (push_err == ESP_ERR_NO_MEM) {
+        supervisor_assert_error(DEVERR_OUTBOX_FULL);
+    }
+
+    device_event_t devev = {
+        .timestamp = ts,
+        .event_type = event_type,
+        .bin_id = bin_id
+    };
 
     switch (devev.event_type) {
         case DEVEVT_DOOR_OPENED:
@@ -841,7 +851,7 @@ static void handle_device_event_bin(device_event_type_t event_type, int bin_id)
 
 static void handle_device_event_nobin(device_event_type_t event_type)
 {
-    handle_device_event_bin(event_type, 0);
+    handle_device_event_bin(event_type, EVENT_OUTBOX_BIN_ID_NONE);
 }
 
 static void handle_device_event(const supervisor_event_t* ev)
@@ -944,6 +954,8 @@ void supervisor_operation_event(const supervisor_event_t* event)
             if (event->id == EVENT_MQTT_CONNECTED) {
                 mqtt_publish_device_state(&s_device_state);
                 shadow_state_on_connect();
+                /* Drain any events that accumulated before MQTT connected. */
+                mqtt_drain_event_outbox();
                 s_state = STATE_MQTT_CONNECTED;
             }
             break;
@@ -969,6 +981,8 @@ void supervisor_operation_event(const supervisor_event_t* event)
             } else if (event->id == EVENT_STATE_CHANGED) {
                 print_state(&s_device_state);            
                 ESP_ERROR_CHECK(mqtt_publish_device_state(&s_device_state));
+                /* Drain any newly pushed outbox events. */
+                mqtt_drain_event_outbox();
             }
 #if CONFIG_FIRMWARE_ENGINEERING
             else if (event->id == EVENT_RESET_PENDING_BINS) {
@@ -1008,6 +1022,14 @@ void supervisor_operation_tick()
 
     check_state_transitions();
     set_led_idle_task();
+
+    /* Maintain event outbox: persist entries older than 60 s. */
+    event_outbox_tick();
+
+    /* Clear DEVERR_OUTBOX_FULL once the queue drops below capacity. */
+    if ((supervisor_get_error_flags() & DEVERR_OUTBOX_FULL) && !event_outbox_is_full()) {
+        supervisor_clear_error(DEVERR_OUTBOX_FULL);
+    }
 }
 
 esp_err_t supervisor_operation_get_schedule(device_schedule_t* sched)
