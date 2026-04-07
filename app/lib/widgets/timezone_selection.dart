@@ -55,6 +55,7 @@ class TimeZoneSelectionState extends ConsumerState<TimeZoneSelection> {
   @override
   Widget build(BuildContext context) {
     final scheduleState = ref.watch(scheduleProvider);
+    final bool scheduleLoaded = scheduleState.hasValue;
     final timezone = scheduleState.asData?.value.effectiveTimezoneIana;
     final bool timezoneMismatch = phoneLocation != null &&
         timezone != null &&
@@ -62,9 +63,9 @@ class TimeZoneSelectionState extends ConsumerState<TimeZoneSelection> {
 
     return Column(
       children: [
-        _buildTimezoneSection(timezone, widget.isOwner, _isUpdatingTimezone, timezoneMismatch),
+        _buildTimezoneSection(timezone, widget.isOwner, _isUpdatingTimezone || !scheduleLoaded, timezoneMismatch),
         SizedBox(height: 16.h),
-        _buildCurrentTimezoneButton(_isUpdatingTimezone, timezoneMismatch),
+        _buildCurrentTimezoneButton(_isUpdatingTimezone || !scheduleLoaded, timezoneMismatch),
       ],
     );
   }
