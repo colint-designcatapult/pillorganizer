@@ -31,6 +31,7 @@ Dio tenantDio(Ref ref) {
     BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 30),
     ),
   );
 
@@ -49,6 +50,7 @@ TenantApiClient tenantClientForUrl(String baseUrl) {
   final dio = Dio(BaseOptions(
     baseUrl: baseUrl,
     connectTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 30),
   ));
   dio.interceptors.add(JwtAuthInterceptor(dio: dio));
   return TenantApiClient(dio);

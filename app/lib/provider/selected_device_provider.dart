@@ -42,6 +42,9 @@ class ActiveDevice extends _$ActiveDevice {
   }
 }
 
+/// Deprecated: timezone is now sourced from [scheduleProvider].
+/// This provider will be removed once all consumers are migrated.
+@Deprecated('Use scheduleProvider and DeviceScheduleState.effectiveTimezoneIana instead')
 @riverpod
 class ActiveDeviceConfig extends _$ActiveDeviceConfig {
   @override
@@ -49,12 +52,10 @@ class ActiveDeviceConfig extends _$ActiveDeviceConfig {
     final activeDevice = ref.watch(activeDeviceProvider);
     if (activeDevice == null) return null;
 
-    // Mocking timezone for now
     return const DeviceConfig(timezone: null);
   }
 
   Future<void> updateTimezone(String timezone) async {
-    // Logic to update timezone via API
     state = DeviceConfig(timezone: timezone);
   }
 }
