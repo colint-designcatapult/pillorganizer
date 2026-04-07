@@ -52,6 +52,7 @@ TenantApiClient tenantClientForUrl(String baseUrl) {
     connectTimeout: const Duration(seconds: 10),
     receiveTimeout: const Duration(seconds: 30),
   ));
+  dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true, error: true));
   dio.interceptors.add(JwtAuthInterceptor(dio: dio));
   return TenantApiClient(dio);
 }

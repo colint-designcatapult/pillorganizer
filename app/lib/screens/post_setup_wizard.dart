@@ -54,7 +54,7 @@ class _PostSetupWizardState extends ConsumerState<PostSetupWizard> {
         FlutterTimezone.getLocalTimezone().then((tz) {
           ref.read(scheduleProvider.notifier)
               .updateTimezone(activeDevice.id, normalizeIanaTimezone(tz.identifier));
-        });
+        }).catchError((_) {});
       }
     });
 

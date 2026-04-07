@@ -57,14 +57,14 @@ class DeviceScheduleState {
 
 class DeviceSchedule {
   final String id;
-  final ScheduleTakeEffect takeEffect;
-  final BaseSchedule schedule;
+  final ScheduleTakeEffect? takeEffect;
+  final BaseSchedule? schedule;
   final String? timezoneIana;
 
   const DeviceSchedule({
     required this.id,
-    required this.takeEffect,
-    required this.schedule,
+    this.takeEffect,
+    this.schedule,
     this.timezoneIana,
   });
 }
@@ -122,7 +122,7 @@ extension DeviceScheduleDtoX on DeviceScheduleDto {
   DeviceSchedule toDomain() => DeviceSchedule(
         id: id,
         takeEffect: takeEffect,
-        schedule: schedule.toDomain(),
+        schedule: schedule?.toDomain(),
         timezoneIana: timezoneIana,
       );
 }
@@ -163,7 +163,7 @@ extension DeviceScheduleX on DeviceSchedule {
   DeviceScheduleDto toDto() => DeviceScheduleDto(
         id: id,
         takeEffect: takeEffect,
-        schedule: schedule.toDto(),
+        schedule: schedule?.toDto(),
         timezoneIana: timezoneIana,
       );
 }
