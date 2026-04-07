@@ -190,11 +190,14 @@ public class ScheduleService {
     }
 
     private BaseSchedule parseSchedule(String json) {
+        if (json == null) {
+            return null;
+        }
         try {
             return objectMapper.readValue(json, BaseSchedule.class);
         } catch (IOException e) {
             log.atSevere().withCause(e)
-                    .log("Failed to parse schedule JSON (length=%d)", json != null ? json.length() : 0);
+                    .log("Failed to parse schedule JSON (length=%d)", json.length());
             return null;
         }
     }
