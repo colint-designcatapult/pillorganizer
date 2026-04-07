@@ -54,10 +54,12 @@ menu "Firmware Features"
 
 config FIRMWARE_ENGINEERING
     bool "Enable Engineering Features (development only)"
-    default y
+    default n
     help
         Enable engineering web interface with testing and debugging functions.
         Includes: manual reload trigger, reset pending bins for retesting.
-        DISABLE in production builds to remove all engineering endpoints and handlers.
+        Leave disabled by default; enable explicitly in development/test configs
+        (for example via sdkconfig.defaults or CI profiles). Keep disabled in
+        production builds to remove all engineering endpoints and handlers.
 
 endmenu
