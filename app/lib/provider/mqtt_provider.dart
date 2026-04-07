@@ -1,9 +1,8 @@
-import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/service/amplify_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -12,41 +11,21 @@ part 'mqtt_provider.g.dart';
 
 final String mqttEndpoint = "wss://ws-mqtt.app.healthesolutions.ca/mqtt";
 
-const _maxRetries = 2;
-
-/// Exponential backoff: 5s → 10s → failure.
-Duration? _nextRetryDelay(int failureCount) {
-  if (failureCount >= _maxRetries) return null;
-  const baseSecs = 5;
-  const capSecs = 300; // 5 minutes
-  final secs = (baseSecs * pow(2, failureCount)).toInt();
-  return Duration(seconds: secs < capSecs ? secs : capSecs);
+Duration? _mqttRetry(int retryCount, Object error) {
+  if (retryCount >= 3) return null;
+  return Duration(seconds: retryCount * 3);
 }
 
-@riverpod
+@Riverpod(retry: _mqttRetry)
 class MqttClient extends _$MqttClient {
-  MqttServerClient? _activeClient;
-  int _failureCount = 0;
-  Timer? _retryTimer;
-
   @override
   Future<MqttServerClient?> build() async {
-    final device = ref.watch(activeDeviceProvider);
+    // Only rebuild if the selected device ID changes.
+    // This stops background list refreshes from resetting the connection.
+    ref.watch(activeDeviceProvider.select((d) => d?.id));
 
-    // Cancel any pending retry timer from a previous build.
-    _retryTimer?.cancel();
-    _retryTimer = null;
-
-    // Disconnect any client from a previous build before starting fresh.
-    _activeClient?.disconnect();
-    _activeClient = null;
-
-    // Once the retry budget is exhausted, stop permanently.
-    // Only a manual reconnect() call can reset this.
-    if (_failureCount > _maxRetries) {
-      print('[MQTT] Retry budget exhausted — not attempting connection');
-      return null;
-    }
+    // Get the full device object.
+    final device = ref.read(activeDeviceProvider);
 
     if (device == null || device.thingName == null) {
       print('[MQTT] No device or thingName — skipping connection');
@@ -66,7 +45,7 @@ class MqttClient extends _$MqttClient {
       final Map<String, dynamic> jwtClaims = jsonDecode(utf8.decode(base64s));
       userid = jwtClaims["userId"] as String?;
     } catch (e) {
-      print('[MQTT] Failed to parse JWT: $e — aborting');
+      print('[MQTT] Failed to parse JWT — aborting');
       return null;
     }
 
@@ -76,9 +55,10 @@ class MqttClient extends _$MqttClient {
     }
 
     final clientName = '${device.thingName}/user/$userid';
-    print('[MQTT] Connecting: clientName=$clientName, x-device-id=${device.id}, x-tenant-id=${device.tenantId}');
+    print('[MQTT] Connecting: clientName=$clientName');
 
-    final client = MqttServerClient.withPort(mqttEndpoint, clientName, 443);
+    final client = MqttServerClient.withPort(mqttEndpoint, clientName, 443,
+        maxConnectionAttempts: 1);
     client.websocketHeader = {
       "x-jwt": idToken,
       "x-device-id": device.id,
@@ -92,41 +72,26 @@ class MqttClient extends _$MqttClient {
     client.connectTimeoutPeriod = 30;
     client.autoReconnect = true;
 
+    // Riverpod 3.0 handles disposal semantics.
+    // When the provider is invalidated or destroyed, this will run.
     ref.onDispose(client.disconnect);
 
     try {
       await client.connect();
       print('[MQTT] Connected successfully');
-      _failureCount = 0;
-      _activeClient = client;
       return client;
     } catch (e) {
+      print('[MQTT] Initial connection failed: $e');
       client.disconnect();
-      _failureCount++;
-      print(
-        '[MQTT] Connection failed (attempt $_failureCount/${_maxRetries + 1}): $e',
-      );
-      // Use failureCount - 1 as the exponent so the first retry is 5s,
-      // matching the documented 5s → 10s → failure schedule.
-      final delay = _nextRetryDelay(_failureCount - 1);
-      if (delay != null) {
-        print('[MQTT] Retrying in ${delay.inSeconds}s');
-        _retryTimer = Timer(delay, () => ref.invalidateSelf());
-        ref.onDispose(() => _retryTimer?.cancel());
-      } else {
-        print('[MQTT] Retry budget exhausted — giving up');
-      }
-      return null;
+      // Rethrow so the provider enters an error state.
+      // Riverpod 3.0 will now automatically retry according to 
+      // the policy defined in ProviderScope (3 retries, then stop).
+      rethrow;
     }
   }
 
-  /// Manually trigger a reconnect, resetting the retry counter.
+  /// Manually trigger a reconnect.
   void reconnect() {
-    _retryTimer?.cancel();
-    _retryTimer = null;
-    _activeClient?.disconnect();
-    _activeClient = null;
-    _failureCount = 0;
     ref.invalidateSelf();
   }
 }
