@@ -431,18 +431,23 @@ static void start_reload()
         return;
     }
 
-    // If stored epoch_week equals newly calculated epoch_week,
-    // advance it by schedule_length_days to move to next cycle
-    if (future_state->epoch_week == new_epoch_week) {
+    time_t stored_epoch_week = future_state->epoch_week;
+
+    // Preserve a stored future epoch_week, advance only when the stored value
+    // matches the current epoch_week, and otherwise fall back to the current week.
+    if (stored_epoch_week == new_epoch_week) {
         // Calculate the number of seconds to add (schedule_length_days * 86400)
         time_t schedule_length_seconds = (time_t)s_device_state.schedule_length_days * 86400;
         new_epoch_week += schedule_length_seconds;
         ESP_LOGI(TAG, "Epoch week was current week, advancing by %d days", s_device_state.schedule_length_days);
+    } else if (stored_epoch_week > new_epoch_week) {
+        new_epoch_week = stored_epoch_week;
+        ESP_LOGI(TAG, "Epoch week is already in the future, keeping stored value");
     } else {
-        ESP_LOGI(TAG, "Epoch week was different (stale), using newly calculated week");
+        ESP_LOGI(TAG, "Epoch week was stale, using newly calculated week");
     }
 
-    // Update future_state with the new epoch_week for schedule calculation
+    // Update future_state with the selected epoch_week for schedule calculation
     future_state->epoch_week = new_epoch_week;
     ESP_LOGI(TAG, "Reload: epoch_week set to %lld", (long long)new_epoch_week);
 
