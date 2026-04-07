@@ -423,6 +423,12 @@ CONFIG_ESP_TASK_WDT_TIMEOUT_S=5
 # end of Watchdog Configuration
 
 #
+# Firmware Features
+#
+CONFIG_FIRMWARE_ENGINEERING=y
+# end of Firmware Features
+
+#
 # Compiler options
 #
 # CONFIG_COMPILER_OPTIMIZATION_DEBUG is not set

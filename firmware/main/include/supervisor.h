@@ -50,7 +50,8 @@ typedef enum {
     EVENT_SCHEDULE_DELTA_RECEIVED,
     EVENT_RELOAD_TIMEOUT,
     EVENT_RELOAD_COMPLETE,
-    EVENT_BATTERY_CHANGE
+    EVENT_BATTERY_CHANGE,
+    EVENT_RESET_PENDING_BINS
 } supervisor_event_id_t;
 
 typedef struct {
@@ -132,6 +133,8 @@ typedef struct device_state_t {
     time_t epoch_week;
     // Non-authoritative copy of the device error flags
     int error_flags;
+    // Length of the schedule in days (e.g., 7 for a weekly schedule)
+    uint8_t schedule_length_days;
 } device_state_t;
 
 typedef enum {

@@ -1,4 +1,4 @@
-# Safe defaults - no secrets
+# Production defaults - engineering features disabled
 CONFIG_DEV_WIFI_ENABLED=n
 CONFIG_AWS_IOT_ENDPOINT="mqtt.app.healthesolutions.ca"
 CONFIG_CONTROL_PLANE_URL="https://control-plane.app.healthesolutions.ca"
@@ -6,9 +6,9 @@ CONFIG_AWS_IOT_THING_NAME="PillOrganizer_Test_001"
 CONFIG_RESET_PROVISIONED_ON_BOOT=n
 
 #
-# Firmware Features (Development)
+# Firmware Features (Production)
 #
-CONFIG_FIRMWARE_ENGINEERING=y
+CONFIG_FIRMWARE_ENGINEERING=n
 
 #
 # Watchdog Configuration
@@ -83,5 +83,4 @@ CONFIG_BT_NIMBLE_ATT_PREFERRED_MTU=517
 CONFIG_WIFI_PROV_SCAN_MAX_ENTRIES=16
 CONFIG_WIFI_PROV_AUTOSTOP_TIMEOUT=30
 CONFIG_WIFI_PROV_BLE_FORCE_ENCRYPTION=n
-CONFIG_BT_NIMBLE_ATT_PREFERRED_MTU=517
 CONFIG_BT_NIMBLE_SVC_GAP_APPEARANCE=0
