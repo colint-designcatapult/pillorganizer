@@ -15,7 +15,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../provider/device_connection_status_provider.dart';
-import '../provider/device_notice_provider.dart';
+import '../provider/device_error_provider.dart';
 import '../provider/device_state_provider.dart';
 import '../provider/scroll_provider.dart';
 import '../provider/time_provider.dart';

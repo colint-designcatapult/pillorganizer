@@ -31,11 +31,8 @@ class HomeBodySelector extends ConsumerWidget {
     final bool isLoadingInitialDeviceState = deviceStateAsync.isLoading && !deviceStateAsync.hasValue;
     final bool hasInitiallyLoadedDeviceState = deviceStateAsync.hasValue;
 
-    //final bool isDisconnected = deviceNotice == DeviceNotice.disconnected;
-    final bool isDisconnected = false;
-    //final bool isEmpty =
-    //    !dosePeriods.any((element) => element.medicationIDs.isNotEmpty);
-    final bool isEmpty = false;
+    final bool isDisconnected = deviceError == DeviceError.disconnected;
+    final bool isEmpty = deviceError == DeviceError.needsReload;
     final bool isOwner = activeDevice?.primaryUser ?? false;
 
     if (isLoadingDevices) {
@@ -78,17 +75,17 @@ class HomeBodySelector extends ConsumerWidget {
       return const HomeNoDeviceBody();
     }
 
-    /*if (isLoadingInitialDeviceState) {
+    if (isLoadingInitialDeviceState) {
       return const HomeLoadingBody();
-    }*/
+    }
 
-    /*if (isDisconnected) {
+    if (isDisconnected) {
       return const HomeDisconnectedBody();
     }
 
     if (isEmpty && hasInitiallyLoadedDeviceState) {
       return HomeEmptyDeviceBody(isOwner: isOwner);
-    }*/
+    }
 
     return HomeBody();
 

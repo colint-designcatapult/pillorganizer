@@ -6,7 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'device_error_provider.g.dart';
 
 @riverpod
-DeviceError deviceError(DeviceErrorRef ref) {
+DeviceError deviceError(Ref ref) {
   final status = ref.watch(deviceConnectionStatusProvider);
   if (status == DeviceConnectionStatus.offline) {
     return DeviceError.disconnected;
@@ -18,7 +18,7 @@ DeviceError deviceError(DeviceErrorRef ref) {
       if (state == null) return DeviceError.none;
       
       if (state.errors.isNotEmpty) {
-        final firstError = state.errors.first;
+        final DeviceErrorFlag firstError = state.errors.first;
         return switch (firstError) {
           DeviceErrorFlag.noSchedule => DeviceError.noSchedule,
           DeviceErrorFlag.stateCorrupted => DeviceError.stateCorrupted,

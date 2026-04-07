@@ -944,6 +944,78 @@ abstract class AppLocalizations {
   /// **'Fill Now'**
   String get noticeEmptyAction;
 
+  /// No description provided for @noticeNeedsReload.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload Required'**
+  String get noticeNeedsReload;
+
+  /// No description provided for @noticeNeedsReloadSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your device state needs to be re-synchronized.'**
+  String get noticeNeedsReloadSubtitle;
+
+  /// No description provided for @noticeNeedsReloadAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload Now'**
+  String get noticeNeedsReloadAction;
+
+  /// No description provided for @noticeNoSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'No Schedule Found'**
+  String get noticeNoSchedule;
+
+  /// No description provided for @noticeNoScheduleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your device does not have a medication schedule.'**
+  String get noticeNoScheduleSubtitle;
+
+  /// No description provided for @noticeNoScheduleAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Schedule'**
+  String get noticeNoScheduleAction;
+
+  /// No description provided for @noticeStateCorrupted.
+  ///
+  /// In en, this message translates to:
+  /// **'Device State Corrupt'**
+  String get noticeStateCorrupted;
+
+  /// No description provided for @noticeStateCorruptedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The internal state of your device is corrupted.'**
+  String get noticeStateCorruptedSubtitle;
+
+  /// No description provided for @noticeStateCorruptedAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Device'**
+  String get noticeStateCorruptedAction;
+
+  /// No description provided for @noticeNoRtcTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Device Clock Error'**
+  String get noticeNoRtcTime;
+
+  /// No description provided for @noticeNoRtcTimeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The device clock is not set correctly.'**
+  String get noticeNoRtcTimeSubtitle;
+
+  /// No description provided for @noticeNoRtcTimeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Time'**
+  String get noticeNoRtcTimeAction;
+
   /// No description provided for @noticeNoMeds.
   ///
   /// In en, this message translates to:
