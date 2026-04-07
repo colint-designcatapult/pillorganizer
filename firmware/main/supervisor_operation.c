@@ -369,6 +369,9 @@ static void process_schedule_delta(const device_schedule_t* sched)
         s_device_state.schedule_length_days = calculate_schedule_length_days(&s_device_state.schedule);
         ESP_LOGI(TAG, "Schedule length calculated: %d days", s_device_state.schedule_length_days);
 
+        // Clear no-schedule error now that a valid schedule has been applied
+        supervisor_clear_error(DEVERR_NO_SCHEDULE);
+
         ESP_ERROR_CHECK(update_device_state());
         ESP_ERROR_CHECK(shadow_state_report_schedule(&s_device_state.schedule));
         return;
@@ -455,6 +458,9 @@ static void start_reload()
     int rc = apply_schedule(&s_device_state.schedule, future_state, true);
     if (rc != 0) {
         ESP_LOGE(TAG, "apply_schedule failed (%d), aborting reload", rc);
+        if (s_device_state.schedule.type == SCHED_NONE) {
+            supervisor_assert_error(DEVERR_NO_SCHEDULE);
+        }
         free(future_state);
         return;
     }
@@ -599,6 +605,12 @@ static void load_state()
 
         // Recalculate schedule_length_days from loaded schedule (derived value, not persisted)
         s_device_state.schedule_length_days = calculate_schedule_length_days(&s_device_state.schedule);
+
+        // Assert error if no schedule has been configured
+        if (s_device_state.schedule.type == SCHED_NONE) {
+            ESP_LOGW(TAG, "No schedule configured");
+            supervisor_assert_error(DEVERR_NO_SCHEDULE);
+        }
     } else {
         // Failed to load state, trigger failsafe
         supervisor_assert_error(DEVERR_STATE_CORRUPTED);
