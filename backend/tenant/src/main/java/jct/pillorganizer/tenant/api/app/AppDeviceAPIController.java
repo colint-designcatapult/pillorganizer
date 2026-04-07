@@ -10,7 +10,6 @@ import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.tenant.auth.AuthService;
 import jct.pillorganizer.tenant.dto.UpdateDeviceNickname;
 import jct.pillorganizer.tenant.model.user.User;
-import jct.pillorganizer.tenant.service.DeviceProvisionService;
 import jct.pillorganizer.tenant.service.DeviceService;
 import lombok.extern.flogger.Flogger;
 

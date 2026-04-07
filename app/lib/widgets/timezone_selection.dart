@@ -37,6 +37,7 @@ class TimeZoneSelectionState extends ConsumerState<TimeZoneSelection> {
   Future<void> _getCurrentPhoneLocation() async {
     final String timeZoneName = normalizeIanaTimezone((await FlutterTimezone.getLocalTimezone()).identifier);
     final tz.Location location = tz.getLocation(timeZoneName);
+    if (!mounted) return;
     setState(() {
       phoneLocation = location;
     });

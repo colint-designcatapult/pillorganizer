@@ -49,23 +49,36 @@ class Schedule extends _$Schedule {
         .toList();
 
     final newSchedule = SimpleSchedule(bins: [...otherBins, ...newBins]);
-    final timezoneIana = current.effectiveTimezoneIana ?? normalizeIanaTimezone((await FlutterTimezone.getLocalTimezone()).identifier);
-    await _postSchedule(deviceID, newSchedule, timezoneIana);
+    try {
+      final timezoneIana = current.effectiveTimezoneIana ??
+          normalizeIanaTimezone((await FlutterTimezone.getLocalTimezone()).identifier);
+      await _postSchedule(deviceID, newSchedule, timezoneIana);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
   }
 
   Future<void> updateTimezone(String deviceID, String ianaTimezone) async {
     final client = ref.read(activeTenantClientProvider);
     if (client == null) return;
 
-    final current = state.asData?.value ?? const DeviceScheduleState();
-    final effectiveSchedule = current.effectiveSchedule ?? const SimpleSchedule(bins: []);
-
-    final request = SetScheduleRequestDto(
-      schedule: effectiveSchedule.toDto(),
-      takeEffect: ScheduleTakeEffect.immediate,
-      timezoneIana: ianaTimezone,
-    );
     try {
+      BaseSchedule? effectiveSchedule = state.asData?.value.effectiveSchedule;
+
+      if (effectiveSchedule == null) {
+        final dto = await client.getSchedule(deviceID);
+        effectiveSchedule = dto.toDomain().effectiveSchedule;
+      }
+
+      if (effectiveSchedule == null) {
+        throw StateError('Cannot update timezone without a loaded schedule.');
+      }
+
+      final request = SetScheduleRequestDto(
+        schedule: effectiveSchedule.toDto(),
+        takeEffect: ScheduleTakeEffect.immediate,
+        timezoneIana: ianaTimezone,
+      );
       final responseDto = await client.setSchedule(deviceID, request);
       state = AsyncValue.data(responseDto.toDomain());
     } catch (e, st) {
