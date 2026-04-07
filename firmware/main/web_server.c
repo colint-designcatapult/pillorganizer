@@ -11,6 +11,8 @@
 
 #define TAG "WEB_SERVER"
 
+#if CONFIG_FIRMWARE_ENGINEERING
+
 // Declare the external embedded HTML file
 extern const uint8_t engineering_html_start[] asm("_binary_engineering_html_start");
 extern const uint8_t engineering_html_end[] asm("_binary_engineering_html_end");
@@ -224,3 +226,22 @@ esp_err_t web_server_stop(void)
     
     return ESP_OK;
 }
+
+#else // CONFIG_FIRMWARE_ENGINEERING
+
+/**
+ * Stub implementations when engineering is disabled
+ */
+esp_err_t web_server_init(void)
+{
+    // Engineering disabled - no web server needed
+    return ESP_OK;
+}
+
+esp_err_t web_server_stop(void)
+{
+    // Engineering disabled - nothing to stop
+    return ESP_OK;
+}
+
+#endif // CONFIG_FIRMWARE_ENGINEERING

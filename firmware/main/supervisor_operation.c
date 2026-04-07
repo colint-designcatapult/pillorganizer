@@ -945,11 +945,14 @@ void supervisor_operation_event(const supervisor_event_t* event)
             } else if (event->id == EVENT_STATE_CHANGED) {
                 print_state(&s_device_state);            
                 ESP_ERROR_CHECK(mqtt_publish_device_state(&s_device_state));
-            } else if (event->id == EVENT_RESET_PENDING_BINS) {
+            }
+#if CONFIG_FIRMWARE_ENGINEERING
+            else if (event->id == EVENT_RESET_PENDING_BINS) {
                 // Reset future-dated bins to PENDING for re-testing
                 ESP_LOGI(TAG, "[ENGINEERING] Resetting pending bins from web interface");
                 supervisor_operation_reset_pending_bins();
             }
+#endif // CONFIG_FIRMWARE_ENGINEERING
             break;
         default:
             ESP_LOGW(TAG, "Unhandled state: %d", s_state);
@@ -993,6 +996,7 @@ esp_err_t supervisor_operation_get_schedule(device_schedule_t* sched)
     return ESP_OK;
 }
 
+#if CONFIG_FIRMWARE_ENGINEERING
 esp_err_t supervisor_operation_trigger_reload(void)
 {
     if (!supervisor_operation_is_initialized()) {
@@ -1062,3 +1066,4 @@ esp_err_t supervisor_operation_reset_pending_bins(void)
     
     return ESP_OK;
 }
+#endif // CONFIG_FIRMWARE_ENGINEERING

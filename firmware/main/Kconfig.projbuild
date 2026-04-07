@@ -49,3 +49,15 @@ config ESP_TASK_WDT_TIMEOUT_S
         expensive TLS operations like ECDH key exchange during AWS IoT connections.
 
 endmenu
+
+menu "Firmware Features"
+
+config FIRMWARE_ENGINEERING
+    bool "Enable Engineering Features (development only)"
+    default y
+    help
+        Enable engineering web interface with testing and debugging functions.
+        Includes: manual reload trigger, reset pending bins for retesting.
+        DISABLE in production builds to remove all engineering endpoints and handlers.
+
+endmenu
