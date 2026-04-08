@@ -73,12 +73,7 @@
       <scope>test</scope>
       <version>${testcontainers.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>localstack</artifactId>
-      <scope>test</scope>
-      <version>${testcontainers.version}</version>
-    </dependency>
+
     <dependency>
       <groupId>io.micronaut</groupId>
       <artifactId>micronaut-inject-groovy</artifactId>

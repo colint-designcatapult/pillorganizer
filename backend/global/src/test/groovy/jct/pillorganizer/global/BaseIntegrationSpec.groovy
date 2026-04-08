@@ -1,59 +1,70 @@
 package jct.pillorganizer.global
 
-import io.micronaut.test.extensions.spock.annotation.MicronautTest;
-import io.micronaut.test.support.TestPropertyProvider;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.localstack.LocalStackContainer;
-import org.testcontainers.spock.Testcontainers;
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import io.micronaut.test.support.TestPropertyProvider
+import org.testcontainers.containers.GenericContainer
+import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.spock.Testcontainers
 import org.testcontainers.utility.DockerImageName
-import org.testcontainers.utility.MountableFile;
-import spock.lang.Shared;
-import spock.lang.Specification;
+import spock.lang.Shared
+import spock.lang.Specification
+
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.model.*
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.regions.Region
 
 @Testcontainers
 @MicronautTest
 class BaseIntegrationSpec extends Specification implements TestPropertyProvider {
 
-    static String getInitScriptPath() {
-        def file = new File("init-aws.sh")
-        if (!file.exists())
-            file = new File("../init-aws.sh")
-        if (!file.exists())
-            throw new FileNotFoundException("Could not find init-aws.sh script")
-        return file.absolutePath
-    }
+
 
     @Shared
-    static LocalStackContainer localstack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:latest"))
-            .withEnv([
-                    "DEFAULT_REGION": "ca-central-1",
-                    "SERVICES": "sqs,iot,secretsmanager,dynamodb",
-                    "ENVIRONMENT_KEY": "test",
-                    "LOCALSTACK_ACKNOWLEDGE_ACCOUNT_REQUIREMENT": "1"
-            ])
-            .withCopyFileToContainer(
-                    MountableFile.forHostPath(getInitScriptPath(), 0777),
-                    "/etc/localstack/init/ready.d/init-aws.sh"
-            )
+    static PostgreSQLContainer postgres = new PostgreSQLContainer<>("postgres:17.7")
+            .withDatabaseName("pillorganizer")
+            .withUsername("postgres")
+            .withPassword("root")
             .withReuse(true)
+
+    @Shared
+    static GenericContainer dynamodb = new GenericContainer(DockerImageName.parse("docker.io/amazon/dynamodb-local:3.3.0"))
+            .withCommand("-jar DynamoDBLocal.jar -inMemory -sharedDb")
+            .withNetwork(org.testcontainers.containers.Network.SHARED)
+            .withNetworkAliases("dynamodb")
+            .withExposedPorts(8000)
+            .withReuse(true)
+
+    def setupSpec() {
+        if (!dynamodb.isRunning()) {
+            dynamodb.start()
+        }
+    }
 
     @Override
     Map<String, String> getProperties() {
-        if (!localstack.isRunning()) localstack.start()
+        if (!postgres.isRunning()) postgres.start()
+        if (!dynamodb.isRunning()) dynamodb.start()
+
+        def dynamoEndpoint = "http://${dynamodb.getHost()}:${dynamodb.getMappedPort(8000)}"
 
         return [
+                // Postgres Config
+                "datasources.default.url": postgres.getJdbcUrl(),
+                "datasources.default.username": postgres.getUsername(),
+                "datasources.default.password": postgres.getPassword(),
+                "datasources.default.driverClassName": "org.postgresql.Driver",
+                "datasources.default.allow-pool-suspension": "true",
+                "flyway.datasources.default.enabled": "true",
+
                 // AWS Config
-                "aws.region": localstack.getRegion(),
-                "aws.accessKeyId": localstack.getAccessKey(),
-                "aws.secretKey": localstack.getSecretKey(),
+                "aws.region": "ca-central-1",
+                "aws.accessKeyId": "test",
+                "aws.secretKey": "test",
 
                 // Endpoint Overrides
-                "aws.services.sqs.endpoint-override": localstack.getEndpointOverride(LocalStackContainer.Service.SQS).toString(),
-                "aws.services.secretsmanager.endpoint-override": localstack.getEndpointOverride(LocalStackContainer.Service.SECRETSMANAGER).toString(),
-                "aws.services.dynamodb.endpoint-override": localstack.getEndpointOverride(LocalStackContainer.Service.DYNAMODB).toString()
-                // Todo: add IoT Core endpoint override
+                "aws.services.dynamodb.endpoint-override": dynamoEndpoint
         ]
     }
 }
-
-
