@@ -89,6 +89,8 @@ static void print_schedule(const device_schedule_t* sched) {
     ESP_LOGI(TAG, "ID: %.36s", sched->id);
     ESP_LOGI(TAG, "Type: %s", get_schedule_type_str(sched->type));
     ESP_LOGI(TAG, "Take Effect: %s", get_take_effect_str(sched->take_effect));
+    ESP_LOGI(TAG, "Timezone IANA: %s", sched->timezone_iana);
+    ESP_LOGI(TAG, "Timezone POSIX: %s", sched->timezone_posix);
 
     if (sched->type == SCHED_SIMPLE) {
         uint8_t count = sched->schedule.simple_schedule.bin_count;
