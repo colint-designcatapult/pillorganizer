@@ -40,7 +40,7 @@ typedef struct {
     int                  bin_id;     /* EVENT_OUTBOX_BIN_ID_NONE if not bin-specific */
     int                  flags;      /* optional flags (e.g. error code)        */
     uint32_t             seq;        /* monotonic sequence number (stable handle) */
-    int                  msg_id;     /* broker msg_id once published; -1 = unpublished */
+    int                  msg_id;     /* client-assigned packet ID once published; -1 = unpublished */
     bool                 delivered;  /* true = PUBACK confirmed by broker        */
     bool                 valid;
     bool                 persisted;  /* true once saved to NVS                  */
@@ -71,12 +71,27 @@ esp_err_t event_outbox_push(rtc_utc_timestamp_ms timestamp,
 esp_err_t event_outbox_get(int pos, event_outbox_entry_t *out_entry);
 
 /*
- * Record the broker-assigned MQTT msg_id on the entry identified by `seq`.
+ * Returns the current connection epoch.  The epoch is incremented every time
+ * event_outbox_reset_inflight() is called (i.e., on every MQTT disconnect).
+ * Callers should snapshot this value before publishing and pass it to
+ * event_outbox_set_msg_id() so that a racing disconnect is detected.
+ */
+uint64_t event_outbox_get_conn_epoch(void);
+
+/*
+ * Record the client-assigned MQTT packet ID on the entry identified by `seq`.
  * Using `seq` rather than a positional index makes this safe to call after
  * the mutex was released between event_outbox_get() and this call.
+ *
+ * `conn_epoch` must be the value obtained from event_outbox_get_conn_epoch()
+ * before the corresponding publish call.  If the stored epoch has advanced
+ * (i.e., a disconnect fired between the publish and this call), the write is
+ * a no-op and ESP_ERR_INVALID_STATE is returned so the caller knows the
+ * msg_id is stale and the entry will be republished on reconnect.
+ *
  * Returns ESP_ERR_NOT_FOUND if no entry with that seq exists.
  */
-esp_err_t event_outbox_set_msg_id(uint32_t seq, int msg_id);
+esp_err_t event_outbox_set_msg_id(uint32_t seq, int msg_id, uint64_t conn_epoch);
 
 /*
  * Mark the entry with the given MQTT msg_id as delivered (PUBACK received),

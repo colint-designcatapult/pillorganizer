@@ -53,6 +53,20 @@ void mqtt_drain_event_outbox(void)
 {
     if (!mqtt_wrapper_is_connected()) return;
 
+    char thing_name[128];
+    if (!devcfg_get_thing_name_str(thing_name, sizeof(thing_name))) {
+        ESP_LOGE(TAG, "Could not retrieve thing name for event drain");
+        return;
+    }
+
+    char topic[256];
+    snprintf(topic, sizeof(topic), "healthe/things/%s/event", thing_name);
+
+    /* Snapshot the connection epoch before any publish.  It is passed to
+     * event_outbox_set_msg_id so that a racing MQTT_EVENT_DISCONNECTED is
+     * detected and the stale packet ID is not written back. */
+    uint64_t conn_epoch = event_outbox_get_conn_epoch();
+
     int count = event_outbox_count();
     for (int i = 0; i < count; i++) {
         event_outbox_entry_t entry;
@@ -60,15 +74,6 @@ void mqtt_drain_event_outbox(void)
 
         /* Already published and awaiting PUBACK — skip. */
         if (entry.msg_id >= 0) continue;
-
-        char thing_name[128];
-        if (!devcfg_get_thing_name_str(thing_name, sizeof(thing_name))) {
-            ESP_LOGE(TAG, "Could not retrieve thing name for event drain");
-            break;
-        }
-
-        char topic[256];
-        snprintf(topic, sizeof(topic), "healthe/things/%s/event", thing_name);
 
         cJSON *root = cJSON_CreateObject();
         if (!root) break;
@@ -98,9 +103,11 @@ void mqtt_drain_event_outbox(void)
             break; /* outgoing buffer likely full; retry on next drain call */
         }
 
-        /* Record the broker-assigned msg_id in the entry using its stable
-         * sequence number as the key. */
-        event_outbox_set_msg_id(entry.seq, msg_id);
+        /* Record the client-assigned packet ID against the entry using its
+         * stable sequence number as the key.  Passing conn_epoch lets the
+         * outbox detect if a disconnect raced between publish and this call
+         * and silently discard the write rather than recording a stale ID. */
+        event_outbox_set_msg_id(entry.seq, msg_id, conn_epoch);
         ESP_LOGI(TAG, "Event drain: published seq=%u msg_id=%d type=%s",
                  entry.seq, msg_id, event_type_to_str(entry.event_type));
     }

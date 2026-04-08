@@ -22,7 +22,7 @@ esp_err_t mqtt_wrapper_connect(const mqtt_wrapper_config_t* config);
 // Disconnects the broker, stops the background task, and frees memory
 esp_err_t mqtt_wrapper_disconnect(void);
 
-// Publishes a message and returns the broker-assigned msg_id (thread-safe)
+// Publishes a message and returns the client-assigned packet ID used for MQTT ACK correlation (thread-safe)
 esp_err_t mqtt_wrapper_publish_with_id(const char* topic, const char* payload, int len, int qos, int retain, int* out_msg_id);
 
 // Publishes a message (thread-safe)

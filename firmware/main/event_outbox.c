@@ -28,6 +28,12 @@ static RTC_DATA_ATTR uint32_t             s_next_seq;  /* monotonic counter    *
  * 0 = nothing to persist. */
 static RTC_DATA_ATTR rtc_relative_time_t  s_dirty_since;
 
+/* Connection epoch – incremented on every reset_inflight (MQTT disconnect).
+ * Lives in DRAM: resets to 0 on cold boot is fine because all entry msg_ids
+ * are also reset to -1 on init, so there can be no epoch mismatch.
+ * uint64_t ensures the counter never wraps in practice. */
+static uint64_t s_conn_epoch = 0;
+
 /* Mutex lives in normal DRAM – recreated on every boot. */
 static SemaphoreHandle_t s_mutex = NULL;
 
@@ -89,11 +95,12 @@ static void pop_front_locked(void)
     }
 }
 
-/* Reset msg_id on every undelivered entry.
+/* Reset msg_id on every undelivered entry and advance the connection epoch.
  * Caller is responsible for locking: either hold s_mutex, or call before
  * the FreeRTOS scheduler starts (e.g. from event_outbox_init). */
 static void reset_inflight_nolock(void)
 {
+    s_conn_epoch++;
     for (int i = 0; i < s_queue.count; i++) {
         int idx = (s_queue.head + i) % EVENT_OUTBOX_MAX_ENTRIES;
         if (s_queue.entries[idx].valid && !s_queue.entries[idx].delivered) {
@@ -112,12 +119,24 @@ void event_outbox_init(void)
     configASSERT(s_mutex != NULL);
 
     if (s_magic == EVENT_OUTBOX_MAGIC) {
-        /* Deep-sleep wake: RTC memory is intact but MQTT has disconnected,
-         * so any in-flight msg_ids are stale and must be cleared.
-         * Called before tasks start so no mutex is needed. */
-        ESP_LOGI(TAG, "Restored from RTC memory (%d entries)", s_queue.count);
-        reset_inflight_nolock();
-        return;
+        /* s_magic matches, so the RTC domain was powered during deep sleep.
+         * Still validate head/count: a brownout could corrupt those fields
+         * while leaving the magic word intact. */
+        bool rtc_valid = (s_queue.count >= 0 &&
+                          s_queue.count <= EVENT_OUTBOX_MAX_ENTRIES &&
+                          s_queue.head  >= 0 &&
+                          s_queue.head  <  EVENT_OUTBOX_MAX_ENTRIES);
+        if (rtc_valid) {
+            ESP_LOGI(TAG, "Restored from RTC memory (%d entries)", s_queue.count);
+            /* MQTT has disconnected since last wake, so any in-flight
+             * msg_ids are stale and must be cleared.
+             * Called before tasks start so no mutex is needed. */
+            reset_inflight_nolock();
+            return;
+        }
+        ESP_LOGW(TAG, "RTC outbox state invalid (head=%d count=%d), reinitialising",
+                 s_queue.head, s_queue.count);
+        /* Fall through to cold-boot initialisation and attempt NVS restore. */
     }
 
     /* Cold boot: initialise RTC state then attempt NVS restore. */
@@ -216,9 +235,26 @@ esp_err_t event_outbox_get(int pos, event_outbox_entry_t *out_entry)
     return ESP_OK;
 }
 
-esp_err_t event_outbox_set_msg_id(uint32_t seq, int msg_id)
+uint64_t event_outbox_get_conn_epoch(void)
 {
     xSemaphoreTake(s_mutex, portMAX_DELAY);
+    uint64_t epoch = s_conn_epoch;
+    xSemaphoreGive(s_mutex);
+    return epoch;
+}
+
+esp_err_t event_outbox_set_msg_id(uint32_t seq, int msg_id, uint64_t conn_epoch)
+{
+    xSemaphoreTake(s_mutex, portMAX_DELAY);
+
+    /* If the epoch has advanced, a disconnect fired between the publish
+     * call and this write.  The entry's msg_id was already reset to -1 by
+     * reset_inflight; writing the now-stale id would make the entry look
+     * in-flight and block future delivery. */
+    if (s_conn_epoch != conn_epoch) {
+        xSemaphoreGive(s_mutex);
+        return ESP_ERR_INVALID_STATE;
+    }
 
     for (int i = 0; i < s_queue.count; i++) {
         int idx = (s_queue.head + i) % EVENT_OUTBOX_MAX_ENTRIES;
