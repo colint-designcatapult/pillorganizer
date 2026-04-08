@@ -1,6 +1,7 @@
 #include "event_outbox.h"
 #include "nvs_wrapper.h"
 #include <string.h>
+#include <inttypes.h>
 #include <esp_log.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
@@ -169,7 +170,7 @@ void event_outbox_init(void)
                     }
                 }
             }
-            ESP_LOGI(TAG, "Restored %d events from NVS (next_seq=%u)",
+            ESP_LOGI(TAG, "Restored %d events from NVS (next_seq=%" PRIu32 ")",
                      s_queue.count, s_next_seq);
         } else {
             ESP_LOGW(TAG, "NVS outbox data corrupted, discarding");
@@ -212,7 +213,7 @@ esp_err_t event_outbox_push(rtc_utc_timestamp_ms timestamp,
         s_dirty_since = app_rtc_get_relative_timestamp();
     }
 
-    ESP_LOGD(TAG, "Pushed seq=%u type=%d bin=%d count=%d",
+    ESP_LOGD(TAG, "Pushed seq=%" PRIu32 " type=%d bin=%d count=%d",
              e->seq, event_type, bin_id, s_queue.count);
 
     xSemaphoreGive(s_mutex);
@@ -280,7 +281,7 @@ esp_err_t event_outbox_ack(int msg_id)
         if (s_queue.entries[idx].valid && s_queue.entries[idx].msg_id == msg_id) {
             s_queue.entries[idx].delivered = true;
             found = true;
-            ESP_LOGD(TAG, "ACK seq=%u msg_id=%d", s_queue.entries[idx].seq, msg_id);
+            ESP_LOGD(TAG, "ACK seq=%" PRIu32 " msg_id=%d", s_queue.entries[idx].seq, msg_id);
             break;
         }
     }
@@ -292,7 +293,7 @@ esp_err_t event_outbox_ack(int msg_id)
 
     /* Pop all consecutive delivered entries from the front. */
     while (s_queue.count > 0 && s_queue.entries[s_queue.head].delivered) {
-        ESP_LOGD(TAG, "Popping seq=%u, remaining=%d",
+        ESP_LOGD(TAG, "Popping seq=%" PRIu32 ", remaining=%d",
                  s_queue.entries[s_queue.head].seq, s_queue.count - 1);
         pop_front_locked();
     }

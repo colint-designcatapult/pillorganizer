@@ -5,6 +5,7 @@
 #include "rtc.h"
 #include "event_outbox.h"
 #include <esp_log.h>
+#include <inttypes.h>
 #include <mqtt_client.h>
 #include <cJSON.h>
 
@@ -101,7 +102,7 @@ void mqtt_drain_event_outbox(void)
         free(json_str);
 
         if (err != ESP_OK || msg_id < 0) {
-            ESP_LOGW(TAG, "Event drain: publish failed for seq=%u (%d)", entry.seq, err);
+            ESP_LOGW(TAG, "Event drain: publish failed for seq=%" PRIu32 " (%d)", entry.seq, err);
             break; /* outgoing buffer likely full; retry on next drain call */
         }
 
@@ -110,7 +111,7 @@ void mqtt_drain_event_outbox(void)
          * outbox detect if a disconnect raced between publish and this call
          * and silently discard the write rather than recording a stale ID. */
         event_outbox_set_msg_id(entry.seq, msg_id, conn_epoch);
-        ESP_LOGI(TAG, "Event drain: published seq=%u msg_id=%d type=%s",
+        ESP_LOGI(TAG, "Event drain: published seq=%" PRIu32 " msg_id=%d type=%s",
                  entry.seq, msg_id, event_type_to_str(entry.event_type));
     }
 }
