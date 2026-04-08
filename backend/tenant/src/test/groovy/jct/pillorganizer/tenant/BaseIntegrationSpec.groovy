@@ -13,14 +13,7 @@ import spock.lang.Specification
 @MicronautTest
 class BaseIntegrationSpec extends Specification implements TestPropertyProvider {
 
-    static String getInitScriptPath() {
-        def file = new File("init-aws.sh")
-        if (!file.exists())
-            file = new File("../init-aws.sh")
-        if (!file.exists())
-            throw new FileNotFoundException("Could not find init-aws.sh script")
-        return file.absolutePath
-    }
+
 
     @Shared
     static PostgreSQLContainer postgres = new PostgreSQLContainer<>("postgres:17.7")

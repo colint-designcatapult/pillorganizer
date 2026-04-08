@@ -8,6 +8,13 @@ import software.amazon.awssdk.services.sqs.SqsClient
 import spock.lang.Subject
 import jct.pillorganizer.global.BaseIntegrationSpec
 
+import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest
+import software.amazon.awssdk.services.sqs.model.GetQueueUrlResponse
+
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest
+import software.amazon.awssdk.services.sqs.model.SendMessageResponse
+import java.util.function.Consumer
+
 class TenantMessageServiceSpec extends BaseIntegrationSpec {
 
     @Inject
@@ -19,6 +26,13 @@ class TenantMessageServiceSpec extends BaseIntegrationSpec {
     @Inject
     @Subject
     TenantMessageService tenantMessageService
+
+    def setup() {
+        client.getQueueUrl(_ as GetQueueUrlRequest) >> { GetQueueUrlRequest req ->
+            def qName = req.queueName() ?: "tenant-test-tenant"
+            return GetQueueUrlResponse.builder().queueUrl("http://localhost:9324/queue/" + qName).build()
+        }
+    }
 
     def "should return correct queue URL"() {
         given:
@@ -41,19 +55,19 @@ class TenantMessageServiceSpec extends BaseIntegrationSpec {
                 .claimId("claim-xyz")
                 .thingName("test-tenant-SN-789-dev-456")
                 .build()
-        def queueUrl = tenantMessageService.getQueueUrl("test-tenant")
 
         when:
         tenantMessageService.provisionDevice(message)
 
         then:
-        noExceptionThrown()
-        
-        and:
-        def response = client.receiveMessage(b -> b.queueUrl(queueUrl).maxNumberOfMessages(1))
-        response.hasMessages()
-        response.messages().get(0).body().contains("test-tenant")
-        response.messages().get(0).body().contains("dev-456")
+        1 * client.sendMessage(_ as Consumer) >> { Consumer req ->
+            def builder = SendMessageRequest.builder()
+            req.accept(builder)
+            def finalReq = builder.build()
+            assert finalReq.messageBody().contains("test-tenant")
+            assert finalReq.messageBody().contains("dev-456")
+            return SendMessageResponse.builder().messageId("mocked-msg").build()
+        }
     }
 
     def "should grant user"() {
@@ -64,18 +78,18 @@ class TenantMessageServiceSpec extends BaseIntegrationSpec {
                 .userName("John Doe")
                 .email("john@example.com")
                 .build()
-        def queueUrl = tenantMessageService.getQueueUrl("test-tenant")
 
         when:
         tenantMessageService.grantUser(message)
 
         then:
-        noExceptionThrown()
-
-        and:
-        def response = client.receiveMessage(b -> b.queueUrl(queueUrl).maxNumberOfMessages(1))
-        response.hasMessages()
-        response.messages().get(0).body().contains("test-tenant")
-        response.messages().get(0).body().contains("John Doe")
+        1 * client.sendMessage(_ as Consumer) >> { Consumer req ->
+            def builder = SendMessageRequest.builder()
+            req.accept(builder)
+            def finalReq = builder.build()
+            assert finalReq.messageBody().contains("test-tenant")
+            assert finalReq.messageBody().contains("John Doe")
+            return SendMessageResponse.builder().messageId("mocked-msg").build()
+        }
     }
 }

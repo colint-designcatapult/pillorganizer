@@ -19,14 +19,7 @@ import software.amazon.awssdk.regions.Region
 @MicronautTest
 class BaseIntegrationSpec extends Specification implements TestPropertyProvider {
 
-    static String getInitScriptPath() {
-        def file = new File("init-aws.sh")
-        if (!file.exists())
-            file = new File("../init-aws.sh")
-        if (!file.exists())
-            throw new FileNotFoundException("Could not find init-aws.sh script")
-        return file.absolutePath
-    }
+
 
     @Shared
     static PostgreSQLContainer postgres = new PostgreSQLContainer<>("postgres:17.7")
@@ -36,56 +29,16 @@ class BaseIntegrationSpec extends Specification implements TestPropertyProvider 
             .withReuse(true)
 
     @Shared
-    static GenericContainer dynamodb = new GenericContainer(DockerImageName.parse("docker.io/amazon/dynamodb-local:latest"))
+    static GenericContainer dynamodb = new GenericContainer(DockerImageName.parse("docker.io/amazon/dynamodb-local:3.3.0"))
             .withCommand("-jar DynamoDBLocal.jar -inMemory -sharedDb")
+            .withNetwork(org.testcontainers.containers.Network.SHARED)
+            .withNetworkAliases("dynamodb")
             .withExposedPorts(8000)
             .withReuse(true)
 
     def setupSpec() {
-        def dynamoEndpoint = "http://${dynamodb.getHost()}:${dynamodb.getMappedPort(8000)}"
-        def client = DynamoDbClient.builder()
-                .endpointOverride(java.net.URI.create(dynamoEndpoint))
-                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("test", "test")))
-                .region(Region.CA_CENTRAL_1)
-                .build()
-
-        try {
-            client.createTable { builder ->
-                builder.tableName("DeviceControlPlane")
-                       .keySchema(
-                           KeySchemaElement.builder().attributeName("PK").keyType(KeyType.HASH).build(),
-                           KeySchemaElement.builder().attributeName("SK").keyType(KeyType.RANGE).build()
-                       )
-                       .attributeDefinitions(
-                           AttributeDefinition.builder().attributeName("PK").attributeType("S").build(),
-                           AttributeDefinition.builder().attributeName("SK").attributeType("S").build(),
-                           AttributeDefinition.builder().attributeName("GSI1_PK").attributeType("S").build(),
-                           AttributeDefinition.builder().attributeName("GSI1_SK").attributeType("S").build(),
-                           AttributeDefinition.builder().attributeName("GSI2_PK").attributeType("S").build(),
-                           AttributeDefinition.builder().attributeName("GSI2_SK").attributeType("S").build()
-                       )
-                       .globalSecondaryIndexes(
-                           GlobalSecondaryIndex.builder()
-                               .indexName("GSI1")
-                               .keySchema(
-                                   KeySchemaElement.builder().attributeName("GSI1_PK").keyType(KeyType.HASH).build(),
-                                   KeySchemaElement.builder().attributeName("GSI1_SK").keyType(KeyType.RANGE).build()
-                               )
-                               .projection(Projection.builder().projectionType("ALL").build())
-                               .build(),
-                           GlobalSecondaryIndex.builder()
-                               .indexName("GSI2")
-                               .keySchema(
-                                   KeySchemaElement.builder().attributeName("GSI2_PK").keyType(KeyType.HASH).build(),
-                                   KeySchemaElement.builder().attributeName("GSI2_SK").keyType(KeyType.RANGE).build()
-                               )
-                               .projection(Projection.builder().projectionType("ALL").build())
-                               .build()
-                       )
-                       .billingMode(BillingMode.PAY_PER_REQUEST)
-            }
-        } catch (ResourceInUseException ignored) {
-            // Already created
+        if (!dynamodb.isRunning()) {
+            dynamodb.start()
         }
     }
 

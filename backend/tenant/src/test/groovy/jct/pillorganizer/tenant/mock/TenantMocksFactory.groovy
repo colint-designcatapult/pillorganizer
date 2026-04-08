@@ -18,8 +18,6 @@ class TenantMocksFactory {
     @Singleton
     @Replaces(IotDataPlaneClient)
     IotDataPlaneClient iotDataPlaneClient() {
-        return [
-            updateThingShadow: { args -> UpdateThingShadowResponse.builder().payload(SdkBytes.fromUtf8String("{}")).build() }
-        ] as IotDataPlaneClient
+        return mockFactory.Mock(IotDataPlaneClient)
     }
 }

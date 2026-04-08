@@ -22,39 +22,12 @@ class GlobalMocksFactory {
     @Singleton
     @Replaces(SqsClient)
     SqsClient sqsClient() {
-        def messages = []
-        return [
-            getQueueUrl: { req ->
-                def finalReq = req
-                if (req instanceof java.util.function.Consumer) {
-                    def builder = GetQueueUrlRequest.builder()
-                    req.accept(builder)
-                    finalReq = builder.build()
-                }
-                def qName = finalReq.queueName() ?: "tenant-test-tenant"
-                GetQueueUrlResponse.builder().queueUrl("http://localhost:9324/queue/" + qName).build()
-            },
-            sendMessage: { req ->
-                def finalReq = req
-                if (req instanceof java.util.function.Consumer) {
-                    def builder = SendMessageRequest.builder()
-                    req.accept(builder)
-                    finalReq = builder.build()
-                }
-                messages.add(finalReq)
-                SendMessageResponse.builder().messageId("mocked-msg").build()
-            },
-            receiveMessage: { req ->
-                def items = messages.collect { Message.builder().body(it.messageBody()).build() }
-                messages.clear()
-                ReceiveMessageResponse.builder().messages(items).build()
-            }
-        ] as SqsClient
+        return mockFactory.Mock(SqsClient)
     }
 
     @Singleton
     @Replaces(IotClient)
     IotClient iotClient() {
-        return [:] as IotClient
+        return mockFactory.Mock(IotClient)
     }
 }
