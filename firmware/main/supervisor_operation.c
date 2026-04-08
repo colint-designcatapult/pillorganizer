@@ -354,6 +354,13 @@ static void process_schedule_delta(const device_schedule_t* sched)
     ESP_LOGI(TAG, "========= Schedule Delta =========");
     print_schedule(sched);
 
+    // Guard: skip if we already have this exact schedule applied
+    if (sched->id[0] != '\0' && s_device_state.schedule.id[0] != '\0' &&
+        strcmp(sched->id, s_device_state.schedule.id) == 0) {
+        ESP_LOGI(TAG, "Schedule ID %s already applied, skipping delta", sched->id);
+        return;
+    }
+
     device_state_t state_copy;
     memcpy(&state_copy, &s_device_state, sizeof(device_state_t));
 
