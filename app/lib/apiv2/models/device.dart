@@ -23,7 +23,45 @@ enum DeviceConnectionStatus { undefined, offline, online, loading }
 
 enum DeviceError { none, disconnected, phoneDisconnected, needsReload, noSchedule, stateCorrupted, noRtcTime, unknown }
 
-enum DeviceErrorFlag { noSchedule, stateCorrupted, noRtcTime, unknown }
+enum DeviceErrorFlag {
+  noSchedule(1 << 0),
+  stateCorrupted(1 << 1),
+  noRtcTime(1 << 2),
+  unknown(0);
+
+  const DeviceErrorFlag(this.bit);
+  final int bit;
+
+  /// Parses a raw bitfield integer into a set of [DeviceErrorFlag] values.
+  /// Any bit position that does not correspond to a known flag causes
+  /// [DeviceErrorFlag.unknown] to be included in the result.
+  static Set<DeviceErrorFlag> fromBitfield(int flags) {
+    // Build a lookup from each known flag's bit position to the flag itself.
+    final Map<int, DeviceErrorFlag> bitToFlag = {
+      for (final f in values)
+        if (f != unknown) f.bit: f,
+    };
+
+    final Set<DeviceErrorFlag> result = {};
+    bool hasUnknownBits = false;
+
+    // Walk every bit position that is set in flags.
+    for (int i = 0; i < 32; i++) {
+      if ((flags >> i) & 1 == 0) continue;
+      final int bit = 1 << i;
+      final DeviceErrorFlag? flag = bitToFlag[bit];
+      if (flag != null) {
+        result.add(flag);
+      } else {
+        hasUnknownBits = true;
+      }
+    }
+
+    if (hasUnknownBits) result.add(unknown);
+
+    return result;
+  }
+}
 
 
 @MappableClass()
@@ -234,12 +272,9 @@ class DeviceState with DeviceStateMappable {
         epochWeek: dto.epochWeek != null
             ? DateTime.fromMillisecondsSinceEpoch(dto.epochWeek! * 1000, isUtc: true)
             : null,
-        errors: {...(dto.errorFlags != null ? [
-          if ((dto.errorFlags! & (1 << 0)) != 0) DeviceErrorFlag.noSchedule,
-          if ((dto.errorFlags! & (1 << 1)) != 0) DeviceErrorFlag.stateCorrupted,
-          if ((dto.errorFlags! & (1 << 2)) != 0) DeviceErrorFlag.noRtcTime,
-          if ((dto.errorFlags! & ~0x7) != 0) DeviceErrorFlag.unknown,
-        ] : const [])},
+        errors: dto.errorFlags != null
+            ? DeviceErrorFlag.fromBitfield(dto.errorFlags!)
+            : const {},
         scheduleId: dto.scheduleId,
         reloadState: dto.reload != null ? ReloadState.fromDTO(dto.reload!) : null,
     );
