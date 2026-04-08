@@ -211,6 +211,7 @@ class DeviceState with DeviceStateMappable {
   final Set<DeviceErrorFlag> errors;
   final String? scheduleId;
   final ReloadState? reloadState;
+  final TimeZoneLocation? timezone;
 
   const DeviceState({
     required this.id,
@@ -222,6 +223,7 @@ class DeviceState with DeviceStateMappable {
     required this.errors,
     this.scheduleId,
     this.reloadState,
+    this.timezone,
   });
 
   factory DeviceState.fromDTO(DeviceStateDto dto, {String? deviceId}) {
@@ -242,6 +244,7 @@ class DeviceState with DeviceStateMappable {
         ] : const [])},
         scheduleId: dto.scheduleId,
         reloadState: dto.reload != null ? ReloadState.fromDTO(dto.reload!) : null,
+        timezone: lookupTimeZoneLocation(dto.timezoneIana),
     );
   }
 
