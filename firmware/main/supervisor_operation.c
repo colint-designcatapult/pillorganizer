@@ -28,7 +28,7 @@ static int MISSED_THRESHOLD_SEC = 15 * 60;  // 15 minutes (15 * 60 seconds)
 static int RELOAD_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes (5 * 60 seconds * 1000 ms)
 
 // Track last processed schedule ID to prevent duplicate delta processing
-static char s_last_processed_schedule_id[37] = {0};  // SCHEDULE_ID_SIZE is typically 37 (UUID + null)
+static char s_last_processed_schedule_id[SCHEDULE_ID_SIZE] = {0};  // Buffer sized for schedule IDs, including the null terminator
 
 static const char* get_day_of_week_str(device_schedule_day_of_week_t day) {
     switch(day) {
