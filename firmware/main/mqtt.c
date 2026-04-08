@@ -149,6 +149,14 @@ esp_err_t mqtt_publish_device_state(device_state_t* state)
         cJSON_AddStringToObject(root, "schedule_id", state->schedule.id);
     }
 
+    if (state->timezone_iana[0] != '\0') {
+        cJSON_AddStringToObject(root, "timezoneIana", state->timezone_iana);
+    }
+
+    if (state->timezone_posix[0] != '\0') {
+        cJSON_AddStringToObject(root, "timezonePosix", state->timezone_posix);
+    }
+
     cJSON *bins_array = cJSON_AddArrayToObject(root, "bins");
     for (int i = 0; i < 14; i++) {
         cJSON *bin_obj = cJSON_CreateObject();

@@ -91,6 +91,8 @@ class DeviceAlert extends StatelessWidget {
         return AppLocalizations.of(context)!.noticeStateCorrupted;
       case DeviceError.noRtcTime:
         return AppLocalizations.of(context)!.noticeNoRtcTime;
+      case DeviceError.noTimezone:
+        return AppLocalizations.of(context)!.noticeNoTimezone;
       default:
         return '';
     }
@@ -110,6 +112,8 @@ class DeviceAlert extends StatelessWidget {
         return AppLocalizations.of(context)!.noticeStateCorruptedSubtitle;
       case DeviceError.noRtcTime:
         return AppLocalizations.of(context)!.noticeNoRtcTimeSubtitle;
+      case DeviceError.noTimezone:
+        return AppLocalizations.of(context)!.noticeNoTimezoneSubtitle;
       default:
         return '';
     }
@@ -129,6 +133,8 @@ class DeviceAlert extends StatelessWidget {
         return Icon(PhosphorIconsBold.warningCircle, color: Colors.black, size: 20.h);
       case DeviceError.noRtcTime:
         return Icon(PhosphorIconsBold.clockAfternoon, color: Colors.black, size: 20.h);
+      case DeviceError.noTimezone:
+        return Icon(PhosphorIconsBold.globe, color: Colors.black, size: 20.h);
       default:
         return Icon(PhosphorIconsBold.warningCircle, color: Colors.black, size: 20.h);
     }
@@ -148,6 +154,8 @@ class DeviceAlert extends StatelessWidget {
         return AppLocalizations.of(context)!.noticeStateCorruptedAction;
       case DeviceError.noRtcTime:
         return AppLocalizations.of(context)!.noticeNoRtcTimeAction;
+      case DeviceError.noTimezone:
+        return AppLocalizations.of(context)!.noticeNoTimezoneAction;
       default:
         return "";
     }
