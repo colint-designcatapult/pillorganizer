@@ -222,6 +222,10 @@ public class DeviceService {
     }
 
 
+    public Optional<LogicalDevice> findByThingName(String thingName) {
+        return logicalDeviceRepository.findByPhysicalDeviceThingName(thingName);
+    }
+
     public Optional<LogicalDevice> get(String id) {
         return logicalDeviceRepository.findById(id);
     }
