@@ -1,5 +1,5 @@
 import 'package:app/apiv2/models/device.dart';
-import 'package:app/provider/device_provider.dart';
+import 'package:app/provider/schedule_provider.dart';
 import 'package:app/screens/modals/time_zone_selection.dart';
 import 'package:app/service/time_service.dart';
 import 'package:flutter/material.dart';
@@ -9,9 +9,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timezone/standalone.dart' as tz;
-import 'package:collection/collection.dart';
-
-import '../provider/selected_device_provider.dart';
 
 class TimeZoneSelection extends ConsumerStatefulWidget {
   final DeviceMetadata? device;
@@ -28,7 +25,8 @@ class TimeZoneSelection extends ConsumerStatefulWidget {
 }
 
 class TimeZoneSelectionState extends ConsumerState<TimeZoneSelection> {
-  late tz.Location phoneLocation;
+  tz.Location? phoneLocation;
+  bool _isUpdatingTimezone = false;
 
   @override
   void initState() {
@@ -37,48 +35,58 @@ class TimeZoneSelectionState extends ConsumerState<TimeZoneSelection> {
   }
 
   Future<void> _getCurrentPhoneLocation() async {
-    final String timeZoneName = (await FlutterTimezone.getLocalTimezone()).identifier;
+    final String timeZoneName = normalizeIanaTimezone((await FlutterTimezone.getLocalTimezone()).identifier);
     final tz.Location location = tz.getLocation(timeZoneName);
-
+    if (!mounted) return;
     setState(() {
       phoneLocation = location;
     });
   }
 
   Future<void> _updateDeviceTimezone(tz.Location location) async {
-    await ref.read(deviceListProvider.notifier).updateDeviceTimeZone(widget.device!.id, location);
+    if (widget.device == null) return;
+    setState(() => _isUpdatingTimezone = true);
+    try {
+      await ref.read(scheduleProvider.notifier).updateTimezone(widget.device!.id, location.name);
+    } finally {
+      if (mounted) setState(() => _isUpdatingTimezone = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final activeDevice = ref.watch(activeDeviceProvider);
-    final deviceConfig = ref.watch(activeDeviceConfigProvider);
-    
-    // If we're looking at the active device, use its config
-    // Otherwise we don't have config for it yet via providers
-    final timezone = (activeDevice?.id == widget.device?.id) ? deviceConfig?.timezone : null;
-
-    final deviceListAsync = ref.watch(deviceListProvider);
-    bool isUpdatingTimezone = deviceListAsync.isLoading;
+    final scheduleState = ref.watch(scheduleProvider);
+    final bool scheduleLoaded = scheduleState.hasValue;
+    final timezone = scheduleState.asData?.value.effectiveTimezoneIana;
+    final bool timezoneMismatch = phoneLocation != null &&
+        timezone != null &&
+        phoneLocation!.name != timezone;
 
     return Column(
       children: [
-        _buildTimezoneSection(
-             timezone, widget.isOwner, isUpdatingTimezone),
+        _buildTimezoneSection(timezone, widget.isOwner, _isUpdatingTimezone || !scheduleLoaded, timezoneMismatch),
         SizedBox(height: 16.h),
-        _buildCurrentTimezoneButton(isUpdatingTimezone),
+        _buildCurrentTimezoneButton(_isUpdatingTimezone || !scheduleLoaded, timezoneMismatch),
       ],
     );
   }
 
   Widget _buildTimezoneSection(
-      String? timezone, bool isOwner, bool isUpdatingTimezone) {
+      String? timezone, bool isOwner, bool isUpdatingTimezone, bool timezoneMismatch) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          AppLocalizations.of(context)!.selectManualTimezone,
-          style: Theme.of(context).textTheme.bodySmall,
+        Row(
+          children: [
+            Text(
+              AppLocalizations.of(context)!.selectManualTimezone,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            if (timezoneMismatch) ...[
+              SizedBox(width: 8.w),
+              Icon(Icons.warning_amber_rounded, size: 16.h, color: Colors.orange),
+            ],
+          ],
         ),
         SizedBox(height: 12.h),
         Container(
@@ -104,13 +112,9 @@ class TimeZoneSelectionState extends ConsumerState<TimeZoneSelection> {
                     width: 24.w,
                     height: 24.h,
                   ),
-                  trailing:
-                      isOwner ? Icon(Icons.arrow_drop_down, size: 24.h) : null,
+                  trailing: isOwner ? Icon(Icons.arrow_drop_down, size: 24.h) : null,
                   onTap: () {
-                    if (!isOwner) {
-                      return;
-                    }
-
+                    if (!isOwner) return;
                     Navigator.of(context)
                         .push(TimeZoneSelectionModal.route(context))
                         .then((value) {
@@ -125,7 +129,7 @@ class TimeZoneSelectionState extends ConsumerState<TimeZoneSelection> {
     );
   }
 
-  Widget _buildCurrentTimezoneButton(bool isUpdatingTimezone) {
+  Widget _buildCurrentTimezoneButton(bool isUpdatingTimezone, bool timezoneMismatch) {
     if (!widget.isOwner) {
       return const SizedBox.shrink();
     }
@@ -133,12 +137,15 @@ class TimeZoneSelectionState extends ConsumerState<TimeZoneSelection> {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
-        onPressed: isUpdatingTimezone
+        onPressed: (isUpdatingTimezone || phoneLocation == null)
             ? null
-            : () => _updateDeviceTimezone(phoneLocation),
+            : () => _updateDeviceTimezone(phoneLocation!),
         style: ButtonStyle(
           side: WidgetStateProperty.all<BorderSide>(
-            const BorderSide(color: Color(0xFFBFD2DB), width: 2.0),
+            BorderSide(
+              color: timezoneMismatch ? Colors.orange : const Color(0xFFBFD2DB),
+              width: 2.0,
+            ),
           ),
           shape: WidgetStateProperty.all<OutlinedBorder>(
             RoundedRectangleBorder(

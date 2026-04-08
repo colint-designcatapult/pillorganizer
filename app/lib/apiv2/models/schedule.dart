@@ -50,17 +50,22 @@ class DeviceScheduleState {
 
   BaseSchedule? get effectiveSchedule =>
       requestedSchedule?.schedule ?? currentSchedule?.schedule;
+
+  String? get effectiveTimezoneIana =>
+      requestedSchedule?.timezoneIana ?? currentSchedule?.timezoneIana;
 }
 
 class DeviceSchedule {
   final String id;
-  final ScheduleTakeEffect takeEffect;
-  final BaseSchedule schedule;
+  final ScheduleTakeEffect? takeEffect;
+  final BaseSchedule? schedule;
+  final String? timezoneIana;
 
   const DeviceSchedule({
     required this.id,
-    required this.takeEffect,
-    required this.schedule,
+    this.takeEffect,
+    this.schedule,
+    this.timezoneIana,
   });
 }
 
@@ -98,8 +103,9 @@ class DosePeriodV2 {
 class SetScheduleRequest {
   final BaseSchedule schedule;
   final ScheduleTakeEffect takeEffect;
+  final String timezoneIana;
 
-  const SetScheduleRequest({required this.schedule, required this.takeEffect});
+  const SetScheduleRequest({required this.schedule, required this.takeEffect, required this.timezoneIana});
 }
 
 // DTO -> Domain
@@ -116,7 +122,8 @@ extension DeviceScheduleDtoX on DeviceScheduleDto {
   DeviceSchedule toDomain() => DeviceSchedule(
         id: id,
         takeEffect: takeEffect,
-        schedule: schedule.toDomain(),
+        schedule: schedule?.toDomain(),
+        timezoneIana: timezoneIana,
       );
 }
 
@@ -156,7 +163,8 @@ extension DeviceScheduleX on DeviceSchedule {
   DeviceScheduleDto toDto() => DeviceScheduleDto(
         id: id,
         takeEffect: takeEffect,
-        schedule: schedule.toDto(),
+        schedule: schedule?.toDto(),
+        timezoneIana: timezoneIana,
       );
 }
 

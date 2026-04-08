@@ -2,7 +2,9 @@ import 'package:app/apiv2/models/dto.dart';
 import 'package:app/apiv2/models/schedule.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/tenant_providers.dart';
+import 'package:app/service/time_service.dart' show normalizeIanaTimezone;
 import 'package:flutter/material.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'schedule_provider.g.dart';
@@ -47,16 +49,51 @@ class Schedule extends _$Schedule {
         .toList();
 
     final newSchedule = SimpleSchedule(bins: [...otherBins, ...newBins]);
-    await _postSchedule(deviceID, newSchedule);
+    try {
+      final timezoneIana = current.effectiveTimezoneIana ??
+          normalizeIanaTimezone((await FlutterTimezone.getLocalTimezone()).identifier);
+      await _postSchedule(deviceID, newSchedule, timezoneIana);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
   }
 
-  Future<void> _postSchedule(String deviceID, BaseSchedule newSchedule) async {
+  Future<void> updateTimezone(String deviceID, String ianaTimezone) async {
+    final client = ref.read(activeTenantClientProvider);
+    if (client == null) return;
+
+    try {
+      BaseSchedule? effectiveSchedule = state.asData?.value.effectiveSchedule;
+
+      if (effectiveSchedule == null) {
+        final dto = await client.getSchedule(deviceID);
+        effectiveSchedule = dto.toDomain().effectiveSchedule;
+      }
+
+      if (effectiveSchedule == null) {
+        throw StateError('Cannot update timezone without a loaded schedule.');
+      }
+
+      final request = SetScheduleRequestDto(
+        schedule: effectiveSchedule.toDto(),
+        takeEffect: ScheduleTakeEffect.immediate,
+        timezoneIana: ianaTimezone,
+      );
+      final responseDto = await client.setSchedule(deviceID, request);
+      state = AsyncValue.data(responseDto.toDomain());
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  Future<void> _postSchedule(String deviceID, BaseSchedule newSchedule, String timezoneIana) async {
     final client = ref.read(activeTenantClientProvider);
     if (client == null) return;
 
     final request = SetScheduleRequestDto(
       schedule: newSchedule.toDto(),
       takeEffect: ScheduleTakeEffect.immediate,
+      timezoneIana: timezoneIana,
     );
     try {
       final responseDto = await client.setSchedule(deviceID, request);

@@ -9,9 +9,7 @@ import jakarta.validation.Valid;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.tenant.auth.AuthService;
 import jct.pillorganizer.tenant.dto.UpdateDeviceNickname;
-import jct.pillorganizer.tenant.model.device.LogicalDevice;
 import jct.pillorganizer.tenant.model.user.User;
-import jct.pillorganizer.tenant.service.DeviceProvisionService;
 import jct.pillorganizer.tenant.service.DeviceService;
 import lombok.extern.flogger.Flogger;
 
@@ -40,10 +38,13 @@ public class AppDeviceAPIController {
     @Operation(summary = "Updates the device nickname")
     @Post("/{id}/nickname")
     @Secured(SecurityRule.IS_AUTHENTICATED)
-    public LogicalDevice setDeviceNickname(@PathVariable("id") String deviceID,
-                                           @Body @Valid UpdateDeviceNickname dto) {
-        LogicalDevice device = authService.accessDevice(deviceID, true);
-        return deviceService.updateNickname(device, dto.deviceName());
+    public DeviceAccessDto setDeviceNickname(@PathVariable("id") String deviceID,
+                                             @Body @Valid UpdateDeviceNickname dto, User user) {
+        var device = authService.accessDevice(deviceID, true);
+        deviceService.updateNickname(device, dto.deviceName());
+        return deviceService.getUserDevice(user, device)
+                .orElseThrow(() -> new io.micronaut.http.exceptions.HttpStatusException(
+                        io.micronaut.http.HttpStatus.NOT_FOUND, "Device not found"));
     }
 
 }

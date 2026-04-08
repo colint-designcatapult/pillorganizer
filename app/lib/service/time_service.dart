@@ -198,6 +198,16 @@ class TimeOfDayOfWeek {
 typedef TimeZone = tz.TimeZone;
 typedef TimeZoneLocation = tz.Location;
 
+/// Normalizes timezone identifiers returned by the platform that are not
+/// present in the IANA POSIX DB (e.g. plain "UTC" instead of "Etc/UTC").
+String normalizeIanaTimezone(String timezone) {
+  const aliases = {
+    'UTC': 'Etc/UTC',
+    'GMT': 'Etc/GMT',
+  };
+  return aliases[timezone] ?? timezone;
+}
+
 TimeZone? lookupTimeZone(String? tzString) {
   if (tzString == null) {
     return null;

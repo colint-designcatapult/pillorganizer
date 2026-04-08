@@ -8,6 +8,7 @@ import 'package:app/provider/user_registration_provider.dart';
 import 'package:app/screens/modals/add_new_pills_modal.dart';
 import 'package:app/service/error_handler.dart';
 import 'package:app/service/provisioning_service.dart';
+import 'package:app/service/time_service.dart';
 import 'package:app/widgets/addNewPill/medication_card_entry.dart';
 import 'package:app/widgets/medication_card.dart';
 import 'package:app/widgets/notifications_settings.dart';
@@ -19,31 +20,45 @@ import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:validatorless/validatorless.dart';
 
 import '../widgets/basic_page.dart';
 
-class PostSetupWizard extends ConsumerWidget {
+class PostSetupWizard extends ConsumerStatefulWidget {
   const PostSetupWizard({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PostSetupWizard> createState() => _PostSetupWizardState();
+}
+
+class _PostSetupWizardState extends ConsumerState<PostSetupWizard> {
+  bool _timezoneInitialized = false;
+
+  @override
+  Widget build(BuildContext context) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(3, 1);
-    void onSkip() {
-      Navigator.of(context).pushNamedAndRemoveUntil("/index", (route) => false);
-    }
 
     final activeDevice = ref.watch(activeDeviceProvider);
-    final deviceID = activeDevice?.id ?? "";
     final schedule = ref.watch(scheduleProvider);
-    final deviceList = ref.watch(deviceListProvider);
-    
-    // Note: The original used deviceProvider.isUpdatingTimezone. 
-    // Assuming DeviceList notifier handles this or we check loading state.
-    bool isLoadingSchedule = schedule.isLoading;
-    bool isUpdatingTimezone = deviceList.isLoading; // Approximation
 
-    bool canGoNext = !isLoadingSchedule && !isUpdatingTimezone;
+    // Once the schedule finishes loading, initialize timezone to the phone's
+    // default if the device has no timezone set yet.
+    ref.listen(scheduleProvider, (previous, next) {
+      if (_timezoneInitialized) return;
+      if (next.isLoading || !next.hasValue) return;
+      _timezoneInitialized = true;
+
+      final timezone = next.value?.effectiveTimezoneIana;
+      if (timezone == null && activeDevice != null) {
+        FlutterTimezone.getLocalTimezone().then((tz) {
+          ref.read(scheduleProvider.notifier)
+              .updateTimezone(activeDevice.id, normalizeIanaTimezone(tz.identifier));
+        }).catchError((_) {});
+      }
+    });
+
+    bool canGoNext = !schedule.isLoading;
 
     return WizardStep(
         provisionningProgress: provisionningProgress,

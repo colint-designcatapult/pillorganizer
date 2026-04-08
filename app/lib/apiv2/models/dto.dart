@@ -106,13 +106,17 @@ class DeviceScheduleStateDto with DeviceScheduleStateDtoMappable {
 @MappableClass()
 class DeviceScheduleDto with DeviceScheduleDtoMappable {
   final String id;
-  final ScheduleTakeEffect takeEffect;
-  final BaseScheduleDto schedule;
+  final ScheduleTakeEffect? takeEffect;
+  final BaseScheduleDto? schedule;
+  final String? timezoneIana;
+  final String? timezonePosix;
 
   const DeviceScheduleDto({
     required this.id,
-    required this.takeEffect,
+    this.takeEffect = ScheduleTakeEffect.immediate,
     required this.schedule,
+    this.timezoneIana,
+    this.timezonePosix,
   });
 }
 
@@ -140,8 +144,9 @@ class DosePeriodDto with DosePeriodDtoMappable {
 class SetScheduleRequestDto with SetScheduleRequestDtoMappable {
   final BaseScheduleDto schedule;
   final ScheduleTakeEffect takeEffect;
+  final String timezoneIana;
 
-  const SetScheduleRequestDto({required this.schedule, required this.takeEffect});
+  const SetScheduleRequestDto({required this.schedule, required this.takeEffect, required this.timezoneIana});
 }
 
 @MappableClass()
