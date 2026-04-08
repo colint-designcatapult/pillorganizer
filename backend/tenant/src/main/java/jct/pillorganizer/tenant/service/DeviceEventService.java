@@ -8,7 +8,6 @@ import jct.pillorganizer.tenant.model.device.LogicalDevice;
 import jct.pillorganizer.tenant.repo.DeviceEventRepository;
 import lombok.extern.flogger.Flogger;
 
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -28,8 +27,8 @@ public class DeviceEventService {
      * Looks up the {@link LogicalDevice} for the provided {@code thingName}, constructs the
      * {@link DeviceEvent} entity, and persists it. A unique constraint on
      * {@code (logical_device_id, timestamp, event_type, bin_id)} silently drops duplicate messages
-     * (QoS-1 "at least once" re-deliveries). All other errors propagate to the caller so the SQS
-     * message is routed to the dead-letter queue.
+     * (QoS-1 "at least once" re-deliveries) via {@code ON CONFLICT DO NOTHING}. All other errors
+     * propagate to the caller so the SQS message is routed to the dead-letter queue.
      * </p>
      *
      * @param message the incoming device event message
@@ -57,29 +56,16 @@ public class DeviceEventService {
         event.setMetadata(metadata);
         event.setScheduleId(message.scheduleId());
 
-        try {
-            deviceEventRepository.save(event);
-            log.atInfo().log("Saved device event %s for thing %s (type=%s)",
-                    event.getId(), message.thingName(), event.getEventType());
-        } catch (Exception e) {
-            if (isDuplicateKeyException(e)) {
-                log.atInfo().log("Duplicate device event dropped for thing %s (timestamp=%d, type=%s, binId=%s)",
-                        message.thingName(), message.timestamp(), message.eventType(), message.binId());
-            } else {
-                throw e;
-            }
-        }
-    }
-
-    private boolean isDuplicateKeyException(Throwable e) {
-        Throwable cause = e;
-        while (cause != null) {
-            if (cause instanceof SQLException sqlException) {
-                // '23505' is the standard PostgreSQL SQLState for unique_violation
-                return "23505".equals(sqlException.getSQLState());
-            }
-            cause = cause.getCause();
-        }
-        return false;
+        deviceEventRepository.saveIdempotent(
+                event.getId(),
+                event.getLogicalDevice().getId(),
+                event.getTimestamp(),
+                event.getEventType(),
+                event.getBinId(),
+                event.getMetadata(),
+                event.getScheduleId()
+        );
+        log.atInfo().log("Processed device event for thing %s (type=%s)",
+                message.thingName(), event.getEventType());
     }
 }
