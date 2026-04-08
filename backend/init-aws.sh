@@ -2,24 +2,12 @@
 
 # Use ca-central-1 Canadian region
 export AWS_DEFAULT_REGION=ca-central-1
+export AWS_ACCESS_KEY_ID=test
+export AWS_SECRET_ACCESS_KEY=test
 
 # Variable to control whether this is local/test, etc
 # Defaults to local if not set in environment variable already
 : "${ENVIRONMENT_KEY:=local}"
-
-# Build secret in RDS format
-DB_SECRET_JSON=$(cat <<EOF
-{
-  "username": "postgres",
-  "password": "root"
-}
-EOF
-)
-
-awslocal secretsmanager create-secret \
-    --name /config/pillorganizer-backend_${ENVIRONMENT_KEY}/database \
-    --description "Tenant development database credentials" \
-    --secret-string "${DB_SECRET_JSON}"
 
 # Control Plane DynamoDB Tables
 
@@ -64,7 +52,4 @@ DYNAMO_CONTROL_PLANE=$(cat <<EOF
 }
 EOF
 )
-awslocal dynamodb create-table --cli-input-json "${DYNAMO_CONTROL_PLANE}"
-
-# SQS Queues
-awslocal sqs create-queue --queue-name tenant-test-tenant
+aws dynamodb create-table --endpoint-url http://localhost:8000 --cli-input-json "${DYNAMO_CONTROL_PLANE}"
