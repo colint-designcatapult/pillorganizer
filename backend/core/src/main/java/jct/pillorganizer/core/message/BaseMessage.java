@@ -13,7 +13,8 @@ import io.micronaut.serde.annotation.Serdeable;
         @JsonSubTypes.Type(value = NoOpMessage.class, name = "noop"),
         @JsonSubTypes.Type(value = GrantUserMessage.class, name = "grantUser"),
         @JsonSubTypes.Type(value = DeviceProvisionMessage.class, name = "deviceProvision"),
-        @JsonSubTypes.Type(value = IotShadowStateMessage.class, name = "shadow")
+        @JsonSubTypes.Type(value = IotShadowStateMessage.class, name = "shadow"),
+        @JsonSubTypes.Type(value = IotDeviceEventMessage.class, name = "deviceEvent")
 })
 @Serdeable
 public interface BaseMessage {

@@ -5,7 +5,9 @@ import jakarta.inject.Inject
 import jct.pillorganizer.core.message.BaseMessage
 import jct.pillorganizer.core.message.DeviceProvisionMessage
 import jct.pillorganizer.core.message.GrantUserMessage
+import jct.pillorganizer.core.message.IotDeviceEventMessage
 import jct.pillorganizer.tenant.BaseIntegrationSpec
+import jct.pillorganizer.tenant.repo.DeviceEventRepository
 import jct.pillorganizer.tenant.repo.ProvisionRecordRepository
 import spock.lang.Subject
 
@@ -21,6 +23,12 @@ class QueueProcessorServiceSpec extends BaseIntegrationSpec {
 
     @Inject
     ProvisionRecordRepository provisionRecordRepository
+
+    @Inject
+    DeviceService deviceService
+
+    @Inject
+    DeviceEventRepository deviceEventRepository
 
     def "should grant a new user"() {
         given:
@@ -76,5 +84,52 @@ class QueueProcessorServiceSpec extends BaseIntegrationSpec {
 
         then:
         thrown(IllegalStateException)
+    }
+
+    def "should persist a device event message"() {
+        given:
+        def user = userService.upsert("qps-event-user", "Event User", "event@example.com")
+        deviceService.provision(user, "qps-event-device", "qps-serial", "qps-claim", "qps-tenant-serial-device")
+
+        def message = IotDeviceEventMessage.builder()
+                .thingName("qps-tenant-serial-device")
+                .tenant("qps-tenant")
+                .timestamp(1_700_000_000_000L)
+                .eventType("DOOR_OPENED")
+                .build()
+
+        when:
+        queueProcessorService.processQueueMessage(message)
+
+        then:
+        def events = deviceEventRepository.findAll().findAll {
+            it.logicalDevice.id == "qps-event-device" && it.eventType == "DOOR_OPENED"
+        }
+        events.size() == 1
+        events[0].timestamp != null
+    }
+
+    def "should silently drop a duplicate device event message"() {
+        given:
+        def user = userService.upsert("qps-dup-user", "Dup User", "dup@example.com")
+        deviceService.provision(user, "qps-dup-device", "qps-dup-serial", "qps-dup-claim", "qps-dup-thing")
+
+        def message = IotDeviceEventMessage.builder()
+                .thingName("qps-dup-thing")
+                .tenant("qps-tenant")
+                .timestamp(1_700_000_001_000L)
+                .eventType("TAKEN")
+                .build()
+
+        when: "the same message is processed twice"
+        queueProcessorService.processQueueMessage(message)
+        queueProcessorService.processQueueMessage(message)
+
+        then: "no exception is thrown and only one row exists"
+        noExceptionThrown()
+        def events = deviceEventRepository.findAll().findAll {
+            it.logicalDevice.id == "qps-dup-device" && it.eventType == "TAKEN"
+        }
+        events.size() == 1
     }
 }
