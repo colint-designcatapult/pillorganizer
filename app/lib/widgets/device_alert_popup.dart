@@ -157,7 +157,7 @@ class DeviceAlertPopup extends StatelessWidget {
       case DeviceError.noRtcTime:
         return AppLocalizations.of(context)!.noticeNoRtcTime;
       default:
-        return '';
+        return AppLocalizations.of(context)!.noticeUnknownError;
     }
   }
 
@@ -176,7 +176,7 @@ class DeviceAlertPopup extends StatelessWidget {
       case DeviceError.noRtcTime:
         return AppLocalizations.of(context)!.noticeNoRtcTimeSubtitle;
       default:
-        return '';
+        return AppLocalizations.of(context)!.noticeUnknownErrorSubtitle;
     }
   }
 
@@ -187,7 +187,7 @@ class DeviceAlertPopup extends StatelessWidget {
       case DeviceError.noSchedule:
         return AppLocalizations.of(context)!.noticeNoScheduleAction;
       default:
-        return null;
+        return AppLocalizations.of(context)!.noticeUnknownErrorAction;
     }
   }
 }

@@ -35,21 +35,20 @@ enum DeviceErrorFlag {
   /// Parses a raw bitfield integer into a set of [DeviceErrorFlag] values.
   /// Any bit position that does not correspond to a known flag causes
   /// [DeviceErrorFlag.unknown] to be included in the result.
-  static Set<DeviceErrorFlag> fromBitfield(int flags) {
-    // Build a lookup from each known flag's bit position to the flag itself.
-    final Map<int, DeviceErrorFlag> bitToFlag = {
-      for (final f in values)
-        if (f != unknown) f.bit: f,
-    };
+  static final Map<int, DeviceErrorFlag> _bitToFlag = {
+    for (final f in values)
+      if (f != unknown) f.bit: f,
+  };
 
+  static Set<DeviceErrorFlag> fromBitfield(int flags) {
     final Set<DeviceErrorFlag> result = {};
     bool hasUnknownBits = false;
 
     // Walk every bit position that is set in flags.
-    for (int i = 0; i < 32; i++) {
-      if ((flags >> i) & 1 == 0) continue;
+    for (int i = 0; i < flags.bitLength; i++) {
+      if ((((flags >> i) & 1) == 0)) continue;
       final int bit = 1 << i;
-      final DeviceErrorFlag? flag = bitToFlag[bit];
+      final DeviceErrorFlag? flag = _bitToFlag[bit];
       if (flag != null) {
         result.add(flag);
       } else {
