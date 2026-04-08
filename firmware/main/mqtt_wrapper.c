@@ -3,6 +3,7 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
+#include "freertos/semphr.h"
 #include <string.h>
 #include "supervisor.h"
 
@@ -17,6 +18,11 @@
 static esp_mqtt_client_handle_t mqtt_client = NULL;
 static EventGroupHandle_t mqtt_event_group = NULL;
 static esp_event_handler_t app_data_callback = NULL;
+
+/* Mutex protecting mqtt_client handle reads and writes.
+ * The handle is copied under the mutex and then used outside it so we never
+ * hold the lock across a blocking MQTT API call. */
+static SemaphoreHandle_t s_client_mutex = NULL;
 
 extern const uint8_t aws_root_ca_start[] asm("_binary_root_ca_pem_start");
 extern const uint8_t aws_root_ca_end[] asm("_binary_root_ca_pem_end");
@@ -50,8 +56,22 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     }
 }
 
+void mqtt_wrapper_init(void)
+{
+    if (s_client_mutex == NULL) {
+        s_client_mutex = xSemaphoreCreateMutex();
+        configASSERT(s_client_mutex != NULL);
+    }
+}
+
 esp_err_t mqtt_wrapper_connect(const mqtt_wrapper_config_t* config) {
-    if (mqtt_client != NULL) {
+    configASSERT(s_client_mutex != NULL); /* mqtt_wrapper_init() must be called first */
+
+    xSemaphoreTake(s_client_mutex, portMAX_DELAY);
+    bool already_init = (mqtt_client != NULL);
+    xSemaphoreGive(s_client_mutex);
+
+    if (already_init) {
         ESP_LOGE(TAG, "Client already initialized. Call disconnect first.");
         return ESP_ERR_INVALID_STATE;
     }
@@ -89,23 +109,46 @@ esp_err_t mqtt_wrapper_connect(const mqtt_wrapper_config_t* config) {
         }
     };
 
-    mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
-    if (!mqtt_client) return ESP_FAIL;
+    esp_mqtt_client_handle_t new_client = esp_mqtt_client_init(&mqtt_cfg);
+    if (!new_client) return ESP_FAIL;
 
-    app_data_callback = config->event_handler;    
+    app_data_callback = config->event_handler;
 
-    esp_err_t err = esp_mqtt_client_register_event(mqtt_client,
+    esp_err_t err = esp_mqtt_client_register_event(new_client,
              (esp_mqtt_event_id_t)ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
-    if(err != ESP_OK) return err;
-    return esp_mqtt_client_start(mqtt_client);
+    if (err != ESP_OK) {
+        esp_mqtt_client_destroy(new_client);
+        return err;
+    }
+
+    /* Publish the handle only after it is fully configured. */
+    xSemaphoreTake(s_client_mutex, portMAX_DELAY);
+    mqtt_client = new_client;
+    xSemaphoreGive(s_client_mutex);
+
+    return esp_mqtt_client_start(new_client);
 }
 
 esp_err_t mqtt_wrapper_disconnect(void) {
-    if (mqtt_client == NULL) return ESP_OK; // Already disconnected
+    if (s_client_mutex == NULL) return ESP_OK; // Never connected
 
-    esp_mqtt_client_stop(mqtt_client);
-    esp_mqtt_client_destroy(mqtt_client);
+    /* Atomically take and null the handle so publish/subscribe callers that
+     * snapshot it under the mutex cannot reach a destroyed object. */
+    xSemaphoreTake(s_client_mutex, portMAX_DELAY);
+    esp_mqtt_client_handle_t old_client = mqtt_client;
     mqtt_client = NULL;
+    xSemaphoreGive(s_client_mutex);
+
+    if (old_client == NULL) return ESP_OK; // Already disconnected
+
+    /* Clear the connected bit so is_connected() returns false immediately. */
+    if (mqtt_event_group != NULL) {
+        xEventGroupClearBits(mqtt_event_group, MQTT_CONNECTED_BIT);
+        xEventGroupSetBits(mqtt_event_group, MQTT_DISCONNECTED_BIT);
+    }
+
+    esp_mqtt_client_stop(old_client);
+    esp_mqtt_client_destroy(old_client);
     app_data_callback = NULL;
 
     ESP_LOGI(TAG, "MQTT Client Destroyed");
@@ -115,7 +158,14 @@ esp_err_t mqtt_wrapper_disconnect(void) {
 esp_err_t mqtt_wrapper_publish_with_id(const char* topic, const char* payload, int len, int qos, int retain, int* out_msg_id) {
     if (!mqtt_wrapper_is_connected()) return ESP_ERR_INVALID_STATE;
 
-    int msg_id = esp_mqtt_client_publish(mqtt_client, topic, payload, len, qos, retain);
+    /* Snapshot the handle under the mutex to close the TOCTOU window between
+     * the is_connected() check and the actual publish call. */
+    xSemaphoreTake(s_client_mutex, portMAX_DELAY);
+    esp_mqtt_client_handle_t client = mqtt_client;
+    xSemaphoreGive(s_client_mutex);
+    if (client == NULL) return ESP_ERR_INVALID_STATE;
+
+    int msg_id = esp_mqtt_client_publish(client, topic, payload, len, qos, retain);
     if (msg_id < 0) return ESP_FAIL;
 
     if (out_msg_id != NULL) {
@@ -126,8 +176,13 @@ esp_err_t mqtt_wrapper_publish_with_id(const char* topic, const char* payload, i
 
 esp_err_t mqtt_wrapper_publish(const char* topic, const char* payload, int len, int qos, int retain) {
     if (!mqtt_wrapper_is_connected()) return ESP_ERR_INVALID_STATE;
-    
-    int msg_id = esp_mqtt_client_publish(mqtt_client, topic, payload, len, qos, retain);
+
+    xSemaphoreTake(s_client_mutex, portMAX_DELAY);
+    esp_mqtt_client_handle_t client = mqtt_client;
+    xSemaphoreGive(s_client_mutex);
+    if (client == NULL) return ESP_ERR_INVALID_STATE;
+
+    int msg_id = esp_mqtt_client_publish(client, topic, payload, len, qos, retain);
     return (msg_id >= 0) ? ESP_OK : ESP_FAIL;
 }
 
@@ -139,7 +194,12 @@ esp_err_t mqtt_wrapper_subscribe(const char* topic, int qos, int* out_id)
 
     if (!mqtt_wrapper_is_connected()) return ESP_ERR_INVALID_STATE;
 
-    int msg_id = esp_mqtt_client_subscribe(mqtt_client, topic, qos);
+    xSemaphoreTake(s_client_mutex, portMAX_DELAY);
+    esp_mqtt_client_handle_t client = mqtt_client;
+    xSemaphoreGive(s_client_mutex);
+    if (client == NULL) return ESP_ERR_INVALID_STATE;
+
+    int msg_id = esp_mqtt_client_subscribe(client, topic, qos);
     if (out_id != NULL && msg_id >= 0) {
         *out_id = msg_id;
     }

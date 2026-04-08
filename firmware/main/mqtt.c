@@ -152,6 +152,8 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 esp_err_t mqtt_init()
 {
+    mqtt_wrapper_init();
+
     // Sanity check: device must have a permanent identity
     if (!devcfg_has_permanent_identity()) {
         ESP_LOGE(TAG, "MQTT needs permanent identity");
