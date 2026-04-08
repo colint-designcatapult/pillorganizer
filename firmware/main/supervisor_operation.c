@@ -189,6 +189,8 @@ static esp_err_t update_device_state()
     pers.synced_at = s_device_state.synced_at;
     pers.schedule = s_device_state.schedule; 
     pers.epoch_week = s_device_state.epoch_week;
+    snprintf(pers.timezone_iana, sizeof(pers.timezone_iana), "%s", s_device_state.timezone_iana);
+    snprintf(pers.timezone_posix, sizeof(pers.timezone_posix), "%s", s_device_state.timezone_posix);
 
     for (int i = 0; i < 14; i++) {
         pers.bins[i].status = s_device_state.bins[i].status;
@@ -371,6 +373,25 @@ static void process_schedule_delta(const device_schedule_t* sched)
 
         // Clear no-schedule error now that a valid schedule has been applied
         supervisor_clear_error(DEVERR_NO_SCHEDULE);
+
+        // Apply timezone from the new schedule to device state and the system.
+        // POSIX format alone is sufficient to configure the system timezone via setenv("TZ",...).
+        // IANA is stored alongside it for state reporting only.
+        // Always apply immediately if no timezone is currently set (DEVERR_NO_TIMEZONE asserted),
+        // otherwise follow the schedule's take_effect rule.
+        bool no_timezone = (supervisor_get_error_flags() & DEVERR_NO_TIMEZONE) != 0;
+        bool apply_tz_now = no_timezone || (sched->take_effect == SCHED_IMMEDIATE);
+
+        if (sched->timezone_posix[0] != '\0' && apply_tz_now) {
+            snprintf(s_device_state.timezone_posix, sizeof(s_device_state.timezone_posix),
+                     "%s", sched->timezone_posix);
+            snprintf(s_device_state.timezone_iana, sizeof(s_device_state.timezone_iana),
+                     "%s", sched->timezone_iana);
+            app_rtc_set_timezone(s_device_state.timezone_posix);
+            supervisor_clear_error(DEVERR_NO_TIMEZONE);
+            ESP_LOGI(TAG, "Timezone applied: IANA=%s POSIX=%s",
+                     s_device_state.timezone_iana, s_device_state.timezone_posix);
+        }
 
         ESP_ERROR_CHECK(update_device_state());
         ESP_ERROR_CHECK(shadow_state_report_schedule(&s_device_state.schedule));
@@ -594,6 +615,8 @@ static void load_state()
         s_device_state.modified_at = pers.modified_at;
         s_device_state.schedule = pers.schedule;
         s_device_state.epoch_week = pers.epoch_week;
+        snprintf(s_device_state.timezone_iana, sizeof(s_device_state.timezone_iana), "%s", pers.timezone_iana);
+        snprintf(s_device_state.timezone_posix, sizeof(s_device_state.timezone_posix), "%s", pers.timezone_posix);
 
         // Copy bin state
         for (uint8_t i = 0; i < 14; i++) {
@@ -610,6 +633,14 @@ static void load_state()
         if (s_device_state.schedule.type == SCHED_NONE) {
             ESP_LOGW(TAG, "No schedule configured");
             supervisor_assert_error(DEVERR_NO_SCHEDULE);
+        }
+
+        // Apply persisted timezone as the system timezone; assert error if none is set
+        if (s_device_state.timezone_posix[0] != '\0') {
+            app_rtc_set_timezone(s_device_state.timezone_posix);
+        } else {
+            ESP_LOGW(TAG, "No timezone configured");
+            supervisor_assert_error(DEVERR_NO_TIMEZONE);
         }
     } else {
         // Failed to load state, trigger failsafe

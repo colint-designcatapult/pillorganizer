@@ -529,6 +529,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noticeNoRtcTimeAction => 'Sync Time';
 
   @override
+  String get noticeNoTimezone => 'Fuseau horaire non configuré';
+
+  @override
+  String get noticeNoTimezoneSubtitle =>
+      'Votre appareil n\'a pas de fuseau horaire configuré.';
+
+  @override
+  String get noticeNoTimezoneAction => 'Configurer le fuseau horaire';
+
+  @override
   String get noticeNoMeds => 'Vous n\'avez entré aucun médicament.';
 
   @override

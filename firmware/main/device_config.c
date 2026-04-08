@@ -224,6 +224,10 @@ esp_err_t devcfg_set_device_schedule(const device_schedule_t* sched) {
     CHECK_GOTO(nvs_set_u8(handle, "sch_type", (uint8_t)sched->type));
     CHECK_GOTO(nvs_set_u8(handle, "sch_eff", (uint8_t)sched->take_effect));
 
+    // Persist timezone strings (may be empty on first write)
+    CHECK_GOTO(nvs_set_str(handle, "sch_tz_iana", sched->timezone_iana));
+    CHECK_GOTO(nvs_set_str(handle, "sch_tz_posix", sched->timezone_posix));
+
     if (sched->type == SCHED_SIMPLE) {
         uint8_t bin_count = sched->schedule.simple_schedule.bin_count;
         if (bin_count > 14) bin_count = 14; 
@@ -289,6 +293,17 @@ esp_err_t devcfg_get_device_schedule(device_schedule_t* sched) {
     uint8_t eff_val = 0;
     if (nvs_get_u8(handle, "sch_eff", &eff_val) == ESP_OK) {
         sched->take_effect = (device_schedule_take_effect_t)eff_val;
+    }
+
+    // Load timezone strings (ignore if not yet stored)
+    size_t iana_len = TIMEZONE_IANA_SIZE;
+    if (nvs_get_str(handle, "sch_tz_iana", sched->timezone_iana, &iana_len) == ESP_OK) {
+        sched->timezone_iana[TIMEZONE_IANA_SIZE - 1] = '\0';
+    }
+
+    size_t posix_len = TIMEZONE_POSIX_SIZE;
+    if (nvs_get_str(handle, "sch_tz_posix", sched->timezone_posix, &posix_len) == ESP_OK) {
+        sched->timezone_posix[TIMEZONE_POSIX_SIZE - 1] = '\0';
     }
 
     if (sched->type == SCHED_SIMPLE) {

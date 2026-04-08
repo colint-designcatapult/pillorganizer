@@ -21,9 +21,9 @@ enum EventType { opened, closed, missed }
 
 enum DeviceConnectionStatus { undefined, offline, online, loading }
 
-enum DeviceError { none, disconnected, phoneDisconnected, needsReload, noSchedule, stateCorrupted, noRtcTime }
+enum DeviceError { none, disconnected, phoneDisconnected, needsReload, noSchedule, stateCorrupted, noRtcTime, noTimezone }
 
-enum DeviceErrorFlag { noSchedule, stateCorrupted, noRtcTime }
+enum DeviceErrorFlag { noSchedule, stateCorrupted, noRtcTime, noTimezone }
 
 
 @MappableClass()
@@ -238,6 +238,7 @@ class DeviceState with DeviceStateMappable {
           if ((dto.errorFlags! & (1 << 0)) != 0) DeviceErrorFlag.noSchedule,
           if ((dto.errorFlags! & (1 << 1)) != 0) DeviceErrorFlag.stateCorrupted,
           if ((dto.errorFlags! & (1 << 2)) != 0) DeviceErrorFlag.noRtcTime,
+          if ((dto.errorFlags! & (1 << 3)) != 0) DeviceErrorFlag.noTimezone,
         ] : const [])},
         scheduleId: dto.scheduleId,
         reloadState: dto.reload != null ? ReloadState.fromDTO(dto.reload!) : null,
