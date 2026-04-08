@@ -799,7 +799,7 @@ static void handle_reload_fsm(const supervisor_event_t* event)
                 int door_id = (int)event->payload;
                 s_device_state.reload_state.progress |= (1 << door_id);
 
-                if (s_device_state.reload_state.progress == s_device_state.reload_state.complete_mask) {
+                if ((s_device_state.reload_state.progress & s_device_state.reload_state.complete_mask) == s_device_state.reload_state.complete_mask) {
                     // Reload complete!
                     supervisor_submit_event(EVENT_RELOAD_COMPLETE);
                     ESP_LOGI(TAG, "Reload complete");
