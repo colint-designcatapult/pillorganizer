@@ -8,7 +8,7 @@ import lombok.Builder;
 @Builder
 @Serdeable
 public record IotDeviceEventMessage(
-        Long timestamp,
+        long timestamp,
         String thingName,
         String tenant,
         @JsonProperty("event_type") String eventType,
