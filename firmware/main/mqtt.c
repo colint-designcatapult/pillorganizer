@@ -85,6 +85,14 @@ void mqtt_drain_event_outbox(void)
         cJSON_AddStringToObject(root, "event_type", event_type_to_str(entry.event_type));
         if (entry.bin_id != EVENT_OUTBOX_BIN_ID_NONE) {
             cJSON_AddNumberToObject(root, "bin_id", entry.bin_id);
+            
+            /* Include schedule_id for bin events */
+            device_persistent_state_t state;
+            if (devcfg_get_device_state(&state) == ESP_OK) {
+                if (entry.bin_id < 14 && state.bins[entry.bin_id].schedule_id[0] != '\0') {
+                    cJSON_AddStringToObject(root, "schedule_id", state.bins[entry.bin_id].schedule_id);
+                }
+            }
         }
         if (entry.flags != 0) {
             cJSON_AddNumberToObject(root, "flags", entry.flags);
