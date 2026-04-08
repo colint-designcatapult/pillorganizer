@@ -72,6 +72,8 @@ void mqtt_drain_event_outbox(void)
         event_outbox_entry_t entry;
         if (event_outbox_get(i, &entry) != ESP_OK) break;
 
+        /* Already delivered — never republish from the drain loop. */
+        if (entry.delivered) continue;
         /* Already published and awaiting PUBACK — skip. */
         if (entry.msg_id >= 0) continue;
 
