@@ -27,6 +27,9 @@ static device_state_t s_device_state;
 static int MISSED_THRESHOLD_SEC = 15 * 60;  // 15 minutes (15 * 60 seconds)
 static int RELOAD_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes (5 * 60 seconds * 1000 ms)
 
+// Track last processed schedule ID to prevent duplicate delta processing
+static char s_last_processed_schedule_id[37] = {0};  // SCHEDULE_ID_SIZE is typically 37 (UUID + null)
+
 static const char* get_day_of_week_str(device_schedule_day_of_week_t day) {
     switch(day) {
         case SCHED_MONDAY: return "MON";
@@ -354,6 +357,12 @@ static void process_schedule_delta(const device_schedule_t* sched)
     ESP_LOGI(TAG, "========= Schedule Delta =========");
     print_schedule(sched);
 
+    // Check if this is the same schedule we just processed - skip if so
+    if (sched->id[0] != '\0' && strcmp(sched->id, s_last_processed_schedule_id) == 0) {
+        ESP_LOGD(TAG, "Schedule ID %s already processed, skipping duplicate delta", sched->id);
+        return;
+    }
+
     device_state_t state_copy;
     memcpy(&state_copy, &s_device_state, sizeof(device_state_t));
 
@@ -368,6 +377,9 @@ static void process_schedule_delta(const device_schedule_t* sched)
         // Calculate and store the schedule length
         s_device_state.schedule_length_days = calculate_schedule_length_days(&s_device_state.schedule);
         ESP_LOGI(TAG, "Schedule length calculated: %d days", s_device_state.schedule_length_days);
+
+        // Track this schedule as processed
+        snprintf(s_last_processed_schedule_id, sizeof(s_last_processed_schedule_id), "%s", sched->id);
 
         // Clear no-schedule error now that a valid schedule has been applied
         supervisor_clear_error(DEVERR_NO_SCHEDULE);
