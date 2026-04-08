@@ -92,7 +92,7 @@ class DeviceAlert extends StatelessWidget {
       case DeviceError.noRtcTime:
         return AppLocalizations.of(context)!.noticeNoRtcTime;
       default:
-        return '';
+        return AppLocalizations.of(context)!.noticeUnknownError;
     }
   }
 
@@ -111,7 +111,7 @@ class DeviceAlert extends StatelessWidget {
       case DeviceError.noRtcTime:
         return AppLocalizations.of(context)!.noticeNoRtcTimeSubtitle;
       default:
-        return '';
+        return AppLocalizations.of(context)!.noticeUnknownErrorSubtitle;
     }
   }
 
@@ -149,7 +149,7 @@ class DeviceAlert extends StatelessWidget {
       case DeviceError.noRtcTime:
         return AppLocalizations.of(context)!.noticeNoRtcTimeAction;
       default:
-        return "";
+        return AppLocalizations.of(context)!.noticeUnknownErrorAction;
     }
   }
 }
