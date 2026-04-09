@@ -204,6 +204,10 @@ class DeviceStateDto with DeviceStateDtoMappable {
   final String? scheduleId;
   final int? errorFlags;
   final int? epochWeek;
+  @MappableField(key: 'timezoneIana')
+  final String? timezoneIana;
+  @MappableField(key: 'timezonePosix')
+  final String? timezonePosix;
 
   DeviceStateDto({
     required this.timestamp,
@@ -213,7 +217,9 @@ class DeviceStateDto with DeviceStateDtoMappable {
     this.bins,
     this.scheduleId,
     this.errorFlags,
-    this.epochWeek
+    this.epochWeek,
+    this.timezoneIana,
+    this.timezonePosix,
   });
 }
 

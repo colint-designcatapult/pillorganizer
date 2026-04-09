@@ -70,6 +70,25 @@ export class AppStack extends cdk.Stack {
       },
     });
 
+    const deviceEventRule = new iot.CfnTopicRule(this, 'DeviceEventRule', {
+      ruleName: `RouteDeviceEventsToSQS_${props.environmentName}`,
+      topicRulePayload: {
+        awsIotSqlVersion: '2016-03-23',
+        sql: `SELECT *, topic(3) as thingName, topic(4) as topicName, 'deviceEvent' as type, '${props.environmentName}' as tenant
+         FROM 'healthe/things/+/event' WHERE startswith(topic(3), '${props.environmentName}-')`,
+        ruleDisabled: false,
+        actions: [
+          {
+            sqs: {
+              queueUrl: tenantQueue.queueUrl,
+              roleArn: iotSqsRole.roleArn,
+              useBase64: false,
+            },
+          },
+        ],
+      },
+    });
+
     // -- Lambda --
     const tenantCode = lambda.Code.fromAsset("../backend/tenant/target/tenant-0.1.jar");
 

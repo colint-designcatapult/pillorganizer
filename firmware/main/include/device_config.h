@@ -40,6 +40,8 @@ esp_err_t devcfg_set_permanent_cert(const char* cert, const char* privkey);
 /* --- DEVICE SCHEDULE --- */
 
 #define SCHEDULE_ID_SIZE 37
+#define TIMEZONE_IANA_SIZE 64
+#define TIMEZONE_POSIX_SIZE 64
 
 typedef enum {
     SCHED_MONDAY, SCHED_TUESDAY, SCHED_WEDNESDAY, SCHED_THURSDAY, SCHED_FRIDAY, SCHED_SATURDAY, SCHED_SUNDAY
@@ -80,6 +82,10 @@ typedef struct {
     device_schedule_take_effect_t take_effect;
     char rejected_id[SCHEDULE_ID_SIZE];
     device_schedule_validation_t rejected_reason;
+    // Timezone in IANA format (e.g. "America/Detroit")
+    char timezone_iana[TIMEZONE_IANA_SIZE];
+    // Timezone in POSIX format (e.g. "EST5EDT,M3.2.0,M11.1.0")
+    char timezone_posix[TIMEZONE_POSIX_SIZE];
 } device_schedule_t;
 
 esp_err_t devcfg_get_device_schedule(device_schedule_t* state);
@@ -121,6 +127,10 @@ typedef struct {
     time_t epoch_week;
     // Length of the schedule in days (e.g., 7 for a weekly schedule)
     uint8_t schedule_length_days;
+    // Currently configured timezone in IANA format (e.g. "America/Detroit")
+    char timezone_iana[TIMEZONE_IANA_SIZE];
+    // Currently configured timezone in POSIX format (e.g. "EST5EDT,M3.2.0,M11.1.0")
+    char timezone_posix[TIMEZONE_POSIX_SIZE];
 } device_persistent_state_t;
 
 

@@ -26,6 +26,9 @@ public class QueueProcessorService {
     ScheduleService scheduleService;
 
     @Inject
+    DeviceEventService deviceEventService;
+
+    @Inject
     JsonMapper jsonMapper;
 
     private void deviceProvision(DeviceProvisionMessage message) {
@@ -76,6 +79,10 @@ public class QueueProcessorService {
         }
     }
 
+    private void deviceEvent(IotDeviceEventMessage message) {
+        deviceEventService.processEvent(message);
+    }
+
     @Transactional
     public void processQueueMessage(BaseMessage message) throws Exception {
         if(message instanceof GrantUserMessage) {
@@ -84,6 +91,8 @@ public class QueueProcessorService {
             deviceProvision((DeviceProvisionMessage) message);
         } else if(message instanceof IotShadowStateMessage) {
             shadowStateDocument((IotShadowStateMessage) message);
+        } else if(message instanceof IotDeviceEventMessage) {
+            deviceEvent((IotDeviceEventMessage) message);
         } else if(message instanceof NoOpMessage) {
             // do nothing
             log.atInfo().log("Processing noop queue message");

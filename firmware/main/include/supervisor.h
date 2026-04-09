@@ -93,7 +93,8 @@ typedef enum {
     DEVERR_NO_SCHEDULE      =  (1 << 0),
     DEVERR_STATE_CORRUPTED  =  (1 << 1),
     DEVERR_NO_RTC_TIME      =  (1 << 2),
-    DEVERR_OUTBOX_FULL      =  (1 << 3)
+    DEVERR_NO_TIMEZONE      =  (1 << 3),
+    DEVERR_OUTBOX_FULL      =  (1 << 4)
 } device_error_flag_t;
 
 #define SECONDS_PER_WEEK 604800
@@ -137,6 +138,10 @@ typedef struct device_state_t {
     int error_flags;
     // Length of the schedule in days (e.g., 7 for a weekly schedule)
     uint8_t schedule_length_days;
+    // Currently configured timezone in IANA format (e.g. "America/Detroit")
+    char timezone_iana[TIMEZONE_IANA_SIZE];
+    // Currently configured timezone in POSIX format (e.g. "EST5EDT,M3.2.0,M11.1.0")
+    char timezone_posix[TIMEZONE_POSIX_SIZE];
 } device_state_t;
 
 typedef enum {

@@ -527,6 +527,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noticeNoRtcTimeAction => 'Sync Time';
 
   @override
+  String get noticeNoTimezone => 'No Timezone Configured';
+
+  @override
+  String get noticeNoTimezoneSubtitle =>
+      'Your device does not have a timezone configured.';
+
+  @override
+  String get noticeNoTimezoneAction => 'Set Schedule';
+
+  @override
+  String get noticeUnknownError => 'Device Error';
+
+  @override
+  String get noticeUnknownErrorSubtitle =>
+      'An unexpected error has occurred on the device.';
+
+  @override
+  String get noticeUnknownErrorAction => 'Retry';
+
+  @override
   String get noticeNoMeds => 'You don\'t have any medications entered.';
 
   @override

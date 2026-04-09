@@ -224,6 +224,10 @@ esp_err_t devcfg_set_device_schedule(const device_schedule_t* sched) {
     CHECK_GOTO(nvs_set_u8(handle, "sch_type", (uint8_t)sched->type));
     CHECK_GOTO(nvs_set_u8(handle, "sch_eff", (uint8_t)sched->take_effect));
 
+    // Persist timezone strings (may be empty on first write)
+    CHECK_GOTO(nvs_set_str(handle, "sch_tz_iana", sched->timezone_iana));
+    CHECK_GOTO(nvs_set_str(handle, "sch_tz_posix", sched->timezone_posix));
+
     if (sched->type == SCHED_SIMPLE) {
         uint8_t bin_count = sched->schedule.simple_schedule.bin_count;
         if (bin_count > 14) bin_count = 14; 
@@ -291,6 +295,17 @@ esp_err_t devcfg_get_device_schedule(device_schedule_t* sched) {
         sched->take_effect = (device_schedule_take_effect_t)eff_val;
     }
 
+    // Load timezone strings (ignore if not yet stored)
+    size_t iana_len = TIMEZONE_IANA_SIZE;
+    if (nvs_get_str(handle, "sch_tz_iana", sched->timezone_iana, &iana_len) == ESP_OK) {
+        sched->timezone_iana[TIMEZONE_IANA_SIZE - 1] = '\0';
+    }
+
+    size_t posix_len = TIMEZONE_POSIX_SIZE;
+    if (nvs_get_str(handle, "sch_tz_posix", sched->timezone_posix, &posix_len) == ESP_OK) {
+        sched->timezone_posix[TIMEZONE_POSIX_SIZE - 1] = '\0';
+    }
+
     if (sched->type == SCHED_SIMPLE) {
         uint8_t bin_count = 0;
         if (nvs_get_u8(handle, "sch_bcnt", &bin_count) == ESP_OK) {
@@ -345,7 +360,10 @@ esp_err_t devcfg_set_device_state(const device_persistent_state_t* state) {
     CHECK_GOTO(nvs_set_u64(handle, "synced_at", (uint64_t)state->synced_at));
     CHECK_GOTO(nvs_set_u64(handle, "epoch_week", (time_t)state->epoch_week));
     CHECK_GOTO(devcfg_set_device_schedule(&state->schedule));
-    
+
+    // Persist timezone strings (always written so cleared values don't linger in NVS)
+    CHECK_GOTO(nvs_set_str(handle, "tz_iana", state->timezone_iana));
+    CHECK_GOTO(nvs_set_str(handle, "tz_posix", state->timezone_posix));
 
     bin_pod_state_t bins_pod[14];
     for (int i = 0; i < 14; i++) {
@@ -430,6 +448,18 @@ esp_err_t devcfg_get_device_state(device_persistent_state_t* state) {
     // Attempt to load schedule, ignore if it's missing but fail on real NVS errors
     err = devcfg_get_device_schedule(&state->schedule);
     if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND) goto cleanup;
+
+    // Load timezone strings (ignore if not yet stored; fields default to empty via memset above)
+    state->timezone_iana[0] = '\0';
+    size_t iana_len = TIMEZONE_IANA_SIZE;
+    if (nvs_get_str(handle, "tz_iana", state->timezone_iana, &iana_len) == ESP_OK) {
+        state->timezone_iana[TIMEZONE_IANA_SIZE - 1] = '\0';
+    }
+    state->timezone_posix[0] = '\0';
+    size_t posix_len = TIMEZONE_POSIX_SIZE;
+    if (nvs_get_str(handle, "tz_posix", state->timezone_posix, &posix_len) == ESP_OK) {
+        state->timezone_posix[TIMEZONE_POSIX_SIZE - 1] = '\0';
+    }
 
     bin_pod_state_t bins_pod[14];
     size_t req_size = sizeof(bins_pod);

@@ -1,4 +1,5 @@
 #include "rtc.h"
+#include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
 #include "esp_log.h"
@@ -14,13 +15,18 @@
 RTC_DATA_ATTR static time_t last_sntp_sync_time = 0;
 RTC_DATA_ATTR static uint64_t last_sync_rtc_time = 0;
 
+void app_rtc_set_timezone(const char* posix_tz)
+{
+    if (posix_tz && posix_tz[0] != '\0') {
+        setenv("TZ", posix_tz, 1);
+        tzset();
+        ESP_LOGI(TAG, "Timezone set to: %s", posix_tz);
+    }
+}
+
 void app_rtc_time_sync_notification_cb(struct timeval *tv)
 {
     ESP_LOGI(TAG, "Asynchronous SNTP sync complete!");
-    
-    // You can set your timezone here now that the system time is valid
-    setenv("TZ", "EST5EDT,M3.2.0/2,M11.1.0", 1);
-    tzset();
 
     // Log the updated time
     time_t now = 0;

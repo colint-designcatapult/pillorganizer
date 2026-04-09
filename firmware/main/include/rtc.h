@@ -23,3 +23,7 @@ int64_t app_rtc_calc_duration_ms(rtc_relative_time_t start, rtc_relative_time_t 
 esp_err_t app_rtc_get_current_epoch_week(time_t* epoch_week);
 
 bool app_rtc_time_synced();
+
+// Sets the system timezone using a POSIX TZ string (e.g. "EST5EDT,M3.2.0,M11.1.0").
+// Calls setenv("TZ", ...) and tzset().
+void app_rtc_set_timezone(const char* posix_tz);
