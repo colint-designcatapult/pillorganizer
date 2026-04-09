@@ -17,7 +17,8 @@ typedef struct {
 // --- Core API ---
 
 // Initializes the mqtt_wrapper module (creates internal mutex). Must be called
-// once from app_main before any other mqtt_wrapper functions.
+// before mqtt_wrapper_connect() or other mqtt_wrapper operations such as
+// publish/subscribe. This is called by mqtt_init().
 void mqtt_wrapper_init(void);
 
 // Initializes the client, starts the MQTT task
