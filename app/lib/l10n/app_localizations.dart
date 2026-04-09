@@ -1051,6 +1051,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Set Schedule'**
   String get noticeNoTimezoneAction;
+
   /// No description provided for @noticeUnknownError.
   ///
   /// In en, this message translates to:

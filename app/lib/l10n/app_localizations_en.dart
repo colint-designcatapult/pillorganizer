@@ -535,6 +535,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noticeNoTimezoneAction => 'Set Schedule';
+
+  @override
   String get noticeUnknownError => 'Device Error';
 
   @override
