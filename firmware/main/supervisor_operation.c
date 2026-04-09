@@ -30,8 +30,8 @@ static device_state_t s_device_state;
 static int MISSED_THRESHOLD_SEC = 15 * 60;  // 15 minutes (15 * 60 seconds)
 static int RELOAD_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes (5 * 60 seconds * 1000 ms)
 
-/* Door left open timers (one per door, max 14 doors) */
-static TimerHandle_t s_door_left_open_timers[14] = {0};
+/* Door left open timers (one per door). */
+static TimerHandle_t s_door_left_open_timers[DEVICE_NUM_BINS] = {0};
 
 static const char* get_day_of_week_str(device_schedule_day_of_week_t day) {
     switch(day) {
@@ -756,7 +756,7 @@ static void handle_door_open(int door_id)
     update_device_state();
 
     /* Start or restart the door left open timer */
-    if (door_id >= 0 && door_id < 14) {
+    if (door_id >= 0 && door_id < DEVICE_NUM_BINS) {
         /* Create timer on first use */
         if (s_door_left_open_timers[door_id] == NULL) {
             s_door_left_open_timers[door_id] = xTimerCreate(
@@ -799,7 +799,7 @@ static void handle_door_close(int door_id)
     update_device_state();
 
     /* Cancel the door left open timer */
-    if (door_id >= 0 && door_id < 14 && s_door_left_open_timers[door_id] != NULL) {
+    if (door_id >= 0 && door_id < DEVICE_NUM_BINS && s_door_left_open_timers[door_id] != NULL) {
         xTimerStop(s_door_left_open_timers[door_id], 0);
     }
 }

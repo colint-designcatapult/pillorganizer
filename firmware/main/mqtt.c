@@ -82,18 +82,32 @@ void mqtt_drain_event_outbox(void)
      * detected and the stale packet ID is not written back. */
     uint64_t conn_epoch = event_outbox_get_conn_epoch();
 
-    int count = event_outbox_count();
-    for (int i = 0; i < count; i++) {
+    /* Load device state once before the loop; reused for every bin entry so
+     * we avoid repeated NVS reads inside the per-entry body. */
+    device_persistent_state_t dev_state;
+    bool dev_state_loaded = (devcfg_get_device_state(&dev_state) == ESP_OK);
+
+    /* Iterate without a snapshotted count: a concurrent MQTT_EVENT_PUBLISHED
+     * can call event_outbox_ack() which pops from the front of the queue,
+     * shifting all positions.  By restarting from i=0 after each successful
+     * publish and breaking when event_outbox_get() returns ESP_ERR_NOT_FOUND,
+     * we always see the current queue state and never skip an entry. */
+    int i = 0;
+    while (true) {
         event_outbox_entry_t entry;
-        if (event_outbox_get(i, &entry) != ESP_OK) {
+        esp_err_t get_err = event_outbox_get(i, &entry);
+        if (get_err == ESP_ERR_NOT_FOUND) {
+            break;  /* reached the end of the queue */
+        }
+        if (get_err != ESP_OK) {
             xSemaphoreGive(s_drain_mutex);
             return;
         }
 
         /* Already delivered — never republish from the drain loop. */
-        if (entry.delivered) continue;
+        if (entry.delivered) { i++; continue; }
         /* Already published and awaiting PUBACK — skip. */
-        if (entry.msg_id >= 0) continue;
+        if (entry.msg_id >= 0) { i++; continue; }
 
         cJSON *root = cJSON_CreateObject();
         if (!root) {
@@ -105,13 +119,13 @@ void mqtt_drain_event_outbox(void)
         cJSON_AddStringToObject(root, "event_type", event_type_to_str(entry.event_type));
         if (entry.bin_id != EVENT_OUTBOX_BIN_ID_NONE) {
             cJSON_AddNumberToObject(root, "bin_id", entry.bin_id);
-            
-            /* Include schedule_id for bin events */
-            device_persistent_state_t state;
-            if (devcfg_get_device_state(&state) == ESP_OK) {
-                if (entry.bin_id < 14 && state.bins[entry.bin_id].schedule_id[0] != '\0') {
-                    cJSON_AddStringToObject(root, "schedule_id", state.bins[entry.bin_id].schedule_id);
-                }
+
+            /* Include schedule_id for bin events, using the pre-loaded state. */
+            if (dev_state_loaded &&
+                entry.bin_id < DEVICE_NUM_BINS &&
+                dev_state.bins[entry.bin_id].schedule_id[0] != '\0') {
+                cJSON_AddStringToObject(root, "schedule_id",
+                                        dev_state.bins[entry.bin_id].schedule_id);
             }
         }
         if (entry.flags != 0) {
@@ -142,6 +156,10 @@ void mqtt_drain_event_outbox(void)
         event_outbox_set_msg_id(entry.seq, msg_id, conn_epoch);
         ESP_LOGI(TAG, "Event drain: published seq=%" PRIu32 " msg_id=%d type=%s",
                  entry.seq, msg_id, event_type_to_str(entry.event_type));
+
+        /* Restart from position 0: a concurrent PUBACK may have popped the
+         * entry we just published (or an earlier one), shifting positions. */
+        i = 0;
     }
 
     xSemaphoreGive(s_drain_mutex);

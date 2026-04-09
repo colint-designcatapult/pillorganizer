@@ -65,7 +65,9 @@ void mqtt_wrapper_init(void)
 }
 
 esp_err_t mqtt_wrapper_connect(const mqtt_wrapper_config_t* config) {
-    configASSERT(s_client_mutex != NULL); /* mqtt_wrapper_init() must be called first */
+    /* Lazily initialise the module so call sites that do not call
+     * mqtt_wrapper_init() explicitly (e.g., fleet provisioning) still work. */
+    mqtt_wrapper_init();
 
     xSemaphoreTake(s_client_mutex, portMAX_DELAY);
     bool already_init = (mqtt_client != NULL);
@@ -158,6 +160,9 @@ esp_err_t mqtt_wrapper_disconnect(void) {
 esp_err_t mqtt_wrapper_publish_with_id(const char* topic, const char* payload, int len, int qos, int retain, int* out_msg_id) {
     if (!mqtt_wrapper_is_connected()) return ESP_ERR_INVALID_STATE;
 
+    /* Guard against calls made before mqtt_wrapper_init(). */
+    if (s_client_mutex == NULL) return ESP_ERR_INVALID_STATE;
+
     /* Snapshot the handle under the mutex to close the TOCTOU window between
      * the is_connected() check and the actual publish call. */
     xSemaphoreTake(s_client_mutex, portMAX_DELAY);
@@ -177,6 +182,9 @@ esp_err_t mqtt_wrapper_publish_with_id(const char* topic, const char* payload, i
 esp_err_t mqtt_wrapper_publish(const char* topic, const char* payload, int len, int qos, int retain) {
     if (!mqtt_wrapper_is_connected()) return ESP_ERR_INVALID_STATE;
 
+    /* Guard against calls made before mqtt_wrapper_init(). */
+    if (s_client_mutex == NULL) return ESP_ERR_INVALID_STATE;
+
     xSemaphoreTake(s_client_mutex, portMAX_DELAY);
     esp_mqtt_client_handle_t client = mqtt_client;
     xSemaphoreGive(s_client_mutex);
@@ -193,6 +201,9 @@ esp_err_t mqtt_wrapper_subscribe(const char* topic, int qos, int* out_id)
     }
 
     if (!mqtt_wrapper_is_connected()) return ESP_ERR_INVALID_STATE;
+
+    /* Guard against calls made before mqtt_wrapper_init(). */
+    if (s_client_mutex == NULL) return ESP_ERR_INVALID_STATE;
 
     xSemaphoreTake(s_client_mutex, portMAX_DELAY);
     esp_mqtt_client_handle_t client = mqtt_client;

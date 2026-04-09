@@ -12,6 +12,10 @@
 #define SERIAL_NUMBER_SIZE 6
 #define SERIAL_NUMBER_STR_SIZE 13
 
+/* Number of pill bins (doors) on the device. All arrays and bounds checks
+ * that depend on the physical door count must use this constant. */
+#define DEVICE_NUM_BINS 14
+
 void devcfg_init();
 void devcfg_get_serial_number(uint8_t sn[SERIAL_NUMBER_SIZE], size_t size);
 void devcfg_get_serial_number_str(char serial_number[SERIAL_NUMBER_STR_SIZE], size_t size);
