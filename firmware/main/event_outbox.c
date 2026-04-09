@@ -3,8 +3,6 @@
 #include <string.h>
 #include <inttypes.h>
 #include <esp_log.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/semphr.h>
 
 #define TAG "EVENT_OUTBOX"
 
@@ -35,11 +33,8 @@ static RTC_DATA_ATTR rtc_relative_time_t  s_dirty_since;
  * uint64_t ensures the counter never wraps in practice. */
 static uint64_t s_conn_epoch = 0;
 
-/* Mutex lives in normal DRAM – recreated on every boot. */
-static SemaphoreHandle_t s_mutex = NULL;
-
 /* ------------------------------------------------------------------ */
-/*  Internal helpers (called with mutex already held)                  */
+/*  Internal helpers                                                    */
 /* ------------------------------------------------------------------ */
 
 static void save_to_nvs_locked(void)
@@ -83,7 +78,6 @@ static void refresh_dirty_state_locked(void)
 
 /*
  * Pop a single front entry that is known to be delivered.
- * Caller must hold the mutex.
  */
 static void pop_front_locked(void)
 {
@@ -96,9 +90,7 @@ static void pop_front_locked(void)
     }
 }
 
-/* Reset msg_id on every undelivered entry and advance the connection epoch.
- * Caller is responsible for locking: either hold s_mutex, or call before
- * the FreeRTOS scheduler starts (e.g. from event_outbox_init). */
+/* Reset msg_id on every undelivered entry and advance the connection epoch. */
 static void reset_inflight_nolock(void)
 {
     s_conn_epoch++;
@@ -116,9 +108,6 @@ static void reset_inflight_nolock(void)
 
 void event_outbox_init(void)
 {
-    s_mutex = xSemaphoreCreateMutex();
-    configASSERT(s_mutex != NULL);
-
     if (s_magic == EVENT_OUTBOX_MAGIC) {
         /* s_magic matches, so the RTC domain was powered during deep sleep.
          * Still validate head/count: a brownout could corrupt those fields
@@ -130,8 +119,7 @@ void event_outbox_init(void)
         if (rtc_valid) {
             ESP_LOGI(TAG, "Restored from RTC memory (%d entries)", s_queue.count);
             /* MQTT has disconnected since last wake, so any in-flight
-             * msg_ids are stale and must be cleared.
-             * Called before tasks start so no mutex is needed. */
+             * msg_ids are stale and must be cleared. */
             reset_inflight_nolock();
             return;
         }
@@ -187,10 +175,7 @@ esp_err_t event_outbox_push(rtc_utc_timestamp_ms timestamp,
                              int bin_id,
                              int flags)
 {
-    xSemaphoreTake(s_mutex, portMAX_DELAY);
-
     if (s_queue.count >= EVENT_OUTBOX_MAX_ENTRIES) {
-        xSemaphoreGive(s_mutex);
         ESP_LOGE(TAG, "Outbox full!");
         return ESP_ERR_NO_MEM;
     }
@@ -216,44 +201,33 @@ esp_err_t event_outbox_push(rtc_utc_timestamp_ms timestamp,
     ESP_LOGI(TAG, "Pushed seq=%" PRIu32 " type=%d bin=%d count=%d",
              e->seq, event_type, bin_id, s_queue.count);
 
-    xSemaphoreGive(s_mutex);
     return ESP_OK;
 }
 
 esp_err_t event_outbox_get(int pos, event_outbox_entry_t *out_entry)
 {
-    xSemaphoreTake(s_mutex, portMAX_DELAY);
-
     if (pos < 0 || pos >= s_queue.count) {
-        xSemaphoreGive(s_mutex);
         return ESP_ERR_NOT_FOUND;
     }
 
     int idx = (s_queue.head + pos) % EVENT_OUTBOX_MAX_ENTRIES;
     *out_entry = s_queue.entries[idx];
 
-    xSemaphoreGive(s_mutex);
     return ESP_OK;
 }
 
 uint64_t event_outbox_get_conn_epoch(void)
 {
-    xSemaphoreTake(s_mutex, portMAX_DELAY);
-    uint64_t epoch = s_conn_epoch;
-    xSemaphoreGive(s_mutex);
-    return epoch;
+    return s_conn_epoch;
 }
 
 esp_err_t event_outbox_set_msg_id(uint32_t seq, int msg_id, uint64_t conn_epoch)
 {
-    xSemaphoreTake(s_mutex, portMAX_DELAY);
-
     /* If the epoch has advanced, a disconnect fired between the publish
      * call and this write.  The entry's msg_id was already reset to -1 by
      * reset_inflight; writing the now-stale id would make the entry look
      * in-flight and block future delivery. */
     if (s_conn_epoch != conn_epoch) {
-        xSemaphoreGive(s_mutex);
         return ESP_ERR_INVALID_STATE;
     }
 
@@ -261,19 +235,15 @@ esp_err_t event_outbox_set_msg_id(uint32_t seq, int msg_id, uint64_t conn_epoch)
         int idx = (s_queue.head + i) % EVENT_OUTBOX_MAX_ENTRIES;
         if (s_queue.entries[idx].valid && s_queue.entries[idx].seq == seq) {
             s_queue.entries[idx].msg_id = msg_id;
-            xSemaphoreGive(s_mutex);
             return ESP_OK;
         }
     }
 
-    xSemaphoreGive(s_mutex);
     return ESP_ERR_NOT_FOUND;
 }
 
 esp_err_t event_outbox_ack(int msg_id)
 {
-    xSemaphoreTake(s_mutex, portMAX_DELAY);
-
     /* Find the in-flight entry with this msg_id and mark it delivered. */
     bool found = false;
     for (int i = 0; i < s_queue.count; i++) {
@@ -290,7 +260,6 @@ esp_err_t event_outbox_ack(int msg_id)
     }
 
     if (!found) {
-        xSemaphoreGive(s_mutex);
         return ESP_ERR_NOT_FOUND;
     }
 
@@ -303,36 +272,27 @@ esp_err_t event_outbox_ack(int msg_id)
 
     refresh_dirty_state_locked();
 
-    xSemaphoreGive(s_mutex);
     return ESP_OK;
 }
 
 void event_outbox_reset_inflight(void)
 {
-    xSemaphoreTake(s_mutex, portMAX_DELAY);
     reset_inflight_nolock();
-    xSemaphoreGive(s_mutex);
 }
 
 int event_outbox_count(void)
 {
-    xSemaphoreTake(s_mutex, portMAX_DELAY);
-    int count = s_queue.count;
-    xSemaphoreGive(s_mutex);
-    return count;
+    return s_queue.count;
 }
 
 bool event_outbox_is_full(void)
 {
-    return event_outbox_count() >= EVENT_OUTBOX_MAX_ENTRIES;
+    return s_queue.count >= EVENT_OUTBOX_MAX_ENTRIES;
 }
 
 void event_outbox_tick(void)
 {
-    xSemaphoreTake(s_mutex, portMAX_DELAY);
-
     if (s_dirty_since == 0 || s_queue.count == 0) {
-        xSemaphoreGive(s_mutex);
         return;
     }
 
@@ -343,7 +303,5 @@ void event_outbox_tick(void)
         ESP_LOGI(TAG, "Persisting outbox after %lld ms", age);
         save_to_nvs_locked();
     }
-
-    xSemaphoreGive(s_mutex);
 }
 

@@ -21,11 +21,10 @@
  *
  * A stable per-entry `seq` number is used as a handle when associating an
  * MQTT msg_id with an entry after publishing, making the assignment robust
- * against concurrent queue modifications between the publish call and the
- * set_msg_id call.
+ * against queue modifications between the publish call and the set_msg_id call.
  *
- * Thread-safety: all public functions are protected by an internal mutex and
- * are safe to call from the supervisor task AND the MQTT event-handler task.
+ * Thread-safety: NOT thread-safe.  All public functions MUST be called
+ * exclusively from the supervisor event-loop task.
  */
 
 #define EVENT_OUTBOX_MAX_ENTRIES 100

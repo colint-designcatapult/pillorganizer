@@ -52,7 +52,8 @@ typedef enum {
     EVENT_RELOAD_TIMEOUT,
     EVENT_RELOAD_COMPLETE,
     EVENT_BATTERY_CHANGE,
-    EVENT_RESET_PENDING_BINS
+    EVENT_RESET_PENDING_BINS,
+    EVENT_MQTT_PUBACK     /* payload = (intptr_t)(int) client-assigned packet id */
 } supervisor_event_id_t;
 
 typedef struct {
@@ -68,9 +69,12 @@ static_assert(sizeof(supervisor_event_door_t) <= sizeof(intptr_t));
 /* ----- OPERATIONAL STATE ------ */
 
 typedef enum {
-    BIN_FLAG_NONE       = 0,
-    BIN_FLAG_OPEN       = (1 << 0),
-    BIN_FLAG_ON_TIME    = (1 << 1)
+    BIN_FLAG_NONE                = 0,
+    BIN_FLAG_OPEN                = (1 << 0),
+    BIN_FLAG_ON_TIME             = (1 << 1),
+    /* Set when EVENT_DOOR_LEFT_OPEN has already been submitted for the
+     * current open cycle; cleared when the door opens again. */
+    BIN_FLAG_LEFT_OPEN_NOTIFIED  = (1 << 2)
 } bin_state_flags_t;
 
 typedef struct {

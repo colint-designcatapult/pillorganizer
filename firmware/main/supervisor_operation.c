@@ -1,14 +1,16 @@
 #include "supervisor_operation.h"
 #include <string.h>
 #include <esp_log.h>
+#include <inttypes.h>
 #include "mqtt.h"
+#include "mqtt_wrapper.h"
 #include "device_config.h"
 #include "ledc.h"
 #include "network.h"
 #include "shadow_state.h"
 #include "event_outbox.h"
 #include <stdatomic.h>
-#include <freertos/timers.h>
+#include <cJSON.h>
 
 #define TAG "SUPERVISOR_OPERATION"
 #define DOOR_LEFT_OPEN_TIMEOUT_MS 60000  /* 60 seconds */
@@ -29,9 +31,6 @@ static device_state_t s_device_state;
 
 static int MISSED_THRESHOLD_SEC = 15 * 60;  // 15 minutes (15 * 60 seconds)
 static int RELOAD_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes (5 * 60 seconds * 1000 ms)
-
-/* Door left open timers (one per door). */
-static TimerHandle_t s_door_left_open_timers[DEVICE_NUM_BINS] = {0};
 
 static const char* get_day_of_week_str(device_schedule_day_of_week_t day) {
     switch(day) {
@@ -217,6 +216,115 @@ static esp_err_t update_device_state()
 
     /* Notify supervisor of state change */
     return supervisor_submit_event(EVENT_STATE_CHANGED);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Event outbox drain (runs exclusively on the supervisor task)       */
+/* ------------------------------------------------------------------ */
+
+static const char* event_type_to_str(device_event_type_t evt)
+{
+    switch (evt) {
+        case DEVEVT_DOOR_OPENED:    return "DOOR_OPENED";
+        case DEVEVT_DOOR_CLOSED:    return "DOOR_CLOSED";
+        case DEVEVT_DOOR_LEFT_OPEN: return "DOOR_LEFT_OPEN";
+        case DEVEVT_TAKEN:          return "TAKEN";
+        case DEVEVT_MISSED:         return "MISSED";
+        case DEVEVT_TAKE_NOW:       return "TAKE_NOW";
+        case DEVEVT_RELOAD_START:   return "RELOAD_START";
+        case DEVEVT_RELOAD_END:     return "RELOAD_END";
+        case DEVEVT_ACTION_TIMEOUT: return "RELOAD_TIMEOUT";
+        case DEVEVT_ERROR:          return "ERROR";
+        default:                    return "UNKNOWN";
+    }
+}
+
+/*
+ * Iterate the outbox and publish every entry that has not yet been assigned an
+ * MQTT packet ID.  Called exclusively from the supervisor event loop so no
+ * locking is needed.
+ */
+static void drain_event_outbox(void)
+{
+    if (!mqtt_wrapper_is_connected()) {
+        return;
+    }
+
+    char thing_name[128];
+    if (!devcfg_get_thing_name_str(thing_name, sizeof(thing_name))) {
+        ESP_LOGE(TAG, "Could not retrieve thing name for event drain");
+        return;
+    }
+
+    char topic[256];
+    snprintf(topic, sizeof(topic), "healthe/things/%s/event", thing_name);
+
+    /* Snapshot the connection epoch before any publish so that a disconnect
+     * received while we are draining causes set_msg_id to discard stale IDs. */
+    uint64_t conn_epoch = event_outbox_get_conn_epoch();
+
+    /* Load persistent device state once; reused for every bin entry. */
+    device_persistent_state_t dev_state;
+    bool dev_state_loaded = (devcfg_get_device_state(&dev_state) == ESP_OK);
+
+    int i = 0;
+    while (true) {
+        event_outbox_entry_t entry;
+        esp_err_t get_err = event_outbox_get(i, &entry);
+        if (get_err == ESP_ERR_NOT_FOUND) {
+            break;
+        }
+        if (get_err != ESP_OK) {
+            return;
+        }
+
+        /* Already delivered — never republish. */
+        if (entry.delivered) { i++; continue; }
+        /* Already in-flight, awaiting PUBACK — skip. */
+        if (entry.msg_id >= 0) { i++; continue; }
+
+        cJSON *root = cJSON_CreateObject();
+        if (!root) return;
+
+        cJSON_AddNumberToObject(root, "timestamp",  (double)entry.timestamp);
+        cJSON_AddStringToObject(root, "event_type", event_type_to_str(entry.event_type));
+        if (entry.bin_id != EVENT_OUTBOX_BIN_ID_NONE) {
+            cJSON_AddNumberToObject(root, "bin_id", entry.bin_id);
+            if (dev_state_loaded &&
+                entry.bin_id < DEVICE_NUM_BINS &&
+                dev_state.bins[entry.bin_id].schedule_id[0] != '\0') {
+                cJSON_AddStringToObject(root, "schedule_id",
+                                        dev_state.bins[entry.bin_id].schedule_id);
+            }
+        }
+        if (entry.flags != 0) {
+            cJSON_AddNumberToObject(root, "flags", entry.flags);
+        }
+
+        char *json_str = cJSON_PrintUnformatted(root);
+        cJSON_Delete(root);
+        if (!json_str) break;
+
+        int msg_id = -1;
+        esp_err_t err = mqtt_wrapper_publish_with_id(topic, json_str,
+                                                      strlen(json_str),
+                                                      /*qos=*/1, /*retain=*/0,
+                                                      &msg_id);
+        free(json_str);
+
+        if (err != ESP_OK || msg_id < 0) {
+            ESP_LOGW(TAG, "Event drain: publish failed for seq=%" PRIu32 " (%d)", entry.seq, err);
+            return;  /* outgoing buffer likely full; retry on next drain call */
+        }
+
+        event_outbox_set_msg_id(entry.seq, msg_id, conn_epoch);
+        ESP_LOGI(TAG, "Event drain: published seq=%" PRIu32 " msg_id=%d type=%s",
+                 entry.seq, msg_id, event_type_to_str(entry.event_type));
+
+        /* Restart from 0: supervisor processed a PUBACK since the last publish,
+         * popping the front entry and shifting all positions. */
+        i = 0;
+    }
 }
 
 static bool should_schedule_bin(const bin_state_t* bin_state, time_t current_sec)
@@ -744,21 +852,6 @@ static bool should_mark_taken(bin_state_t* bin_state)
     return false;
 }
 
-/* Timer callback: fires when a door has been left open for DOOR_LEFT_OPEN_TIMEOUT_MS */
-static void door_left_open_timer_callback(TimerHandle_t xTimer)
-{
-    int door_id = (int)(intptr_t)pvTimerGetTimerID(xTimer);
-    esp_err_t err;
-
-    ESP_LOGI(TAG, "Door %d left open timeout", door_id);
-    err = supervisor_submit_event_block(EVENT_DOOR_LEFT_OPEN, (intptr_t)door_id, 0);
-    if (err == ESP_ERR_NO_MEM) {
-        ESP_LOGW(TAG, "Dropping EVENT_DOOR_LEFT_OPEN for door %d: supervisor queue full", door_id);
-    } else if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to submit EVENT_DOOR_LEFT_OPEN for door %d: %s", door_id, esp_err_to_name(err));
-    }
-}
-
 static void door_light_effect(int door_id, bool open, bool correct)
 {
     led_task_param_t fw_param = {0};
@@ -782,31 +875,14 @@ static void handle_door_open(int door_id)
     bin_state->opened_at = app_rtc_get_relative_timestamp();
 
     bin_state->flags |= BIN_FLAG_OPEN;
+    /* Clear the left-open notification flag so the tick can fire again if the
+     * door is closed and re-opened. */
+    bin_state->flags &= ~BIN_FLAG_LEFT_OPEN_NOTIFIED;
     if (taken_event) {
         bin_state->flags |= BIN_FLAG_ON_TIME;
     }
 
     update_device_state();
-
-    /* Start or restart the door left open timer */
-    if (door_id >= 0 && door_id < DEVICE_NUM_BINS) {
-        /* Create timer on first use */
-        if (s_door_left_open_timers[door_id] == NULL) {
-            s_door_left_open_timers[door_id] = xTimerCreate(
-                "door_left_open",
-                pdMS_TO_TICKS(DOOR_LEFT_OPEN_TIMEOUT_MS),
-                pdFALSE,  /* auto-reload: false (one-shot) */
-                (void*)(intptr_t)door_id,  /* timer ID = door_id */
-                door_left_open_timer_callback
-            );
-        }
-        
-        if (s_door_left_open_timers[door_id] != NULL) {
-            /* Stop and restart the timer */
-            xTimerStop(s_door_left_open_timers[door_id], 0);
-            xTimerStart(s_door_left_open_timers[door_id], 0);
-        }
-    }
 }
 
 static void handle_door_close(int door_id)
@@ -823,6 +899,7 @@ static void handle_door_close(int door_id)
 
     bin_state->flags &= ~BIN_FLAG_OPEN;
     bin_state->flags &= ~BIN_FLAG_ON_TIME;
+    bin_state->flags &= ~BIN_FLAG_LEFT_OPEN_NOTIFIED;
 
     if (taken_event) {
         // Fire event
@@ -830,11 +907,6 @@ static void handle_door_close(int door_id)
     }
 
     update_device_state();
-
-    /* Cancel the door left open timer */
-    if (door_id >= 0 && door_id < DEVICE_NUM_BINS && s_door_left_open_timers[door_id] != NULL) {
-        xTimerStop(s_door_left_open_timers[door_id], 0);
-    }
 }
 
 static void handle_reload_fsm(const supervisor_event_t* event)
@@ -1039,7 +1111,7 @@ void supervisor_operation_event(const supervisor_event_t* event)
                 mqtt_publish_device_state(&s_device_state);
                 shadow_state_on_connect();
                 /* Drain any events that accumulated before MQTT connected. */
-                mqtt_drain_event_outbox();
+                drain_event_outbox();
                 s_state = STATE_MQTT_CONNECTED;
             }
             break;
@@ -1066,7 +1138,7 @@ void supervisor_operation_event(const supervisor_event_t* event)
                 print_state(&s_device_state);            
                 ESP_ERROR_CHECK(mqtt_publish_device_state(&s_device_state));
                 /* Drain any newly pushed outbox events. */
-                mqtt_drain_event_outbox();
+                drain_event_outbox();
             }
 #if CONFIG_FIRMWARE_ENGINEERING
             else if (event->id == EVENT_RESET_PENDING_BINS) {
@@ -1089,7 +1161,15 @@ void supervisor_operation_event(const supervisor_event_t* event)
         network_reconnect();
     } else if (event->id == EVENT_MQTT_DISCONNECTED) {
         ESP_LOGW(TAG, "Disconnected from MQTT");
+        /* Reset all in-flight packet IDs so events are republished on reconnect. */
+        event_outbox_reset_inflight();
         s_state = STATE_CONNECTING_MQTT;
+    } else if (event->id == EVENT_MQTT_PUBACK) {
+        /* MQTT QoS-1 acknowledgement: mark the entry delivered and drain. */
+        int msg_id = (int)(intptr_t)event->payload;
+        if (event_outbox_ack(msg_id) == ESP_OK) {
+            drain_event_outbox();
+        }
     }
 }
 
@@ -1101,6 +1181,29 @@ void supervisor_operation_tick()
             app_rtc_get_relative_timestamp());
         if (dur > RELOAD_TIMEOUT_MS) {
             ESP_ERROR_CHECK(supervisor_submit_event(EVENT_RELOAD_TIMEOUT));
+        }
+    }
+
+    /* Check for doors that have been left open past the threshold. */
+    rtc_relative_time_t now = app_rtc_get_relative_timestamp();
+    for (int i = 0; i < DEVICE_NUM_BINS; i++) {
+        bin_state_t* bin = &s_device_state.bins[i];
+        if ((bin->flags & BIN_FLAG_OPEN) &&
+            !(bin->flags & BIN_FLAG_LEFT_OPEN_NOTIFIED) &&
+            bin->opened_at > 0) {
+            int64_t dur = app_rtc_calc_duration_ms(bin->opened_at, now);
+            if (dur >= DOOR_LEFT_OPEN_TIMEOUT_MS) {
+                ESP_LOGI(TAG, "Door %d left open for %lld ms", i, dur);
+                esp_err_t err = supervisor_submit_event_block(EVENT_DOOR_LEFT_OPEN, (intptr_t)i, 0);
+                if (err == ESP_OK || err == ESP_ERR_NO_MEM) {
+                    /* Mark notified even on queue-full: avoids flooding the log
+                     * on every tick.  The event will fire again after door re-open. */
+                    bin->flags |= BIN_FLAG_LEFT_OPEN_NOTIFIED;
+                    if (err == ESP_ERR_NO_MEM) {
+                        ESP_LOGW(TAG, "Dropping EVENT_DOOR_LEFT_OPEN for door %d: supervisor queue full", i);
+                    }
+                }
+            }
         }
     }
 
