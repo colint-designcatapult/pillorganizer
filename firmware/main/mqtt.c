@@ -8,7 +8,7 @@
 #include <inttypes.h>
 #include <mqtt_client.h>
 #include <cJSON.h>
-#include <stdatomic.h>
+#include <freertos/semphr.h>
 
 
 #define TAG "MQTT"
@@ -16,9 +16,9 @@
 static const char* s_cert_pem = NULL;
 static const char* s_key_pem = NULL;
 
-/* Guard flag: prevent concurrent mqtt_drain_event_outbox() calls from
+/* Mutex: prevent concurrent mqtt_drain_event_outbox() calls from
  * supervisor context and MQTT event handler context. */
-static atomic_bool s_drain_in_progress = ATOMIC_VAR_INIT(false);
+static SemaphoreHandle_t s_drain_mutex = NULL;
 
 static void cleanup_certs()
 {
@@ -58,20 +58,19 @@ static const char* event_type_to_str(device_event_type_t evt)
 void mqtt_drain_event_outbox(void)
 {
     /* Guard against concurrent drain calls from supervisor and MQTT event handler. */
-    bool expected = false;
-    if (!atomic_compare_exchange_strong(&s_drain_in_progress, &expected, true)) {
+    if (s_drain_mutex == NULL || xSemaphoreTake(s_drain_mutex, 0) != pdTRUE) {
         return;  /* Drain already in progress; skip */
     }
 
     if (!mqtt_wrapper_is_connected()) {
-        atomic_store(&s_drain_in_progress, false);
+        xSemaphoreGive(s_drain_mutex);
         return;
     }
 
     char thing_name[128];
     if (!devcfg_get_thing_name_str(thing_name, sizeof(thing_name))) {
         ESP_LOGE(TAG, "Could not retrieve thing name for event drain");
-        atomic_store(&s_drain_in_progress, false);
+        xSemaphoreGive(s_drain_mutex);
         return;
     }
 
@@ -87,7 +86,7 @@ void mqtt_drain_event_outbox(void)
     for (int i = 0; i < count; i++) {
         event_outbox_entry_t entry;
         if (event_outbox_get(i, &entry) != ESP_OK) {
-            atomic_store(&s_drain_in_progress, false);
+            xSemaphoreGive(s_drain_mutex);
             return;
         }
 
@@ -98,7 +97,7 @@ void mqtt_drain_event_outbox(void)
 
         cJSON *root = cJSON_CreateObject();
         if (!root) {
-            atomic_store(&s_drain_in_progress, false);
+            xSemaphoreGive(s_drain_mutex);
             return;
         }
 
@@ -132,7 +131,7 @@ void mqtt_drain_event_outbox(void)
 
         if (err != ESP_OK || msg_id < 0) {
             ESP_LOGW(TAG, "Event drain: publish failed for seq=%" PRIu32 " (%d)", entry.seq, err);
-            atomic_store(&s_drain_in_progress, false);
+            xSemaphoreGive(s_drain_mutex);
             return;  /* outgoing buffer likely full; retry on next drain call */
         }
 
@@ -145,7 +144,7 @@ void mqtt_drain_event_outbox(void)
                  entry.seq, msg_id, event_type_to_str(entry.event_type));
     }
 
-    atomic_store(&s_drain_in_progress, false);
+    xSemaphoreGive(s_drain_mutex);
 }
 
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
@@ -185,6 +184,15 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 esp_err_t mqtt_init()
 {
+    /* Create mutex if not already created */
+    if (s_drain_mutex == NULL) {
+        s_drain_mutex = xSemaphoreCreateMutex();
+        if (s_drain_mutex == NULL) {
+            ESP_LOGE(TAG, "Failed to create drain mutex");
+            return ESP_ERR_NO_MEM;
+        }
+    }
+
     mqtt_wrapper_init();
 
     // Sanity check: device must have a permanent identity
