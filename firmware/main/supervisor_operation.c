@@ -715,8 +715,15 @@ static bool should_mark_taken(bin_state_t* bin_state)
 static void door_left_open_timer_callback(TimerHandle_t xTimer)
 {
     int door_id = (int)pvTimerGetTimerID(xTimer);
+    esp_err_t err;
+
     ESP_LOGI(TAG, "Door %d left open timeout", door_id);
-    supervisor_submit_event_block(EVENT_DOOR_LEFT_OPEN, (intptr_t)door_id, 100);
+    err = supervisor_submit_event_block(EVENT_DOOR_LEFT_OPEN, (intptr_t)door_id, 0);
+    if (err == ESP_ERR_NO_MEM) {
+        ESP_LOGW(TAG, "Dropping EVENT_DOOR_LEFT_OPEN for door %d: supervisor queue full", door_id);
+    } else if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to submit EVENT_DOOR_LEFT_OPEN for door %d: %s", door_id, esp_err_to_name(err));
+    }
 }
 
 static void door_light_effect(int door_id, bool open, bool correct)
