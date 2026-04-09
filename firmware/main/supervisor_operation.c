@@ -714,7 +714,7 @@ static bool should_mark_taken(bin_state_t* bin_state)
 /* Timer callback: fires when a door has been left open for DOOR_LEFT_OPEN_TIMEOUT_MS */
 static void door_left_open_timer_callback(TimerHandle_t xTimer)
 {
-    int door_id = (int)pvTimerGetTimerID(xTimer);
+    int door_id = (int)(intptr_t)pvTimerGetTimerID(xTimer);
     esp_err_t err;
 
     ESP_LOGI(TAG, "Door %d left open timeout", door_id);
@@ -763,7 +763,7 @@ static void handle_door_open(int door_id)
                 "door_left_open",
                 pdMS_TO_TICKS(DOOR_LEFT_OPEN_TIMEOUT_MS),
                 pdFALSE,  /* auto-reload: false (one-shot) */
-                (void*)door_id,  /* timer ID = door_id */
+                (void*)(intptr_t)door_id,  /* timer ID = door_id */
                 door_left_open_timer_callback
             );
         }

@@ -8,12 +8,17 @@
 #include <inttypes.h>
 #include <mqtt_client.h>
 #include <cJSON.h>
+#include <stdatomic.h>
 
 
 #define TAG "MQTT"
 
 static const char* s_cert_pem = NULL;
 static const char* s_key_pem = NULL;
+
+/* Guard flag: prevent concurrent mqtt_drain_event_outbox() calls from
+ * supervisor context and MQTT event handler context. */
+static atomic_bool s_drain_in_progress = ATOMIC_VAR_INIT(false);
 
 static void cleanup_certs()
 {
@@ -52,11 +57,21 @@ static const char* event_type_to_str(device_event_type_t evt)
 
 void mqtt_drain_event_outbox(void)
 {
-    if (!mqtt_wrapper_is_connected()) return;
+    /* Guard against concurrent drain calls from supervisor and MQTT event handler. */
+    bool expected = false;
+    if (!atomic_compare_exchange_strong(&s_drain_in_progress, &expected, true)) {
+        return;  /* Drain already in progress; skip */
+    }
+
+    if (!mqtt_wrapper_is_connected()) {
+        atomic_store(&s_drain_in_progress, false);
+        return;
+    }
 
     char thing_name[128];
     if (!devcfg_get_thing_name_str(thing_name, sizeof(thing_name))) {
         ESP_LOGE(TAG, "Could not retrieve thing name for event drain");
+        atomic_store(&s_drain_in_progress, false);
         return;
     }
 
@@ -71,7 +86,10 @@ void mqtt_drain_event_outbox(void)
     int count = event_outbox_count();
     for (int i = 0; i < count; i++) {
         event_outbox_entry_t entry;
-        if (event_outbox_get(i, &entry) != ESP_OK) break;
+        if (event_outbox_get(i, &entry) != ESP_OK) {
+            atomic_store(&s_drain_in_progress, false);
+            return;
+        }
 
         /* Already delivered — never republish from the drain loop. */
         if (entry.delivered) continue;
@@ -79,7 +97,10 @@ void mqtt_drain_event_outbox(void)
         if (entry.msg_id >= 0) continue;
 
         cJSON *root = cJSON_CreateObject();
-        if (!root) break;
+        if (!root) {
+            atomic_store(&s_drain_in_progress, false);
+            return;
+        }
 
         cJSON_AddNumberToObject(root, "timestamp",  (double)entry.timestamp);
         cJSON_AddStringToObject(root, "event_type", event_type_to_str(entry.event_type));
@@ -111,7 +132,8 @@ void mqtt_drain_event_outbox(void)
 
         if (err != ESP_OK || msg_id < 0) {
             ESP_LOGW(TAG, "Event drain: publish failed for seq=%" PRIu32 " (%d)", entry.seq, err);
-            break; /* outgoing buffer likely full; retry on next drain call */
+            atomic_store(&s_drain_in_progress, false);
+            return;  /* outgoing buffer likely full; retry on next drain call */
         }
 
         /* Record the client-assigned packet ID against the entry using its
@@ -122,6 +144,8 @@ void mqtt_drain_event_outbox(void)
         ESP_LOGI(TAG, "Event drain: published seq=%" PRIu32 " msg_id=%d type=%s",
                  entry.seq, msg_id, event_type_to_str(entry.event_type));
     }
+
+    atomic_store(&s_drain_in_progress, false);
 }
 
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
