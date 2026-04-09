@@ -8,8 +8,10 @@
 #include "shadow_state.h"
 #include "event_outbox.h"
 #include <stdatomic.h>
+#include <freertos/timers.h>
 
 #define TAG "SUPERVISOR_OPERATION"
+#define DOOR_LEFT_OPEN_TIMEOUT_MS 60000  /* 5 seconds for testing; change to 60000 for production */
 
 typedef enum {
     STATE_INIT,
@@ -27,6 +29,9 @@ static device_state_t s_device_state;
 
 static int MISSED_THRESHOLD_SEC = 15 * 60;  // 15 minutes (15 * 60 seconds)
 static int RELOAD_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes (5 * 60 seconds * 1000 ms)
+
+/* Door left open timers (one per door, max 14 doors) */
+static TimerHandle_t s_door_left_open_timers[14] = {0};
 
 static const char* get_day_of_week_str(device_schedule_day_of_week_t day) {
     switch(day) {
@@ -706,6 +711,14 @@ static bool should_mark_taken(bin_state_t* bin_state)
     return false;
 }
 
+/* Timer callback: fires when a door has been left open for DOOR_LEFT_OPEN_TIMEOUT_MS */
+static void door_left_open_timer_callback(TimerHandle_t xTimer)
+{
+    int door_id = (int)pvTimerGetTimerID(xTimer);
+    ESP_LOGI(TAG, "Door %d left open timeout", door_id);
+    supervisor_submit_event_block(EVENT_DOOR_LEFT_OPEN, (intptr_t)door_id, 100);
+}
+
 static void door_light_effect(int door_id, bool open, bool correct)
 {
     led_task_param_t fw_param = {0};
@@ -734,6 +747,26 @@ static void handle_door_open(int door_id)
     }
 
     update_device_state();
+
+    /* Start or restart the door left open timer */
+    if (door_id >= 0 && door_id < 14) {
+        /* Create timer on first use */
+        if (s_door_left_open_timers[door_id] == NULL) {
+            s_door_left_open_timers[door_id] = xTimerCreate(
+                "door_left_open",
+                pdMS_TO_TICKS(DOOR_LEFT_OPEN_TIMEOUT_MS),
+                pdFALSE,  /* auto-reload: false (one-shot) */
+                (void*)door_id,  /* timer ID = door_id */
+                door_left_open_timer_callback
+            );
+        }
+        
+        if (s_door_left_open_timers[door_id] != NULL) {
+            /* Stop and restart the timer */
+            xTimerStop(s_door_left_open_timers[door_id], 0);
+            xTimerStart(s_door_left_open_timers[door_id], 0);
+        }
+    }
 }
 
 static void handle_door_close(int door_id)
@@ -758,6 +791,10 @@ static void handle_door_close(int door_id)
 
     update_device_state();
 
+    /* Cancel the door left open timer */
+    if (door_id >= 0 && door_id < 14 && s_door_left_open_timers[door_id] != NULL) {
+        xTimerStop(s_door_left_open_timers[door_id], 0);
+    }
 }
 
 static void handle_reload_fsm(const supervisor_event_t* event)
@@ -838,6 +875,10 @@ static void handle_device_event_bin(device_event_type_t event_type, int bin_id)
         case DEVEVT_DOOR_CLOSED:
             handle_door_close(devev.bin_id);
             break;
+        case DEVEVT_DOOR_LEFT_OPEN:
+            /* Door was left open too long; update state to trigger drain and persist */
+            ESP_ERROR_CHECK(update_device_state());
+            break;
         case DEVEVT_TAKEN:
             s_device_state.bins[devev.bin_id].status = TAKEN;
             s_device_state.bins[devev.bin_id].event_time = devev.timestamp;
@@ -862,6 +903,9 @@ static void handle_device_event(const supervisor_event_t* ev)
             break;
         case EVENT_DOOR_CLOSED:
             handle_device_event_bin(DEVEVT_DOOR_CLOSED, (int)ev->payload);
+            break;
+        case EVENT_DOOR_LEFT_OPEN:
+            handle_device_event_bin(DEVEVT_DOOR_LEFT_OPEN, (int)ev->payload);
             break;
         case EVENT_BIN_TAKEN:
             handle_device_event_bin(DEVEVT_TAKEN, (int)ev->payload);
