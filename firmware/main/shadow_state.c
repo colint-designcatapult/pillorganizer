@@ -317,6 +317,8 @@ cJSON* serialize_device_schedule(const device_schedule_t* sched) {
         cJSON_AddNullToObject(root, "id");
         cJSON_AddNullToObject(root, "takeEffect");
         cJSON_AddNullToObject(root, "schedule");
+        cJSON_AddNullToObject(root, "timezoneIana");
+        cJSON_AddNullToObject(root, "timezonePosix");
         return root; 
     }
 
@@ -389,6 +391,19 @@ cJSON* serialize_device_schedule(const device_schedule_t* sched) {
         } else {
             cJSON_AddNullToObject(schedule_obj, "bins");
         }
+    }
+
+    // 5. Timezone fields
+    if (sched->timezone_iana[0] != '\0') {
+        cJSON_AddStringToObject(root, "timezoneIana", sched->timezone_iana);
+    } else {
+        cJSON_AddNullToObject(root, "timezoneIana");
+    }
+
+    if (sched->timezone_posix[0] != '\0') {
+        cJSON_AddStringToObject(root, "timezonePosix", sched->timezone_posix);
+    } else {
+        cJSON_AddNullToObject(root, "timezonePosix");
     }
 
     return root;
@@ -550,6 +565,30 @@ esp_err_t patch_schedule_from_delta(device_schedule_t* schedule, const char* del
                    tmp_bins,
                    tmp_bin_count * sizeof(device_bin_schedule_t));
         }
+    }
+
+    // 7. Parse timezoneIana if present
+    cJSON* tz_iana_item = cJSON_GetObjectItem(state, "timezoneIana");
+    if (cJSON_IsString(tz_iana_item) && tz_iana_item->valuestring != NULL) {
+        if (strlen(tz_iana_item->valuestring) >= TIMEZONE_IANA_SIZE) {
+            ESP_LOGW(TAG, "Rejecting schedule: timezoneIana too long (%d >= %d)",
+                     (int)strlen(tz_iana_item->valuestring), TIMEZONE_IANA_SIZE);
+            cJSON_Delete(root);
+            return ESP_ERR_INVALID_ARG;
+        }
+        snprintf(schedule->timezone_iana, TIMEZONE_IANA_SIZE, "%s", tz_iana_item->valuestring);
+    }
+
+    // 8. Parse timezonePosix if present
+    cJSON* tz_posix_item = cJSON_GetObjectItem(state, "timezonePosix");
+    if (cJSON_IsString(tz_posix_item) && tz_posix_item->valuestring != NULL) {
+        if (strlen(tz_posix_item->valuestring) >= TIMEZONE_POSIX_SIZE) {
+            ESP_LOGW(TAG, "Rejecting schedule: timezonePosix too long (%d >= %d)",
+                     (int)strlen(tz_posix_item->valuestring), TIMEZONE_POSIX_SIZE);
+            cJSON_Delete(root);
+            return ESP_ERR_INVALID_ARG;
+        }
+        snprintf(schedule->timezone_posix, TIMEZONE_POSIX_SIZE, "%s", tz_posix_item->valuestring);
     }
 
     // Clean up

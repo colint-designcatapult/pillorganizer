@@ -112,6 +112,9 @@ class DeviceAlertPopup extends StatelessWidget {
       case DeviceError.noRtcTime:
         iconData = PhosphorIconsFill.clockAfternoon;
         break;
+      case DeviceError.noTimezone:
+        iconData = PhosphorIconsFill.globe;
+        break;
       default:
         iconData = PhosphorIconsFill.warningCircle;
         break;
@@ -137,6 +140,8 @@ class DeviceAlertPopup extends StatelessWidget {
         return Icon(PhosphorIconsBold.warningCircle, color: Colors.black, size: 20.h);
       case DeviceError.noRtcTime:
         return Icon(PhosphorIconsBold.clockAfternoon, color: Colors.black, size: 20.h);
+      case DeviceError.noTimezone:
+        return Icon(PhosphorIconsBold.globe, color: Colors.black, size: 20.h);
       default:
         return Icon(PhosphorIconsBold.warningCircle, color: Colors.black, size: 20.h);
     }
@@ -156,6 +161,8 @@ class DeviceAlertPopup extends StatelessWidget {
         return AppLocalizations.of(context)!.noticeStateCorrupted;
       case DeviceError.noRtcTime:
         return AppLocalizations.of(context)!.noticeNoRtcTime;
+      case DeviceError.noTimezone:
+        return AppLocalizations.of(context)!.noticeNoTimezone;
       default:
         return AppLocalizations.of(context)!.noticeUnknownError;
     }
@@ -175,6 +182,8 @@ class DeviceAlertPopup extends StatelessWidget {
         return AppLocalizations.of(context)!.noticeStateCorruptedSubtitle;
       case DeviceError.noRtcTime:
         return AppLocalizations.of(context)!.noticeNoRtcTimeSubtitle;
+      case DeviceError.noTimezone:
+        return AppLocalizations.of(context)!.noticeNoTimezoneSubtitle;
       default:
         return AppLocalizations.of(context)!.noticeUnknownErrorSubtitle;
     }

@@ -1034,6 +1034,24 @@ abstract class AppLocalizations {
   /// **'Sync Time'**
   String get noticeNoRtcTimeAction;
 
+  /// No description provided for @noticeNoTimezone.
+  ///
+  /// In en, this message translates to:
+  /// **'No Timezone Configured'**
+  String get noticeNoTimezone;
+
+  /// No description provided for @noticeNoTimezoneSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your device does not have a timezone configured.'**
+  String get noticeNoTimezoneSubtitle;
+
+  /// No description provided for @noticeNoTimezoneAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Schedule'**
+  String get noticeNoTimezoneAction;
+
   /// No description provided for @noticeUnknownError.
   ///
   /// In en, this message translates to:
