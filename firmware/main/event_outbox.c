@@ -64,7 +64,7 @@ static void update_nvs_after_pop_locked(void)
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "NVS update after pop failed: 0x%x", err);
     } else {
-        ESP_LOGD(TAG, "NVS updated after pop (%d remaining)", s_queue.count);
+        ESP_LOGI(TAG, "NVS updated after pop (%d remaining)", s_queue.count);
     }
 }
 
@@ -213,7 +213,7 @@ esp_err_t event_outbox_push(rtc_utc_timestamp_ms timestamp,
         s_dirty_since = app_rtc_get_relative_timestamp();
     }
 
-    ESP_LOGD(TAG, "Pushed seq=%" PRIu32 " type=%d bin=%d count=%d",
+    ESP_LOGI(TAG, "Pushed seq=%" PRIu32 " type=%d bin=%d count=%d",
              e->seq, event_type, bin_id, s_queue.count);
 
     xSemaphoreGive(s_mutex);
@@ -281,7 +281,7 @@ esp_err_t event_outbox_ack(int msg_id)
         if (s_queue.entries[idx].valid && s_queue.entries[idx].msg_id == msg_id) {
             s_queue.entries[idx].delivered = true;
             found = true;
-            ESP_LOGD(TAG, "ACK seq=%" PRIu32 " msg_id=%d", s_queue.entries[idx].seq, msg_id);
+            ESP_LOGI(TAG, "ACK seq=%" PRIu32 " msg_id=%d", s_queue.entries[idx].seq, msg_id);
             break;
         }
     }
@@ -293,7 +293,7 @@ esp_err_t event_outbox_ack(int msg_id)
 
     /* Pop all consecutive delivered entries from the front. */
     while (s_queue.count > 0 && s_queue.entries[s_queue.head].delivered) {
-        ESP_LOGD(TAG, "Popping seq=%" PRIu32 ", remaining=%d",
+        ESP_LOGI(TAG, "Popping seq=%" PRIu32 ", remaining=%d",
                  s_queue.entries[s_queue.head].seq, s_queue.count - 1);
         pop_front_locked();
     }
