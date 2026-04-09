@@ -119,3 +119,11 @@ bool event_outbox_is_full(void);
  * power cycle.
  */
 void event_outbox_tick(void);
+
+/*
+ * Publish every pending outbox entry (msg_id == -1, not yet delivered) over
+ * MQTT QoS 1.  Stops at the first publish failure (e.g. not connected or
+ * broker send-buffer full) so it is safe to call unconditionally.
+ * Must be called from the supervisor event-loop task.
+ */
+void event_outbox_drain(void);

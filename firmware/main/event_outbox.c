@@ -1,4 +1,5 @@
 #include "event_outbox.h"
+#include "mqtt.h"
 #include "nvs_wrapper.h"
 #include <string.h>
 #include <inttypes.h>
@@ -302,6 +303,40 @@ void event_outbox_tick(void)
     if (age >= EVENT_OUTBOX_PERSIST_MS) {
         ESP_LOGI(TAG, "Persisting outbox after %lld ms", age);
         save_to_nvs_locked();
+    }
+}
+
+void event_outbox_drain(void)
+{
+    /* Snapshot the connection epoch once; used to discard stale msg_id writes
+     * if a disconnect races between mqtt_publish_event() and recording the id. */
+    uint64_t conn_epoch = s_conn_epoch;
+
+    int i = 0;
+    while (i < s_queue.count) {
+        int idx = (s_queue.head + i) % EVENT_OUTBOX_MAX_ENTRIES;
+        event_outbox_entry_t *e = &s_queue.entries[idx];
+
+        if (!e->valid || e->delivered || e->msg_id >= 0) {
+            i++;
+            continue;
+        }
+
+        int msg_id = -1;
+        esp_err_t err = mqtt_publish_event(e, &msg_id);
+        if (err != ESP_OK) {
+            /* Not connected, or broker send-buffer full; retry on next drain. */
+            return;
+        }
+
+        /* Record the packet ID only if no disconnect raced since we started. */
+        if (s_conn_epoch == conn_epoch) {
+            e->msg_id = msg_id;
+        }
+
+        /* Restart from the front: a PUBACK handler may have popped entries
+         * while we were inside mqtt_publish_event(), shifting all positions. */
+        i = 0;
     }
 }
 
