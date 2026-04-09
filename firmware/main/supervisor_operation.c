@@ -11,7 +11,7 @@
 #include <freertos/timers.h>
 
 #define TAG "SUPERVISOR_OPERATION"
-#define DOOR_LEFT_OPEN_TIMEOUT_MS 60000  /* 5 seconds for testing; change to 60000 for production */
+#define DOOR_LEFT_OPEN_TIMEOUT_MS 60000  /* 60 seconds */
 
 typedef enum {
     STATE_INIT,
