@@ -114,8 +114,6 @@ esp_err_t mqtt_wrapper_connect(const mqtt_wrapper_config_t* config) {
     esp_mqtt_client_handle_t new_client = esp_mqtt_client_init(&mqtt_cfg);
     if (!new_client) return ESP_FAIL;
 
-    app_data_callback = config->event_handler;
-
     esp_err_t err = esp_mqtt_client_register_event(new_client,
              (esp_mqtt_event_id_t)ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
     if (err != ESP_OK) {
@@ -123,12 +121,25 @@ esp_err_t mqtt_wrapper_connect(const mqtt_wrapper_config_t* config) {
         return err;
     }
 
-    /* Publish the handle only after it is fully configured. */
+    err = esp_mqtt_client_start(new_client);
+    if (err != ESP_OK) {
+        if (mqtt_event_group != NULL) {
+            xEventGroupClearBits(mqtt_event_group, MQTT_CONNECTED_BIT);
+            xEventGroupSetBits(mqtt_event_group, MQTT_DISCONNECTED_BIT);
+        }
+        app_data_callback = NULL;
+        esp_mqtt_client_destroy(new_client);
+        return err;
+    }
+
+    app_data_callback = config->event_handler;
+
+    /* Publish the handle only after it is fully configured and started. */
     xSemaphoreTake(s_client_mutex, portMAX_DELAY);
     mqtt_client = new_client;
     xSemaphoreGive(s_client_mutex);
 
-    return esp_mqtt_client_start(new_client);
+    return ESP_OK;
 }
 
 esp_err_t mqtt_wrapper_disconnect(void) {
