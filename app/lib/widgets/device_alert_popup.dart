@@ -164,7 +164,7 @@ class DeviceAlertPopup extends StatelessWidget {
       case DeviceError.noTimezone:
         return AppLocalizations.of(context)!.noticeNoTimezone;
       default:
-        return '';
+        return AppLocalizations.of(context)!.noticeUnknownError;
     }
   }
 
@@ -185,7 +185,7 @@ class DeviceAlertPopup extends StatelessWidget {
       case DeviceError.noTimezone:
         return AppLocalizations.of(context)!.noticeNoTimezoneSubtitle;
       default:
-        return '';
+        return AppLocalizations.of(context)!.noticeUnknownErrorSubtitle;
     }
   }
 
@@ -196,7 +196,7 @@ class DeviceAlertPopup extends StatelessWidget {
       case DeviceError.noSchedule:
         return AppLocalizations.of(context)!.noticeNoScheduleAction;
       default:
-        return null;
+        return AppLocalizations.of(context)!.noticeUnknownErrorAction;
     }
   }
 }

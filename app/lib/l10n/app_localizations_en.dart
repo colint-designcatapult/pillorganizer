@@ -535,6 +535,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noticeNoTimezoneAction => 'Set Schedule';
+  String get noticeUnknownError => 'Device Error';
+
+  @override
+  String get noticeUnknownErrorSubtitle =>
+      'An unexpected error has occurred on the device.';
+
+  @override
+  String get noticeUnknownErrorAction => 'Retry';
 
   @override
   String get noticeNoMeds => 'You don\'t have any medications entered.';

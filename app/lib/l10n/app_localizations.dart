@@ -1051,6 +1051,23 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Set Schedule'**
   String get noticeNoTimezoneAction;
+  /// No description provided for @noticeUnknownError.
+  ///
+  /// In en, this message translates to:
+  /// **'Device Error'**
+  String get noticeUnknownError;
+
+  /// No description provided for @noticeUnknownErrorSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'An unexpected error has occurred on the device.'**
+  String get noticeUnknownErrorSubtitle;
+
+  /// No description provided for @noticeUnknownErrorAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get noticeUnknownErrorAction;
 
   /// No description provided for @noticeNoMeds.
   ///

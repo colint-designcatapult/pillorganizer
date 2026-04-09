@@ -37,6 +37,7 @@ DeviceError deviceError(Ref ref) {
           DeviceErrorFlag.stateCorrupted => DeviceError.stateCorrupted,
           DeviceErrorFlag.noRtcTime => DeviceError.noRtcTime,
           DeviceErrorFlag.noTimezone => DeviceError.noTimezone,
+          DeviceErrorFlag.unknown => DeviceError.unknown,
         };
       }
       

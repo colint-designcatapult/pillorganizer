@@ -537,6 +537,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noticeNoTimezoneAction => 'Configurer le fuseau horaire';
+  String get noticeUnknownError => 'Erreur de l\'appareil';
+
+  @override
+  String get noticeUnknownErrorSubtitle =>
+      'Une erreur inattendue s\'est produite sur l\'appareil.';
+
+  @override
+  String get noticeUnknownErrorAction => 'Réessayer';
 
   @override
   String get noticeNoMeds => 'Vous n\'avez entré aucun médicament.';
