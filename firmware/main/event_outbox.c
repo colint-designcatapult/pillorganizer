@@ -274,12 +274,15 @@ esp_err_t event_outbox_ack(int msg_id)
 {
     xSemaphoreTake(s_mutex, portMAX_DELAY);
 
-    /* Find the entry with this msg_id and mark it delivered. */
+    /* Find the in-flight entry with this msg_id and mark it delivered. */
     bool found = false;
     for (int i = 0; i < s_queue.count; i++) {
         int idx = (s_queue.head + i) % EVENT_OUTBOX_MAX_ENTRIES;
-        if (s_queue.entries[idx].valid && s_queue.entries[idx].msg_id == msg_id) {
+        if (s_queue.entries[idx].valid &&
+            !s_queue.entries[idx].delivered &&
+            s_queue.entries[idx].msg_id == msg_id) {
             s_queue.entries[idx].delivered = true;
+            s_queue.entries[idx].msg_id = -1;
             found = true;
             ESP_LOGI(TAG, "ACK seq=%" PRIu32 " msg_id=%d", s_queue.entries[idx].seq, msg_id);
             break;
