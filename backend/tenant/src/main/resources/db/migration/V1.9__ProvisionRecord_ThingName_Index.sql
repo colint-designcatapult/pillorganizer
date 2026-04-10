@@ -1,1 +1,1 @@
-CREATE INDEX ASYNC idx_provision_record_thing_name ON provision_record (thing_name);
+--CREATE INDEX ASYNC idx_provision_record_thing_name ON provision_record (thing_name);
