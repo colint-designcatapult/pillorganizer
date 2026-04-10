@@ -10,6 +10,14 @@
 #define EVENT_OUTBOX_NVS_KEY    "evt_outbox"
 #define EVENT_OUTBOX_MAGIC      0xA5B6C7D8u
 #define EVENT_OUTBOX_PERSIST_MS (60LL * 1000LL)
+/* After this many ms of seeing entries stuck in-flight (msg_id >= 0 but
+ * not delivered), reset all in-flight msg_ids so drain can republish them.
+ * This recovers from dropped PUBACK events (e.g. supervisor queue full). */
+#define EVENT_OUTBOX_INFLIGHT_TIMEOUT_MS (30LL * 1000LL)
+/* Maximum entries published per drain call.  Keeping this well below the
+ * supervisor queue size (16) prevents the resulting PUBACK events from
+ * overflowing the queue. */
+#define EVENT_OUTBOX_DRAIN_MAX_PER_CALL 6
 
 /* ------------------------------------------------------------------ */
 /*  RTC-backed state                                                    */
@@ -33,6 +41,11 @@ static RTC_DATA_ATTR rtc_relative_time_t  s_dirty_since;
  * are also reset to -1 on init, so there can be no epoch mismatch.
  * uint64_t ensures the counter never wraps in practice. */
 static uint64_t s_conn_epoch = 0;
+
+/* Relative timestamp of when we first noticed entries stuck in-flight.
+ * 0 = no stuck entries currently known.  Lives in DRAM (not RTC): reset on
+ * every boot is safe since a boot also resets all msg_ids. */
+static rtc_relative_time_t s_inflight_since = 0;
 
 /* ------------------------------------------------------------------ */
 /*  Internal helpers                                                    */
@@ -293,37 +306,78 @@ bool event_outbox_is_full(void)
 
 void event_outbox_tick(void)
 {
-    if (s_dirty_since == 0 || s_queue.count == 0) {
-        return;
+    rtc_relative_time_t now = app_rtc_get_relative_timestamp();
+
+    /* Periodic NVS persist for unpersisted entries. */
+    if (s_dirty_since != 0 && s_queue.count > 0) {
+        int64_t age = app_rtc_calc_duration_ms(s_dirty_since, now);
+        if (age >= EVENT_OUTBOX_PERSIST_MS) {
+            ESP_LOGI(TAG, "Persisting outbox after %lld ms", age);
+            save_to_nvs_locked();
+        }
     }
 
-    rtc_relative_time_t now = app_rtc_get_relative_timestamp();
-    int64_t             age = app_rtc_calc_duration_ms(s_dirty_since, now);
+    /* Inflight-timeout recovery: if any entry has been in-flight (published
+     * but PUBACK not yet received) for longer than EVENT_OUTBOX_INFLIGHT_TIMEOUT_MS,
+     * reset all in-flight msg_ids so drain can republish them on the next call.
+     * This recovers from dropped PUBACK events (e.g. supervisor queue overflow). */
+    bool any_inflight = false;
+    for (int i = 0; i < s_queue.count; i++) {
+        int idx = (s_queue.head + i) % EVENT_OUTBOX_MAX_ENTRIES;
+        if (s_queue.entries[idx].valid &&
+            !s_queue.entries[idx].delivered &&
+            s_queue.entries[idx].msg_id >= 0) {
+            any_inflight = true;
+            break;
+        }
+    }
 
-    if (age >= EVENT_OUTBOX_PERSIST_MS) {
-        ESP_LOGI(TAG, "Persisting outbox after %lld ms", age);
-        save_to_nvs_locked();
+    if (any_inflight) {
+        if (s_inflight_since == 0) {
+            s_inflight_since = now;
+        } else {
+            int64_t inflight_age = app_rtc_calc_duration_ms(s_inflight_since, now);
+            if (inflight_age >= EVENT_OUTBOX_INFLIGHT_TIMEOUT_MS) {
+                ESP_LOGW(TAG, "In-flight entries stuck for %lld ms; resetting for republish",
+                         inflight_age);
+                reset_inflight_nolock();
+                s_inflight_since = 0;
+            }
+        }
+    } else {
+        s_inflight_since = 0;
     }
 }
 
 void event_outbox_drain(void)
 {
-    /* Snapshot the connection epoch once; used to discard stale msg_id writes
-     * if a disconnect races between mqtt_publish_event() and recording the id. */
+    /* Snapshot the connection epoch.  If a disconnect fires between publish
+     * and recording the msg_id, the epoch will have advanced and we skip
+     * the stale msg_id write. */
     uint64_t conn_epoch = s_conn_epoch;
 
-    int i = 0;
-    while (i < s_queue.count) {
+    /* Load persistent device state once for all entries to avoid an NVS
+     * read per entry when draining a batch. */
+    device_persistent_state_t dev_state;
+    bool dev_state_loaded = (devcfg_get_device_state(&dev_state) == ESP_OK);
+    const device_persistent_state_t *dev_state_hint = dev_state_loaded ? &dev_state : NULL;
+
+    /* Publish unpublished entries up to a per-call limit.  Bounding the
+     * number of concurrent in-flight entries prevents the supervisor queue
+     * from being flooded with PUBACK events (queue size = 16;
+     * EVENT_OUTBOX_DRAIN_MAX_PER_CALL << 16). */
+    int published = 0;
+    for (int i = 0; i < s_queue.count && published < EVENT_OUTBOX_DRAIN_MAX_PER_CALL; i++) {
         int idx = (s_queue.head + i) % EVENT_OUTBOX_MAX_ENTRIES;
         event_outbox_entry_t *e = &s_queue.entries[idx];
 
+        /* Skip invalid, already-delivered, or already in-flight entries. */
         if (!e->valid || e->delivered || e->msg_id >= 0) {
-            i++;
             continue;
         }
 
         int msg_id = -1;
-        esp_err_t err = mqtt_publish_event(e, &msg_id);
+        esp_err_t err = mqtt_publish_event(e, dev_state_hint, &msg_id);
         if (err != ESP_OK) {
             /* Not connected, or broker send-buffer full; retry on next drain. */
             return;
@@ -334,9 +388,7 @@ void event_outbox_drain(void)
             e->msg_id = msg_id;
         }
 
-        /* Restart from the front: a PUBACK handler may have popped entries
-         * while we were inside mqtt_publish_event(), shifting all positions. */
-        i = 0;
+        published++;
     }
 }
 

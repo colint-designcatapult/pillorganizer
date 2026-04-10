@@ -50,7 +50,9 @@ static const char* event_type_to_str(device_event_type_t evt)
     }
 }
 
-esp_err_t mqtt_publish_event(const event_outbox_entry_t* entry, int* out_msg_id)
+esp_err_t mqtt_publish_event(const event_outbox_entry_t* entry,
+                              const device_persistent_state_t* dev_state_hint,
+                              int* out_msg_id)
 {
     if (!mqtt_wrapper_is_connected()) {
         return ESP_ERR_INVALID_STATE;
@@ -65,9 +67,14 @@ esp_err_t mqtt_publish_event(const event_outbox_entry_t* entry, int* out_msg_id)
     char topic[256];
     snprintf(topic, sizeof(topic), "healthe/things/%s/event", thing_name);
 
-    /* Load persistent device state for schedule_id lookup on bin events. */
-    device_persistent_state_t dev_state;
-    bool dev_state_loaded = (devcfg_get_device_state(&dev_state) == ESP_OK);
+    /* Use the caller-supplied device state if available to avoid an NVS
+     * read per entry when draining a batch of events. */
+    device_persistent_state_t dev_state_local;
+    const device_persistent_state_t *dev_state = dev_state_hint;
+    if (dev_state == NULL) {
+        bool loaded = (devcfg_get_device_state(&dev_state_local) == ESP_OK);
+        dev_state = loaded ? &dev_state_local : NULL;
+    }
 
     cJSON *root = cJSON_CreateObject();
     if (!root) return ESP_ERR_NO_MEM;
@@ -76,11 +83,11 @@ esp_err_t mqtt_publish_event(const event_outbox_entry_t* entry, int* out_msg_id)
     cJSON_AddStringToObject(root, "event_type", event_type_to_str(entry->event_type));
     if (entry->bin_id != EVENT_OUTBOX_BIN_ID_NONE) {
         cJSON_AddNumberToObject(root, "bin_id", entry->bin_id);
-        if (dev_state_loaded &&
+        if (dev_state != NULL &&
             entry->bin_id < DEVICE_NUM_BINS &&
-            dev_state.bins[entry->bin_id].schedule_id[0] != '\0') {
+            dev_state->bins[entry->bin_id].schedule_id[0] != '\0') {
             cJSON_AddStringToObject(root, "schedule_id",
-                                    dev_state.bins[entry->bin_id].schedule_id);
+                                    dev_state->bins[entry->bin_id].schedule_id);
         }
     }
     if (entry->flags != 0) {
@@ -129,9 +136,21 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             break;
         case MQTT_EVENT_PUBLISHED:
             /* Marshal the PUBACK to the supervisor event loop so the outbox
-             * can be acknowledged and drained without any cross-task calls. */
+             * can be acknowledged and drained without any cross-task calls.
+             * A 50 ms timeout is used so brief queue pressure is absorbed;
+             * if the queue is still full, the entry stays in-flight and will
+             * be reset by the inflight-timeout in event_outbox_tick(). */
             ESP_LOGI(TAG, "Event PUBACK msg_id=%d", event->msg_id);
-            supervisor_submit_event_block(EVENT_MQTT_PUBACK, (intptr_t)event->msg_id, 0);
+            {
+                esp_err_t puback_err = supervisor_submit_event_block(
+                        EVENT_MQTT_PUBACK, (intptr_t)event->msg_id,
+                        pdMS_TO_TICKS(50));
+                if (puback_err != ESP_OK) {
+                    ESP_LOGW(TAG, "PUBACK msg_id=%d dropped (supervisor queue full); "
+                             "entry will recover via inflight timeout",
+                             event->msg_id);
+                }
+            }
             break;
         default:
             break;

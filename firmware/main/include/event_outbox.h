@@ -121,9 +121,16 @@ bool event_outbox_is_full(void);
 void event_outbox_tick(void);
 
 /*
- * Publish every pending outbox entry (msg_id == -1, not yet delivered) over
- * MQTT QoS 1.  Stops at the first publish failure (e.g. not connected or
- * broker send-buffer full) so it is safe to call unconditionally.
+ * Publish pending outbox entries over MQTT QoS 1.
+ *
+ * Publishes at most EVENT_OUTBOX_DRAIN_MAX_PER_CALL entries per call to
+ * prevent the supervisor event queue from being flooded with PUBACK events.
+ * Stops early at the first publish failure (e.g. not connected or broker
+ * send-buffer full) so it is safe to call unconditionally.
+ *
+ * Calling drain again after a PUBACK is acknowledged will publish the next
+ * batch of entries.
+ *
  * Must be called from the supervisor event-loop task.
  */
 void event_outbox_drain(void);
