@@ -50,19 +50,19 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDrByJb8hQ1LdGUdMIjpDx5WpfjfJhWNOQ',
-    appId: '1:1091240480280:android:07ba3d9dac1416663d3d6d',
-    messagingSenderId: '1091240480280',
-    projectId: 'cabinet-f7e5a',
-    storageBucket: 'cabinet-f7e5a.appspot.com',
+    apiKey: 'AIzaSyB9Iyi_lsFIiWNLQjAvUqLMGrV0gvZtM48',
+    appId: '1:665591360892:android:81ce0e5143a59bbaf608f9',
+    messagingSenderId: '665591360892',
+    projectId: 'pillorganizer-d158c',
+    storageBucket: 'pillorganizer-d158c.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyC2ElEQU73WB_uLwtnnYPxBY_5hNzpouSw',
-    appId: '1:1091240480280:ios:29c80a6128e9fa273d3d6d',
-    messagingSenderId: '1091240480280',
-    projectId: 'cabinet-f7e5a',
-    storageBucket: 'cabinet-f7e5a.appspot.com',
+    apiKey: 'AIzaSyB9Iyi_lsFIiWNLQjAvUqLMGrV0gvZtM48',
+    appId: '1:665591360892:android:81ce0e5143a59bbaf608f9',
+    messagingSenderId: '665591360892',
+    projectId: 'pillorganizer-d158c',
+    storageBucket: 'pillorganizer-d158c.firebasestorage.app',
     iosBundleId: 'ca.healthesolutions.cabinet',
   );
 }

@@ -78,21 +78,28 @@ public class DeviceEventService {
         log.atInfo().log("Processed device event for thing %s (type=%s)",
                 message.thingName(), event.getEventType());
 
-        maybeNotify(logicalDevice, message.eventType());
+        maybeNotify(logicalDevice, message.eventType(), message.binId());
     }
 
-    private void maybeNotify(LogicalDevice device, String eventType) {
-        if (!EVENT_TAKEN.equals(eventType) && !EVENT_MISSED.equals(eventType)) {
-            return;
-        }
+    private void maybeNotify(LogicalDevice device, String eventType, Integer binId) {
         if (device.getTopicArn() == null) {
             return;
         }
-        String notificationMessage = EVENT_TAKEN.equals(eventType)
-                ? "It's time to take your medication"
-                : "You missed your medication dose";
+
+
+        String notificationMessage;
+        switch (eventType) {
+            case EVENT_TAKEN -> notificationMessage = "It's time to take your medication";
+            case EVENT_MISSED -> notificationMessage = "You missed your medication dose";
+            case "DOOR_OPENED" -> notificationMessage = "(Test) Door " + binId + " opened";
+            case "DOOR_CLOSED" -> notificationMessage = "(Test) Door " + binId + " closed";
+            case null, default -> {
+                return;
+            }
+        }
+
         try {
-            notificationService.publish(device.getTopicArn(), notificationMessage);
+            notificationService.publish(device.getTopicArn(), "Medication Reminder", notificationMessage);
             log.atInfo().log("Published %s notification for device %s", eventType, device.getId());
         } catch (Exception e) {
             log.atWarning().withCause(e).log("Failed to publish notification for device %s (event=%s)",

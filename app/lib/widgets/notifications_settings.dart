@@ -6,6 +6,7 @@ import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:app/service/error_handler.dart';
 
 class NotificationsSettings extends ConsumerStatefulWidget {
   final DeviceMetadata? device;
@@ -50,7 +51,11 @@ class _NotificationsSettingsState extends ConsumerState<NotificationsSettings>
     return FutureBuilder<bool>(
         future: _notificationPreference,
         builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
-          if (snapshot.hasData ||
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const CircularProgressIndicator(
+              color: Color(0xff708F72), // Changed to green, a white spinner on white bg would be invisible
+            );
+          } else if (snapshot.hasData ||
               snapshot.hasError ||
               snapshot.connectionState == ConnectionState.done) {
             return Column(
@@ -110,12 +115,23 @@ class _NotificationsSettingsState extends ConsumerState<NotificationsSettings>
         });
   }
 
-  void updateNotification(bool value, DeviceMetadata targetDevice) {
-    ref.read(deviceListProvider.notifier).updateDeviceNotifications(targetDevice.id, value);
+  Future<void> updateNotification(bool value, DeviceMetadata targetDevice) async {
+    final future = ref.read(deviceListProvider.notifier).updateDeviceNotifications(targetDevice.id, value);
 
     setState(() {
-      _notificationPreference = Future.value(value);
+      _notificationPreference = future.then((device) => device.notifications);
     });
+
+    try {
+      await future;
+    } catch (e) {
+      if (mounted) {
+        showErrorDialog(context, AppLocalizations.of(context)!.genericError);
+      }
+      setState(() {
+        _notificationPreference = Future.value(!value);
+      });
+    }
   }
 
   Future<void> checkPermission() async {

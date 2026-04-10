@@ -1,4 +1,5 @@
 import 'package:app/navigation/tab_navigator.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
 import 'package:app/screens/first_launch.dart';
@@ -19,6 +20,7 @@ import 'provider/deep_link_provider.dart';
 import 'provider/language_provider.dart';
 import 'screens/auth/launch_page_login.dart';
 import 'screens/auth/patient_confirmation.dart';
+import 'firebase_options.dart';
 
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
@@ -28,6 +30,7 @@ void main() async {
   tz.initializeTimeZones();
   DeepLinkService().initialize();
   await AmplifyService().configureAmplify();
+  Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const ProviderScope(child: MyApp()));
 }
 

@@ -171,7 +171,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         deviceEventService.processEvent(message)
 
         then:
-        1 * notificationService.publish(topicArn, "It's time to take your medication")
+        1 * notificationService.publish(topicArn, "Medication Reminder", "It's time to take your medication")
         deviceEventRepository.findAll().findAll {
             it.logicalDevice.id == "des-notif-device-1" && it.eventType == "TAKEN"
         }.size() == 1
@@ -196,7 +196,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         deviceEventService.processEvent(message)
 
         then:
-        1 * notificationService.publish(topicArn, "You missed your medication dose")
+        1 * notificationService.publish(topicArn, "Medication Reminder", "You missed your medication dose")
         deviceEventRepository.findAll().findAll {
             it.logicalDevice.id == "des-notif-device-2" && it.eventType == "MISSED"
         }.size() == 1
@@ -218,7 +218,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         deviceEventService.processEvent(message)
 
         then:
-        0 * notificationService.publish(_, _)
+        0 * notificationService.publish(_, _, _)
         noExceptionThrown()
     }
 }

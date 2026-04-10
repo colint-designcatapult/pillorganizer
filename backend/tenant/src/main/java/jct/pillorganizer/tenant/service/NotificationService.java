@@ -34,10 +34,11 @@ public interface NotificationService {
     void unsubscribe(String subscriptionArn);
 
     /**
-     * Publishes a plain-text push-notification message to an SNS topic.
+     * Publishes a push-notification message to an SNS topic.
      *
      * @param topicArn ARN of the target SNS topic
-     * @param message  Human-readable message body (e.g. "It's time to take your medication")
+     * @param title    Human-readable title (e.g. "Medication Reminder")
+     * @param body     Human-readable message body (e.g. "It's time to take your medication")
      */
-    void publish(String topicArn, String message);
+    void publish(String topicArn, String title, String body);
 }
