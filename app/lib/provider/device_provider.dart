@@ -4,6 +4,7 @@ import 'package:app/apiv2/models/device.dart';
 import 'package:app/apiv2/models/dto.dart';
 import 'package:app/provider/control_plane_providers.dart';
 import 'package:app/provider/tenant_providers.dart';
+import 'package:app/service/notification_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:timezone/standalone.dart' as tz;
 
@@ -62,8 +63,44 @@ class DeviceList extends _$DeviceList {
     throw UnimplementedError();
   }
 
-  Future<DeviceMetadata> updateDeviceNotifications(String id, bool notifications) async {
-    throw UnimplementedError();
+  /// Subscribes or unsubscribes the current user from push notifications for
+  /// [id]. Registers the FCM token with the control plane first so the
+  /// backend always has a fresh endpoint ARN before toggling the subscription.
+  Future<DeviceMetadata> updateDeviceNotifications(String id, bool subscribe) async {
+    if (!state.hasValue) {
+      await future;
+    }
+
+    final previous = state.asData!.value;
+    final device = previous.firstWhere(
+      (d) => d.id == id,
+      orElse: () => throw StateError('Device $id not found in list'),
+    );
+
+    final controlPlane = ref.read(controlPlaneClientProvider);
+
+    // 1. Register / refresh FCM token so the backend has the endpoint ARN.
+    final token = await getFcmToken();
+    if (token != null) {
+      await controlPlane.registerFcmToken(RegisterFcmTokenDto(fcmToken: token));
+    }
+
+    // 2. Toggle the subscription on the control plane.
+    final updated = await controlPlane.updateDeviceNotifications(
+      DeviceNotificationRequestDto(
+        deviceId: id,
+        tenantId: device.tenantId,
+        subscribe: subscribe,
+      ),
+    );
+
+    final updatedDomain = updated.toDomain();
+    final newList = previous
+        .map((d) => d.id == id ? updatedDomain : d)
+        .toList();
+    state = AsyncValue.data(newList);
+
+    return updatedDomain;
   }
 
   Future<void> updateNotificationsForAllDevices(bool notifications) async {

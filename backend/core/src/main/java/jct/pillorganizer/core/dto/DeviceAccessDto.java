@@ -14,6 +14,7 @@ public record DeviceAccessDto(
         String apiBase,
         boolean primaryUser,
         @Nullable String thingName,
-        String tenantName
+        String tenantName,
+        @Nullable Boolean notifications
 ) {
 }

@@ -33,6 +33,18 @@ export class ControlPlaneStack extends cdk.Stack {
       resources: [`arn:aws:iot:${this.region}:${this.account}:provisioningtemplate/TenantDeviceProvisioningTemplate`],
     }));
 
+    // Grant function ability to manage SNS platform endpoints and subscribe devices
+    appFunction.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'sns:CreatePlatformEndpoint',
+        'sns:SetEndpointAttributes',
+        'sns:Subscribe',
+        'sns:Unsubscribe',
+      ],
+      resources: ['*'],
+    }));
+
     const version = appFunction.currentVersion;
     
     const alias = new lambda.Alias(this, 'ControlPlaneAppAlias', {

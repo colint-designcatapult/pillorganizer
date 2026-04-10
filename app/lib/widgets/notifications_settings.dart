@@ -136,8 +136,9 @@ class _NotificationsSettingsState extends ConsumerState<NotificationsSettings>
 
     if (targetDevice == null) return;
 
-    // Mocking notification preference as Device model doesn't have it
-    _notificationPreference = Future.value(true);
+    // Initialise from the persisted backend value so the toggle reflects the
+    // real subscription state on first load.
+    _notificationPreference = Future.value(targetDevice.notifications);
 
     if (await Permission.notification.status.isDenied ||
         await Permission.notification.status.isPermanentlyDenied) {

@@ -15,11 +15,17 @@ import java.util.UUID;
 @Singleton
 public class DeviceEventService {
 
+    static final String EVENT_TAKEN = "TAKEN";
+    static final String EVENT_MISSED = "MISSED";
+
     @Inject
     DeviceService deviceService;
 
     @Inject
     DeviceEventRepository deviceEventRepository;
+
+    @Inject
+    NotificationService notificationService;
 
     /**
      * Processes an incoming IoT device event message.
@@ -29,6 +35,10 @@ public class DeviceEventService {
      * {@code (logical_device_id, timestamp, event_type, bin_id)} silently drops duplicate messages
      * (QoS-1 "at least once" re-deliveries) via {@code ON CONFLICT DO NOTHING}. All other errors
      * propagate to the caller so the SQS message is routed to the dead-letter queue.
+     * </p>
+     * <p>
+     * For {@code TAKEN} and {@code MISSED} events a push notification is published to the
+     * device's SNS topic so all subscribed users are notified.
      * </p>
      *
      * @param message the incoming device event message
@@ -67,5 +77,27 @@ public class DeviceEventService {
         );
         log.atInfo().log("Processed device event for thing %s (type=%s)",
                 message.thingName(), event.getEventType());
+
+        maybeNotify(logicalDevice, message.eventType());
+    }
+
+    private void maybeNotify(LogicalDevice device, String eventType) {
+        if (!EVENT_TAKEN.equals(eventType) && !EVENT_MISSED.equals(eventType)) {
+            return;
+        }
+        if (device.getTopicArn() == null) {
+            return;
+        }
+        String notificationMessage = EVENT_TAKEN.equals(eventType)
+                ? "It's time to take your medication"
+                : "You missed your medication dose";
+        try {
+            notificationService.publish(device.getTopicArn(), notificationMessage);
+            log.atInfo().log("Published %s notification for device %s", eventType, device.getId());
+        } catch (Exception e) {
+            log.atWarning().withCause(e).log("Failed to publish notification for device %s (event=%s)",
+                    device.getId(), eventType);
+        }
     }
 }
+

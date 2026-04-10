@@ -2,6 +2,7 @@ package jct.pillorganizer.tenant.model.device;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.*;
 import jct.pillorganizer.tenant.model.user.User;
 import lombok.Getter;
@@ -25,6 +26,10 @@ public class DeviceUser {
     private User user;
 
     private boolean primaryUser;
+
+    /** ARN of the SNS subscription linking this user to the device's SNS topic. Null when not subscribed. */
+    @Nullable
+    private String subscriptionArn;
 
     @DateCreated
     @JsonIgnore

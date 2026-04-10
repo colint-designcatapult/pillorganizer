@@ -145,6 +145,20 @@ export class AppStack extends cdk.Stack {
         })
       );
 
+      // Ensure app functions can manage SNS topics, subscriptions and publish notifications
+      fn.addToRolePolicy(
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            'sns:CreateTopic',
+            'sns:Subscribe',
+            'sns:Unsubscribe',
+            'sns:Publish',
+          ],
+          resources: ['*'],
+        })
+      );
+
       return fn;
     };
 

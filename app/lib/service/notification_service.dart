@@ -1,5 +1,4 @@
-import 'dart:convert';
-
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BackgroundNotificationTranslator {
@@ -29,9 +28,9 @@ class BackgroundNotificationTranslator {
 
     return translation;
   }
-
 }
 
-Future<String> enablePushNotifications() async {
-  return "not implemented";
+/// Returns the current FCM registration token, or null if unavailable.
+Future<String?> getFcmToken() async {
+  return FirebaseMessaging.instance.getToken();
 }

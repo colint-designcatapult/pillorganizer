@@ -16,6 +16,7 @@ import jct.pillorganizer.core.dto.DeviceEligibilityCheckDto
 import jct.pillorganizer.core.service.TenantService
 import jct.pillorganizer.core.uid.KsuidService
 import jct.pillorganizer.tenant.BaseIntegrationSpec
+import jct.pillorganizer.tenant.dto.DeviceNotificationSubscribeDto
 import jct.pillorganizer.tenant.model.user.User
 import jct.pillorganizer.tenant.service.DeviceService
 import jct.pillorganizer.tenant.service.UserService
@@ -172,5 +173,60 @@ class InternalUserControllerSpec extends BaseIntegrationSpec {
         _ * securityService.getAuthentication() >> Optional.of(auth)
         !resp3.isEligible()
         resp3.deviceExists()
+    }
+
+    void "POST /internal/user/device/{id}/notifications subscribes the user"() {
+        given:
+        String userId  = ksuidService.generateKsuid()
+        String deviceId = ksuidService.generateKsuid()
+        User user = userService.ensureExists(userId)
+        deviceService.provision(user, deviceId, "sn-notif-1", ksuidService.generateKsuid(), "thing-notif-1")
+
+        def auth = Mock(Authentication)
+        auth.getAttributes() >> [userId: userId]
+
+        def body = new DeviceNotificationSubscribeDto(true, "arn:local:endpoint:test-1")
+
+        when:
+        def response = client.toBlocking().retrieve(
+                HttpRequest.POST("/internal/user/device/${deviceId}/notifications", body),
+                DeviceAccessDto
+        )
+
+        then:
+        _ * securityService.getAuthentication() >> Optional.of(auth)
+        response.deviceId() == deviceId
+        response.notifications() == true
+    }
+
+    void "POST /internal/user/device/{id}/notifications unsubscribes the user"() {
+        given:
+        String userId  = ksuidService.generateKsuid()
+        String deviceId = ksuidService.generateKsuid()
+        User user = userService.ensureExists(userId)
+        deviceService.provision(user, deviceId, "sn-notif-2", ksuidService.generateKsuid(), "thing-notif-2")
+
+        def auth = Mock(Authentication)
+        auth.getAttributes() >> [userId: userId]
+        // Stub auth up-front so the subscribe call in this block also has it
+        securityService.getAuthentication() >> Optional.of(auth)
+
+        // Subscribe first so there is a subscription to clear
+        client.toBlocking().retrieve(
+                HttpRequest.POST("/internal/user/device/${deviceId}/notifications",
+                        new DeviceNotificationSubscribeDto(true, "arn:local:endpoint:test-2")),
+                DeviceAccessDto
+        )
+
+        when: "then unsubscribe"
+        def response = client.toBlocking().retrieve(
+                HttpRequest.POST("/internal/user/device/${deviceId}/notifications",
+                        new DeviceNotificationSubscribeDto(false, "arn:local:endpoint:test-2")),
+                DeviceAccessDto
+        )
+
+        then:
+        response.deviceId() == deviceId
+        response.notifications() == false
     }
 }

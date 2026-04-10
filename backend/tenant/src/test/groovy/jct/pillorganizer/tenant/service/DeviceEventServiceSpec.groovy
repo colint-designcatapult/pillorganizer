@@ -5,6 +5,7 @@ import jakarta.inject.Inject
 import jct.pillorganizer.core.message.IotDeviceEventMessage
 import jct.pillorganizer.tenant.BaseIntegrationSpec
 import jct.pillorganizer.tenant.repo.DeviceEventRepository
+import jct.pillorganizer.tenant.repo.LogicalDeviceRepository
 import spock.lang.Subject
 
 @MicronautTest
@@ -22,6 +23,12 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
 
     @Inject
     DeviceEventRepository deviceEventRepository
+
+    @Inject
+    LogicalDeviceRepository logicalDeviceRepository
+
+    @Inject
+    NotificationService notificationService
 
     def "should save a device event and convert timestamp to instant"() {
         given:
@@ -137,5 +144,75 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         then:
         def e = thrown(IllegalStateException)
         e.message.contains("unknown-thing")
+    }
+
+    def "should publish a notification when event type is TAKEN and device has a topic"() {
+        given:
+        def user = userService.upsert("des-user-notif-1", "Notif User", "notif1@example.com")
+        deviceService.provision(user, "des-notif-device-1", "des-sn-n1", "des-claim-n1", "des-thing-n1")
+
+        // Give the device a topic ARN so the notification path is exercised
+        def topicArn = notificationService.createOrGetTopic("des-notif-device-1")
+        logicalDeviceRepository.updateTopicArn("des-notif-device-1", topicArn)
+
+        def message = IotDeviceEventMessage.builder()
+                .thingName("des-thing-n1")
+                .tenant("des-tenant")
+                .timestamp(1_700_000_010_000L)
+                .eventType("TAKEN")
+                .build()
+
+        when:
+        deviceEventService.processEvent(message)
+
+        then:
+        noExceptionThrown()
+        deviceEventRepository.findAll().findAll {
+            it.logicalDevice.id == "des-notif-device-1" && it.eventType == "TAKEN"
+        }.size() == 1
+    }
+
+    def "should publish a notification when event type is MISSED and device has a topic"() {
+        given:
+        def user = userService.upsert("des-user-notif-2", "Notif User 2", "notif2@example.com")
+        deviceService.provision(user, "des-notif-device-2", "des-sn-n2", "des-claim-n2", "des-thing-n2")
+
+        def topicArn = notificationService.createOrGetTopic("des-notif-device-2")
+        logicalDeviceRepository.updateTopicArn("des-notif-device-2", topicArn)
+
+        def message = IotDeviceEventMessage.builder()
+                .thingName("des-thing-n2")
+                .tenant("des-tenant")
+                .timestamp(1_700_000_011_000L)
+                .eventType("MISSED")
+                .build()
+
+        when:
+        deviceEventService.processEvent(message)
+
+        then:
+        noExceptionThrown()
+        deviceEventRepository.findAll().findAll {
+            it.logicalDevice.id == "des-notif-device-2" && it.eventType == "MISSED"
+        }.size() == 1
+    }
+
+    def "should not throw when event type is TAKEN but device has no topic"() {
+        given:
+        def user = userService.upsert("des-user-notif-3", "Notif User 3", "notif3@example.com")
+        deviceService.provision(user, "des-notif-device-3", "des-sn-n3", "des-claim-n3", "des-thing-n3")
+
+        def message = IotDeviceEventMessage.builder()
+                .thingName("des-thing-n3")
+                .tenant("des-tenant")
+                .timestamp(1_700_000_012_000L)
+                .eventType("TAKEN")
+                .build()
+
+        when:
+        deviceEventService.processEvent(message)
+
+        then:
+        noExceptionThrown()
     }
 }
