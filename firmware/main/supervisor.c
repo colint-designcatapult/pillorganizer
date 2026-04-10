@@ -17,6 +17,7 @@
 #include "shadow_state.h"
 #include "ledc.h"
 #include "nvs_wrapper.h"
+#include "esp_task_wdt.h"
 
 #define TAG "SUPERVISOR"
 
@@ -106,8 +107,12 @@ void supervisor_run()
         supervisor_operation_init();
     }
 
+    // Subscribe main supervisor task to hardware watchdog
+    ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
+
     // Main event loop
     while (true) {
+        esp_task_wdt_reset();
         event_received = xQueueReceive(s_supervisor_event_queue, &event, pdMS_TO_TICKS(1000));
 
         if (event_received) {

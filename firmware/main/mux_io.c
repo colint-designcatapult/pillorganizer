@@ -6,6 +6,8 @@
 #include "ulp.h"          
 #include "ulp_main.h"     
 #include "esp_sleep.h"
+#include "esp_system.h"
+#include "esp_task_wdt.h"
 #include "driver/rtc_io.h"
 #include "driver/gpio.h"
 #include "soc/rtc_cntl_reg.h"
@@ -196,8 +198,19 @@ static void IRAM_ATTR ulp_isr_handler(void *arg)
 
 static void ulp_event_task(void *arg)
 {
+    /* Subscribe to the global hardware Task Watchdog Timer (60s) */
+    ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
+
     while (1) {
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        uint32_t notified = ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(1000));
+
+        if (notified == 0) {
+            ESP_LOGE(TAG, "ULP software watchdog timeout! Resetting...");
+            esp_restart();
+        }
+
+        /* Feed the hardware watchdog */
+        esp_task_wdt_reset();
 
         // Process the new events (or retrieve state updated during wake stub)
         uint32_t wake_reasons = process_ulp_events();
