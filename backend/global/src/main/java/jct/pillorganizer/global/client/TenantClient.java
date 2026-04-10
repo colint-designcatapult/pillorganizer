@@ -63,11 +63,10 @@ public class TenantClient {
                 new DeviceEligibilityCheckDto(deviceId, serialNumber)), Argument.of(DeviceClaimEligibilityDto.class)));
     }
 
-    public Mono<DeviceAccessDto> updateDeviceNotifications(String authorization, String deviceId,
+    public Mono<DeviceAccessDto> updateDeviceNotifications(String deviceId,
                                                            DeviceSubscribeDto dto) {
         return Mono.from(httpClient.retrieve(
-                HttpRequest.POST(makeUri("/internal/user/device/" + deviceId + "/notifications"), dto)
-                        .bearerAuth(authorization),
+                HttpRequest.POST(makeUri("/internal/user/device/" + deviceId + "/notifications"), dto),
                 Argument.of(DeviceAccessDto.class)));
     }
 

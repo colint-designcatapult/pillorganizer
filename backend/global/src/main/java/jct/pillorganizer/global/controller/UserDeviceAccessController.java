@@ -60,20 +60,17 @@ public class UserDeviceAccessController {
      * for a device. Forwards the request to the appropriate tenant module,
      * passing the user's JWT so the tenant can authenticate and identify the caller.
      *
-     * @param authorization the {@code Authorization} header value (forwarded to the tenant)
      * @param dto           contains {@code deviceId}, {@code tenantId}, and {@code subscribe} flag
      * @return updated {@link DeviceAccessDto} with the refreshed {@code notifications} flag
      */
     @Post("/device/notifications")
     @Secured(SecurityRule.IS_AUTHENTICATED)
-    public Mono<DeviceAccessDto> updateDeviceNotifications(
-            @Header(HttpHeaders.AUTHORIZATION) String authorization,
-            @Body @Valid DeviceNotificationRequestDto dto) {
+    public Mono<DeviceAccessDto> updateDeviceNotifications(@Body @Valid DeviceNotificationRequestDto dto) {
         String userId = authService.getUserID();
         return Mono.fromCallable(() -> userService.get(userId)
                         .orElseThrow(() -> new IllegalStateException("User not found: " + userId)))
-                .flatMap(user -> userDeviceAccessService.updateDeviceNotifications(
-                        authorization, dto.tenantId(), dto.deviceId(), user, dto.subscribe()));
+                .flatMap(user -> userDeviceAccessService.updateDeviceNotifications(dto.tenantId(),
+                        dto.deviceId(), user, dto.subscribe()));
     }
 }
 

@@ -97,6 +97,7 @@ public class DeviceEventService {
         } catch (Exception e) {
             log.atWarning().withCause(e).log("Failed to publish notification for device %s (event=%s)",
                     device.getId(), eventType);
+            throw e;
         }
     }
 }

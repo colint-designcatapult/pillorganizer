@@ -67,14 +67,13 @@ public class UserDeviceAccessService {
      * Forwards a subscribe / unsubscribe request to the appropriate tenant module via the
      * internal API, passing the user's JWT so the tenant can authenticate the call.
      *
-     * @param authorization bearer token of the currently-authenticated user
      * @param tenantId      tenant that owns the device
      * @param deviceId      logical device ID
      * @param user          the authenticated user entity (provides the endpoint ARN)
      * @param subscribe     {@code true} to subscribe, {@code false} to unsubscribe
      * @return updated {@link DeviceAccessDto} returned by the tenant
      */
-    public Mono<DeviceAccessDto> updateDeviceNotifications(String authorization, String tenantId,
+    public Mono<DeviceAccessDto> updateDeviceNotifications(String tenantId,
                                                            String deviceId, UserEntity user,
                                                            boolean subscribe) {
         TenantClient client = tenants.stream()
@@ -89,7 +88,7 @@ public class UserDeviceAccessService {
         }
 
         DeviceSubscribeDto dto = new DeviceSubscribeDto(subscribe, endpointArn);
-        return client.updateDeviceNotifications(authorization, deviceId, dto);
+        return client.updateDeviceNotifications(deviceId, dto);
     }
 
 }
