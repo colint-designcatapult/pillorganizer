@@ -6,6 +6,8 @@
 #include "ulp.h"          
 #include "ulp_main.h"     
 #include "esp_sleep.h"
+#include "esp_system.h"
+#include "esp_task_wdt.h"
 #include "driver/rtc_io.h"
 #include "driver/gpio.h"
 #include "soc/rtc_cntl_reg.h"
@@ -196,8 +198,19 @@ static void IRAM_ATTR ulp_isr_handler(void *arg)
 
 static void ulp_event_task(void *arg)
 {
+    /* Subscribe to the global hardware Task Watchdog Timer (60s) */
+    ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
+
     while (1) {
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        uint32_t notified = ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(1000));
+
+        if (notified == 0) {
+            ESP_LOGE(TAG, "ULP software watchdog timeout! Resetting...");
+            esp_restart();
+        }
+
+        /* Feed the hardware watchdog */
+        esp_task_wdt_reset();
 
         // Process the new events (or retrieve state updated during wake stub)
         uint32_t wake_reasons = process_ulp_events();
@@ -261,6 +274,9 @@ void mux_prep_deep_sleep()
 
 void mux_fresh_boot()
 {
+    /* Stop the ULP timer before loading the binary to prevent crashing the ULP FSM 
+     * in the event it was left running across a warm/software reset. */
+    ulp_timer_stop();
     init_ulp_program();
     start_ulp_program();
 }
@@ -310,8 +326,12 @@ static void init_ulp_program(void)
     //ulp_set_wakeup_period(0, 200000);
 
 #if CONFIG_IDF_TARGET_ESP32
+#ifndef CONFIG_FIRMWARE_ENGINEERING
+    /* Disconnect JTAG/Bootstrapping pins to save deep sleep power.
+     * Skipped when engineering mode is enabled to allow JTAG debugging. */
     rtc_gpio_isolate(GPIO_NUM_12);
     rtc_gpio_isolate(GPIO_NUM_15);
+#endif
 #endif
 
     esp_deep_sleep_disable_rom_logging();
