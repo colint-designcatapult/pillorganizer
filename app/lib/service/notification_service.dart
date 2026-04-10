@@ -4,7 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// The Android notification channel used for all medication reminder
 /// notifications. Must match the value declared in AndroidManifest.xml
-/// and sent by the backend in the FCM payload's `android_channel_id` field.
+/// and sent by the backend in the FCM payload's
+/// `android.notification.channel_id` field.
 const String kMedicationChannelId = 'medication_reminders';
 const String kMedicationChannelName = 'Medication Reminders';
 const String kMedicationChannelDescription =
