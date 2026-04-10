@@ -151,11 +151,24 @@ export class AppStack extends cdk.Stack {
           effect: iam.Effect.ALLOW,
           actions: [
             'sns:CreateTopic',
-            'sns:Subscribe',
-            'sns:Unsubscribe',
             'sns:Publish',
           ],
-          resources: ['*'],
+          resources: [
+            `arn:aws:sns:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:device-*`,
+          ],
+        })
+      );
+
+      fn.addToRolePolicy(
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            'sns:Subscribe',
+            'sns:Unsubscribe',
+          ],
+          resources: [
+            `arn:aws:sns:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:device-*`,
+          ],
         })
       );
 

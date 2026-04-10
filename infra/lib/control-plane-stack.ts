@@ -39,10 +39,22 @@ export class ControlPlaneStack extends cdk.Stack {
       actions: [
         'sns:CreatePlatformEndpoint',
         'sns:SetEndpointAttributes',
+      ],
+      resources: [
+        `arn:aws:sns:${this.region}:${this.account}:app/GCM/HealtheCabinetAndroid`,
+        `arn:aws:sns:${this.region}:${this.account}:endpoint/GCM/HealtheCabinetAndroid/*`,
+      ],
+    }));
+
+    appFunction.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
         'sns:Subscribe',
         'sns:Unsubscribe',
       ],
-      resources: ['*'],
+      resources: [
+        `arn:aws:sns:${this.region}:${this.account}:device-*`,
+      ],
     }));
 
     const version = appFunction.currentVersion;
