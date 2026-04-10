@@ -365,7 +365,7 @@ esp_err_t devcfg_set_device_state(const device_persistent_state_t* state) {
     CHECK_GOTO(nvs_set_str(handle, "tz_iana", state->timezone_iana));
     CHECK_GOTO(nvs_set_str(handle, "tz_posix", state->timezone_posix));
 
-    bin_pod_state_t bins_pod[14];
+    bin_pod_state_t bins_pod[14] = {0};
     for (int i = 0; i < 14; i++) {
         bins_pod[i].status = state->bins[i].status;
         bins_pod[i].scheduled_time = state->bins[i].scheduled_time;
