@@ -79,9 +79,16 @@ class DeviceList extends _$DeviceList {
 
     final controlPlane = ref.read(controlPlaneClientProvider);
 
-    // 1. Register / refresh FCM token so the backend has the endpoint ARN.
-    final token = await getFcmToken();
-    if (token != null) {
+    // 1. Register / refresh FCM token (only needed when subscribing).
+    //    Unsubscribe relies solely on the server-side stored subscription ARN.
+    if (subscribe) {
+      final token = await getFcmToken();
+      if (token == null) {
+        throw StateError(
+          'Cannot enable notifications: FCM token is unavailable. '
+          'Please grant notification permission and try again.',
+        );
+      }
       await controlPlane.registerFcmToken(RegisterFcmTokenDto(fcmToken: token));
     }
 

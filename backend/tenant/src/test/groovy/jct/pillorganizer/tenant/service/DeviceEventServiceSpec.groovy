@@ -1,5 +1,6 @@
 package jct.pillorganizer.tenant.service
 
+import io.micronaut.test.annotation.MockBean
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import jct.pillorganizer.core.message.IotDeviceEventMessage
@@ -29,6 +30,11 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
 
     @Inject
     NotificationService notificationService
+
+    @MockBean(NotificationService)
+    NotificationService notificationService() {
+        Mock(NotificationService)
+    }
 
     def "should save a device event and convert timestamp to instant"() {
         given:
@@ -151,8 +157,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         def user = userService.upsert("des-user-notif-1", "Notif User", "notif1@example.com")
         deviceService.provision(user, "des-notif-device-1", "des-sn-n1", "des-claim-n1", "des-thing-n1")
 
-        // Give the device a topic ARN so the notification path is exercised
-        def topicArn = notificationService.createOrGetTopic("des-notif-device-1")
+        def topicArn = "arn:local:sns:local:000000000000:device-des-notif-device-1"
         logicalDeviceRepository.updateTopicArn("des-notif-device-1", topicArn)
 
         def message = IotDeviceEventMessage.builder()
@@ -166,7 +171,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         deviceEventService.processEvent(message)
 
         then:
-        noExceptionThrown()
+        1 * notificationService.publish(topicArn, "It's time to take your medication")
         deviceEventRepository.findAll().findAll {
             it.logicalDevice.id == "des-notif-device-1" && it.eventType == "TAKEN"
         }.size() == 1
@@ -177,7 +182,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         def user = userService.upsert("des-user-notif-2", "Notif User 2", "notif2@example.com")
         deviceService.provision(user, "des-notif-device-2", "des-sn-n2", "des-claim-n2", "des-thing-n2")
 
-        def topicArn = notificationService.createOrGetTopic("des-notif-device-2")
+        def topicArn = "arn:local:sns:local:000000000000:device-des-notif-device-2"
         logicalDeviceRepository.updateTopicArn("des-notif-device-2", topicArn)
 
         def message = IotDeviceEventMessage.builder()
@@ -191,13 +196,13 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         deviceEventService.processEvent(message)
 
         then:
-        noExceptionThrown()
+        1 * notificationService.publish(topicArn, "You missed your medication dose")
         deviceEventRepository.findAll().findAll {
             it.logicalDevice.id == "des-notif-device-2" && it.eventType == "MISSED"
         }.size() == 1
     }
 
-    def "should not throw when event type is TAKEN but device has no topic"() {
+    def "should not publish a notification when event type is TAKEN but device has no topic"() {
         given:
         def user = userService.upsert("des-user-notif-3", "Notif User 3", "notif3@example.com")
         deviceService.provision(user, "des-notif-device-3", "des-sn-n3", "des-claim-n3", "des-thing-n3")
@@ -213,6 +218,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         deviceEventService.processEvent(message)
 
         then:
+        0 * notificationService.publish(_, _)
         noExceptionThrown()
     }
 }

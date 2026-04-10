@@ -82,7 +82,7 @@ public class UserDeviceAccessService {
                 .orElseThrow(() -> new IllegalStateException("Tenant not found: " + tenantId));
 
         String endpointArn = user.getFcmEndpointArn();
-        if (endpointArn == null) {
+        if (subscribe && endpointArn == null) {
             return Mono.error(new IllegalStateException(
                     "User has no FCM endpoint ARN — register an FCM token first"));
         }
