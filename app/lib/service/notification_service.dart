@@ -36,7 +36,7 @@ Future<void> initLocalNotifications() async {
     iOS: iosSettings,
   );
 
-  await flutterLocalNotificationsPlugin.initialize(initSettings);
+  await flutterLocalNotificationsPlugin.initialize(settings: initSettings);
 
   // Create the high-importance Android channel so notifications are shown
   // with sound and as heads-up banners while the app is in the foreground.
@@ -71,7 +71,8 @@ Future<void> showForegroundNotification(String title, String body) async {
     android: androidDetails,
   );
 
-  await flutterLocalNotificationsPlugin.show(0, title, body, details);
+  await flutterLocalNotificationsPlugin.show(id: 0, title: title, body: body,
+      notificationDetails: details);
 }
 
 class BackgroundNotificationTranslator {
