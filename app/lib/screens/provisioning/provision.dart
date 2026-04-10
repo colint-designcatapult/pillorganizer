@@ -183,7 +183,12 @@ class _ProvisionPageState extends ConsumerState<ProvisionPage>
           elevation: 1,
           child: ListTile(
             leading: const Icon(Icons.bluetooth),
-            title: Text(entry),
+            horizontalTitleGap: 12,
+            title: Text(
+              entry,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
             subtitle: subtitle,
             onTap: () {
               ref.read(provisionProvider.notifier).selectBluetooth(entry);
