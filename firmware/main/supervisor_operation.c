@@ -429,8 +429,8 @@ static void print_state(const device_state_t* state) {
         const bin_state_t* bin = &state->bins[i];
         
         // Using %d for bin_status_t assuming it's an enum. Adjust if it's a struct.
-        // Using %.34s for schedule_id to safely cap at the struct's defined 35 char length.
-        ESP_LOGI(TAG, "  Bin %2d | Status: %d | Sched: %lld | Event: %lld | Open: %lld | Close: %lld | SchedID: %.34s",
+        // Using %.36s for schedule_id to safely print up to 36 UUID chars (SCHEDULE_ID_SIZE = 37 including null).
+        ESP_LOGI(TAG, "  Bin %2d | Status: %d | Sched: %lld | Event: %lld | Open: %lld | Close: %lld | SchedID: %.36s",
                  i,
                  (int)bin->status, 
                  (long long)bin->scheduled_time, 
