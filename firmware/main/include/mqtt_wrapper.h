@@ -16,11 +16,19 @@ typedef struct {
 
 // --- Core API ---
 
+// Initializes the mqtt_wrapper module (creates internal mutex). Must be called
+// before mqtt_wrapper_connect() or other mqtt_wrapper operations such as
+// publish/subscribe. This is called by mqtt_init().
+void mqtt_wrapper_init(void);
+
 // Initializes the client, starts the MQTT task
 esp_err_t mqtt_wrapper_connect(const mqtt_wrapper_config_t* config);
 
 // Disconnects the broker, stops the background task, and frees memory
 esp_err_t mqtt_wrapper_disconnect(void);
+
+// Publishes a message and returns the client-assigned packet ID used for MQTT ACK correlation (thread-safe)
+esp_err_t mqtt_wrapper_publish_with_id(const char* topic, const char* payload, int len, int qos, int retain, int* out_msg_id);
 
 // Publishes a message (thread-safe)
 esp_err_t mqtt_wrapper_publish(const char* topic, const char* payload, int len, int qos, int retain);

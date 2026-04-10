@@ -31,6 +31,7 @@
 #include <freertos/semphr.h>
 #include "battery.h"
 #include "web_server.h"
+#include "event_outbox.h"
 
 #define TAG "MAIN"
 
@@ -278,6 +279,9 @@ void app_main(void)
 {
     // Initialize non-volatile storage (flash storage)
     init_nvs();
+
+    // Initialize event outbox early so events can be recorded before mux_io starts
+    event_outbox_init();
 
     // Initialize event loop
     ESP_ERROR_CHECK(esp_event_loop_create_default());

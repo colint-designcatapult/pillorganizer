@@ -3,7 +3,9 @@
 #include "device_config.h"
 #include "shadow_state.h"
 #include "rtc.h"
+#include "event_outbox.h"
 #include <esp_log.h>
+#include <inttypes.h>
 #include <mqtt_client.h>
 #include <cJSON.h>
 
@@ -31,6 +33,90 @@ esp_err_t mqtt_publish(const char* topic, const char* payload, int len, int qos,
     return mqtt_wrapper_publish(topic, payload, len, qos, retain);
 }
 
+static const char* event_type_to_str(device_event_type_t evt)
+{
+    switch (evt) {
+        case DEVEVT_DOOR_OPENED:    return "DOOR_OPENED";
+        case DEVEVT_DOOR_CLOSED:    return "DOOR_CLOSED";
+        case DEVEVT_DOOR_LEFT_OPEN: return "DOOR_LEFT_OPEN";
+        case DEVEVT_TAKEN:          return "TAKEN";
+        case DEVEVT_MISSED:         return "MISSED";
+        case DEVEVT_TAKE_NOW:       return "TAKE_NOW";
+        case DEVEVT_RELOAD_START:   return "RELOAD_START";
+        case DEVEVT_RELOAD_END:     return "RELOAD_END";
+        case DEVEVT_ACTION_TIMEOUT: return "RELOAD_TIMEOUT";
+        case DEVEVT_ERROR:          return "ERROR";
+        default:                    return "UNKNOWN";
+    }
+}
+
+esp_err_t mqtt_publish_event(const event_outbox_entry_t* entry,
+                              const device_persistent_state_t* dev_state_hint,
+                              int* out_msg_id)
+{
+    if (!mqtt_wrapper_is_connected()) {
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    char thing_name[128];
+    if (!devcfg_get_thing_name_str(thing_name, sizeof(thing_name))) {
+        ESP_LOGE(TAG, "Could not retrieve thing name for event publish");
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    char topic[256];
+    snprintf(topic, sizeof(topic), "healthe/things/%s/event", thing_name);
+
+    /* Use the caller-supplied device state if available to avoid an NVS
+     * read per entry when draining a batch of events. */
+    device_persistent_state_t dev_state_local;
+    const device_persistent_state_t *dev_state = dev_state_hint;
+    if (dev_state == NULL) {
+        bool loaded = (devcfg_get_device_state(&dev_state_local) == ESP_OK);
+        dev_state = loaded ? &dev_state_local : NULL;
+    }
+
+    cJSON *root = cJSON_CreateObject();
+    if (!root) return ESP_ERR_NO_MEM;
+
+    cJSON_AddNumberToObject(root, "timestamp",  (double)entry->timestamp);
+    cJSON_AddStringToObject(root, "event_type", event_type_to_str(entry->event_type));
+    if (entry->bin_id != EVENT_OUTBOX_BIN_ID_NONE) {
+        cJSON_AddNumberToObject(root, "bin_id", entry->bin_id);
+        if (dev_state != NULL &&
+            entry->bin_id < DEVICE_NUM_BINS &&
+            dev_state->bins[entry->bin_id].schedule_id[0] != '\0') {
+            cJSON_AddStringToObject(root, "schedule_id",
+                                    dev_state->bins[entry->bin_id].schedule_id);
+        }
+    }
+    if (entry->flags != 0) {
+        cJSON_AddNumberToObject(root, "flags", entry->flags);
+    }
+
+    char *json_str = cJSON_PrintUnformatted(root);
+    cJSON_Delete(root);
+    if (!json_str) return ESP_ERR_NO_MEM;
+
+    int msg_id = -1;
+    esp_err_t err = mqtt_wrapper_publish_with_id(topic, json_str,
+                                                  strlen(json_str),
+                                                  /*qos=*/1, /*retain=*/0,
+                                                  &msg_id);
+    free(json_str);
+
+    if (err != ESP_OK || msg_id < 0) {
+        ESP_LOGW(TAG, "Event publish failed for seq=%" PRIu32 " (%s)",
+                 entry->seq, esp_err_to_name(err));
+        return (err != ESP_OK) ? err : ESP_FAIL;
+    }
+
+    ESP_LOGI(TAG, "Event published seq=%" PRIu32 " msg_id=%d type=%s",
+             entry->seq, msg_id, event_type_to_str(entry->event_type));
+    *out_msg_id = msg_id;
+    return ESP_OK;
+}
+
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
     esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)event_data;
 
@@ -48,6 +134,24 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         case MQTT_EVENT_DISCONNECTED:
             ESP_LOGI(TAG, "MQTT Disconnected");
             break;
+        case MQTT_EVENT_PUBLISHED:
+            /* Marshal the PUBACK to the supervisor event loop so the outbox
+             * can be acknowledged and drained without any cross-task calls.
+             * A 50 ms timeout is used so brief queue pressure is absorbed;
+             * if the queue is still full, the entry stays in-flight and will
+             * be reset by the inflight-timeout in event_outbox_tick(). */
+            ESP_LOGI(TAG, "Event PUBACK msg_id=%d", event->msg_id);
+            {
+                esp_err_t puback_err = supervisor_submit_event_block(
+                        EVENT_MQTT_PUBACK, (intptr_t)event->msg_id,
+                        pdMS_TO_TICKS(50));
+                if (puback_err != ESP_OK) {
+                    ESP_LOGW(TAG, "PUBACK msg_id=%d dropped (supervisor queue full); "
+                             "entry will recover via inflight timeout",
+                             event->msg_id);
+                }
+            }
+            break;
         default:
             break;
     }
@@ -56,6 +160,8 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 esp_err_t mqtt_init()
 {
+    mqtt_wrapper_init();
+
     // Sanity check: device must have a permanent identity
     if (!devcfg_has_permanent_identity()) {
         ESP_LOGE(TAG, "MQTT needs permanent identity");

@@ -38,6 +38,7 @@ typedef enum {
     EVENT_STATE_CHANGED,
     EVENT_DOOR_OPENED,
     EVENT_DOOR_CLOSED,
+    EVENT_DOOR_LEFT_OPEN,
     EVENT_BIN_TAKEN,
     EVENT_BIN_MISSED,
     EVENT_BIN_TAKE_NOW,
@@ -51,7 +52,8 @@ typedef enum {
     EVENT_RELOAD_TIMEOUT,
     EVENT_RELOAD_COMPLETE,
     EVENT_BATTERY_CHANGE,
-    EVENT_RESET_PENDING_BINS
+    EVENT_RESET_PENDING_BINS,
+    EVENT_MQTT_PUBACK     /* payload = (intptr_t)(int) client-assigned packet id */
 } supervisor_event_id_t;
 
 typedef struct {
@@ -67,9 +69,12 @@ static_assert(sizeof(supervisor_event_door_t) <= sizeof(intptr_t));
 /* ----- OPERATIONAL STATE ------ */
 
 typedef enum {
-    BIN_FLAG_NONE       = 0,
-    BIN_FLAG_OPEN       = (1 << 0),
-    BIN_FLAG_ON_TIME    = (1 << 1)
+    BIN_FLAG_NONE                = 0,
+    BIN_FLAG_OPEN                = (1 << 0),
+    BIN_FLAG_ON_TIME             = (1 << 1),
+    /* Set when EVENT_DOOR_LEFT_OPEN has already been submitted for the
+     * current open cycle; cleared when the door opens again. */
+    BIN_FLAG_LEFT_OPEN_NOTIFIED  = (1 << 2)
 } bin_state_flags_t;
 
 typedef struct {
@@ -92,7 +97,8 @@ typedef enum {
     DEVERR_NO_SCHEDULE      =  (1 << 0),
     DEVERR_STATE_CORRUPTED  =  (1 << 1),
     DEVERR_NO_RTC_TIME      =  (1 << 2),
-    DEVERR_NO_TIMEZONE      =  (1 << 3)
+    DEVERR_NO_TIMEZONE      =  (1 << 3),
+    DEVERR_OUTBOX_FULL      =  (1 << 4)
 } device_error_flag_t;
 
 #define SECONDS_PER_WEEK 604800
@@ -151,6 +157,8 @@ typedef enum {
     DEVEVT_RELOAD_START,
     DEVEVT_RELOAD_END,
     DEVEVT_ACTION_TIMEOUT,
+    DEVEVT_DOOR_LEFT_OPEN,
+    DEVEVT_ERROR,
 } device_event_type_t;
 
 typedef struct {
