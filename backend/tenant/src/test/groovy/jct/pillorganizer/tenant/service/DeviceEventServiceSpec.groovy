@@ -266,7 +266,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         def topicArn = "arn:local:sns:local:000000000000:device-des-notif-device-5"
         logicalDeviceRepository.updateTopicArn("des-notif-device-5", topicArn)
 
-        // Event is exactly 15 minutes (+ 1 second buffer) old — TTL = 0 → skip
+        // Event is exactly 15 minutes + 1 second old — TTL = 900 - 901 = -1 → skip
         def borderTimestamp = Instant.now().minusSeconds(15 * 60 + 1).toEpochMilli()
         def message = IotDeviceEventMessage.builder()
                 .thingName("des-thing-n5")

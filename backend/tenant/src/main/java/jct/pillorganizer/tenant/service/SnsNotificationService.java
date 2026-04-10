@@ -66,6 +66,9 @@ public class SnsNotificationService implements NotificationService {
             FcmMessageWrapper fcmMessage = new FcmMessageWrapper(
                     new FcmMessage(
                             new FcmNotification(notificationData),
+                            // FCM v1 android.ttl is a duration string (e.g. "840s").
+                            // AWS.SNS.MOBILE.GCM.TTL message attribute carries the same value
+                            // as a numeric string for the SNS delivery-attempt window.
                             new FcmAndroid(ttlSeconds + "s", new FcmAndroidNotification("medication_reminders"))
                     )
             );
