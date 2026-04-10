@@ -45,7 +45,7 @@ public class LocalNotificationService implements NotificationService {
     }
 
     @Override
-    public void publish(String topicArn, String title, String body) {
-        log.atInfo().log("Local: publish to %s — title: %s, body: %s", topicArn, title, body);
+    public void publish(String topicArn, String title, String body, long ttlSeconds) {
+        log.atInfo().log("Local: publish to %s — title: %s, body: %s, ttlSeconds: %d", topicArn, title, body, ttlSeconds);
     }
 }

@@ -8,6 +8,7 @@ import jct.pillorganizer.tenant.model.device.LogicalDevice;
 import jct.pillorganizer.tenant.repo.DeviceEventRepository;
 import lombok.extern.flogger.Flogger;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -17,6 +18,7 @@ public class DeviceEventService {
 
     static final String EVENT_TAKEN = "TAKEN";
     static final String EVENT_MISSED = "MISSED";
+    static final long NOTIFICATION_TTL_SECONDS = 15 * 60L; // 15 minutes
 
     @Inject
     DeviceService deviceService;
@@ -78,14 +80,20 @@ public class DeviceEventService {
         log.atInfo().log("Processed device event for thing %s (type=%s)",
                 message.thingName(), event.getEventType());
 
-        maybeNotify(logicalDevice, message.eventType(), message.binId());
+        maybeNotify(logicalDevice, message.eventType(), message.binId(), Instant.ofEpochMilli(message.timestamp()));
     }
 
-    private void maybeNotify(LogicalDevice device, String eventType, Integer binId) {
+    private void maybeNotify(LogicalDevice device, String eventType, Integer binId, Instant eventTimestamp) {
         if (device.getTopicArn() == null) {
             return;
         }
 
+        long ttlSeconds = NOTIFICATION_TTL_SECONDS - Duration.between(eventTimestamp, Instant.now()).getSeconds();
+        if (ttlSeconds <= 0) {
+            log.atInfo().log("Skipping notification for device %s (event=%s) — TTL expired (%ds over limit)",
+                    device.getId(), eventType, -ttlSeconds);
+            return;
+        }
 
         String notificationMessage;
         switch (eventType) {
@@ -99,8 +107,8 @@ public class DeviceEventService {
         }
 
         try {
-            notificationService.publish(device.getTopicArn(), "Medication Reminder", notificationMessage);
-            log.atInfo().log("Published %s notification for device %s", eventType, device.getId());
+            notificationService.publish(device.getTopicArn(), "Medication Reminder", notificationMessage, ttlSeconds);
+            log.atInfo().log("Published %s notification for device %s (ttl=%ds)", eventType, device.getId(), ttlSeconds);
         } catch (Exception e) {
             log.atWarning().withCause(e).log("Failed to publish notification for device %s (event=%s)",
                     device.getId(), eventType);

@@ -36,9 +36,12 @@ public interface NotificationService {
     /**
      * Publishes a push-notification message to an SNS topic.
      *
-     * @param topicArn ARN of the target SNS topic
-     * @param title    Human-readable title (e.g. "Medication Reminder")
-     * @param body     Human-readable message body (e.g. "It's time to take your medication")
+     * @param topicArn   ARN of the target SNS topic
+     * @param title      Human-readable title (e.g. "Medication Reminder")
+     * @param body       Human-readable message body (e.g. "It's time to take your medication")
+     * @param ttlSeconds Number of seconds the message should remain deliverable. The FCM
+     *                   {@code android.ttl} field and the SNS {@code AWS.SNS.MOBILE.GCM.TTL}
+     *                   message attribute are both set to this value. Must be &gt; 0.
      */
-    void publish(String topicArn, String title, String body);
+    void publish(String topicArn, String title, String body, long ttlSeconds);
 }

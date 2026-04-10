@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Production SNS implementation of {@link NotificationService}.
@@ -58,14 +59,14 @@ public class SnsNotificationService implements NotificationService {
     }
 
     @Override
-    public void publish(String topicArn, String title, String body) {
+    public void publish(String topicArn, String title, String body, long ttlSeconds) {
         try {
             NotificationData notificationData = new NotificationData(title, body);
 
             FcmMessageWrapper fcmMessage = new FcmMessageWrapper(
                     new FcmMessage(
                             new FcmNotification(notificationData),
-                            new FcmAndroid(new FcmAndroidNotification("medication_reminders"))
+                            new FcmAndroid(ttlSeconds + "s", new FcmAndroidNotification("medication_reminders"))
                     )
             );
 
@@ -82,8 +83,14 @@ public class SnsNotificationService implements NotificationService {
                     .topicArn(topicArn)
                     .message(snsMessage)
                     .messageStructure("json")
+                    .messageAttributes(Map.of(
+                            "AWS.SNS.MOBILE.GCM.TTL", MessageAttributeValue.builder()
+                                    .dataType("Number")
+                                    .stringValue(String.valueOf(ttlSeconds))
+                                    .build()
+                    ))
                     .build());
-            log.atInfo().log("SNS message published to topic %s", topicArn);
+            log.atInfo().log("SNS message published to topic %s (ttl=%ds)", topicArn, ttlSeconds);
         } catch (IOException e) {
             log.atWarning().withCause(e).log("Failed to serialize SNS message for topic %s", topicArn);
             throw new RuntimeException("Failed to serialize SNS message", e);
@@ -106,7 +113,7 @@ public class SnsNotificationService implements NotificationService {
     public record FcmNotification(NotificationData notification) {}
 
     @Serdeable
-    public record FcmAndroid(FcmAndroidNotification notification) {}
+    public record FcmAndroid(@JsonProperty("ttl") String ttl, FcmAndroidNotification notification) {}
 
     @Serdeable
     public record FcmAndroidNotification(@JsonProperty("channel_id") String channelId) {}

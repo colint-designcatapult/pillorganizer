@@ -9,6 +9,8 @@ import jct.pillorganizer.tenant.repo.DeviceEventRepository
 import jct.pillorganizer.tenant.repo.LogicalDeviceRepository
 import spock.lang.Subject
 
+import java.time.Instant
+
 @MicronautTest
 class DeviceEventServiceSpec extends BaseIntegrationSpec {
 
@@ -160,10 +162,12 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         def topicArn = "arn:local:sns:local:000000000000:device-des-notif-device-1"
         logicalDeviceRepository.updateTopicArn("des-notif-device-1", topicArn)
 
+        // Use a recent timestamp (1 minute ago) so TTL is still positive
+        def recentTimestamp = Instant.now().minusSeconds(60).toEpochMilli()
         def message = IotDeviceEventMessage.builder()
                 .thingName("des-thing-n1")
                 .tenant("des-tenant")
-                .timestamp(1_700_000_010_000L)
+                .timestamp(recentTimestamp)
                 .eventType("TAKEN")
                 .build()
 
@@ -171,7 +175,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         deviceEventService.processEvent(message)
 
         then:
-        1 * notificationService.publish(topicArn, "Medication Reminder", "It's time to take your medication")
+        1 * notificationService.publish(topicArn, "Medication Reminder", "It's time to take your medication", { it > 0 && it <= 900 })
         deviceEventRepository.findAll().findAll {
             it.logicalDevice.id == "des-notif-device-1" && it.eventType == "TAKEN"
         }.size() == 1
@@ -185,10 +189,12 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         def topicArn = "arn:local:sns:local:000000000000:device-des-notif-device-2"
         logicalDeviceRepository.updateTopicArn("des-notif-device-2", topicArn)
 
+        // Use a recent timestamp (1 minute ago) so TTL is still positive
+        def recentTimestamp = Instant.now().minusSeconds(60).toEpochMilli()
         def message = IotDeviceEventMessage.builder()
                 .thingName("des-thing-n2")
                 .tenant("des-tenant")
-                .timestamp(1_700_000_011_000L)
+                .timestamp(recentTimestamp)
                 .eventType("MISSED")
                 .build()
 
@@ -196,7 +202,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         deviceEventService.processEvent(message)
 
         then:
-        1 * notificationService.publish(topicArn, "Medication Reminder", "You missed your medication dose")
+        1 * notificationService.publish(topicArn, "Medication Reminder", "You missed your medication dose", { it > 0 && it <= 900 })
         deviceEventRepository.findAll().findAll {
             it.logicalDevice.id == "des-notif-device-2" && it.eventType == "MISSED"
         }.size() == 1
@@ -207,10 +213,11 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         def user = userService.upsert("des-user-notif-3", "Notif User 3", "notif3@example.com")
         deviceService.provision(user, "des-notif-device-3", "des-sn-n3", "des-claim-n3", "des-thing-n3")
 
+        def recentTimestamp = Instant.now().minusSeconds(60).toEpochMilli()
         def message = IotDeviceEventMessage.builder()
                 .thingName("des-thing-n3")
                 .tenant("des-tenant")
-                .timestamp(1_700_000_012_000L)
+                .timestamp(recentTimestamp)
                 .eventType("TAKEN")
                 .build()
 
@@ -218,7 +225,86 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         deviceEventService.processEvent(message)
 
         then:
-        0 * notificationService.publish(_, _, _)
+        0 * notificationService.publish(_, _, _, _)
         noExceptionThrown()
+    }
+
+    def "should not publish a notification when the event timestamp is more than 15 minutes ago"() {
+        given:
+        def user = userService.upsert("des-user-notif-4", "Notif User 4", "notif4@example.com")
+        deviceService.provision(user, "des-notif-device-4", "des-sn-n4", "des-claim-n4", "des-thing-n4")
+
+        def topicArn = "arn:local:sns:local:000000000000:device-des-notif-device-4"
+        logicalDeviceRepository.updateTopicArn("des-notif-device-4", topicArn)
+
+        // Event is 20 minutes old — TTL would be 900 - 1200 = -300 → skip
+        def expiredTimestamp = Instant.now().minusSeconds(20 * 60).toEpochMilli()
+        def message = IotDeviceEventMessage.builder()
+                .thingName("des-thing-n4")
+                .tenant("des-tenant")
+                .timestamp(expiredTimestamp)
+                .eventType("TAKEN")
+                .build()
+
+        when:
+        deviceEventService.processEvent(message)
+
+        then:
+        0 * notificationService.publish(_, _, _, _)
+        noExceptionThrown()
+        // Event is still persisted even if notification is skipped
+        deviceEventRepository.findAll().findAll {
+            it.logicalDevice.id == "des-notif-device-4" && it.eventType == "TAKEN"
+        }.size() == 1
+    }
+
+    def "should not publish a notification when the event timestamp is exactly 15 minutes ago"() {
+        given:
+        def user = userService.upsert("des-user-notif-5", "Notif User 5", "notif5@example.com")
+        deviceService.provision(user, "des-notif-device-5", "des-sn-n5", "des-claim-n5", "des-thing-n5")
+
+        def topicArn = "arn:local:sns:local:000000000000:device-des-notif-device-5"
+        logicalDeviceRepository.updateTopicArn("des-notif-device-5", topicArn)
+
+        // Event is exactly 15 minutes (+ 1 second buffer) old — TTL = 0 → skip
+        def borderTimestamp = Instant.now().minusSeconds(15 * 60 + 1).toEpochMilli()
+        def message = IotDeviceEventMessage.builder()
+                .thingName("des-thing-n5")
+                .tenant("des-tenant")
+                .timestamp(borderTimestamp)
+                .eventType("MISSED")
+                .build()
+
+        when:
+        deviceEventService.processEvent(message)
+
+        then:
+        0 * notificationService.publish(_, _, _, _)
+        noExceptionThrown()
+    }
+
+    def "should compute correct TTL based on event age"() {
+        given:
+        def user = userService.upsert("des-user-notif-6", "Notif User 6", "notif6@example.com")
+        deviceService.provision(user, "des-notif-device-6", "des-sn-n6", "des-claim-n6", "des-thing-n6")
+
+        def topicArn = "arn:local:sns:local:000000000000:device-des-notif-device-6"
+        logicalDeviceRepository.updateTopicArn("des-notif-device-6", topicArn)
+
+        // Event is 5 minutes old → expected TTL = 900 - 300 = ~600s (within ±5s tolerance for test execution)
+        def fiveMinutesAgo = Instant.now().minusSeconds(5 * 60).toEpochMilli()
+        def message = IotDeviceEventMessage.builder()
+                .thingName("des-thing-n6")
+                .tenant("des-tenant")
+                .timestamp(fiveMinutesAgo)
+                .eventType("TAKEN")
+                .build()
+
+        when:
+        deviceEventService.processEvent(message)
+
+        then:
+        1 * notificationService.publish(topicArn, "Medication Reminder", "It's time to take your medication",
+                { long ttl -> ttl >= 595 && ttl <= 605 })
     }
 }
