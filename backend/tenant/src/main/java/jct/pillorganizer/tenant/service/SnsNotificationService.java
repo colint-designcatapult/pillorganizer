@@ -64,7 +64,8 @@ public class SnsNotificationService implements NotificationService {
 
             FcmMessageWrapper fcmMessage = new FcmMessageWrapper(
                     new FcmMessage(
-                            new FcmNotification(notificationData)
+                            new FcmNotification(notificationData),
+                            new FcmAndroid(new FcmAndroidNotification("medication_reminders"))
                     )
             );
 
@@ -99,10 +100,16 @@ public class SnsNotificationService implements NotificationService {
     public record FcmMessageWrapper(FcmMessage fcmV1Message) {}
 
     @Serdeable
-    public record FcmMessage(FcmNotification message) {}
+    public record FcmMessage(FcmNotification message, FcmAndroid android) {}
 
     @Serdeable
     public record FcmNotification(NotificationData notification) {}
+
+    @Serdeable
+    public record FcmAndroid(FcmAndroidNotification notification) {}
+
+    @Serdeable
+    public record FcmAndroidNotification(@JsonProperty("channel_id") String channelId) {}
 
     @Serdeable
     public record DefaultPayload(NotificationData notification) {}
