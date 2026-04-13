@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <jobs.h>
-#include <core_json.h>
+#include <cJSON.h>
 
 #define TAG "OTA"
 
@@ -208,47 +208,73 @@ void ota_on_data(const char* topic, size_t topic_len, const char* data, size_t d
     if (js != JobsSuccess ||
         (topic_type != JobsNextJobChanged && topic_type != JobsStartNextSuccess)) return;
 
-    /* Extract job ID from execution.jobId in the notification payload.
-     * JSON_Search takes a mutable buffer; cast away const since it does not modify. */
-    char* val = NULL;
-    size_t val_len = 0;
-    JSONStatus_t json_status = JSON_Search((char*)data, data_len,
-                                           "execution.jobId", strlen("execution.jobId"),
-                                           &val, &val_len);
-    if (json_status != JSONSuccess || val_len == 0 || val_len > JOBID_MAX_LENGTH) {
-        ESP_LOGW(TAG, "Jobs notification: no execution.jobId found, ignoring");
+    cJSON* root = cJSON_ParseWithLength(data, data_len);
+    if (!root) {
+        ESP_LOGE(TAG, "Failed to parse Jobs notification JSON");
         return;
     }
-    memcpy(s_job_id, val, val_len);
-    s_job_id[val_len] = '\0';
 
-    /* Extract firmware URL from execution.jobDocument.url */
-    json_status = JSON_Search((char*)data, data_len,
-                              "execution.jobDocument.url", strlen("execution.jobDocument.url"),
-                              &val, &val_len);
-    if (json_status != JSONSuccess || val_len == 0) {
+    /* When there is no pending job, AWS sends a notification with no
+     * "execution" field (e.g. after a job completes or fails).  This is
+     * normal — log at debug level and return cleanly. */
+    cJSON* execution = cJSON_GetObjectItemCaseSensitive(root, "execution");
+    if (!cJSON_IsObject(execution)) {
+        ESP_LOGD(TAG, "Jobs notification: no pending job (no execution field)");
+        cJSON_Delete(root);
+        return;
+    }
+
+    cJSON* job_id_item = cJSON_GetObjectItemCaseSensitive(execution, "jobId");
+    if (!cJSON_IsString(job_id_item) || job_id_item->valuestring[0] == '\0') {
+        ESP_LOGW(TAG, "Jobs notification: execution.jobId missing or empty");
+        cJSON_Delete(root);
+        return;
+    }
+    size_t job_id_len = strlen(job_id_item->valuestring);
+    if (job_id_len > JOBID_MAX_LENGTH) {
+        ESP_LOGE(TAG, "Jobs notification: jobId too long (%zu bytes)", job_id_len);
+        cJSON_Delete(root);
+        return;
+    }
+    memcpy(s_job_id, job_id_item->valuestring, job_id_len + 1);
+
+    cJSON* job_doc = cJSON_GetObjectItemCaseSensitive(execution, "jobDocument");
+    if (!cJSON_IsObject(job_doc)) {
+        ESP_LOGE(TAG, "OTA job document missing — ignoring job %s", s_job_id);
+        s_job_id[0] = '\0';
+        cJSON_Delete(root);
+        return;
+    }
+
+    cJSON* url_item = cJSON_GetObjectItemCaseSensitive(job_doc, "url");
+    if (!cJSON_IsString(url_item) || url_item->valuestring[0] == '\0') {
         ESP_LOGE(TAG, "OTA job document missing 'url' field — ignoring job %s", s_job_id);
         s_job_id[0] = '\0';
+        cJSON_Delete(root);
         return;
     }
-    if (val_len >= OTA_URL_MAX_LEN) {
-        ESP_LOGE(TAG, "OTA URL too long (%zu bytes) — ignoring job %s", val_len, s_job_id);
+    size_t url_len = strlen(url_item->valuestring);
+    if (url_len >= OTA_URL_MAX_LEN) {
+        ESP_LOGE(TAG, "OTA URL too long (%zu bytes) — ignoring job %s", url_len, s_job_id);
         s_job_id[0] = '\0';
+        cJSON_Delete(root);
         return;
     }
-    memcpy(s_job_url, val, val_len);
-    s_job_url[val_len] = '\0';
+    memcpy(s_job_url, url_item->valuestring, url_len + 1);
 
-    /* Extract optional version field */
-    json_status = JSON_Search((char*)data, data_len,
-                              "execution.jobDocument.version", strlen("execution.jobDocument.version"),
-                              &val, &val_len);
-    if (json_status == JSONSuccess && val_len > 0 && val_len < OTA_VERSION_MAX_LEN) {
-        memcpy(s_job_version, val, val_len);
-        s_job_version[val_len] = '\0';
+    cJSON* ver_item = cJSON_GetObjectItemCaseSensitive(job_doc, "version");
+    if (cJSON_IsString(ver_item) && ver_item->valuestring[0] != '\0') {
+        size_t ver_len = strlen(ver_item->valuestring);
+        if (ver_len < OTA_VERSION_MAX_LEN) {
+            memcpy(s_job_version, ver_item->valuestring, ver_len + 1);
+        } else {
+            s_job_version[0] = '\0';
+        }
     } else {
         s_job_version[0] = '\0';
     }
+
+    cJSON_Delete(root);
 
     ESP_LOGI(TAG, "OTA job received: id=%s version=%s url=%s",
              s_job_id, s_job_version[0] ? s_job_version : "(unset)", s_job_url);
