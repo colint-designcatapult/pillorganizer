@@ -15,9 +15,10 @@ class UserServiceSpec extends Specification {
     UserRepo userRepo = Mock()
     KsuidService ksuidService = new KsuidService()
     TokenValidator<?> tokenValidator = Mock()
+    NotificationEndpointService notificationEndpointService = Mock()
 
     @Subject
-    UserService userService = new UserService(userRepo, ksuidService, tokenValidator)
+    UserService userService = new UserService(userRepo, ksuidService, tokenValidator, notificationEndpointService)
 
     def "should create a new user when one does not exist"() {
         given:
@@ -101,5 +102,48 @@ class UserServiceSpec extends Specification {
 
         then:
         thrown(IllegalStateException)
+    }
+
+    def "registerFcmToken creates an endpoint ARN and persists it when none exists"() {
+        given:
+        def id = "user-fcm-1"
+        def sub = "sub-fcm-1"
+        def user = UserEntity.builder()
+                .base(UserEntity.buildBase(id, sub))
+                .userId(id).userSub(sub).email("fcm1@example.com")
+                .build()
+        def newArn = "arn:local:endpoint:1"
+
+        and:
+        notificationEndpointService.registerOrUpdateEndpoint("tok-abc", null) >> newArn
+
+        when:
+        def result = userService.registerFcmToken(user, "tok-abc")
+
+        then:
+        1 * userRepo.updateFcmEndpointArn(user, newArn)
+        result.fcmEndpointArn == newArn
+    }
+
+    def "registerFcmToken is a no-op when the endpoint ARN is unchanged"() {
+        given:
+        def existingArn = "arn:local:endpoint:existing"
+        def id = "user-fcm-2"
+        def sub = "sub-fcm-2"
+        def user = UserEntity.builder()
+                .base(UserEntity.buildBase(id, sub))
+                .userId(id).userSub(sub).email("fcm2@example.com")
+                .fcmEndpointArn(existingArn)
+                .build()
+
+        and:
+        notificationEndpointService.registerOrUpdateEndpoint("tok-same", existingArn) >> existingArn
+
+        when:
+        def result = userService.registerFcmToken(user, "tok-same")
+
+        then:
+        0 * userRepo.updateFcmEndpointArn(_, _)
+        result.fcmEndpointArn == existingArn
     }
 }

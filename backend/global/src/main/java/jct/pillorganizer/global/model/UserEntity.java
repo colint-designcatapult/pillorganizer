@@ -9,7 +9,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbImmut
 import java.time.Instant;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 @DynamoDbImmutable(builder = UserEntity.UserEntityBuilder.class)
 public class UserEntity {
     @Getter(onMethod_ = {@DynamoDbFlatten})
@@ -26,6 +26,9 @@ public class UserEntity {
 
     @Getter(onMethod_ = @DynamoDbAttribute("Email"))
     String email;
+
+    @Getter(onMethod_ = @DynamoDbAttribute("FcmEndpointArn"))
+    String fcmEndpointArn;
 
     public static String pk(String userId) {
         return "USER#" + userId;

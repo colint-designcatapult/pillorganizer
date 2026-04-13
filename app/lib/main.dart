@@ -1,4 +1,6 @@
 import 'package:app/navigation/tab_navigator.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
 import 'package:app/screens/first_launch.dart';
@@ -7,6 +9,7 @@ import 'package:app/screens/post_setup_wizard.dart';
 import 'package:app/service/amplify_service.dart';
 import 'package:app/service/credential_manager.dart';
 import 'package:app/service/deep_link_service.dart';
+import 'package:app/service/notification_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
@@ -19,6 +22,7 @@ import 'provider/deep_link_provider.dart';
 import 'provider/language_provider.dart';
 import 'screens/auth/launch_page_login.dart';
 import 'screens/auth/patient_confirmation.dart';
+import 'firebase_options.dart';
 
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
@@ -28,6 +32,29 @@ void main() async {
   tz.initializeTimeZones();
   DeepLinkService().initialize();
   await AmplifyService().configureAmplify();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await initLocalNotifications();
+
+  // Show foreground notifications on iOS (alert + sound + badge).
+  // On Android this is handled by the high-importance channel.
+  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
+  // Display a local notification whenever an FCM message arrives while the
+  // app is open in the foreground (Android only — iOS uses the system UI).
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    final notification = message.notification;
+    if (notification != null) {
+      showForegroundNotification(
+        notification.title ?? 'Medication Reminder',
+        notification.body ?? '',
+      );
+    }
+  });
+
   runApp(const ProviderScope(child: MyApp()));
 }
 

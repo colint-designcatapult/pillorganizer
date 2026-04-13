@@ -59,4 +59,11 @@ public class UserRepo extends BaseControlPlaneRepo<UserEntity> {
                 .flatMap(page -> page.items().stream())
                 .findFirst();
     }
+
+    public void updateFcmEndpointArn(UserEntity user, String fcmEndpointArn) {
+        UserEntity updated = user.toBuilder()
+                .fcmEndpointArn(fcmEndpointArn)
+                .build();
+        this.table.putItem(updated);
+    }
 }

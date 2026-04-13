@@ -60,4 +60,8 @@ public class LogicalDevice {
 
     @JsonIgnore
     private Timestamp disabledAt = null;
+
+    /** ARN of the SNS topic used to fan-out push notifications to all subscribers of this device. */
+    @Nullable
+    private String topicArn;
 }

@@ -29,4 +29,5 @@ public interface LogicalDeviceRepository extends CrudRepository<LogicalDevice, S
     void updateNickname(@Id String logicalDeviceId, String nickname);
     void updateCurrentSchedule(@Id String logicalDeviceId, @Nullable DeviceSchedule currentSchedule);
     void updateRequestedSchedule(@Id String logicalDeviceId, @Nullable DeviceSchedule requestedSchedule);
+    void updateTopicArn(@Id String logicalDeviceId, @Nullable String topicArn);
 }

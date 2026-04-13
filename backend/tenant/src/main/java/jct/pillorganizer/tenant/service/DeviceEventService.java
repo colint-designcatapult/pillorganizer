@@ -8,6 +8,7 @@ import jct.pillorganizer.tenant.model.device.LogicalDevice;
 import jct.pillorganizer.tenant.repo.DeviceEventRepository;
 import lombok.extern.flogger.Flogger;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -15,11 +16,18 @@ import java.util.UUID;
 @Singleton
 public class DeviceEventService {
 
+    static final String EVENT_TAKEN = "TAKEN";
+    static final String EVENT_MISSED = "MISSED";
+    static final long NOTIFICATION_TTL_SECONDS = 15 * 60L; // 15 minutes
+
     @Inject
     DeviceService deviceService;
 
     @Inject
     DeviceEventRepository deviceEventRepository;
+
+    @Inject
+    NotificationService notificationService;
 
     /**
      * Processes an incoming IoT device event message.
@@ -29,6 +37,10 @@ public class DeviceEventService {
      * {@code (logical_device_id, timestamp, event_type, bin_id)} silently drops duplicate messages
      * (QoS-1 "at least once" re-deliveries) via {@code ON CONFLICT DO NOTHING}. All other errors
      * propagate to the caller so the SQS message is routed to the dead-letter queue.
+     * </p>
+     * <p>
+     * For {@code TAKEN} and {@code MISSED} events a push notification is published to the
+     * device's SNS topic so all subscribed users are notified.
      * </p>
      *
      * @param message the incoming device event message
@@ -67,5 +79,41 @@ public class DeviceEventService {
         );
         log.atInfo().log("Processed device event for thing %s (type=%s)",
                 message.thingName(), event.getEventType());
+
+        maybeNotify(logicalDevice, message.eventType(), message.binId(), Instant.ofEpochMilli(message.timestamp()));
+    }
+
+    private void maybeNotify(LogicalDevice device, String eventType, Integer binId, Instant eventTimestamp) {
+        if (device.getTopicArn() == null) {
+            return;
+        }
+
+        long ttlSeconds = NOTIFICATION_TTL_SECONDS - Duration.between(eventTimestamp, Instant.now()).getSeconds();
+        if (ttlSeconds <= 0) {
+            log.atInfo().log("Skipping notification for device %s (event=%s) — TTL expired (%ds over limit)",
+                    device.getId(), eventType, -ttlSeconds);
+            return;
+        }
+
+        String notificationMessage;
+        switch (eventType) {
+            case EVENT_TAKEN -> notificationMessage = "It's time to take your medication";
+            case EVENT_MISSED -> notificationMessage = "You missed your medication dose";
+            case "DOOR_OPENED" -> notificationMessage = "(Test) Door " + binId + " opened";
+            case "DOOR_CLOSED" -> notificationMessage = "(Test) Door " + binId + " closed";
+            case null, default -> {
+                return;
+            }
+        }
+
+        try {
+            notificationService.publish(device.getTopicArn(), "Medication Reminder", notificationMessage, ttlSeconds);
+            log.atInfo().log("Published %s notification for device %s (ttl=%ds)", eventType, device.getId(), ttlSeconds);
+        } catch (Exception e) {
+            log.atWarning().withCause(e).log("Failed to publish notification for device %s (event=%s)",
+                    device.getId(), eventType);
+            throw e;
+        }
     }
 }
+
