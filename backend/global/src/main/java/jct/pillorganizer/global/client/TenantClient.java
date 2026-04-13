@@ -12,6 +12,7 @@ import jct.pillorganizer.core.TenantDetails;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.core.dto.DeviceClaimEligibilityDto;
 import jct.pillorganizer.core.dto.DeviceEligibilityCheckDto;
+import jct.pillorganizer.global.dto.DeviceSubscribeDto;
 import lombok.Getter;
 import reactor.core.publisher.Mono;
 
@@ -60,6 +61,13 @@ public class TenantClient {
     public Mono<DeviceClaimEligibilityDto> getDeviceClaimEligibility(String deviceId, String serialNumber) {
         return Mono.from(httpClient.retrieve(HttpRequest.POST(makeUri("/internal/user/device_claim_eligibility"),
                 new DeviceEligibilityCheckDto(deviceId, serialNumber)), Argument.of(DeviceClaimEligibilityDto.class)));
+    }
+
+    public Mono<DeviceAccessDto> updateDeviceNotifications(String deviceId,
+                                                           DeviceSubscribeDto dto) {
+        return Mono.from(httpClient.retrieve(
+                HttpRequest.POST(makeUri("/internal/user/device/" + deviceId + "/notifications"), dto),
+                Argument.of(DeviceAccessDto.class)));
     }
 
     public static boolean isConnectionInitializationFailure(Throwable ex) {

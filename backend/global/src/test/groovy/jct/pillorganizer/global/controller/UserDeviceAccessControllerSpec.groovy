@@ -7,9 +7,11 @@ import io.micronaut.test.annotation.MockBean
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import jct.pillorganizer.core.dto.DeviceAccessDto
+import jct.pillorganizer.core.service.GlobalAuthService
 import jct.pillorganizer.global.BaseIntegrationSpec
 import jct.pillorganizer.global.dto.UserAndDeviceAccessDto
 import jct.pillorganizer.global.service.UserDeviceAccessService
+import jct.pillorganizer.global.service.UserService
 import reactor.core.publisher.Flux
 
 @MicronautTest
@@ -22,9 +24,25 @@ class UserDeviceAccessControllerSpec extends BaseIntegrationSpec {
     @Inject
     UserDeviceAccessService userDeviceAccessService
 
+    @Inject
+    UserService userService
+
+    @Inject
+    GlobalAuthService globalAuthService
+
     @MockBean(UserDeviceAccessService)
     UserDeviceAccessService userDeviceAccessService() {
         Mock(UserDeviceAccessService)
+    }
+
+    @MockBean(UserService)
+    UserService userService() {
+        Mock(UserService)
+    }
+
+    @MockBean(GlobalAuthService)
+    GlobalAuthService globalAuthService() {
+        Mock(GlobalAuthService)
     }
 
     @Override
@@ -36,8 +54,8 @@ class UserDeviceAccessControllerSpec extends BaseIntegrationSpec {
     // @relation(CTRL-REQ-15, scope=range_start)
     void "test getUserDeviceAccess returns aggregated results"() {
         given:
-        def device1 = new DeviceAccessDto("d1", "dev1", "nickname1", "sn1", "model1", "tenant1", "apiBase1", true as boolean, "tenant1-sn1", "tenant-name")
-        def device2 = new DeviceAccessDto("d2", "dev2", "nickname2", "sn2", "model2", "tenant2", "apiBase2", false as boolean, "tenant2-sn2", "tenant-name")
+        def device1 = new DeviceAccessDto("d1", "dev1", "nickname1", "sn1", "model1", "tenant1", "apiBase1", true as boolean, "tenant1-sn1", "tenant-name", null)
+        def device2 = new DeviceAccessDto("d2", "dev2", "nickname2", "sn2", "model2", "tenant2", "apiBase2", false as boolean, "tenant2-sn2", "tenant-name", null)
         
         when:
         def request = HttpRequest.GET("/user/devices")

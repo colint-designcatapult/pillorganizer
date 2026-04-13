@@ -14,6 +14,7 @@ class DeviceAccessDto with DeviceAccessDtoMappable {
   final bool primaryUser;
   final String? thingName;
   final String? tenantName;
+  final bool? notifications;
 
   DeviceAccessDto({
     required this.deviceId,
@@ -25,7 +26,8 @@ class DeviceAccessDto with DeviceAccessDtoMappable {
     required this.tenantId,
     required this.primaryUser,
     this.thingName,
-    this.tenantName
+    this.tenantName,
+    this.notifications,
   });
 }
 
@@ -228,4 +230,24 @@ class UpdateDeviceSettingsDto with UpdateDeviceSettingsDtoMappable {
   final String? deviceName;
 
   const UpdateDeviceSettingsDto({this.deviceName});
+}
+
+@MappableClass()
+class RegisterFcmTokenDto with RegisterFcmTokenDtoMappable {
+  final String fcmToken;
+
+  const RegisterFcmTokenDto({required this.fcmToken});
+}
+
+@MappableClass()
+class DeviceNotificationRequestDto with DeviceNotificationRequestDtoMappable {
+  final String deviceId;
+  final String tenantId;
+  final bool subscribe;
+
+  const DeviceNotificationRequestDto({
+    required this.deviceId,
+    required this.tenantId,
+    required this.subscribe,
+  });
 }

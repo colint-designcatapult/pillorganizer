@@ -74,7 +74,7 @@ export class AppStack extends cdk.Stack {
       ruleName: `RouteDeviceEventsToSQS_${props.environmentName}`,
       topicRulePayload: {
         awsIotSqlVersion: '2016-03-23',
-        sql: `SELECT *, topic(3) as thingName, topic(4) as topicName, 'deviceEvent' as type, '${props.environmentName}' as tenant
+        sql: `SELECT 'deviceEvent' as type, *, topic(3) as thingName, topic(4) as topicName, '${props.environmentName}' as tenant
          FROM 'healthe/things/+/event' WHERE startswith(topic(3), '${props.environmentName}-')`,
         ruleDisabled: false,
         actions: [
@@ -142,6 +142,33 @@ export class AppStack extends cdk.Stack {
           resources: [
             `arn:aws:iot:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:thing/${props.environmentName}-*`
           ]
+        })
+      );
+
+      // Ensure app functions can manage SNS topics, subscriptions and publish notifications
+      fn.addToRolePolicy(
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            'sns:CreateTopic',
+            'sns:Publish',
+          ],
+          resources: [
+            `arn:aws:sns:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:device-*`,
+          ],
+        })
+      );
+
+      fn.addToRolePolicy(
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            'sns:Subscribe',
+            'sns:Unsubscribe',
+          ],
+          resources: [
+            `arn:aws:sns:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:device-*`,
+          ],
         })
       );
 

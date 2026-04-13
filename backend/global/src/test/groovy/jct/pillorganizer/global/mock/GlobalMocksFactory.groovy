@@ -5,6 +5,7 @@ import io.micronaut.context.annotation.Requires
 import jakarta.inject.Singleton
 import io.micronaut.context.annotation.Replaces
 import software.amazon.awssdk.services.iot.IotClient
+import software.amazon.awssdk.services.sns.SnsClient
 import software.amazon.awssdk.services.sqs.SqsClient
 import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest
 import software.amazon.awssdk.services.sqs.model.GetQueueUrlResponse
@@ -29,5 +30,11 @@ class GlobalMocksFactory {
     @Replaces(IotClient)
     IotClient iotClient() {
         return mockFactory.Mock(IotClient)
+    }
+
+    @Singleton
+    @Replaces(SnsClient)
+    SnsClient snsClient() {
+        return mockFactory.Mock(SnsClient)
     }
 }

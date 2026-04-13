@@ -20,12 +20,15 @@ public class UserService {
     private final KsuidService ksuidService;
     private final UserRepo userRepo;
     private final TokenValidator<?> tokenValidator;
+    private final NotificationEndpointService notificationEndpointService;
 
     @Inject
-    public UserService(UserRepo userRepo, KsuidService ksuidService, TokenValidator<?> tokenValidator) {
+    public UserService(UserRepo userRepo, KsuidService ksuidService, TokenValidator<?> tokenValidator,
+                       NotificationEndpointService notificationEndpointService) {
         this.userRepo = userRepo;
         this.ksuidService = ksuidService;
         this.tokenValidator = tokenValidator;
+        this.notificationEndpointService = notificationEndpointService;
     }
 
     public UserEntity createUser(String sub, String email) {
@@ -86,5 +89,26 @@ public class UserService {
                         return new UserEntityNotFoundException("Subject " + sub);
                     });
                 });
+    }
+
+    /**
+     * Registers or refreshes the user's FCM token as an SNS platform-application endpoint,
+     * then persists the resulting endpoint ARN on the {@link UserEntity}.
+     *
+     * @param user     the user whose token is being registered
+     * @param fcmToken the current FCM registration token from the device
+     * @return the updated {@link UserEntity} containing the new {@code fcmEndpointArn}
+     */
+    public UserEntity registerFcmToken(UserEntity user, String fcmToken) {
+        String endpointArn = notificationEndpointService.registerOrUpdateEndpoint(
+                fcmToken, user.getFcmEndpointArn());
+
+        if (endpointArn.equals(user.getFcmEndpointArn())) {
+            return user;
+        }
+
+        userRepo.updateFcmEndpointArn(user, endpointArn);
+        log.atInfo().log("Persisted FCM endpoint ARN for user %s", user.getUserId());
+        return user.toBuilder().fcmEndpointArn(endpointArn).build();
     }
 }

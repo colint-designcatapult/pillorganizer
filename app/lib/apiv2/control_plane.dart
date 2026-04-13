@@ -33,4 +33,15 @@ abstract class ControlPlaneApiClient {
   @POST("/device/claim")
   Future<ProvisioningClaimDto> getProvisioningClaim(
       @Body() ProvisioningClaimRequestDto request);
+
+  /// Registers or refreshes the current user's FCM token as an SNS
+  /// platform-application endpoint. Call on first launch and on token refresh.
+  @POST("/user/fcm_token")
+  Future<void> registerFcmToken(@Body() RegisterFcmTokenDto dto);
+
+  /// Subscribes or unsubscribes the current user from push notifications
+  /// for a given device. Returns the updated [DeviceAccessDto].
+  @POST("/user/device/notifications")
+  Future<DeviceAccessDto> updateDeviceNotifications(
+      @Body() DeviceNotificationRequestDto dto);
 }

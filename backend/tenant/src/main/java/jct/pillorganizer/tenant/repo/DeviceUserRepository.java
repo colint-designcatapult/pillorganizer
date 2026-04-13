@@ -1,5 +1,7 @@
 package jct.pillorganizer.tenant.repo;
 
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -30,4 +32,6 @@ public interface DeviceUserRepository extends CrudRepository<DeviceUser, UUID> {
 
     @Join(value = "user", type = Join.Type.LEFT_FETCH)
     List<DeviceUser> findByDeviceId(String deviceId);
+
+    void updateSubscriptionArn(@Id UUID id, @Nullable String subscriptionArn);
 }

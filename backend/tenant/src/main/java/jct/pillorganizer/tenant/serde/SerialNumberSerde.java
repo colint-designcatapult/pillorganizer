@@ -16,7 +16,6 @@ import java.util.HexFormat;
  * Serializes a serial number (internally stored as a long) into a hex string. A serial number is 6 bytes and a long
  * is 8 bytes, so the long is truncated.
  */
-@Singleton
 @Order(value = -100)
 public class SerialNumberSerde implements Serde<Long> {
 
