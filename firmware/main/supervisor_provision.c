@@ -27,6 +27,12 @@ static supervisor_provision_state_t s_state = STATE_INIT;
 // Number of provision failures this boot
 static uint8_t s_provision_fail_ctr = 0;
 
+#if CONFIG_EMULATOR_MODE
+/* Track whether NTP time sync has completed so the CLAIM_CREDENTIALS_RECEIVED
+ * handler can decide whether to start fetching certificates immediately. */
+static bool s_time_synced = false;
+#endif
+
 static void provisioning_failed()
 {
     s_state = STATE_FAILED;
@@ -162,6 +168,9 @@ void supervisor_provision_event(const supervisor_event_t* event)
         case STATE_SYNCING_TIME:
             if (event->id == EVENT_TIME_SYNCED) {
                 ESP_LOGI(TAG, "RTC time synced");
+#if CONFIG_EMULATOR_MODE
+                s_time_synced = true;
+#endif
                 if (claim_has_credentials()) {
                     s_state = STATE_FETCHING_CERT;
 
@@ -187,9 +196,15 @@ void supervisor_provision_event(const supervisor_event_t* event)
 #endif
                 }
             } else if (event->id == EVENT_CLAIM_CREDENTIALS_RECEIVED) {
-                /* Credentials arrived (from CLI or BLE endpoint).
-                 * If time is already synced we can proceed immediately. */
+                /* Credentials arrived from CLI (or BLE endpoint).
+                 * Only proceed if time has already been synced; otherwise
+                 * the EVENT_TIME_SYNCED handler above will pick up the
+                 * credentials when the sync completes. */
+#if CONFIG_EMULATOR_MODE
+                if (s_time_synced && claim_has_credentials()) {
+#else
                 if (claim_has_credentials()) {
+#endif
                     s_state = STATE_FETCHING_CERT;
                     ESP_LOGI(TAG, "Claim credentials received, fetching temporary certificates...");
                     claim_execute_fetch();

@@ -44,8 +44,8 @@ static void network_eth_event_handler(void *arg, esp_event_base_t event_base,
         }
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_ETH_GOT_IP) {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
-        ESP_LOGI(TAG, "Got IP via Ethernet: " IPSTR, IP2STR(&event->ip_info.ip));
-        ESP_LOGI(TAG, "Access engineering interface at: http://" IPSTR, IP2STR(&event->ip_info.ip));
+        ESP_LOGI(TAG, "Got IP via Ethernet: " IPSTR " — engineering interface at http://" IPSTR,
+                 IP2STR(&event->ip_info.ip), IP2STR(&event->ip_info.ip));
         ESP_ERROR_CHECK(supervisor_submit_event(EVENT_NETIF_CONNECTED));
     }
 }
