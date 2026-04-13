@@ -20,7 +20,6 @@ typedef enum {
     STATE_SYNCING_TIME,
     STATE_CONNECTING_MQTT,
     STATE_MQTT_CONNECTED,
-    STATE_SHADOW_READY,
     STATE_OPERATIONAL
 } supervisor_operation_state_t;
 
@@ -1036,10 +1035,10 @@ void supervisor_operation_event(const supervisor_event_t* event)
         case STATE_MQTT_CONNECTED:
             if (event->id == EVENT_SHADOW_READY) {
                 shadow_state_report_schedule(&s_device_state.schedule);
-                s_state = STATE_SHADOW_READY;
+                s_state = STATE_OPERATIONAL;
             }
             break;
-        case STATE_SHADOW_READY:
+        case STATE_OPERATIONAL:
             if (event->id == EVENT_SCHEDULE_DELTA_RECEIVED) {
                 device_schedule_t* sched = (device_schedule_t*)event->payload;
                 process_schedule_delta(sched);

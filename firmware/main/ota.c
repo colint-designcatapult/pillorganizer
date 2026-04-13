@@ -6,6 +6,7 @@
 #include <esp_https_ota.h>
 #include <esp_ota_ops.h>
 #include <esp_http_client.h>
+#include <stdio.h>
 #include <string.h>
 #include <jobs.h>
 #include <core_json.h>
@@ -23,8 +24,15 @@ static char s_job_url[OTA_URL_MAX_LEN];
 static char s_job_id[JOBID_MAX_LENGTH + 1];
 static char s_job_version[OTA_VERSION_MAX_LEN];
 static int  s_notify_next_sub_id = -1;
+static int  s_start_next_sub_id  = -1;
 
-/* Publish a job status update via the Jobs SDK. */
+/* Publish a job status update via the Jobs SDK.
+ *
+ * expectedVersion is intentionally omitted from the update message.
+ * Jobs_UpdateMsg requires it, but including it causes VersionMismatch
+ * rejections after the first update (each accepted update increments the
+ * server-side version).  The AWS IoT Jobs API treats expectedVersion as
+ * optional, so we build the minimal JSON body ourselves. */
 static void publish_job_status(JobCurrentStatus_t status)
 {
     char thing_name[THINGNAME_MAX_LENGTH + 1];
@@ -50,15 +58,18 @@ static void publish_job_status(JobCurrentStatus_t status)
         return;
     }
 
-    /* Build the update message body */
-    char msg[UPDATE_JOB_MSG_LENGTH];
-    size_t msg_len = Jobs_UpdateMsg(status, "1", 1, msg, sizeof(msg));
-    if (msg_len == 0) {
-        ESP_LOGE(TAG, "Jobs_UpdateMsg failed");
+    /* Status strings mirror the JobCurrentStatus_t enum order in the SDK. */
+    static const char * const status_str[] = {
+        "QUEUED", "IN_PROGRESS", "FAILED", "SUCCEEDED", "REJECTED"
+    };
+    char msg[48];
+    int msg_len = snprintf(msg, sizeof(msg), "{\"status\":\"%s\"}", status_str[status]);
+    if (msg_len <= 0 || msg_len >= (int)sizeof(msg)) {
+        ESP_LOGE(TAG, "Failed to build job status message");
         return;
     }
 
-    esp_err_t err = mqtt_publish(topic, msg, (int)msg_len, 1, 0);
+    esp_err_t err = mqtt_publish(topic, msg, msg_len, 1, 0);
     if (err != ESP_OK) {
         ESP_LOGW(TAG, "Failed to publish job status %d: %d", (int)status, err);
     } else {
@@ -72,6 +83,7 @@ void ota_init()
     s_job_id[0]      = '\0';
     s_job_version[0] = '\0';
     s_notify_next_sub_id = -1;
+    s_start_next_sub_id  = -1;
     ESP_LOGI(TAG, "OTA module initialized");
 }
 
@@ -102,12 +114,71 @@ void ota_on_connect()
         s_notify_next_sub_id = sub_id;
         ESP_LOGI(TAG, "Subscribed to Jobs notify-next topic (sub_id=%d)", sub_id);
     }
+
+    /* Also subscribe to start-next/accepted so we can recover any job that was
+     * already QUEUED before a reboot (notify-next only fires on state changes). */
+    topic_len = 0;
+    js = Jobs_GetTopic(topic, sizeof(topic),
+                       thing_name, (uint16_t)strlen(thing_name),
+                       JobsStartNextSuccess,
+                       &topic_len);
+    if (js != JobsSuccess) {
+        ESP_LOGE(TAG, "Jobs_GetTopic (StartNextSuccess) failed: %d", js);
+        return;
+    }
+
+    sub_id = -1;
+    err = mqtt_subscribe(topic, 1, &sub_id);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to subscribe to Jobs start-next/accepted topic: %d", err);
+    } else {
+        s_start_next_sub_id = sub_id;
+        ESP_LOGI(TAG, "Subscribed to Jobs start-next/accepted topic (sub_id=%d)", sub_id);
+    }
 }
 
 void ota_on_subscribe(int sub_id)
 {
     if (sub_id == s_notify_next_sub_id) {
         ESP_LOGI(TAG, "Jobs notify-next subscription confirmed (sub_id=%d)", sub_id);
+    }
+
+    if (sub_id == s_start_next_sub_id) {
+        ESP_LOGI(TAG, "Jobs start-next/accepted subscription confirmed (sub_id=%d)", sub_id);
+
+        /* Subscription is live — now request the next pending job.
+         * This recovers any job that was QUEUED before a reboot and would
+         * never trigger a notify-next event on its own. */
+        char thing_name[THINGNAME_MAX_LENGTH + 1];
+        if (!devcfg_get_thing_name_str(thing_name, sizeof(thing_name))) {
+            ESP_LOGE(TAG, "Could not retrieve thing name for StartNext request");
+            return;
+        }
+
+        char topic[TOPIC_BUFFER_SIZE];
+        size_t topic_len = 0;
+        JobsStatus_t js = Jobs_StartNext(topic, sizeof(topic),
+                                         thing_name, (uint16_t)strlen(thing_name),
+                                         &topic_len);
+        if (js != JobsSuccess) {
+            ESP_LOGE(TAG, "Jobs_StartNext topic generation failed: %d", js);
+            return;
+        }
+
+        char msg[START_JOB_MSG_LENGTH];
+        size_t msg_len = Jobs_StartNextMsg(thing_name, strlen(thing_name),
+                                           msg, sizeof(msg));
+        if (msg_len == 0) {
+            ESP_LOGE(TAG, "Jobs_StartNextMsg failed");
+            return;
+        }
+
+        esp_err_t err = mqtt_publish(topic, msg, (int)msg_len, 1, 0);
+        if (err != ESP_OK) {
+            ESP_LOGW(TAG, "Failed to publish StartNext request: %d", err);
+        } else {
+            ESP_LOGI(TAG, "StartNext request published — checking for pending OTA job");
+        }
     }
 }
 
@@ -134,7 +205,8 @@ void ota_on_data(const char* topic, size_t topic_len, const char* data, size_t d
                                       thing_name, (uint16_t)strlen(thing_name),
                                       &topic_type,
                                       &out_job_id, &out_job_id_len);
-    if (js != JobsSuccess || topic_type != JobsNextJobChanged) return;
+    if (js != JobsSuccess ||
+        (topic_type != JobsNextJobChanged && topic_type != JobsStartNextSuccess)) return;
 
     /* Extract job ID from execution.jobId in the notification payload.
      * JSON_Search takes a mutable buffer; cast away const since it does not modify. */

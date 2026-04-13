@@ -202,7 +202,7 @@ static void ulp_event_task(void *arg)
     ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
 
     while (1) {
-        uint32_t notified = ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(1000));
+        uint32_t notified = ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(10000));
 
         if (notified == 0) {
             ESP_LOGE(TAG, "ULP software watchdog timeout! Resetting...");
@@ -277,6 +277,10 @@ void mux_fresh_boot()
     /* Stop the ULP timer before loading the binary to prevent crashing the ULP FSM 
      * in the event it was left running across a warm/software reset. */
     ulp_timer_stop();
+
+    // Wait for halting the ULP to take effect before we mess with RTC memory and load the program
+    vTaskDelay(pdMS_TO_TICKS(200));
+
     init_ulp_program();
     start_ulp_program();
 }
@@ -295,6 +299,10 @@ bool RTC_IRAM_ATTR mux_wake_deep_sleep_early()
 
 static void init_ulp_program(void)
 {
+    // Clear RTC memory to ensure clean state on first boot (won't affect deep sleep wake cycles)
+    memset((void*)ch_stats, 0, sizeof(ch_stats));
+    memset((void*)rtc_last_known_state, 0, sizeof(rtc_last_known_state));
+
     esp_err_t err = ulp_load_binary(0, ulp_main_bin_start,
             (ulp_main_bin_end - ulp_main_bin_start) / sizeof(uint32_t));
     ESP_ERROR_CHECK(err);
@@ -322,8 +330,8 @@ static void init_ulp_program(void)
     rtc_gpio_init(MUX_PIN_D);
     rtc_gpio_set_direction(MUX_PIN_D, RTC_GPIO_MODE_OUTPUT_ONLY);
 
-    /* 200ms ULP wakeup period (polling should run every 160ms) */
-    //ulp_set_wakeup_period(0, 200000);
+    /* 200ms ULP wakeup period (polling should run every 180ms) */
+    ulp_set_wakeup_period(0, 180000);
 
 #if CONFIG_IDF_TARGET_ESP32
 #ifndef CONFIG_FIRMWARE_ENGINEERING
