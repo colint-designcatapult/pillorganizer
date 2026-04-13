@@ -9,6 +9,7 @@ import { ControlPlaneStack } from '../lib/control-plane-stack';
 import { IotStack } from '../lib/iot-stack';
 import { TenantPlatformStack } from '../lib/tenant-platform-stack';
 import { ControlPlaneDataStack } from '../lib/control-plane-data-stack';
+import { FirmwareStack } from '../lib/firmware-stack';
 
 const app = new cdk.App();
 
@@ -57,6 +58,10 @@ const iotStack = new IotStack(app, `HealtheIotStack`, {
   mqttCertificateArn: platformStack.mqttCertificateArn,
   mqttWsCertificateArn: platformStack.mqttWsCertificateArn,
   mqttWsDomain: platformStack.mqttWsDomain,
+});
+
+const firmwareStack = new FirmwareStack(app, 'HealtheFirmwareStack', {
+  env: globalEnv,
 });
 
 // Environment-specific Stacks (Data, App)

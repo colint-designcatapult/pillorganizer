@@ -2,9 +2,11 @@
 #include "mqtt_wrapper.h"
 #include "device_config.h"
 #include "shadow_state.h"
+#include "ota.h"
 #include "rtc.h"
 #include "event_outbox.h"
 #include <esp_log.h>
+#include <esp_app_desc.h>
 #include <inttypes.h>
 #include <mqtt_client.h>
 #include <cJSON.h>
@@ -126,10 +128,12 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             break;
         case MQTT_EVENT_DATA:
             shadow_state_on_data(event->topic, event->topic_len, event->data, event->data_len);
+            ota_on_data(event->topic, event->topic_len, event->data, event->data_len);
             break;
         case MQTT_EVENT_SUBSCRIBED:
             ESP_LOGI(TAG, "MQTT Subscribed to msg_id %d", event->msg_id);
             shadow_state_on_subscribe(event->msg_id);
+            ota_on_subscribe(event->msg_id);
             break;
         case MQTT_EVENT_DISCONNECTED:
             ESP_LOGI(TAG, "MQTT Disconnected");
@@ -250,6 +254,7 @@ esp_err_t mqtt_publish_device_state(device_state_t* state)
     cJSON_AddNumberToObject(root, "doors", state->doors);
     cJSON_AddNumberToObject(root, "epoch_week", state->epoch_week);
     cJSON_AddNumberToObject(root, "error_flags", state->error_flags);
+    cJSON_AddStringToObject(root, "fw_version", esp_app_get_description()->version);
 
     if (state->schedule.id[0] != '\0') {
         cJSON_AddStringToObject(root, "schedule_id", state->schedule.id);

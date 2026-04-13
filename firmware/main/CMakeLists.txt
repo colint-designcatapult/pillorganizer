@@ -29,6 +29,7 @@ idf_component_register(
         battery.c
         web_server.c
         event_outbox.c
+        ota.c
     INCLUDE_DIRS 
         ${CMAKE_CURRENT_LIST_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/include
@@ -61,6 +62,8 @@ idf_component_register(
         coreJSON
         backoffAlgorithm
         Fleet-Provisioning-for-AWS-IoT-embedded-sdk
+        Jobs-for-AWS-IoT-embedded-sdk
+        esp_https_ota
         wifi_provisioning
         protocomm
 )

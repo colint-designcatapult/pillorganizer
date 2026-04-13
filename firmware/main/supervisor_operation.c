@@ -1,11 +1,13 @@
 #include "supervisor_operation.h"
 #include <string.h>
 #include <esp_log.h>
+#include <esp_ota_ops.h>
 #include "mqtt.h"
 #include "device_config.h"
 #include "ledc.h"
 #include "network.h"
 #include "shadow_state.h"
+#include "ota.h"
 #include "event_outbox.h"
 #include <stdatomic.h>
 
@@ -25,6 +27,14 @@ typedef enum {
 static atomic_bool s_init = ATOMIC_VAR_INIT(false);
 static supervisor_operation_state_t s_state;
 static device_state_t s_device_state;
+
+typedef enum {
+    DEFERRED_NONE,
+    DEFERRED_OTA,
+    DEFERRED_SLEEP,   /* reserved for future deep sleep support */
+} deferred_action_t;
+
+static deferred_action_t s_pending_deferred = DEFERRED_NONE;
 
 static int MISSED_THRESHOLD_SEC = 15 * 60;  // 15 minutes (15 * 60 seconds)
 static int RELOAD_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes (5 * 60 seconds * 1000 ms)
@@ -930,13 +940,29 @@ static void handle_device_event(const supervisor_event_t* ev)
     }
 }
 
+static bool supervisor_is_device_idle()
+{
+    if (s_state != STATE_OPERATIONAL) return false;
+    if (s_device_state.doors != 0) return false;
+    if (s_device_state.reload_state.stage != RELOAD_NONE) return false;
+    for (int i = 0; i < DEVICE_NUM_BINS; i++) {
+        if (s_device_state.bins[i].status == TAKE_NOW) return false;
+    }
+    return true;
+}
+
 void supervisor_operation_init()
 {
     s_state = STATE_INIT;
     load_state();
 
-    // Init shadow state
+    // Mark this firmware partition as valid — enables bootloader rollback if the
+    // new firmware crashes before reaching this point on the next boot.
+    esp_ota_mark_app_valid_cancel_rollback();
+
+    // Init shadow state and OTA module
     shadow_state_init();
+    ota_init();
 
     // Network already started at this point
     s_state = STATE_CONNECTING_NETIF;
@@ -969,6 +995,9 @@ void supervisor_operation_event(const supervisor_event_t* event)
         s_device_state.battery = battery_get_state();
         ESP_LOGI(TAG, "New battery state: %s", battery_status_str(s_device_state.battery));
         update_device_state();
+    } else if (event->id == EVENT_OTA_JOB_RECEIVED) {
+        ESP_LOGI(TAG, "OTA job received, deferring until device is idle");
+        s_pending_deferred = DEFERRED_OTA;
     }
 
     // Handle medication reload FSM 
@@ -998,6 +1027,7 @@ void supervisor_operation_event(const supervisor_event_t* event)
             if (event->id == EVENT_MQTT_CONNECTED) {
                 mqtt_publish_device_state(&s_device_state);
                 shadow_state_on_connect();
+                ota_on_connect();
                 /* Drain any events that accumulated before MQTT connected. */
                 event_outbox_drain();
                 s_state = STATE_MQTT_CONNECTED;
@@ -1104,6 +1134,15 @@ void supervisor_operation_tick()
     /* Clear DEVERR_OUTBOX_FULL once the queue drops below capacity. */
     if ((supervisor_get_error_flags() & DEVERR_OUTBOX_FULL) && !event_outbox_is_full()) {
         supervisor_clear_error(DEVERR_OUTBOX_FULL);
+    }
+
+    /* Execute any pending deferred action when the device is idle. */
+    if (s_pending_deferred != DEFERRED_NONE && supervisor_is_device_idle()) {
+        deferred_action_t action = s_pending_deferred;
+        s_pending_deferred = DEFERRED_NONE;
+        if (action == DEFERRED_OTA) {
+            ota_execute();
+        }
     }
 }
 

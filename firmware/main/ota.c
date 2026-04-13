@@ -1,0 +1,220 @@
+#include "ota.h"
+#include "mqtt.h"
+#include "device_config.h"
+#include "supervisor.h"
+#include <esp_log.h>
+#include <esp_https_ota.h>
+#include <esp_ota_ops.h>
+#include <esp_http_client.h>
+#include <string.h>
+#include <jobs.h>
+#include <core_json.h>
+
+#define TAG "OTA"
+
+/* Embedded AWS root CA — same cert used for MQTT */
+extern const char root_ca_pem_start[] asm("_binary_root_ca_pem_start");
+extern const char root_ca_pem_end[]   asm("_binary_root_ca_pem_end");
+
+#define OTA_URL_MAX_LEN     512
+#define OTA_VERSION_MAX_LEN 32
+
+static char s_job_url[OTA_URL_MAX_LEN];
+static char s_job_id[JOBID_MAX_LENGTH + 1];
+static char s_job_version[OTA_VERSION_MAX_LEN];
+static int  s_notify_next_sub_id = -1;
+
+/* Publish a job status update via the Jobs SDK. */
+static void publish_job_status(JobCurrentStatus_t status)
+{
+    char thing_name[THINGNAME_MAX_LENGTH + 1];
+    if (!devcfg_get_thing_name_str(thing_name, sizeof(thing_name))) {
+        ESP_LOGE(TAG, "Could not retrieve thing name for job status update");
+        return;
+    }
+
+    if (s_job_id[0] == '\0') {
+        ESP_LOGW(TAG, "No job ID stored, cannot publish status");
+        return;
+    }
+
+    /* Build the update topic */
+    char topic[TOPIC_BUFFER_SIZE];
+    size_t topic_len = 0;
+    JobsStatus_t js = Jobs_Update(topic, sizeof(topic),
+                                  thing_name, (uint16_t)strlen(thing_name),
+                                  s_job_id, (uint16_t)strlen(s_job_id),
+                                  &topic_len);
+    if (js != JobsSuccess) {
+        ESP_LOGE(TAG, "Jobs_Update topic generation failed: %d", js);
+        return;
+    }
+
+    /* Build the update message body */
+    char msg[UPDATE_JOB_MSG_LENGTH];
+    size_t msg_len = Jobs_UpdateMsg(status, "1", 1, msg, sizeof(msg));
+    if (msg_len == 0) {
+        ESP_LOGE(TAG, "Jobs_UpdateMsg failed");
+        return;
+    }
+
+    esp_err_t err = mqtt_publish(topic, msg, (int)msg_len, 1, 0);
+    if (err != ESP_OK) {
+        ESP_LOGW(TAG, "Failed to publish job status %d: %d", (int)status, err);
+    } else {
+        ESP_LOGI(TAG, "Job %s status published: %d", s_job_id, (int)status);
+    }
+}
+
+void ota_init()
+{
+    s_job_url[0]     = '\0';
+    s_job_id[0]      = '\0';
+    s_job_version[0] = '\0';
+    s_notify_next_sub_id = -1;
+    ESP_LOGI(TAG, "OTA module initialized");
+}
+
+void ota_on_connect()
+{
+    char thing_name[THINGNAME_MAX_LENGTH + 1];
+    if (!devcfg_get_thing_name_str(thing_name, sizeof(thing_name))) {
+        ESP_LOGE(TAG, "Could not retrieve thing name for Jobs subscription");
+        return;
+    }
+
+    char topic[TOPIC_BUFFER_SIZE];
+    size_t topic_len = 0;
+    JobsStatus_t js = Jobs_GetTopic(topic, sizeof(topic),
+                                    thing_name, (uint16_t)strlen(thing_name),
+                                    JobsNextJobChanged,
+                                    &topic_len);
+    if (js != JobsSuccess) {
+        ESP_LOGE(TAG, "Jobs_GetTopic failed: %d", js);
+        return;
+    }
+
+    int sub_id = -1;
+    esp_err_t err = mqtt_subscribe(topic, 1, &sub_id);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to subscribe to Jobs notify-next topic: %d", err);
+    } else {
+        s_notify_next_sub_id = sub_id;
+        ESP_LOGI(TAG, "Subscribed to Jobs notify-next topic (sub_id=%d)", sub_id);
+    }
+}
+
+void ota_on_subscribe(int sub_id)
+{
+    if (sub_id == s_notify_next_sub_id) {
+        ESP_LOGI(TAG, "Jobs notify-next subscription confirmed (sub_id=%d)", sub_id);
+    }
+}
+
+void ota_on_data(const char* topic, size_t topic_len, const char* data, size_t data_len)
+{
+    if (!topic || !data || topic_len == 0 || data_len == 0) return;
+
+    /* Quick prefix check — Jobs topics all start with "$aws" */
+    if (topic_len < 4 || strncmp(topic, "$aws", 4) != 0) return;
+
+    char thing_name[THINGNAME_MAX_LENGTH + 1];
+    if (!devcfg_get_thing_name_str(thing_name, sizeof(thing_name))) return;
+
+    /* Jobs_MatchTopic requires a mutable buffer */
+    char topic_buf[TOPIC_BUFFER_SIZE];
+    size_t copy_len = topic_len < sizeof(topic_buf) - 1 ? topic_len : sizeof(topic_buf) - 1;
+    memcpy(topic_buf, topic, copy_len);
+    topic_buf[copy_len] = '\0';
+
+    JobsTopic_t topic_type;
+    char* out_job_id = NULL;
+    uint16_t out_job_id_len = 0;
+    JobsStatus_t js = Jobs_MatchTopic(topic_buf, copy_len,
+                                      thing_name, (uint16_t)strlen(thing_name),
+                                      &topic_type,
+                                      &out_job_id, &out_job_id_len);
+    if (js != JobsSuccess || topic_type != JobsNextJobChanged) return;
+
+    /* Extract job ID from execution.jobId in the notification payload.
+     * JSON_Search takes a mutable buffer; cast away const since it does not modify. */
+    char* val = NULL;
+    size_t val_len = 0;
+    JSONStatus_t json_status = JSON_Search((char*)data, data_len,
+                                           "execution.jobId", strlen("execution.jobId"),
+                                           &val, &val_len);
+    if (json_status != JSONSuccess || val_len == 0 || val_len > JOBID_MAX_LENGTH) {
+        ESP_LOGW(TAG, "Jobs notification: no execution.jobId found, ignoring");
+        return;
+    }
+    memcpy(s_job_id, val, val_len);
+    s_job_id[val_len] = '\0';
+
+    /* Extract firmware URL from execution.jobDocument.url */
+    json_status = JSON_Search((char*)data, data_len,
+                              "execution.jobDocument.url", strlen("execution.jobDocument.url"),
+                              &val, &val_len);
+    if (json_status != JSONSuccess || val_len == 0) {
+        ESP_LOGE(TAG, "OTA job document missing 'url' field — ignoring job %s", s_job_id);
+        s_job_id[0] = '\0';
+        return;
+    }
+    if (val_len >= OTA_URL_MAX_LEN) {
+        ESP_LOGE(TAG, "OTA URL too long (%zu bytes) — ignoring job %s", val_len, s_job_id);
+        s_job_id[0] = '\0';
+        return;
+    }
+    memcpy(s_job_url, val, val_len);
+    s_job_url[val_len] = '\0';
+
+    /* Extract optional version field */
+    json_status = JSON_Search((char*)data, data_len,
+                              "execution.jobDocument.version", strlen("execution.jobDocument.version"),
+                              &val, &val_len);
+    if (json_status == JSONSuccess && val_len > 0 && val_len < OTA_VERSION_MAX_LEN) {
+        memcpy(s_job_version, val, val_len);
+        s_job_version[val_len] = '\0';
+    } else {
+        s_job_version[0] = '\0';
+    }
+
+    ESP_LOGI(TAG, "OTA job received: id=%s version=%s url=%s",
+             s_job_id, s_job_version[0] ? s_job_version : "(unset)", s_job_url);
+
+    supervisor_submit_event(EVENT_OTA_JOB_RECEIVED);
+}
+
+void ota_execute()
+{
+    if (s_job_url[0] == '\0') {
+        ESP_LOGE(TAG, "ota_execute called but no URL is stored");
+        return;
+    }
+
+    ESP_LOGI(TAG, "Starting OTA update: %s", s_job_url);
+    publish_job_status(InProgress);
+
+    esp_http_client_config_t http_cfg = {
+        .url      = s_job_url,
+        .cert_pem = root_ca_pem_start,
+        .keep_alive_enable = true,
+    };
+    esp_https_ota_config_t ota_cfg = {
+        .http_config = &http_cfg,
+    };
+
+    esp_err_t err = esp_https_ota(&ota_cfg);
+    if (err == ESP_OK) {
+        ESP_LOGI(TAG, "OTA download and flash succeeded — rebooting");
+        publish_job_status(Succeeded);
+        supervisor_submit_event(EVENT_OTA_COMPLETE);
+        supervisor_submit_event(EVENT_REBOOT_REQUESTED);
+    } else {
+        ESP_LOGE(TAG, "OTA failed: %s", esp_err_to_name(err));
+        publish_job_status(Failed);
+        supervisor_submit_event(EVENT_OTA_FAILED);
+        /* Clear stored state so the module is ready for a retry job */
+        s_job_url[0] = '\0';
+        s_job_id[0]  = '\0';
+    }
+}
