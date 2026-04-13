@@ -8,7 +8,7 @@ import 'package:app/provider/user_registration_provider.dart';
 import 'package:app/screens/modals/add_new_pills_modal.dart';
 import 'package:app/service/error_handler.dart';
 import 'package:app/service/provisioning_service.dart';
-import 'package:app/service/time_service.dart';
+import 'package:app/apiv2/models/schedule.dart';
 import 'package:app/widgets/addNewPill/medication_card_entry.dart';
 import 'package:app/widgets/medication_card.dart';
 import 'package:app/widgets/notifications_settings.dart';
@@ -20,7 +20,6 @@ import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:validatorless/validatorless.dart';
 
 import '../widgets/basic_page.dart';
@@ -33,32 +32,19 @@ class PostSetupWizard extends ConsumerStatefulWidget {
 }
 
 class _PostSetupWizardState extends ConsumerState<PostSetupWizard> {
-  bool _timezoneInitialized = false;
-
   @override
   Widget build(BuildContext context) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(3, 1);
 
-    final activeDevice = ref.watch(activeDeviceProvider);
     final schedule = ref.watch(scheduleProvider);
 
-    // Once the schedule finishes loading, initialize timezone to the phone's
-    // default if the device has no timezone set yet.
-    ref.listen(scheduleProvider, (previous, next) {
-      if (_timezoneInitialized) return;
-      if (next.isLoading || !next.hasValue) return;
-      _timezoneInitialized = true;
-
-      final timezone = next.value?.effectiveTimezoneIana;
-      if (timezone == null && activeDevice != null) {
-        FlutterTimezone.getLocalTimezone().then((tz) {
-          ref.read(scheduleProvider.notifier)
-              .updateTimezone(activeDevice.id, normalizeIanaTimezone(tz.identifier));
-        }).catchError((_) {});
-      }
-    });
-
-    bool canGoNext = !schedule.isLoading;
+    // Next is enabled once the user has saved a schedule with both AM and PM set.
+    final scheduleState = schedule.asData?.value;
+    final effective = scheduleState?.effectiveSchedule;
+    final simple = effective is SimpleSchedule ? effective : null;
+    bool canGoNext = simple?.amPeriod != null &&
+        simple?.pmPeriod != null &&
+        scheduleState?.effectiveTimezoneIana != null;
 
     return WizardStep(
         provisionningProgress: provisionningProgress,

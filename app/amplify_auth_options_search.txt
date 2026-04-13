@@ -1,0 +1,36 @@
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\custom_auth_test.dart:38:authFlowType: AuthenticationFlowType.customAuthWithoutSrp,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\custom_auth_test.dart:175:authFlowType: AuthenticationFlowType.customAuthWithoutSrp,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\custom_auth_test.dart:223:authFlowType: AuthenticationFlowType.customAuthWithSrp,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\custom_auth_test.dart:323:authFlowType: AuthenticationFlowType.customAuthWithSrp,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\custom_auth_test.dart:366:for (final (environmentName, authFlowType) in [
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\custom_auth_test.dart:394:final signInRes = await switch (authFlowType) {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\custom_auth_test.dart:400:authFlowType: AuthenticationFlowType.customAuthWithSrp,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\custom_auth_test.dart:409:authFlowType: AuthenticationFlowType.customAuthWithoutSrp,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\native_auth_bridge_test.dart:49:const options = CognitoSignInWithWebUIPluginOptions(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\native_auth_bridge_test.dart:50:isPreferPrivateSession: false,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\native_auth_bridge_test.dart:51:browserPackageName: browserPackage,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\native_auth_bridge_test.dart:60:argBrowserpackagename,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\native_auth_bridge_test.dart:65:expect(argBrowserpackagename, browserPackage);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\native_auth_bridge_test.dart:77:const options = CognitoSignInWithWebUIPluginOptions(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\native_auth_bridge_test.dart:78:isPreferPrivateSession: false,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\native_auth_bridge_test.dart:79:browserPackageName: browserPackage,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\native_auth_bridge_test.dart:88:argBrowserpackagename,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\native_auth_bridge_test.dart:93:expect(argBrowserpackagename, browserPackage);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\native_auth_bridge_test.dart:111:String? argBrowserpackagename,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\native_auth_bridge_test.dart:129:String? argBrowserpackagename,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\native_auth_bridge_test.dart:135:argBrowserpackagename,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\native_auth_bridge_test.dart:145:String? argBrowserpackagename,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\native_auth_bridge_test.dart:151:argBrowserpackagename,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\flows\hosted_ui\hosted_ui_platform_flutter.dart:95:options.isPreferPrivateSession,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\flows\hosted_ui\hosted_ui_platform_flutter.dart:96:options.browserPackageName,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\flows\hosted_ui\hosted_ui_platform_flutter.dart:139:// Launching the sign out url is not needed on iOS if isPreferPrivateSession
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\flows\hosted_ui\hosted_ui_platform_flutter.dart:141:if (Platform.isIOS && options.isPreferPrivateSession) return;
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\flows\hosted_ui\hosted_ui_platform_flutter.dart:146:options.isPreferPrivateSession,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\flows\hosted_ui\hosted_ui_platform_flutter.dart:147:options.browserPackageName,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\native_auth_plugin.g.dart:378:String? browserPackageName,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\native_auth_plugin.g.dart:393:browserPackageName,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\native_auth_plugin.g.dart:423:String? browserPackageName,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\native_auth_plugin.g.dart:438:browserPackageName,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\pigeons\native_auth_plugin.dart:41:String? browserPackageName, // Android-only
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\pigeons\native_auth_plugin.dart:51:String? browserPackageName, // Android-only
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\test\hosted_ui_platform_flutter_test.dart:85:String? arg_browserPackageName,

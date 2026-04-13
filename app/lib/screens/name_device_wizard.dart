@@ -25,11 +25,9 @@ class _NameDeviceWizard extends ConsumerState<NameDeviceWizard> {
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.deviceId != null) {
-        ref.read(activeDeviceProvider.notifier).selectDeviceByID(widget.deviceId!);
-      }
-    });
+    if (widget.deviceId != null) {
+      ref.read(activeDeviceProvider.notifier).selectDeviceByID(widget.deviceId!);
+    }
   }
 
   @override

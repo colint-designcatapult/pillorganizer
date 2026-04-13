@@ -1,0 +1,312 @@
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:59:final signUpCode = await getOtpCode(UserAttribute.email(email));
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:60:final signUpResult = await Amplify.Auth.signUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:63:options: SignUpOptions(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:70:expect(signUpResult.nextStep.signUpStep, AuthSignUpStep.confirmSignUp);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:72:final confirmSignUpResult = await Amplify.Auth.confirmSignUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:74:confirmationCode: await signUpCode.code,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:76:expect(confirmSignUpResult.nextStep.signUpStep, AuthSignUpStep.done);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:79:validateEvents(authEvents, EventType.signUp);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:186:final signUpCode = await getOtpCode(UserAttribute.email(email));
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:187:final signUpResult = await Amplify.Auth.signUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:190:options: SignUpOptions(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:197:expect(signUpResult.nextStep.signUpStep, AuthSignUpStep.confirmSignUp);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:199:await signUpCode.code; // discard original code
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:200:final signUpEvents = (await adminListAuthEvents(username)).toSet();
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:202:final resendSignUpCode = await getOtpCode(UserAttribute.email(email));
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:203:await Amplify.Auth.resendSignUpCode(username: username);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:207:)).toSet().difference(signUpEvents);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:210:final confirmSignUpResult = await Amplify.Auth.confirmSignUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:212:confirmationCode: await resendSignUpCode.code,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:214:expect(confirmSignUpResult.nextStep.signUpStep, AuthSignUpStep.done);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:218:)).toSet().difference(signUpEvents).difference(resendEvents);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\asf_test.dart:219:validateEvents(confirmEvents, EventType.signUp);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:15:group('confirmSignUp', () {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:25:Future<void> signUpWithoutConfirming(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:37:final signUpResult =
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:38:await Amplify.Auth.signUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:41:options: SignUpOptions(userAttributes: userAttributes),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:43:as CognitoSignUpResult;
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:44:expect(signUpResult.isSignUpComplete, false);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:46:signUpResult.nextStep.codeDeliveryDetails?.deliveryMedium,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:49:expect(signUpResult.userId, isNotNull);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:60:await signUpWithoutConfirming(username, password);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:63:final confirmResult = await Amplify.Auth.confirmSignUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:67:expect(confirmResult.isSignUpComplete, true);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:78:await signUpWithoutConfirming(username, password);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:87:AuthSignInStep.confirmSignUp,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:91:final confirmResult = await Amplify.Auth.confirmSignUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:95:expect(confirmResult.isSignUpComplete, true);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:112:await signUpWithoutConfirming(username, password);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:117:final resendResult = await Amplify.Auth.resendSignUpCode(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:125:final confirmResult = await Amplify.Auth.confirmSignUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\confirm_sign_up_test.dart:129:expect(confirmResult.isSignUpComplete, true);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\custom_authorizer_test.dart:62:final signUpRes = await Amplify.Auth.signUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\custom_authorizer_test.dart:66:expect(signUpRes.isSignUpComplete, isTrue);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\custom_authorizer_test.dart:114:final signUpRes = await Amplify.Auth.signUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\custom_authorizer_test.dart:118:expect(signUpRes.isSignUpComplete, isTrue);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:15:group('signUp', () {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:22:asyncTest('should signUp a user with valid parameters', (_) async {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:27:await Amplify.Auth.signUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:30:options: SignUpOptions(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:37:as CognitoSignUpResult;
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:39:res.isSignUpComplete,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:52:Amplify.Auth.signUp(username: username, password: password),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:64:final options = SignUpOptions(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:71:Amplify.Auth.signUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:88:final userOneOptions = SignUpOptions(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:94:await Amplify.Auth.signUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:102:final userTwoOptions = SignUpOptions(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:109:Amplify.Auth.signUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:125:final signUpRes = await Amplify.Auth.signUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:128:options: SignUpOptions(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:135:expect(signUpRes.isSignUpComplete, false);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:136:expect(signUpRes.nextStep.signUpStep, AuthSignUpStep.confirmSignUp);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:138:signUpRes.nextStep.codeDeliveryDetails,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:153:final confirmSignUpRes = await Amplify.Auth.confirmSignUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:157:expect(confirmSignUpRes.isSignUpComplete, true);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\sign_up_test.dart:229:Amplify.Auth.signUp(username: username, password: password),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\confirm_sign_up.dart:7:class ConfirmSignUpWidget extends StatefulWidget {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\confirm_sign_up.dart:8:const ConfirmSignUpWidget(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\confirm_sign_up.dart:22:State<ConfirmSignUpWidget> createState() => _ConfirmSignUpWidgetState();
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\confirm_sign_up.dart:25:class _ConfirmSignUpWidgetState extends State<ConfirmSignUpWidget> {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\confirm_sign_up.dart:29:void _confirmSignUp() async {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\confirm_sign_up.dart:31:final res = await Amplify.Auth.confirmSignUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\confirm_sign_up.dart:35:widget.showResult('Confirm Sign Up Status = ${res.nextStep.signUpStep}');
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\confirm_sign_up.dart:37:res.nextStep.signUpStep != AuthSignUpStep.done
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\confirm_sign_up.dart:46:void _resendSignUpCode() async {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\confirm_sign_up.dart:48:final res = await Amplify.Auth.resendSignUpCode(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\confirm_sign_up.dart:62:key: const Key('confirm-signup-component'),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\confirm_sign_up.dart:71:key: const Key('confirm-signup-username-input'),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\confirm_sign_up.dart:80:key: const Key('confirm-signup-code-input'),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\confirm_sign_up.dart:91:onPressed: _confirmSignUp,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\confirm_sign_up.dart:92:child: const Text('Confirm SignUp'),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\confirm_sign_up.dart:96:onPressed: _resendSignUpCode,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\sign_in.dart:135:key: const Key('goto-signup-button'),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\sign_up.dart:7:class SignUpWidget extends StatefulWidget {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\sign_up.dart:8:const SignUpWidget(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\sign_up.dart:22:State<SignUpWidget> createState() => _SignUpWidgetState();
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\sign_up.dart:25:class _SignUpWidgetState extends State<SignUpWidget> {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\sign_up.dart:31:void _signUp() async {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\sign_up.dart:37:final res = await Amplify.Auth.signUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\sign_up.dart:40:options: SignUpOptions(userAttributes: userAttributes),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\sign_up.dart:42:widget.showResult('Sign Up Status = ${res.nextStep.signUpStep}');
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\sign_up.dart:44:res.nextStep.signUpStep != AuthSignUpStep.done
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\sign_up.dart:56:key: const Key('signup-component'),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\sign_up.dart:64:key: const Key('signup-username-input'),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\sign_up.dart:73:key: const Key('signup-password-input'),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\sign_up.dart:83:key: const Key('signup-email-input'),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\sign_up.dart:92:key: const Key('signup-phone-input'),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\sign_up.dart:102:key: const Key('signup-button'),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\lib\screens\sign_up.dart:103:onPressed: _signUp,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\flows\hosted_ui\hosted_ui_platform_flutter.dart:61:return authOutputs.oauth!.redirectSignInUri
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\auth_plugin_impl.dart:91:Future<CognitoSignUpResult> signUp({
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\auth_plugin_impl.dart:94:SignUpOptions? options,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\auth_plugin_impl.dart:96:options ??= const SignUpOptions();
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\auth_plugin_impl.dart:99:defaultPluginOptions: const CognitoSignUpPluginOptions(),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\auth_plugin_impl.dart:108:options = SignUpOptions(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\auth_plugin_impl.dart:110:pluginOptions: CognitoSignUpPluginOptions(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\auth_plugin_impl.dart:115:return super.signUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:33:// #docregion handle-signup
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:34:Future<void> _handleSignUpResult(SignUpResult result) async {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:35:switch (result.nextStep.signUpStep) {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:36:case AuthSignUpStep.confirmSignUp:
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:39:case AuthSignUpStep.done:
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:43:// #enddocregion handle-signup
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:45:// #docregion signup
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:48:Future<void> signUpUser({
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:60:final result = await Amplify.Auth.signUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:63:options: SignUpOptions(userAttributes: userAttributes),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:65:return _handleSignUpResult(result);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:70:// #enddocregion signup
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:72:// #docregion confirm-signup
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:78:final result = await Amplify.Auth.confirmSignUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:82:return _handleSignUpResult(result);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:87:// #enddocregion confirm-signup
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:89:// #docregion resend-signup-code
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:90:Future<void> resendSignUpCode(String username) async {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:92:final result = await Amplify.Auth.resendSignUpCode(username: username);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:99:// #enddocregion resend-signup-code
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:101:// #docregion handle-signin, handle-confirm-signin-sms, handle-confirm-signin-new-password, handle-confirm-signin-custom-challenge, handle-confirm-signin-reset-password, handle-confirm-signin-confirm-signup, handle-confirm-signin-done, handle-confirm-signin-mfa-selection, handle-confirm-signin-totp-setup, handle-confirm-signin-totp-code, handle-confirm-signin-email-code, handle-confirm-signin-mfa-setup-selection, handle-confirm-signin-email-setup
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:104:// #enddocregion handle-signin, handle-confirm-signin-sms, handle-confirm-signin-new-password, handle-confirm-signin-custom-challenge, handle-confirm-signin-reset-password, handle-confirm-signin-confirm-signup, handle-confirm-signin-done, handle-confirm-signin-mfa-selection, handle-confirm-signin-totp-setup, handle-confirm-signin-totp-code, handle-confirm-signin-email-code, handle-confirm-signin-mfa-setup-selection, handle-confirm-signin-email-setup
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:162:// #docregion handle-confirm-signin-confirm-signup
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:163:case AuthSignInStep.confirmSignUp:
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:165:final resendResult = await Amplify.Auth.resendSignUpCode(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:169:// #enddocregion handle-confirm-signin-confirm-signup
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:194:// #docregion handle-signin, handle-confirm-signin-sms, handle-confirm-signin-new-password, handle-confirm-signin-custom-challenge, handle-confirm-signin-reset-password, handle-confirm-signin-confirm-signup, handle-confirm-signin-done, handle-confirm-signin-mfa-selection, handle-confirm-signin-totp-setup, handle-confirm-signin-totp-code, handle-confirm-signin-email-code, handle-confirm-signin-mfa-setup-selection, handle-confirm-signin-email-setup
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\doc\lib\auth.dart:197:// #enddocregion handle-signin, handle-confirm-signin-sms, handle-confirm-signin-new-password, handle-confirm-signin-custom-challenge, handle-confirm-signin-reset-password, handle-confirm-signin-confirm-signup, handle-confirm-signin-done, handle-confirm-signin-mfa-selection, handle-confirm-signin-totp-setup, handle-confirm-signin-totp-code, handle-confirm-signin-email-code, handle-confirm-signin-mfa-setup-selection, handle-confirm-signin-email-setup
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:71:/// <?code-excerpt "doc/lib/auth.dart" region="signup"?>
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:75:/// Future<void> signUpUser({
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:87:///     final result = await Amplify.Auth.signUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:90:///       options: SignUpOptions(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:94:///     return _handleSignUpResult(result);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:105:/// <?code-excerpt "doc/lib/auth.dart" region="handle-signup"?>
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:107:/// Future<void> _handleSignUpResult(SignUpResult result) async {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:108:///   switch (result.nextStep.signUpStep) {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:109:///     case AuthSignUpStep.confirmSignUp:
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:112:///     case AuthSignUpStep.done:
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:129:/// call [resendSignUpCode].
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:131:Future<SignUpResult> signUp({
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:134:SignUpOptions? options,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:136:AuthCategoryMethod.signUp,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:137:() => defaultPlugin.signUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:162:/// <?code-excerpt "doc/lib/auth.dart" region="confirm-signup"?>
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:169:///     final result = await Amplify.Auth.confirmSignUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:173:///     return _handleSignUpResult(result);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:180:/// After confirming the sign up, check the [SignUpResult] object to check if
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:183:/// <?code-excerpt "doc/lib/auth.dart" region="handle-signup"?>
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:185:/// Future<void> _handleSignUpResult(SignUpResult result) async {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:186:///   switch (result.nextStep.signUpStep) {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:187:///     case AuthSignUpStep.confirmSignUp:
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:190:///     case AuthSignUpStep.done:
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:209:Future<SignUpResult> confirmSignUp({
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:212:ConfirmSignUpOptions? options,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:214:AuthCategoryMethod.confirmSignUp,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:215:() => defaultPlugin.confirmSignUp(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:225:/// [username] must be the same as the value passed to [signUp] and is either an
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:240:/// <?code-excerpt "doc/lib/auth.dart" region="resend-signup-code"?>
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:242:/// Future<void> resendSignUpCode(String username) async {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:244:///     final result = await Amplify.Auth.resendSignUpCode(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:268:Future<ResendSignUpCodeResult> resendSignUpCode({
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:270:ResendSignUpCodeOptions? options,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:272:AuthCategoryMethod.resendSignUpCode,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:273:() => defaultPlugin.resendSignUpCode(username: username, options: options),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:483:/// If a user tries to sign in before completing their sign up, the [AuthSignInStep.confirmSignUp]
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:484:/// step will be returned. This is the same step returned from [signUp] and requires a
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:485:/// call to [confirmSignUp] before re-initiating the sign in flow.
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:487:/// <?code-excerpt "doc/lib/auth.dart" region="handle-confirm-signin-confirm-signup"?>
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:492:///     case AuthSignInStep.confirmSignUp:
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\category\amplify_auth_category.dart:494:///       final resendResult = await Amplify.Auth.resendSignUpCode(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\amplify_outputs\auth\oauth_outputs.dart:22:required this.redirectSignInUri,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\amplify_outputs\auth\oauth_outputs.dart:45:final List<String> redirectSignInUri;
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\amplify_outputs\auth\oauth_outputs.dart:95:redirectSignInUri,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\amplify_outputs\auth\oauth_outputs.g.dart:28:redirectSignInUri: $checkedConvert(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\amplify_outputs\auth\oauth_outputs.g.dart:60:'redirectSignInUri': 'redirect_sign_in_uri',
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\amplify_outputs\auth\oauth_outputs.g.dart:78:'redirect_sign_in_uri': instance.redirectSignInUri,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\auth\cognito\auth.dart:18:this.signupAttributes,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\auth\cognito\auth.dart:33:final List<CognitoUserAttributeKey>? signupAttributes;
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\auth\cognito\auth.dart:44:signupAttributes,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\auth\cognito\auth.dart:55:List<CognitoUserAttributeKey>? signupAttributes,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\auth\cognito\auth.dart:73:signupAttributes:
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\auth\cognito\auth.dart:74:signupAttributes ??
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\auth\cognito\auth.dart:75:(this.signupAttributes == null
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\auth\cognito\auth.dart:77:: List.of(this.signupAttributes!)),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\auth\cognito\auth.g.dart:35:signupAttributes: $checkedConvert(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\auth\cognito\auth.g.dart:36:'signupAttributes',
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\auth\cognito\auth.g.dart:83:'signupAttributes': ?instance.signupAttributes
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\auth\cognito\oauth.dart:49:final signInRedirectUri = authOutputs.oauth!.redirectSignInUri.join(',');
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\auth\auth_config.dart:34:List<CognitoUserAttributeKey>? signupAttributes,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\auth\auth_config.dart:48:signupAttributes: signupAttributes ?? const [],
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\auth\auth_config.dart:122:redirectSignInUri: oAuthConfig.signInRedirectUri.split(','),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\config\auth\auth_config.dart:146:standardRequiredAttributes: plugin?.signupAttributes,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\http\amplify_category_method.dart:32:confirmSignUp('3'),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\http\amplify_category_method.dart:41:resendSignUpCode('12'),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\http\amplify_category_method.dart:47:signUp('18'),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\plugin\amplify_auth_plugin_interface.dart:18:Future<SignUpResult> signUp({
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\plugin\amplify_auth_plugin_interface.dart:21:SignUpOptions? options,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\plugin\amplify_auth_plugin_interface.dart:23:throw UnimplementedError('signUp() has not been implemented');
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\plugin\amplify_auth_plugin_interface.dart:27:Future<SignUpResult> confirmSignUp({
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\plugin\amplify_auth_plugin_interface.dart:30:ConfirmSignUpOptions? options,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\plugin\amplify_auth_plugin_interface.dart:32:throw UnimplementedError('confirmSignUp() has not been implemented');
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\plugin\amplify_auth_plugin_interface.dart:36:Future<ResendSignUpCodeResult> resendSignUpCode({
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\plugin\amplify_auth_plugin_interface.dart:38:ResendSignUpCodeOptions? options,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\plugin\amplify_auth_plugin_interface.dart:40:throw UnimplementedError('resendSignUpCode() has not been implemented');
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\attribute\cognito_user_attribute_key.dart:7:/// User attributes available for configuring via `Amplify.Auth.signUp`,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_in\auth_next_sign_in_step.g.dart:99:AuthSignInStep.confirmSignUp: 'confirmSignUp',
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_in\auth_sign_in_step.dart:57:confirmSignUp,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_in\sign_in_with_web_ui_options.dart:10:class SignInWithWebUIOptions
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.dart:10:class AuthNextSignUpStep extends AuthNextStep
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.dart:11:with AWSEquatable<AuthNextSignUpStep>, AWSDebuggable {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.dart:12:const AuthNextSignUpStep({
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.dart:15:required this.signUpStep,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.dart:18:factory AuthNextSignUpStep.fromJson(Map<String, Object?> json) =>
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.dart:19:_$AuthNextSignUpStepFromJson(json);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.dart:21:final AuthSignUpStep signUpStep;
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.dart:24:List<Object?> get props => [additionalInfo, codeDeliveryDetails, signUpStep];
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.dart:27:String get runtimeTypeName => 'AuthNextSignUpStep';
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.dart:30:Map<String, Object?> toJson() => _$AuthNextSignUpStepToJson(this);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.g.dart:11:AuthNextSignUpStep _$AuthNextSignUpStepFromJson(Map<String, dynamic> json) =>
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.g.dart:12:$checkedCreate('AuthNextSignUpStep', json, ($checkedConvert) {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.g.dart:13:final val = AuthNextSignUpStep(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.g.dart:26:signUpStep: $checkedConvert(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.g.dart:27:'signUpStep',
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.g.dart:28:(v) => $enumDecode(_$AuthSignUpStepEnumMap, v),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.g.dart:34:Map<String, dynamic> _$AuthNextSignUpStepToJson(AuthNextSignUpStep instance) =>
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.g.dart:38:'signUpStep': _$AuthSignUpStepEnumMap[instance.signUpStep]!,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.g.dart:41:const _$AuthSignUpStepEnumMap = {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.g.dart:42:AuthSignUpStep.confirmSignUp: 'confirmSignUp',
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_next_sign_up_step.g.dart:43:AuthSignUpStep.done: 'done',
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_sign_up_step.dart:8:enum AuthSignUpStep {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\auth_sign_up_step.dart:11:confirmSignUp,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\confirm_sign_up_options.dart:8:/// Options passed to `Amplify.Auth.confirmSignUp`.
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\confirm_sign_up_options.dart:10:class ConfirmSignUpOptions
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\confirm_sign_up_options.dart:12:AWSEquatable<ConfirmSignUpOptions>,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\confirm_sign_up_options.dart:16:const ConfirmSignUpOptions({this.pluginOptions});
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\confirm_sign_up_options.dart:19:final ConfirmSignUpPluginOptions? pluginOptions;
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\confirm_sign_up_options.dart:25:String get runtimeTypeName => 'ConfirmSignUpOptions';
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\confirm_sign_up_options.dart:33:/// Plugin-specific options for `Amplify.Auth.confirmSignUp`.
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\confirm_sign_up_options.dart:35:abstract class ConfirmSignUpPluginOptions
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\confirm_sign_up_options.dart:37:AWSEquatable<ConfirmSignUpPluginOptions>,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\confirm_sign_up_options.dart:41:const ConfirmSignUpPluginOptions();
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_options.dart:10:class ResendSignUpCodeOptions
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_options.dart:12:AWSEquatable<ResendSignUpCodeOptions>,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_options.dart:16:const ResendSignUpCodeOptions({this.pluginOptions});
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_options.dart:19:final ResendSignUpCodePluginOptions? pluginOptions;
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_options.dart:25:String get runtimeTypeName => 'ResendSignUpCodeOptions';
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_options.dart:33:/// Plugin-specific options for `Amplify.Auth.resendSignUpCode`.
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_options.dart:35:abstract class ResendSignUpCodePluginOptions
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_options.dart:37:AWSEquatable<ResendSignUpCodePluginOptions>,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_options.dart:41:const ResendSignUpCodePluginOptions();
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_result.dart:10:class ResendSignUpCodeResult
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_result.dart:12:AWSEquatable<ResendSignUpCodeResult>,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_result.dart:15:const ResendSignUpCodeResult(this.codeDeliveryDetails);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_result.dart:17:factory ResendSignUpCodeResult.fromJson(Map<String, Object?> json) =>
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_result.dart:18:_$ResendSignUpCodeResultFromJson(json);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_result.dart:26:String get runtimeTypeName => 'ResendSignUpCodeResult';
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_result.dart:29:Map<String, Object?> toJson() => _$ResendSignUpCodeResultToJson(this);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_result.g.dart:11:ResendSignUpCodeResult _$ResendSignUpCodeResultFromJson(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_result.g.dart:13:) => $checkedCreate('ResendSignUpCodeResult', json, ($checkedConvert) {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_result.g.dart:14:final val = ResendSignUpCodeResult(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_result.g.dart:23:Map<String, dynamic> _$ResendSignUpCodeResultToJson(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\resend_sign_up_code_result.g.dart:24:ResendSignUpCodeResult instance,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_options.dart:8:/// Options for `Amplify.Auth.signUp`.
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_options.dart:10:class SignUpOptions
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_options.dart:12:AWSEquatable<SignUpOptions>,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_options.dart:26:/// final options = SignUpOptions(userAttributes: userAttributes);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_options.dart:28:const SignUpOptions({
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_options.dart:36:final SignUpPluginOptions? pluginOptions;
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_options.dart:42:String get runtimeTypeName => 'SignUpOptions';
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_options.dart:53:/// Plugin-specific options for `Amplify.Auth.signUp`.
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_options.dart:55:abstract class SignUpPluginOptions
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_options.dart:57:AWSEquatable<SignUpPluginOptions>,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_options.dart:61:const SignUpPluginOptions();
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_result.dart:10:class SignUpResult
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_result.dart:12:AWSEquatable<SignUpResult>,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_result.dart:15:const SignUpResult({
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_result.dart:16:required this.isSignUpComplete,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_result.dart:21:factory SignUpResult.fromJson(Map<String, Object?> json) =>
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_result.dart:22:_$SignUpResultFromJson(json);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_result.dart:24:final bool isSignUpComplete;
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_result.dart:25:final AuthNextSignUpStep nextStep;
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_result.dart:31:List<Object?> get props => [isSignUpComplete, nextStep, userId];
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_result.dart:34:String get runtimeTypeName => 'SignUpResult';
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_result.dart:37:Map<String, Object?> toJson() => _$SignUpResultToJson(this);
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_result.g.dart:11:SignUpResult _$SignUpResultFromJson(Map<String, dynamic> json) =>
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_result.g.dart:12:$checkedCreate('SignUpResult', json, ($checkedConvert) {
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_result.g.dart:13:final val = SignUpResult(
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_result.g.dart:14:isSignUpComplete: $checkedConvert('isSignUpComplete', (v) => v as bool),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_result.g.dart:17:(v) => AuthNextSignUpStep.fromJson(v as Map<String, dynamic>),
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_result.g.dart:24:Map<String, dynamic> _$SignUpResultToJson(SignUpResult instance) =>
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\lib\src\types\auth\sign_up\sign_up_result.g.dart:26:'isSignUpComplete': instance.isSignUpComplete,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\test\config\amplify_outputs_mapping\data\amplifyconfiguration.g.dart:42:"signupAttributes": [
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\test\config\amplify_outputs_mapping\amplify_outputs_mapping_test.dart:68:oauth.redirectSignInUri,
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\test\config\testdata\e2e\latest\amplifyconfiguration.dart:55:"signupAttributes": [
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\test\config\testdata\e2e\v5\amplifyconfiguration.dart:53:"signupAttributes": [
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\test\config\testdata\e2e\v6\amplifyconfiguration.dart:55:"signupAttributes": [
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\test\config\testdata\e2e\v7\amplifyconfiguration.dart:55:"signupAttributes": [
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\test\config\auth_config_test.dart:58:signupAttributes: [
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\test\config\auth_config_test.dart:87:signupAttributes: [CognitoUserAttributeKey.email],
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\test\config\auth_config_test.dart:104:signupAttributes: [
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\test\config\auth_config_test.dart:118:signupAttributes: [CognitoUserAttributeKey.email],
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\test\config\auth_config_test.dart:134:signupAttributes: [
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\test\config\auth_config_test.dart:165:signupAttributes: [CognitoUserAttributeKey.email],
+C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_core-2.10.1\test\config\auth_config_test.dart:182:signupAttributes: [CognitoUserAttributeKey.preferredUsername],

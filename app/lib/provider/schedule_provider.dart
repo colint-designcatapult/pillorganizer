@@ -2,9 +2,7 @@ import 'package:app/apiv2/models/dto.dart';
 import 'package:app/apiv2/models/schedule.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/tenant_providers.dart';
-import 'package:app/service/time_service.dart' show normalizeIanaTimezone;
 import 'package:flutter/material.dart';
-import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'schedule_provider.g.dart';
@@ -33,57 +31,17 @@ class Schedule extends _$Schedule {
     });
   }
 
-  Future<void> updateTime(DayPeriod period, TimeOfDay time, String deviceID) async {
-    final current = state.asData?.value ?? const DeviceScheduleState();
-    final effectiveSchedule = current.effectiveSchedule;
 
-    final currentBins = effectiveSchedule is SimpleSchedule
-        ? effectiveSchedule.bins
-        : <DosePeriodV2>[];
-
-    final isAM = period == DayPeriod.am;
-    final otherBins =
-        currentBins.where((b) => isAM ? b.time.hour >= 12 : b.time.hour < 12).toList();
-    final newBins = DayOfWeek.values
-        .map((day) => DosePeriodV2(dayOfWeek: day, time: time))
+  Future<void> setScheduleAndTimezone(
+      String deviceID, TimeOfDay amTime, TimeOfDay pmTime, String ianaTimezone) async {
+    final amBins = DayOfWeek.values
+        .map((day) => DosePeriodV2(dayOfWeek: day, time: amTime))
         .toList();
-
-    final newSchedule = SimpleSchedule(bins: [...otherBins, ...newBins]);
-    try {
-      final timezoneIana = current.effectiveTimezoneIana ??
-          normalizeIanaTimezone((await FlutterTimezone.getLocalTimezone()).identifier);
-      await _postSchedule(deviceID, newSchedule, timezoneIana);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-    }
-  }
-
-  Future<void> updateTimezone(String deviceID, String ianaTimezone) async {
-    final client = ref.read(activeTenantClientProvider);
-    if (client == null) return;
-
-    try {
-      BaseSchedule? effectiveSchedule = state.asData?.value.effectiveSchedule;
-
-      if (effectiveSchedule == null) {
-        final dto = await client.getSchedule(deviceID);
-        effectiveSchedule = dto.toDomain().effectiveSchedule;
-      }
-
-      if (effectiveSchedule == null) {
-        throw StateError('Cannot update timezone without a loaded schedule.');
-      }
-
-      final request = SetScheduleRequestDto(
-        schedule: effectiveSchedule.toDto(),
-        takeEffect: ScheduleTakeEffect.immediate,
-        timezoneIana: ianaTimezone,
-      );
-      final responseDto = await client.setSchedule(deviceID, request);
-      state = AsyncValue.data(responseDto.toDomain());
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-    }
+    final pmBins = DayOfWeek.values
+        .map((day) => DosePeriodV2(dayOfWeek: day, time: pmTime))
+        .toList();
+    final newSchedule = SimpleSchedule(bins: [...amBins, ...pmBins]);
+    await _postSchedule(deviceID, newSchedule, ianaTimezone);
   }
 
   Future<void> _postSchedule(String deviceID, BaseSchedule newSchedule, String timezoneIana) async {
