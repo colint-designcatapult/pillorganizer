@@ -12,29 +12,13 @@ class Schedule extends _$Schedule {
   @override
   FutureOr<DeviceScheduleState> build() async {
     final device = ref.watch(activeDeviceProvider);
-    print('[ScheduleProvider] DEBUG: build() - device=${device?.name ?? 'null'} (id=${device?.id ?? 'null'})');
-
-    if (device == null) {
-      print('[ScheduleProvider] DEBUG: Device is null, returning empty state');
-      return const DeviceScheduleState();
-    }
+    if (device == null) return const DeviceScheduleState();
 
     final client = ref.watch(activeTenantClientProvider);
-    if (client == null) {
-      print('[ScheduleProvider] DEBUG: Client is null, returning empty state');
-      return const DeviceScheduleState();
-    }
+    if (client == null) return const DeviceScheduleState();
 
-    print('[ScheduleProvider] DEBUG: Fetching schedule for device ${device.id}');
-    try {
-      final dto = await client.getSchedule(device.id);
-      final state = dto.toDomain();
-      print('[ScheduleProvider] DEBUG: Schedule fetched successfully: am=${(state.effectiveSchedule is SimpleSchedule) ? 'yes' : 'no'}, tz=${state.effectiveTimezoneIana}');
-      return state;
-    } catch (e) {
-      print('[ScheduleProvider] DEBUG: Error fetching schedule: $e');
-      rethrow;
-    }
+    final dto = await client.getSchedule(device.id);
+    return dto.toDomain();
   }
 
   Future<void> load(String deviceID) async {

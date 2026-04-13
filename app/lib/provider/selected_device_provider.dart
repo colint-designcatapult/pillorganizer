@@ -15,8 +15,6 @@ class ActiveDevice extends _$ActiveDevice {
     final devices = ref.watch(deviceListProvider).value ?? [];
     final savedId = ref.watch(_savedDeviceIdProvider).value;
 
-    print('[ActiveDevice] DEBUG: build() - devices=${devices.length}, savedId=$savedId');
-
     DeviceMetadata? metadata;
     if (savedId != null) {
       metadata = devices.firstWhereOrNull((d) => d.id == savedId) ??
@@ -25,7 +23,6 @@ class ActiveDevice extends _$ActiveDevice {
       metadata = devices.firstOrNull;
     }
 
-    print('[ActiveDevice] DEBUG: build() result - metadata=${metadata?.name ?? 'null'}');
     return metadata;
   }
 
@@ -37,19 +34,10 @@ class ActiveDevice extends _$ActiveDevice {
   }
 
   Future<void> selectDeviceByID(String id) async {
-    print('[ActiveDevice] DEBUG: selectDeviceByID called with id=$id');
-
-    // Wait for device list to load, then find the device
     final deviceListState = await ref.read(deviceListProvider.future);
-    print('[ActiveDevice] DEBUG: Available devices: ${deviceListState.length}');
-
     final device = deviceListState.firstWhereOrNull((d) => d.id == id);
-    print('[ActiveDevice] DEBUG: Found device: ${device?.name ?? 'NOT FOUND'}');
-
     if (device != null) {
       await selectDevice(device);
-    } else {
-      print('[ActiveDevice] DEBUG: Device not found in list, not selecting');
     }
   }
 }

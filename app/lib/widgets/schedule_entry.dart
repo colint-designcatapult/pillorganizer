@@ -160,20 +160,13 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
       }
     });
 
-    if (targetDevice == null) {
-      print('[ScheduleEntry] DEBUG: targetDevice is null, hiding widget');
-      return const SizedBox.shrink();
-    }
+    if (targetDevice == null) return const SizedBox.shrink();
 
     final scheduleAsync = ref.watch(scheduleProvider);
-    print('[ScheduleEntry] DEBUG: Device=${targetDevice.name}, Schedule State=${scheduleAsync.runtimeType}');
-
     return scheduleAsync.when(
-      data: (scheduleState) {
-        print('[ScheduleEntry] DEBUG: Schedule loaded: am=${scheduleState.effectiveSchedule is SimpleSchedule ? (scheduleState.effectiveSchedule as SimpleSchedule).amPeriod : 'N/A'}, tz=${scheduleState.effectiveTimezoneIana}');
+      data: (_) {
         final isOnline = widget.ignoreOffline ||
             connectionStatus == DeviceConnectionStatus.online;
-        print('[ScheduleEntry] DEBUG: isOnline=$isOnline, ignoreOffline=${widget.ignoreOffline}, connectionStatus=$connectionStatus');
 
         return ScreenUtilWrapper(
           child: Column(
@@ -197,14 +190,8 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
           ),
         );
       },
-      loading: () {
-        print('[ScheduleEntry] DEBUG: Schedule LOADING');
-        return const Center(child: CircularProgressIndicator());
-      },
-      error: (e, s) {
-        print('[ScheduleEntry] DEBUG: Schedule ERROR: $e');
-        return Center(child: Text(e.toString()));
-      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, s) => Center(child: Text(e.toString())),
     );
   }
 
