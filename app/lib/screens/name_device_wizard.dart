@@ -26,7 +26,13 @@ class _NameDeviceWizard extends ConsumerState<NameDeviceWizard> {
     super.initState();
 
     if (widget.deviceId != null) {
-      ref.read(activeDeviceProvider.notifier).selectDeviceByID(widget.deviceId!);
+      // Select device by ID after waiting for device list to load
+      // This is done in a post-frame callback to ensure Riverpod is ready
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(activeDeviceProvider.notifier).selectDeviceByID(widget.deviceId!).catchError((e) {
+          print('[NameDeviceWizard] Error selecting device: $e');
+        });
+      });
     }
   }
 
