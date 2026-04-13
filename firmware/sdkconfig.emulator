@@ -1,0 +1,69 @@
+# sdkconfig.emulator - ESP32 QEMU Emulator Configuration
+#
+# Usage:
+#   cp sdkconfig.emulator sdkconfig.defaults
+#   idf.py set-target esp32
+#   idf.py build
+#   idf.py qemu monitor
+#
+# This configuration targets the Espressif QEMU emulator (Xtensa).
+# Key differences from production:
+#   - Wi-Fi and BLE are DISABLED (no radio emulation in QEMU)
+#   - Networking via OpenCores Ethernet MAC (emulated by QEMU)
+#   - ULP coprocessor DISABLED (not emulated)
+#   - Configurable serial number (no eFuse MAC in QEMU)
+#   - Engineering features ENABLED
+#   - UART-based engineering CLI for testing commands
+
+# --- Emulator Mode ---
+CONFIG_EMULATOR_MODE=y
+CONFIG_EMULATOR_SERIAL_NUMBER="emu000000001"
+
+# --- Safe defaults ---
+CONFIG_AWS_IOT_ENDPOINT="mqtt.app.healthesolutions.ca"
+CONFIG_CONTROL_PLANE_URL="https://control-plane.app.healthesolutions.ca"
+CONFIG_AWS_IOT_THING_NAME="PillOrganizer_Emulator"
+CONFIG_RESET_PROVISIONED_ON_BOOT=n
+
+# --- Firmware Features ---
+CONFIG_FIRMWARE_ENGINEERING=y
+
+# --- Watchdog Configuration ---
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=120
+CONFIG_ESP_TASK_WDT_PANIC=n
+
+# --- Compiler options ---
+CONFIG_COMPILER_OPTIMIZATION_DEBUG=y
+
+# --- Flash Size (QEMU default) ---
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+
+# --- Partition table ---
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+CONFIG_PARTITION_TABLE_FILENAME="partitions.csv"
+CONFIG_PARTITION_TABLE_OFFSET=0x8000
+CONFIG_PARTITION_TABLE_MD5=y
+
+# --- Bump default task size (supervisor runs on main task) ---
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=7168
+CONFIG_MAIN_TASK_STACK_SIZE=7168
+
+# --- Bluetooth: DISABLED for emulator (no radio emulation) ---
+CONFIG_BT_ENABLED=n
+
+# --- Wi-Fi: DISABLED for emulator ---
+CONFIG_ESP_WIFI_ENABLED=n
+
+# --- Ethernet: OpenCores MAC (QEMU emulated) ---
+CONFIG_ETH_ENABLED=y
+CONFIG_ETH_USE_OPENETH=y
+
+# --- ULP: DISABLED for emulator (not emulated) ---
+# CONFIG_ULP_COPROC_ENABLED is not set
+
+# --- LWIP ---
+CONFIG_LWIP_DHCP_DOES_ARP_CHECK=n
+
+# --- Console/UART for engineering CLI ---
+CONFIG_ESP_CONSOLE_UART_DEFAULT=y

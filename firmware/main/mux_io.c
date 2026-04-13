@@ -1,4 +1,17 @@
 #include "mux_io.h"
+#include "sdkconfig.h"
+
+#if CONFIG_EMULATOR_MODE
+
+/* No MUX hardware in the emulator — provide empty stubs. */
+void mux_init(void) { }
+void mux_fresh_boot(void) { }
+void mux_wake_deep_sleep(void) { }
+bool mux_wake_deep_sleep_early(void) { return true; }
+void mux_prep_deep_sleep(void) { }
+
+#else /* !CONFIG_EMULATOR_MODE */
+
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -343,3 +356,5 @@ static void start_ulp_program(void)
     esp_err_t err = ulp_run(&ulp_entry - RTC_SLOW_MEM);
     ESP_ERROR_CHECK(err);
 }
+
+#endif /* !CONFIG_EMULATOR_MODE */

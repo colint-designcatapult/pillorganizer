@@ -2,8 +2,26 @@
 #include <stdbool.h>
 #include <memory.h>
 #include <inttypes.h>
-#include "esp_sleep.h"
 #include "esp_system.h"
+#include "nvs_wrapper.h"
+#include "supervisor.h"
+#include "device_config.h"
+#include "network.h"
+#include "rtc.h"
+#include <esp_err.h>
+#include <esp_event.h>
+#include "claim.h"
+#include "shadow_state.h"
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/semphr.h>
+#include "web_server.h"
+#include "event_outbox.h"
+#include "eng_cli.h"
+#include "sdkconfig.h"
+
+#if !CONFIG_EMULATOR_MODE
+#include "esp_sleep.h"
 #include "driver/rtc_io.h"
 #include "driver/gpio.h"
 #include "soc/rtc_cntl_reg.h"
@@ -13,27 +31,16 @@
 #include "mux_io.h"
 #include "esp_intr_alloc.h"
 #include "soc/periph_defs.h"
-#include "nvs_wrapper.h"
 #include "pill_pins.h"
 #include "i2c_dev.h"
 #include "ledc.h"
-#include "supervisor.h"
-#include "device_config.h"
-#include "network.h"
-#include "rtc.h"
-#include <esp_err.h>
-#include <esp_event.h>
-#include "claim.h"
-#include "shadow_state.h"
 #include <esp_private/sar_periph_ctrl.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <freertos/semphr.h>
 #include "battery.h"
-#include "web_server.h"
-#include "event_outbox.h"
+#endif
 
 #define TAG "MAIN"
+
+#if !CONFIG_EMULATOR_MODE
 
 void RTC_IRAM_ATTR esp_wake_deep_sleep(void)
 { 
@@ -274,6 +281,8 @@ static void app_init_hw()
     battery_init();
 }
 
+#endif /* !CONFIG_EMULATOR_MODE */
+
 
 void app_main(void)
 {
@@ -289,6 +298,7 @@ void app_main(void)
     // Initialize the supervisor
     supervisor_init();
 
+#if !CONFIG_EMULATOR_MODE
     // Perform early initialization depending on if this is a fresh boot or wake from deep sleep
     esp_reset_reason_t reset_reason = esp_reset_reason();
     if (reset_reason == ESP_RST_DEEPSLEEP) {
@@ -303,6 +313,9 @@ void app_main(void)
     app_init_hw();
 
     ESP_LOGI(TAG, "Hardware initialized");
+#else
+    ESP_LOGI(TAG, "=== QEMU Emulator Mode ===");
+#endif
 
     // Initialize device configuration 
     devcfg_init();
@@ -319,11 +332,16 @@ void app_main(void)
     // Initialize the web server for testing/engineering
     web_server_init();
 
+    // Start the engineering CLI (UART console)
+    eng_cli_init();
+
     // Hand off business logic to the supervisor
     supervisor_run();
 
+#if !CONFIG_EMULATOR_MODE
     // If we've reached here, there is nothing more to do
     // Go to sleep
     esp_deep_sleep_start();
+#endif
 }
 
