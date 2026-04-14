@@ -37,10 +37,7 @@ class _PostSetupWizardState extends ConsumerState<PostSetupWizard> {
   @override
   void initState() {
     super.initState();
-    print('[PostSetupWizard] initState called, deviceId=${widget.deviceId}');
-    // If we have a device ID from provisioning, select and load it
     if (widget.deviceId != null) {
-      print('[PostSetupWizard] Device ID present, calling _selectAndLoadDevice');
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _selectAndLoadDevice();
       });
@@ -48,28 +45,19 @@ class _PostSetupWizardState extends ConsumerState<PostSetupWizard> {
   }
 
   Future<void> _selectAndLoadDevice() async {
-    if (widget.deviceId == null) {
-      print('[PostSetupWizard] Device ID is null, returning');
-      return;
-    }
+    if (widget.deviceId == null) return;
     try {
-      print('[PostSetupWizard] Selecting device by ID: ${widget.deviceId}');
-      // Select the device by ID (this will refresh the device list)
       await ref.read(activeDeviceProvider.notifier).selectDeviceByID(widget.deviceId!);
-      print('[PostSetupWizard] Device selected successfully');
-      // Once selected, the scheduleProvider will auto-load via its watch
     } catch (e) {
-      print('[PostSetupWizard] Error selecting device: $e');
+      // Device selection failed, proceed anyway
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    print('[PostSetupWizard] build() called');
     ProvisionningProgress provisionningProgress = ProvisionningProgress(3, 1);
 
     final schedule = ref.watch(scheduleProvider);
-    print('[PostSetupWizard] Schedule state: ${schedule.runtimeType}');
 
     // Next is enabled once the user has saved a schedule with both AM and PM set.
     final scheduleState = schedule.asData?.value;
@@ -79,8 +67,6 @@ class _PostSetupWizardState extends ConsumerState<PostSetupWizard> {
         simple?.pmPeriod != null &&
         scheduleState?.effectiveTimezoneIana != null;
     
-    print('[PostSetupWizard] canGoNext=$canGoNext, simple=$simple');
-
     return WizardStep(
         provisionningProgress: provisionningProgress,
         title: AppLocalizations.of(context)!.welcomeCabinet,

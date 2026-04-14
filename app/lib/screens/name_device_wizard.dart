@@ -77,13 +77,10 @@ class _NameDeviceWizard extends ConsumerState<NameDeviceWizard> {
   }
 
   Future<void> _handleNextStep() async {
-    print('[NameDeviceWizard] _handleNextStep called');
-
     if (_textController.text.isNotEmpty &&
         _textController.text != _initialDeviceName) {
       final activeDevice = ref.read(activeDeviceProvider);
       if (activeDevice != null) {
-        print('[NameDeviceWizard] Updating device name...');
         await ref.read(deviceListProvider.notifier).updateDeviceName(
             activeDevice.id, _textController.text);
       }
@@ -92,7 +89,6 @@ class _NameDeviceWizard extends ConsumerState<NameDeviceWizard> {
     // If we have a provisioned device ID, wait for it to appear in the device list
     if (widget.deviceId != null) {
       setState(() => _isWaitingForDevice = true);
-      print('[NameDeviceWizard] Waiting for provisioned device to appear in device list...');
       await _waitForDeviceInList(widget.deviceId!);
       if (mounted) {
         setState(() => _isWaitingForDevice = false);
@@ -100,37 +96,22 @@ class _NameDeviceWizard extends ConsumerState<NameDeviceWizard> {
     }
 
     if (mounted) {
-      // Pass device ID to PostSetupWizard so it can load the schedule directly
-      print('[NameDeviceWizard] Navigating to /post_setup with deviceId=${widget.deviceId}');
       Navigator.of(context, rootNavigator: true)
           .pushNamedAndRemoveUntil('/post_setup?id=${widget.deviceId}', (route) => false);
     }
   }
 
   Future<void> _waitForDeviceInList(String deviceId, {int maxRetries = 30}) async {
-    print('[NameDeviceWizard] Polling for device $deviceId to appear in list...');
     for (int i = 0; i < maxRetries; i++) {
       try {
-        // Refresh the device list
         await ref.read(deviceListProvider.notifier).refresh();
-
         final devices = ref.read(deviceListProvider).value ?? [];
-        print('[NameDeviceWizard] Poll attempt ${i + 1}: Found ${devices.length} devices');
-
         final deviceExists = devices.any((d) => d.id == deviceId);
-        if (deviceExists) {
-          print('[NameDeviceWizard] Device found! Device is now in the list.');
-          return;
-        }
-
-        // Wait 1 second before next retry
+        if (deviceExists) return;
         await Future.delayed(const Duration(seconds: 1));
       } catch (e) {
-        print('[NameDeviceWizard] Error polling device list: $e');
         // Continue trying
       }
     }
-
-    print('[NameDeviceWizard] Timeout waiting for device to appear (30 seconds). Proceeding anyway.');
   }
 }
