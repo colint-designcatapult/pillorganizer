@@ -1,4 +1,0 @@
-C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\hosted_ui_webview_test.dart
-C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\example\integration_test\native_auth_bridge_test.dart
-C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\flows\hosted_ui\hosted_ui_platform_flutter.dart
-C:\Users\MarcosC\AppData\Local\Pub\Cache\hosted\pub.dev\amplify_auth_cognito-2.10.0\lib\src\flows\hosted_ui\hosted_ui_platform_stub.dart
