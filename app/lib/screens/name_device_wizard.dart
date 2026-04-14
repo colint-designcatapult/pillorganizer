@@ -96,8 +96,11 @@ class _NameDeviceWizard extends ConsumerState<NameDeviceWizard> {
     }
 
     if (mounted) {
+      final route = widget.deviceId != null
+          ? '/post_setup?id=${widget.deviceId}'
+          : '/post_setup';
       Navigator.of(context, rootNavigator: true)
-          .pushNamedAndRemoveUntil('/post_setup?id=${widget.deviceId}', (route) => false);
+          .pushNamedAndRemoveUntil(route, (route) => false);
     }
   }
 

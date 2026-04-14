@@ -42,6 +42,16 @@ class Schedule extends _$Schedule {
   }
 
 
+  /// Updates the timezone for a device, re-posting the existing schedule.
+  /// Kept for compatibility with [TimeZoneSelection] widget.
+  Future<void> updateTimezone(String deviceID, String ianaTimezone) async {
+    final currentState = state.asData?.value;
+    final effective = currentState?.effectiveSchedule;
+    if (effective != null) {
+      await _postSchedule(deviceID, effective, ianaTimezone);
+    }
+  }
+
   Future<void> setScheduleAndTimezone(
       String deviceID, TimeOfDay amTime, TimeOfDay pmTime, String ianaTimezone) async {
     final amBins = DayOfWeek.values

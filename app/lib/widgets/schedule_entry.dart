@@ -55,12 +55,30 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
   tz.Location? _selectedTimezone;
   tz.Location? _phoneLocation;
   bool _isSubmitting = false;
-  bool _stateInitialized = false;
+  // Tracks which deviceId we've seeded form fields for; null = not yet seeded
+  String? _seededDeviceId;
+  // Tracks which deviceId the schedule was last loaded for
+  String? _loadedForDeviceId;
 
   @override
   void initState() {
     super.initState();
     _loadPhoneTimezone();
+  }
+
+  @override
+  void didUpdateWidget(ScheduleEntry oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If the explicitly-passed device changes, reset form and reload schedule
+    if (widget.device?.id != oldWidget.device?.id) {
+      setState(() {
+        _seededDeviceId = null;
+        _loadedForDeviceId = null;
+        _amTime = null;
+        _pmTime = null;
+        _selectedTimezone = _phoneLocation;
+      });
+    }
   }
 
   Future<void> _loadPhoneTimezone() async {
@@ -80,10 +98,10 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
     } catch (_) {}
   }
 
-  /// Called once when the schedule state first loads — seeds form fields.
-  void _initializeFromScheduleState(DeviceScheduleState state) {
-    if (_stateInitialized) return;
-    _stateInitialized = true;
+  /// Called when schedule state loads — seeds form fields for the given device.
+  void _initializeFromScheduleState(DeviceScheduleState state, String deviceId) {
+    if (_seededDeviceId == deviceId) return;
+    _seededDeviceId = deviceId;
 
     final effective = state.effectiveSchedule;
     final simple = effective is SimpleSchedule ? effective : null;
@@ -153,10 +171,19 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
     final targetDevice = widget.device ?? ref.watch(activeDeviceProvider);
     final connectionStatus = ref.watch(deviceConnectionStatusProvider);
 
-    // Seed form fields once when schedule data arrives
+    // If an explicit device is passed that differs from what scheduleProvider last loaded,
+    // trigger a reload so the form reflects the correct device's schedule.
+    if (targetDevice != null && _loadedForDeviceId != targetDevice.id) {
+      _loadedForDeviceId = targetDevice.id;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) ref.read(scheduleProvider.notifier).load(targetDevice.id);
+      });
+    }
+
+    // Seed form fields when schedule data arrives for the current device
     ref.listen<AsyncValue<DeviceScheduleState>>(scheduleProvider, (_, next) {
-      if (next.hasValue && next.value != null) {
-        _initializeFromScheduleState(next.value!);
+      if (next.hasValue && next.value != null && targetDevice != null) {
+        _initializeFromScheduleState(next.value!, targetDevice.id);
       }
     });
 
@@ -218,15 +245,16 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
         ),
         child: Padding(
           padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Text('Device offline',
-                  style: Theme.of(context).textTheme.titleSmall),
-              SizedBox(height: _titleSubtitleSpacing.h),
-              Text(
-                  'Schedule and timezone changes can only be made while your device is connected.',
-                  style: Theme.of(context).textTheme.bodySmall),
+              Icon(Icons.wifi_off, size: 24.h, color: Theme.of(context).primaryColor),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context)!.homeDisconnectedSubtext,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
             ],
           ),
         ),
@@ -399,7 +427,7 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
                 ],
               ),
             ),
-            SizedBox(width: 8.w),
+            SizedBox(height: 8.h),
             Padding(
               padding: EdgeInsets.symmetric(
                   horizontal: 8.w, vertical: 12.h),
