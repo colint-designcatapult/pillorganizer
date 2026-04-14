@@ -34,8 +34,9 @@ class ActiveDevice extends _$ActiveDevice {
   }
 
   Future<void> selectDeviceByID(String id) async {
-    final devices = ref.read(deviceListProvider).value ?? [];
-    final device = devices.firstWhereOrNull((d) => d.id == id);
+    await ref.read(deviceListProvider.notifier).refresh();
+    final deviceListState = await ref.read(deviceListProvider.future);
+    final device = deviceListState.firstWhereOrNull((d) => d.id == id);
     if (device != null) {
       await selectDevice(device);
     }

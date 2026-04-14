@@ -80,14 +80,22 @@ class MyApp extends StatelessWidget {
                       title: 'Cabinet Pills',
                       themeMode: ThemeMode.system,
                       locale: languageLocale,
-                      onGenerateRoute: (settings) {
-                        if (settings.name?.startsWith('/name_new_device') ==
-                            true) {
+                      onGenerateRoute: (RouteSettings settings) {
+                        if (settings.name?.startsWith('/name_new_device') ?? false) {
                           final uri = Uri.parse(settings.name!);
                           final deviceId = uri.queryParameters['id'];
 
                           return MaterialPageRoute(
                             builder: (context) => NameDeviceWizard(deviceId: deviceId),
+                          );
+                        }
+
+                        if (settings.name?.startsWith('/post_setup') ?? false) {
+                          final uri = Uri.parse(settings.name!);
+                          final deviceId = uri.queryParameters['id'];
+
+                          return MaterialPageRoute(
+                            builder: (context) => PostSetupWizard(deviceId: deviceId),
                           );
                         }
 
