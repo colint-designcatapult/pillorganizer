@@ -57,7 +57,8 @@ export class IotStack extends cdk.Stack {
             Action: ['iot:Publish', 'iot:Receive', 'iot:RetainPublish'],
             Resource: [
               `arn:aws:iot:${this.region}:${this.account}:topic/healthe/things/\${iot:Connection.Thing.ThingName}/*`,
-              `arn:aws:iot:${this.region}:${this.account}:topic/$aws/things/\${iot:Connection.Thing.ThingName}/shadow/*`
+              `arn:aws:iot:${this.region}:${this.account}:topic/$aws/things/\${iot:Connection.Thing.ThingName}/shadow/*`,
+              `arn:aws:iot:${this.region}:${this.account}:topic/$aws/things/\${iot:Connection.Thing.ThingName}/jobs/*`
             ]
           },
           {
@@ -65,7 +66,8 @@ export class IotStack extends cdk.Stack {
             Action: 'iot:Subscribe',
             Resource: [
               `arn:aws:iot:${this.region}:${this.account}:topicfilter/healthe/things/\${iot:Connection.Thing.ThingName}/*`,
-              `arn:aws:iot:${this.region}:${this.account}:topicfilter/$aws/things/\${iot:Connection.Thing.ThingName}/shadow/*`
+              `arn:aws:iot:${this.region}:${this.account}:topicfilter/$aws/things/\${iot:Connection.Thing.ThingName}/shadow/*`,
+              `arn:aws:iot:${this.region}:${this.account}:topicfilter/$aws/things/\${iot:Connection.Thing.ThingName}/jobs/*`
             ]
           }
         ]

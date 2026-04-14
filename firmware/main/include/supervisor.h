@@ -53,7 +53,10 @@ typedef enum {
     EVENT_RELOAD_COMPLETE,
     EVENT_BATTERY_CHANGE,
     EVENT_RESET_PENDING_BINS,
-    EVENT_MQTT_PUBACK     /* payload = (intptr_t)(int) client-assigned packet id */
+    EVENT_MQTT_PUBACK,     /* payload = (intptr_t)(int) client-assigned packet id */
+    EVENT_OTA_JOB_RECEIVED,
+    EVENT_OTA_COMPLETE,
+    EVENT_OTA_FAILED,
 } supervisor_event_id_t;
 
 typedef struct {

@@ -188,7 +188,8 @@ exit:
     and r0, r0, 1
     st r0, r3, 0
     
-    /* Wake the CPU. Notice wait_for_cpu is entirely removed. */
+    /* Wake the CPU (triggers your ISR perfectly fine) */
     wake
 
-    jump entry
+    /* Stop execution and wait for the hardware timer */
+    halt

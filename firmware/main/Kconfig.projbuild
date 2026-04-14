@@ -63,3 +63,26 @@ config FIRMWARE_ENGINEERING
         production builds to remove all engineering endpoints and handlers.
 
 endmenu
+
+menu "Emulator Configuration"
+
+config EMULATOR_MODE
+    bool "Build for QEMU emulator"
+    default n
+    help
+        Build the firmware targeting the ESP32 QEMU emulator. This disables
+        hardware peripherals (GPIO, I2C, ULP, battery, BLE provisioning) and
+        switches the network stack from Wi-Fi to the OpenCores Ethernet MAC
+        driver supported by the QEMU emulator. A UART-based engineering CLI
+        is provided in place of BLE provisioning.
+
+config EMULATOR_SERIAL_NUMBER
+    string "Emulated device serial number"
+    depends on EMULATOR_MODE
+    default "emu000000001"
+    help
+        Fixed serial number to use when running inside the emulator. On real
+        hardware the serial number is derived from the MAC address in eFuse.
+        This lets multiple emulator instances use distinct identities.
+
+endmenu

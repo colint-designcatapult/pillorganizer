@@ -26,11 +26,11 @@ void devcfg_reset_identity();
 bool devcfg_get_thing_name_str(char* thing_name_out, size_t size);
 esp_err_t devcfg_set_thing_name(const char* thing_name);
 
-// Retrieves the permanent private key from NVS. 
+// Retrieves the permanent private key (NVS on hardware, SD in emulator).
 // NOTE: The caller must free() the returned pointer when done.
 const char* devcfg_get_permanent_key();
 
-// Retrieves the permanent certificate from NVS. 
+// Retrieves the permanent certificate (NVS on hardware, SD in emulator).
 // NOTE: The caller must free() the returned pointer when done.
 const char* devcfg_get_permanent_cert();
 

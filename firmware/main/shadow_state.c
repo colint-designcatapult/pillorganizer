@@ -71,7 +71,7 @@ static bool subscribe_to_shadow_topic(const char* shadow_name, ShadowTopicString
         &topic_len
     );
     
-
+    
     if (shadow_status == SHADOW_SUCCESS) {
         mqtt_subscribe(topic_buf, 1, out_id);
         ESP_LOGI(TAG, "Subscribed to: %s with sub %d", topic_buf, *out_id);
