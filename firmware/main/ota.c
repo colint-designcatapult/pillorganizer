@@ -18,11 +18,9 @@ extern const char root_ca_pem_start[] asm("_binary_root_ca_pem_start");
 extern const char root_ca_pem_end[]   asm("_binary_root_ca_pem_end");
 
 #define OTA_URL_MAX_LEN     512
-#define OTA_VERSION_MAX_LEN 32
 
 static char s_job_url[OTA_URL_MAX_LEN];
 static char s_job_id[JOBID_MAX_LENGTH + 1];
-static char s_job_version[OTA_VERSION_MAX_LEN];
 static int  s_notify_next_sub_id = -1;
 static int  s_start_next_sub_id  = -1;
 
@@ -81,7 +79,6 @@ void ota_init()
 {
     s_job_url[0]     = '\0';
     s_job_id[0]      = '\0';
-    s_job_version[0] = '\0';
     s_notify_next_sub_id = -1;
     s_start_next_sub_id  = -1;
     ESP_LOGI(TAG, "OTA module initialized");
@@ -262,22 +259,9 @@ void ota_on_data(const char* topic, size_t topic_len, const char* data, size_t d
     }
     memcpy(s_job_url, url_item->valuestring, url_len + 1);
 
-    cJSON* ver_item = cJSON_GetObjectItemCaseSensitive(job_doc, "version");
-    if (cJSON_IsString(ver_item) && ver_item->valuestring[0] != '\0') {
-        size_t ver_len = strlen(ver_item->valuestring);
-        if (ver_len < OTA_VERSION_MAX_LEN) {
-            memcpy(s_job_version, ver_item->valuestring, ver_len + 1);
-        } else {
-            s_job_version[0] = '\0';
-        }
-    } else {
-        s_job_version[0] = '\0';
-    }
-
     cJSON_Delete(root);
 
-    ESP_LOGI(TAG, "OTA job received: id=%s version=%s url=%s",
-             s_job_id, s_job_version[0] ? s_job_version : "(unset)", s_job_url);
+    ESP_LOGI(TAG, "OTA job received: id=%s url=%s", s_job_id, s_job_url);
 
     supervisor_submit_event(EVENT_OTA_JOB_RECEIVED);
 }
