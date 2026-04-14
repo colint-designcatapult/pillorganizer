@@ -361,15 +361,15 @@ class WizardStep extends StatelessWidget {
                   )
                 : Expanded(
                     child: GestureDetector(
-                      onTap: canGoNext ? onNextPressed : onSkipPressed,
+                      onTap: onNextPressed,
                       child: Container(
                         height: navFooterHeight,
                         decoration: BoxDecoration(
-                          color: (canGoNext &&
-                                  onNextPressed == null &&
-                                  isLoading)
-                              ? Theme.of(context).primaryColor.withValues(alpha: 0.7)
-                              : Theme.of(context).primaryColor,
+                          color: onNextPressed == null
+                              ? Theme.of(context).primaryColor.withValues(alpha: 0.5)
+                              : (canGoNext && isLoading)
+                                  ? Theme.of(context).primaryColor.withValues(alpha: 0.7)
+                                  : Theme.of(context).primaryColor,
                           borderRadius: BorderRadius.only(
                             topLeft: const Radius.circular(32).r,
                           ),
@@ -389,13 +389,15 @@ class WizardStep extends StatelessWidget {
                               )
                             else
                               Text(
-                                canGoNext
-                                    ? AppLocalizations.of(context)!.next
-                                    : AppLocalizations.of(context)!.skip,
+                                AppLocalizations.of(context)!.next,
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodyMedium
-                                    ?.copyWith(color: Colors.white),
+                                    ?.copyWith(
+                                      color: onNextPressed == null
+                                          ? Colors.white.withValues(alpha: 0.6)
+                                          : Colors.white,
+                                    ),
                               ),
                             if (!(canGoNext &&
                                 onNextPressed == null &&
@@ -408,7 +410,9 @@ class WizardStep extends StatelessWidget {
                                 isLoading))
                               Icon(
                                 Icons.arrow_forward,
-                                color: Colors.white,
+                                color: onNextPressed == null
+                                    ? Colors.white.withValues(alpha: 0.6)
+                                    : Colors.white,
                                 size: 24.h,
                               ),
                           ],

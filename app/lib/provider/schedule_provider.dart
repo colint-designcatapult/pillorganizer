@@ -11,14 +11,32 @@ part 'schedule_provider.g.dart';
 class Schedule extends _$Schedule {
   @override
   FutureOr<DeviceScheduleState> build() async {
+    print('[ScheduleProvider] build() called');
     final device = ref.watch(activeDeviceProvider);
-    if (device == null) return const DeviceScheduleState();
+    print('[ScheduleProvider] Active device: ${device?.name ?? 'null'} (id=${device?.id})');
+
+    if (device == null) {
+      print('[ScheduleProvider] Device is null, returning empty state');
+      return const DeviceScheduleState();
+    }
 
     final client = ref.watch(activeTenantClientProvider);
-    if (client == null) return const DeviceScheduleState();
+    if (client == null) {
+      print('[ScheduleProvider] Client is null, returning empty state');
+      return const DeviceScheduleState();
+    }
 
-    final dto = await client.getSchedule(device.id);
-    return dto.toDomain();
+    print('[ScheduleProvider] Fetching schedule for device ${device.id}');
+    try {
+      final dto = await client.getSchedule(device.id);
+      final state = dto.toDomain();
+      print('[ScheduleProvider] Schedule fetched successfully');
+      return state;
+    } catch (e, st) {
+      print('[ScheduleProvider] Error fetching schedule: $e');
+      print('[ScheduleProvider] Stack trace: $st');
+      rethrow;
+    }
   }
 
   Future<void> load(String deviceID) async {
@@ -61,3 +79,4 @@ class Schedule extends _$Schedule {
     }
   }
 }
+

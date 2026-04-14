@@ -1,5 +1,6 @@
 import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
+import 'package:app/provider/schedule_provider.dart';
 import 'package:app/service/provisioning_service.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:app/widgets/wizard.dart';
@@ -20,11 +21,15 @@ class NameDeviceWizard extends ConsumerStatefulWidget {
 class _NameDeviceWizard extends ConsumerState<NameDeviceWizard> {
   final _textController = TextEditingController();
   final String _initialDeviceName = '';
+  bool _isWaitingForDevice = false;
 
   @override
   void initState() {
     super.initState();
-    // Don't select device here — we'll do it in _handleNextStep before navigating
+    // Listen to text changes to trigger rebuild for button state
+    _textController.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -37,24 +42,26 @@ class _NameDeviceWizard extends ConsumerState<NameDeviceWizard> {
   Widget build(BuildContext context) {
     final provisionningProgress = ProvisionningProgress(2, 1);
     final deviceListState = ref.watch(deviceListProvider);
+
     final isUpdatingName = deviceListState.maybeWhen(
-      data: (_) => false, // Or some other way to track name update
+      data: (_) => false,
       orElse: () => false,
     );
-    // Note: We might need a separate state for isUpdatingName if it's not in the deviceListProvider.
-    // Assuming for now it's false unless we find where it's tracked.
+
+    // Enable Next button only when nickname is provided
+    final hasNickname = _textController.text.isNotEmpty;
 
     return WizardStep(
       height: 394.h,
       provisionningProgress: provisionningProgress,
       title: AppLocalizations.of(context)!.nameDeviceTitle,
       subtext: AppLocalizations.of(context)!.nameDeviceSubtext,
-      canGoNext: true,
-      isLoading: isUpdatingName,
+      canGoNext: hasNickname,
+      isLoading: isUpdatingName || _isWaitingForDevice,
       onBackPressed: () => Navigator.of(context)
           .pushNamedAndRemoveUntil('/', (route) => false),
-      onNextPressed: isUpdatingName ? null : _handleNextStep,
-      onSkipPressed: _handleNextStep,
+      onNextPressed: (isUpdatingName || _isWaitingForDevice || !hasNickname) ? null : _handleNextStep,
+      onSkipPressed: null,
       child: Expanded(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 0.h),
@@ -70,19 +77,60 @@ class _NameDeviceWizard extends ConsumerState<NameDeviceWizard> {
   }
 
   Future<void> _handleNextStep() async {
+    print('[NameDeviceWizard] _handleNextStep called');
+
     if (_textController.text.isNotEmpty &&
         _textController.text != _initialDeviceName) {
       final activeDevice = ref.read(activeDeviceProvider);
       if (activeDevice != null) {
+        print('[NameDeviceWizard] Updating device name...');
         await ref.read(deviceListProvider.notifier).updateDeviceName(
             activeDevice.id, _textController.text);
       }
     }
 
+    // If we have a provisioned device ID, wait for it to appear in the device list
+    if (widget.deviceId != null) {
+      setState(() => _isWaitingForDevice = true);
+      print('[NameDeviceWizard] Waiting for provisioned device to appear in device list...');
+      await _waitForDeviceInList(widget.deviceId!);
+      if (mounted) {
+        setState(() => _isWaitingForDevice = false);
+      }
+    }
+
     if (mounted) {
       // Pass device ID to PostSetupWizard so it can load the schedule directly
+      print('[NameDeviceWizard] Navigating to /post_setup with deviceId=${widget.deviceId}');
       Navigator.of(context, rootNavigator: true)
           .pushNamedAndRemoveUntil('/post_setup?id=${widget.deviceId}', (route) => false);
     }
+  }
+
+  Future<void> _waitForDeviceInList(String deviceId, {int maxRetries = 30}) async {
+    print('[NameDeviceWizard] Polling for device $deviceId to appear in list...');
+    for (int i = 0; i < maxRetries; i++) {
+      try {
+        // Refresh the device list
+        await ref.read(deviceListProvider.notifier).refresh();
+
+        final devices = ref.read(deviceListProvider).value ?? [];
+        print('[NameDeviceWizard] Poll attempt ${i + 1}: Found ${devices.length} devices');
+
+        final deviceExists = devices.any((d) => d.id == deviceId);
+        if (deviceExists) {
+          print('[NameDeviceWizard] Device found! Device is now in the list.');
+          return;
+        }
+
+        // Wait 1 second before next retry
+        await Future.delayed(const Duration(seconds: 1));
+      } catch (e) {
+        print('[NameDeviceWizard] Error polling device list: $e');
+        // Continue trying
+      }
+    }
+
+    print('[NameDeviceWizard] Timeout waiting for device to appear (30 seconds). Proceeding anyway.');
   }
 }

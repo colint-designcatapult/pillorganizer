@@ -150,23 +150,36 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
 
   @override
   Widget build(BuildContext context) {
+    print('[ScheduleEntry] build() called');
     final targetDevice = widget.device ?? ref.watch(activeDeviceProvider);
+    print('[ScheduleEntry] Target device: ${targetDevice?.name ?? 'null'}');
+
     final connectionStatus = ref.watch(deviceConnectionStatusProvider);
+    print('[ScheduleEntry] Connection status: $connectionStatus');
 
     // Seed form fields once when schedule data arrives
     ref.listen<AsyncValue<DeviceScheduleState>>(scheduleProvider, (_, next) {
+      print('[ScheduleEntry] Schedule listener: ${next.runtimeType}');
       if (next.hasValue && next.value != null) {
+        print('[ScheduleEntry] Initializing from schedule state');
         _initializeFromScheduleState(next.value!);
       }
     });
 
-    if (targetDevice == null) return const SizedBox.shrink();
+    if (targetDevice == null) {
+      print('[ScheduleEntry] Target device is null, returning SizedBox.shrink()');
+      return const SizedBox.shrink();
+    }
 
     final scheduleAsync = ref.watch(scheduleProvider);
+    print('[ScheduleEntry] Schedule async state: ${scheduleAsync.runtimeType}');
+
     return scheduleAsync.when(
       data: (_) {
+        print('[ScheduleEntry] Schedule data loaded, building form');
         final isOnline = widget.ignoreOffline ||
             connectionStatus == DeviceConnectionStatus.online;
+        print('[ScheduleEntry] isOnline=$isOnline');
 
         return ScreenUtilWrapper(
           child: Column(
@@ -190,8 +203,14 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
           ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, s) => Center(child: Text(e.toString())),
+      loading: () {
+        print('[ScheduleEntry] Schedule LOADING');
+        return const Center(child: CircularProgressIndicator());
+      },
+      error: (e, s) {
+        print('[ScheduleEntry] Schedule ERROR: $e');
+        return Center(child: Text(e.toString()));
+      },
     );
   }
 
