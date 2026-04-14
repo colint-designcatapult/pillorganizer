@@ -18,6 +18,7 @@
 #include "web_server.h"
 #include "event_outbox.h"
 #include "eng_cli.h"
+#include <esp_log.h>
 #include "sdkconfig.h"
 
 #if !CONFIG_EMULATOR_MODE

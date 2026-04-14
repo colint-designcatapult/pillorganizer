@@ -14,6 +14,7 @@ set(MAIN_SRCS
     IS31FL3730.c
     i2c_dev.c
     ledc.c
+    ledc_emu.c
     supervisor.c
     wifi_provision.c
     device_config.c
@@ -60,23 +61,14 @@ set(MAIN_REQUIRES
     esp_https_ota
 )
 
-# Components that are only needed on real hardware (Wi-Fi, BLE, ULP)
-if(NOT CONFIG_EMULATOR_MODE)
-    list(APPEND MAIN_REQUIRES
-        wifi_provisioning
-        esp_wifi
-        ulp
-        bt
-        protocomm
-    )
-endif()
-
-# Ethernet component for emulator mode
-if(CONFIG_EMULATOR_MODE)
-    list(APPEND MAIN_REQUIRES
-        esp_eth
-    )
-endif()
+list(APPEND MAIN_REQUIRES
+    wifi_provisioning
+    esp_wifi
+    ulp
+    bt
+    protocomm
+    esp_eth
+)
 
 # Register the component WITH embedded files
 idf_component_register(
@@ -95,18 +87,7 @@ idf_component_register(
 # Set C++23 standard
 target_compile_options(${COMPONENT_LIB} PRIVATE -std=gnu++23)
 
-# ULP coprocessor build (real hardware only)
-if(NOT CONFIG_EMULATOR_MODE)
-    set(ulp_app_name "ulp_main")
-
-    # 2. Point to your assembly source file(s)
-    set(ulp_s_sources "ulp/mux.S")
-
-    # 3. Tell CMake which C files depend on the generated ULP variables.
-    # This ensures the ULP is compiled BEFORE app_main.c, so the "ulp_main.h" 
-    # header is generated in time for your C code to include it.
-    set(ulp_exp_dep_srcs "main.c")
-
-    # 4. Trigger the ULP build and embed the binary into the ESP32 flash
-    ulp_embed_binary(${ulp_app_name} "${ulp_s_sources}" "${ulp_exp_dep_srcs}")
-endif()
+set(ulp_app_name "ulp_main")
+set(ulp_s_sources "ulp/mux.S")
+set(ulp_exp_dep_srcs "main.c")
+ulp_embed_binary(${ulp_app_name} "${ulp_s_sources}" "${ulp_exp_dep_srcs}")

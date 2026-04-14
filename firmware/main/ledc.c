@@ -1,4 +1,8 @@
 #include "ledc.h"
+#include "sdkconfig.h"
+
+#if !CONFIG_EMULATOR_MODE
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "IS31FL3730.h"
@@ -325,3 +329,5 @@ void led_task(void* arg)
         vTaskDelay(pdMS_TO_TICKS(TASK_TICK_RATE_MS));
     }
 }
+
+#endif /* !CONFIG_EMULATOR_MODE */

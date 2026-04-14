@@ -20,10 +20,7 @@
 #include <esp_log.h>
 #include <esp_console.h>
 #include <esp_system.h>
-#include <esp_vfs_dev.h>
-#include <driver/uart.h>
 #include <argtable3/argtable3.h>
-#include <linenoise/linenoise.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <nvs.h>
@@ -192,79 +189,29 @@ static void register_reset_cmd(void)
 }
 
 /* ------------------------------------------------------------------ */
-/*  Console task                                                      */
-/* ------------------------------------------------------------------ */
-
-static void eng_cli_task(void *arg)
-{
-    /* Prompt */
-    const char *prompt = "eng> ";
-
-    printf("\n"
-           "======================================\n"
-           "  Engineering CLI  (type 'help')\n"
-           "======================================\n\n");
-
-    while (true) {
-        char *line = linenoise(prompt);
-        if (line == NULL) {
-            /* Timeout / EOF — wait a bit and retry */
-            vTaskDelay(pdMS_TO_TICKS(100));
-            continue;
-        }
-
-        /* Skip empty lines */
-        if (strlen(line) > 0) {
-            linenoiseHistoryAdd(line);
-
-            int ret;
-            esp_err_t err = esp_console_run(line, &ret);
-            if (err == ESP_ERR_NOT_FOUND) {
-                printf("Unknown command: %s\n", line);
-            } else if (err == ESP_ERR_INVALID_ARG) {
-                /* empty input — ignore */
-            } else if (err != ESP_OK) {
-                printf("Error: %s\n", esp_err_to_name(err));
-            }
-        }
-
-        linenoiseFree(line);
-    }
-
-    vTaskDelete(NULL);
-}
-
-/* ------------------------------------------------------------------ */
 /*  Public API                                                        */
 /* ------------------------------------------------------------------ */
 
 esp_err_t eng_cli_init(void)
 {
-    /* Configure UART for console I/O */
-    esp_console_config_t console_config = {
-        .max_cmdline_args   = 8,
-        .max_cmdline_length = 256,
-    };
-    ESP_ERROR_CHECK(esp_console_init(&console_config));
+    esp_console_repl_t *repl = NULL;
 
-    /* Configure linenoise */
-    linenoiseSetMultiLine(1);
-    linenoiseSetMaxLineLen(console_config.max_cmdline_length);
-    linenoiseHistorySetMaxLen(20);
-    linenoiseAllowEmpty(false);
+    esp_console_repl_config_t repl_config = ESP_CONSOLE_REPL_CONFIG_DEFAULT();
+    repl_config.prompt           = "eng>";
+    repl_config.max_cmdline_length = 256;
+    repl_config.task_stack_size  = 4096;
 
-    /* Register built-in 'help' command */
+    esp_console_dev_uart_config_t uart_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
+
     esp_console_register_help_command();
-
-    /* Register engineering commands */
     register_provision_cmd();
     register_serial_cmd();
     register_identity_cmd();
     register_reboot_cmd();
     register_reset_cmd();
 
-    /* Start CLI task with generous stack for linenoise + argtable */
-    xTaskCreate(eng_cli_task, "eng_cli", 4096, NULL, 5, NULL);
+    ESP_ERROR_CHECK(esp_console_new_repl_uart(&uart_config, &repl_config, &repl));
+    ESP_ERROR_CHECK(esp_console_start_repl(repl));
 
     ESP_LOGI(TAG, "Engineering CLI initialized");
     return ESP_OK;

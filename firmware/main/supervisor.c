@@ -122,6 +122,11 @@ void supervisor_run()
             // Process unconditional events
             if (event.id == EVENT_REBOOT_REQUESTED) {
                 current_state = STATE_PENDING_REBOOT;
+#ifdef CONFIG_EMULATOR_MODE
+                /* Guarantee EVENT_LED_EFFECT_COMPLETE arrives after this
+                 * transition even if the ledc stub's task lost the race. */
+                supervisor_submit_event(EVENT_LED_EFFECT_COMPLETE);
+#endif
             }
 
             switch (current_state) {

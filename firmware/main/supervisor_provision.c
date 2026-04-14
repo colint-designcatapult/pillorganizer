@@ -7,8 +7,8 @@
 
 #if !CONFIG_EMULATOR_MODE
 #include "wifi_provision.h"
-#include "ledc.h"
 #endif
+#include "ledc.h"
 
 #define TAG "SUPERVISOR_PROVISION"
 
@@ -41,18 +41,12 @@ static void provisioning_failed()
 #endif
     devcfg_reset_identity();
 
-#if !CONFIG_EMULATOR_MODE
-    // Blink red to indicate failure
-    led_task_param_t param = {
+    ledc_set_task(LED_BLINK, (led_task_param_t) {
         .blink = {
             .red = LED_ALL_DOORS,
             .green = 0x00
         }
-    };
-    ledc_set_task(LED_BLINK, param, 3000);
-#else
-    ESP_LOGW(TAG, "Provisioning failed (emulator mode)");
-#endif
+    }, 3000);
 
     ESP_ERROR_CHECK(supervisor_submit_event(EVENT_REBOOT_REQUESTED));
 }
@@ -174,7 +168,6 @@ void supervisor_provision_event(const supervisor_event_t* event)
                 if (claim_has_credentials()) {
                     s_state = STATE_FETCHING_CERT;
 
-#if !CONFIG_EMULATOR_MODE
                     ledc_set_task(LED_PROGRESS, (led_task_param_t) {
                         .progress = {
                             .red = 0x00,
@@ -182,7 +175,6 @@ void supervisor_provision_event(const supervisor_event_t* event)
                             .progress = 3
                         }
                     }, 0);
-#endif
 
                     claim_execute_fetch();
                 } else {
@@ -219,7 +211,6 @@ void supervisor_provision_event(const supervisor_event_t* event)
                 ESP_LOGI(TAG, "Claim certificate fetched successfully. Moving to STATE_FLEET_PROVISIONING.");
                 s_state = STATE_FLEET_PROVISIONING;
 
-#if !CONFIG_EMULATOR_MODE
                 ledc_set_task(LED_PROGRESS, (led_task_param_t) {
                     .progress = {
                         .red = 0x00,
@@ -227,7 +218,6 @@ void supervisor_provision_event(const supervisor_event_t* event)
                         .progress = 4
                     }
                 }, 0);
-#endif
 
                 claim_fleet_provision();
             } else if (event->id == EVENT_CERT_CLAIM_FAILED) {
@@ -241,7 +231,6 @@ void supervisor_provision_event(const supervisor_event_t* event)
         case STATE_FLEET_PROVISIONING:
             if(event->id == EVENT_FLEET_PROVISION_SUCCESS) {
                 ESP_LOGI(TAG, "Fleet provision success!");
-#if !CONFIG_EMULATOR_MODE
                 ledc_set_task(LED_PROGRESS, (led_task_param_t) {
                     .progress = {
                         .red = 0x00,
@@ -249,7 +238,6 @@ void supervisor_provision_event(const supervisor_event_t* event)
                         .progress = 7
                     }
                 }, 3000);
-#endif
 
                 // Reboot when effect is complete
                 ESP_ERROR_CHECK(supervisor_submit_event(EVENT_REBOOT_REQUESTED));

@@ -25,3 +25,4 @@ src/certs/claim_key.pem
 hs_err_pid*
 Screenshot_*
 build/
+build_*/
