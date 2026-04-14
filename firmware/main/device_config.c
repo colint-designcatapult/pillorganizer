@@ -7,6 +7,15 @@
 #include <cJSON.h>
 #include "sdkconfig.h"
 
+#if CONFIG_EMULATOR_MODE
+#include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
+#include "esp_vfs_fat.h"
+#include "driver/sdmmc_host.h"
+#include "sdmmc_cmd.h"
+#endif
+
 #define TAG "devcfg"
 
 static uint8_t s_mac[6];
@@ -20,9 +29,102 @@ static char s_emu_serial[SERIAL_NUMBER_STR_SIZE];
 #define NVS_DEV_STATE_NS "dev_state"
 #define NVS_DEV_SCHEDULE_NS "dev_sched"
 
+/* ------------------------------------------------------------------ */
+/*  Emulator: SD card VFS identity storage                            */
+/* ------------------------------------------------------------------ */
+
+#if CONFIG_EMULATOR_MODE
+
+#define SDCARD_MOUNT_POINT    "/sdcard"
+#define SDCARD_CERT_PATH      SDCARD_MOUNT_POINT "/cert.pem"
+#define SDCARD_KEY_PATH       SDCARD_MOUNT_POINT "/key.pem"
+#define SDCARD_THING_PATH     SDCARD_MOUNT_POINT "/thing.txt"
+
+/* Set to true when the SD card was successfully mounted at init time. */
+static bool s_sdcard_mounted = false;
+static sdmmc_card_t *s_sdcard = NULL;
+
+/* Returns true if the file exists and is non-empty. */
+static bool emu_file_exists(const char *path)
+{
+    FILE *f = fopen(path, "r");
+    if (!f) return false;
+    fseek(f, 0, SEEK_END);
+    long size = ftell(f);
+    fclose(f);
+    return size > 0;
+}
+
+/* Reads entire file into a heap-allocated buffer. Caller must free(). */
+static char *emu_read_file(const char *path)
+{
+    FILE *f = fopen(path, "r");
+    if (!f) return NULL;
+
+    fseek(f, 0, SEEK_END);
+    long size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    if (size <= 0) { fclose(f); return NULL; }
+
+    char *buf = malloc(size + 1);
+    if (!buf) { fclose(f); return NULL; }
+
+    size_t n = fread(buf, 1, size, f);
+    fclose(f);
+    buf[n] = '\0';
+    return buf;
+}
+
+/* Writes a null-terminated string to a file, replacing any existing content. */
+static esp_err_t emu_write_file(const char *path, const char *content)
+{
+    FILE *f = fopen(path, "w");
+    if (!f) {
+        ESP_LOGE(TAG, "Cannot open %s for writing (errno %d)", path, errno);
+        return ESP_FAIL;
+    }
+    size_t len = strlen(content);
+    size_t written = fwrite(content, 1, len, f);
+    fclose(f);
+    return (written == len) ? ESP_OK : ESP_FAIL;
+}
+
+/* Removes a file; falls back to truncation if unlink is unsupported. */
+static void emu_delete_file(const char *path)
+{
+    if (unlink(path) == 0) return;
+    FILE *f = fopen(path, "w");
+    if (f) fclose(f);
+}
+
+#endif /* CONFIG_EMULATOR_MODE */
+
 void devcfg_init()
 {
 #if CONFIG_EMULATOR_MODE
+    /* Optimistically try to mount a virtual SD card.  If no card is attached
+     * (e.g. the emulator was started without one), silently fall back to the
+     * standard NVS-backed identity storage. */
+    sdmmc_host_t host = SDMMC_HOST_DEFAULT();
+    sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
+    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
+        .format_if_mount_failed = false,
+        .max_files = 4,
+        .allocation_unit_size = 0,
+    };
+    esp_err_t sd_err = esp_vfs_fat_sdmmc_mount(SDCARD_MOUNT_POINT, &host,
+                                                &slot_config, &mount_config,
+                                                &s_sdcard);
+    if (sd_err == ESP_OK) {
+        s_sdcard_mounted = true;
+        ESP_LOGI(TAG, "SD card mounted at " SDCARD_MOUNT_POINT " — using SD identity storage");
+    } else {
+        s_sdcard_mounted = false;
+        ESP_LOGI(TAG, "No SD card detected (err %s) — using NVS identity storage",
+                 esp_err_to_name(sd_err));
+    }
+
     /* Copy the Kconfig-provided serial number, truncate to fit. */
     strncpy(s_emu_serial, CONFIG_EMULATOR_SERIAL_NUMBER, SERIAL_NUMBER_STR_SIZE - 1);
     s_emu_serial[SERIAL_NUMBER_STR_SIZE - 1] = '\0';
@@ -70,9 +172,16 @@ void devcfg_get_serial_number_str(char serial_number[SERIAL_NUMBER_STR_SIZE], si
 #endif
 }
 
-// Checks if all three required identity components exist in NVS
+// Checks if all three required identity components exist
 bool devcfg_has_permanent_identity(void)
 {
+#if CONFIG_EMULATOR_MODE
+    if (s_sdcard_mounted) {
+        return emu_file_exists(SDCARD_CERT_PATH) &&
+               emu_file_exists(SDCARD_KEY_PATH)  &&
+               emu_file_exists(SDCARD_THING_PATH);
+    }
+#endif
     nvs_handle_t h;
     if (nvs_open("storage", NVS_READONLY, &h) != ESP_OK) {
         return false;
@@ -95,6 +204,17 @@ bool devcfg_get_thing_name_str(char* thing_name_out, size_t size)
 {
     if (!thing_name_out || size == 0) return false;
 
+#if CONFIG_EMULATOR_MODE
+    if (s_sdcard_mounted) {
+        FILE *f = fopen(SDCARD_THING_PATH, "r");
+        if (!f) return false;
+        size_t n = fread(thing_name_out, 1, size - 1, f);
+        fclose(f);
+        thing_name_out[n] = '\0';
+        if (n > 0 && thing_name_out[n - 1] == '\n') thing_name_out[--n] = '\0';
+        return n > 0;
+    }
+#endif
     nvs_handle_t h;
     if (nvs_open("storage", NVS_READONLY, &h) != ESP_OK) {
         return false;
@@ -106,11 +226,16 @@ bool devcfg_get_thing_name_str(char* thing_name_out, size_t size)
     return (err == ESP_OK);
 }
 
-// Saves the thing name to NVS
+// Saves the thing name
 esp_err_t devcfg_set_thing_name(const char* thing_name)
 {
     if (!thing_name) return ESP_ERR_INVALID_ARG;
 
+#if CONFIG_EMULATOR_MODE
+    if (s_sdcard_mounted) {
+        return emu_write_file(SDCARD_THING_PATH, thing_name);
+    }
+#endif
     nvs_handle_t h;
     esp_err_t err = nvs_open("storage", NVS_READWRITE, &h);
     if (err != ESP_OK) return err;
@@ -124,11 +249,18 @@ esp_err_t devcfg_set_thing_name(const char* thing_name)
     return err;
 }
 
-// Saves both the certificate and private key to NVS
+// Saves both the certificate and private key
 esp_err_t devcfg_set_permanent_cert(const char* cert, const char* privkey)
 {
     if (!cert || !privkey) return ESP_ERR_INVALID_ARG;
 
+#if CONFIG_EMULATOR_MODE
+    if (s_sdcard_mounted) {
+        esp_err_t err = emu_write_file(SDCARD_CERT_PATH, cert);
+        if (err == ESP_OK) err = emu_write_file(SDCARD_KEY_PATH, privkey);
+        return err;
+    }
+#endif
     nvs_handle_t h;
     esp_err_t err = nvs_open("storage", NVS_READWRITE, &h);
     if (err != ESP_OK) return err;
@@ -146,9 +278,17 @@ esp_err_t devcfg_set_permanent_cert(const char* cert, const char* privkey)
     return err;
 }
 
-// Clears all identity credentials from NVS
+// Clears all identity credentials
 void devcfg_reset_identity(void)
 {
+#if CONFIG_EMULATOR_MODE
+    if (s_sdcard_mounted) {
+        emu_delete_file(SDCARD_CERT_PATH);
+        emu_delete_file(SDCARD_KEY_PATH);
+        emu_delete_file(SDCARD_THING_PATH);
+        return;
+    }
+#endif
     nvs_handle_t h;
     if (nvs_open("storage", NVS_READWRITE, &h) == ESP_OK) {
         nvs_erase_key(h, "DEVICE_CERT");
@@ -159,10 +299,15 @@ void devcfg_reset_identity(void)
     }
 }
 
-// Retrieves the permanent certificate from NVS. 
+// Retrieves the permanent certificate.
 // NOTE: The caller must free() the returned pointer when done.
 const char* devcfg_get_permanent_cert(void)
 {
+#if CONFIG_EMULATOR_MODE
+    if (s_sdcard_mounted) {
+        return emu_read_file(SDCARD_CERT_PATH);
+    }
+#endif
     nvs_handle_t h;
     if (nvs_open("storage", NVS_READONLY, &h) != ESP_OK) {
         return NULL;
@@ -190,10 +335,15 @@ const char* devcfg_get_permanent_cert(void)
     return cert;
 }
 
-// Retrieves the permanent private key from NVS. 
+// Retrieves the permanent private key.
 // NOTE: The caller must free() the returned pointer when done.
 const char* devcfg_get_permanent_key(void)
 {
+#if CONFIG_EMULATOR_MODE
+    if (s_sdcard_mounted) {
+        return emu_read_file(SDCARD_KEY_PATH);
+    }
+#endif
     nvs_handle_t h;
     if (nvs_open("storage", NVS_READONLY, &h) != ESP_OK) {
         return NULL;

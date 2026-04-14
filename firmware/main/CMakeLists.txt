@@ -38,6 +38,9 @@ set(MAIN_SRCS
 set(MAIN_REQUIRES
     nvs_flash
     efuse
+    fatfs
+    sdmmc
+    esp_driver_sdmmc
     esp_http_server
     esp_http_client
     esp_event

@@ -107,12 +107,16 @@ void supervisor_run()
         supervisor_operation_init();
     }
 
+#if !CONFIG_EMULATOR_MODE
     // Subscribe main supervisor task to hardware watchdog
     ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
+#endif
 
     // Main event loop
     while (true) {
+#if !CONFIG_EMULATOR_MODE
         esp_task_wdt_reset();
+#endif
         event_received = xQueueReceive(s_supervisor_event_queue, &event, pdMS_TO_TICKS(1000));
 
         if (event_received) {
