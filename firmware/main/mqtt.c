@@ -35,6 +35,11 @@ esp_err_t mqtt_publish(const char* topic, const char* payload, int len, int qos,
     return mqtt_wrapper_publish(topic, payload, len, qos, retain);
 }
 
+esp_err_t mqtt_publish_with_id(const char* topic, const char* payload, int len, int qos, int retain, int* out_msg_id)
+{
+    return mqtt_wrapper_publish_with_id(topic, payload, len, qos, retain, out_msg_id);
+}
+
 static const char* event_type_to_str(device_event_type_t evt)
 {
     switch (evt) {

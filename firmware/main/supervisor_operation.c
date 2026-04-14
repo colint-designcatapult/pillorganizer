@@ -2,6 +2,7 @@
 #include <string.h>
 #include <esp_log.h>
 #include <esp_ota_ops.h>
+#include <esp_app_desc.h>
 #include "mqtt.h"
 #include "device_config.h"
 #include "ledc.h"
@@ -20,7 +21,8 @@ typedef enum {
     STATE_SYNCING_TIME,
     STATE_CONNECTING_MQTT,
     STATE_MQTT_CONNECTED,
-    STATE_OPERATIONAL
+    STATE_OPERATIONAL,
+    STATE_OTA,
 } supervisor_operation_state_t;
 
 static atomic_bool s_init = ATOMIC_VAR_INIT(false);
@@ -995,8 +997,40 @@ void supervisor_operation_event(const supervisor_event_t* event)
         ESP_LOGI(TAG, "New battery state: %s", battery_status_str(s_device_state.battery));
         update_device_state();
     } else if (event->id == EVENT_OTA_JOB_RECEIVED) {
-        ESP_LOGI(TAG, "OTA job received, deferring until device is idle");
-        s_pending_deferred = DEFERRED_OTA;
+        ota_job_t* job = (ota_job_t*)(intptr_t)event->payload;
+        if (!job) {
+            ESP_LOGE(TAG, "EVENT_OTA_JOB_RECEIVED with NULL payload");
+        } else if (s_pending_deferred == DEFERRED_OTA || s_state == STATE_OTA) {
+            /* Already processing an OTA job — discard duplicate */
+            ESP_LOGD(TAG, "OTA job %s ignored — already processing a job", job->job_id);
+            free(job);
+        } else {
+            /* Accept the job into OTA module state */
+            ota_accept_job(job);
+
+            /* If the device is already running the target version, reject immediately */
+            const char* current_version = esp_app_get_description()->version;
+            if (strcmp(job->version, current_version) == 0) {
+                ESP_LOGI(TAG, "OTA job %s targets current version %s — rejecting",
+                         job->job_id, current_version);
+                ota_reject();
+            } else {
+                ESP_LOGI(TAG, "OTA job %s received, deferring execution until device is idle",
+                         job->job_id);
+                s_pending_deferred = DEFERRED_OTA;
+            }
+            free(job);
+        }
+    } else if (event->id == EVENT_OTA_COMPLETE) {
+        s_pending_deferred = DEFERRED_NONE;
+        ota_on_complete();
+        /* State stays STATE_OTA; device will reboot shortly */
+        supervisor_submit_event(EVENT_REBOOT_REQUESTED);
+    } else if (event->id == EVENT_OTA_FAILED) {
+        s_pending_deferred = DEFERRED_NONE;
+        ota_on_failed();
+        s_state = STATE_OPERATIONAL;
+        ESP_LOGI(TAG, "OTA failed — returning to OPERATIONAL state");
     }
 
     // Handle medication reload FSM 
@@ -1065,6 +1099,11 @@ void supervisor_operation_event(const supervisor_event_t* event)
             }
 #endif // CONFIG_FIRMWARE_ENGINEERING
             break;
+        case STATE_OTA:
+            /* OTA download is in progress in the worker task.
+             * Do not process operational events; wait for EVENT_OTA_COMPLETE
+             * or EVENT_OTA_FAILED to arrive from the worker task. */
+            break;
         default:
             ESP_LOGW(TAG, "Unhandled state: %d", s_state);
             break;
@@ -1080,7 +1119,12 @@ void supervisor_operation_event(const supervisor_event_t* event)
         ESP_LOGW(TAG, "Disconnected from MQTT");
         /* Reset all in-flight packet IDs so events are republished on reconnect. */
         event_outbox_reset_inflight();
-        s_state = STATE_CONNECTING_MQTT;
+        /* Don't overwrite STATE_OTA — the download runs over HTTP independently
+         * of MQTT.  The MQTT client will reconnect on its own; when it does,
+         * EVENT_MQTT_CONNECTED will be ignored because s_state != STATE_CONNECTING_MQTT. */
+        if (s_state != STATE_OTA) {
+            s_state = STATE_CONNECTING_MQTT;
+        }
     } else if (event->id == EVENT_MQTT_PUBACK) {
         /* MQTT QoS-1 acknowledgement: mark the entry delivered and drain. */
         int msg_id = (int)(intptr_t)event->payload;
@@ -1092,6 +1136,13 @@ void supervisor_operation_event(const supervisor_event_t* event)
 
 void supervisor_operation_tick()
 {
+    /* While OTA is in progress, skip all operational tick work — the download
+     * runs in the worker task and will post EVENT_OTA_COMPLETE or
+     * EVENT_OTA_FAILED when done. */
+    if (s_state == STATE_OTA) {
+        return;
+    }
+
     // Check reload timeout
     if (s_device_state.reload_state.stage == RELOAD_RELOADING) {
         int64_t dur = app_rtc_calc_duration_ms(s_device_state.reload_state.start_time, 
@@ -1140,6 +1191,7 @@ void supervisor_operation_tick()
         deferred_action_t action = s_pending_deferred;
         s_pending_deferred = DEFERRED_NONE;
         if (action == DEFERRED_OTA) {
+            s_state = STATE_OTA;
             ota_execute();
         }
     }

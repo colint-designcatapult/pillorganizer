@@ -1,8 +1,6 @@
 import * as cdk from 'aws-cdk-lib/core';
 import * as s3 from 'aws-cdk-lib/aws-s3';
-import * as iot from 'aws-cdk-lib/aws-iot';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import * as cr from 'aws-cdk-lib/custom-resources';
 import { Construct } from 'constructs';
 
@@ -10,102 +8,68 @@ import { Construct } from 'constructs';
 export class FirmwareStack extends cdk.Stack {
 
   public readonly firmwareBucketArn: string;
-  public readonly jobTemplateArn: string;
+  public readonly firmwareBucketName: string;
+  public readonly presignRoleArn: string;
 
   constructor(scope: Construct, id: string, props: cdk.StackProps) {
     super(scope, id, props);
 
+    /* The bucket is fully private. AWS IoT Jobs presigns firmware URLs
+     * per-device at job document fetch time using the presignRole below.
+     * The bucket name is fixed so the push-ota.sh --bucket argument is stable
+     * across deployments and doesn't require looking up CDK outputs. */
     const firmwareBucket = new s3.Bucket(this, 'FirmwareBucket', {
+      bucketName: `healthe-firmware-${this.account}-${this.region}`,
       versioned: true,
       encryption: s3.BucketEncryption.S3_MANAGED,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
     });
 
-    // IAM Role: Allows AWS IoT Core to generate pre-signed URLs
+    /* IAM role assumed by AWS IoT Jobs to generate per-device presigned URLs.
+     * The job document uses ${aws:iot:s3-presigned-url:<url>} placeholders;
+     * IoT substitutes a fresh signed URL each time a device fetches the document. */
     const presignRole = new iam.Role(this, 'IotPresignRole', {
       assumedBy: new iam.ServicePrincipal('iot.amazonaws.com'),
-      description: 'Role used by IoT Jobs to presign firmware S3 URLs',
-      // FIX: Use inline policies to prevent CloudFormation race conditions
+      description: 'Allows AWS IoT Jobs to presign firmware S3 URLs per device',
       inlinePolicies: {
         S3ReadAccess: new iam.PolicyDocument({
           statements: [
             new iam.PolicyStatement({
-              actions: [
-                's3:GetObject', 
-                's3:GetBucketLocation' // Often required by IoT Core for validation
-              ],
-              resources: [
-                firmwareBucket.bucketArn,
-                `${firmwareBucket.bucketArn}/*`
-              ],
+              actions: ['s3:GetObject'],
+              resources: [`${firmwareBucket.bucketArn}/*`],
+            }),
+            new iam.PolicyStatement({
+              actions: ['s3:GetBucketLocation'],
+              resources: [firmwareBucket.bucketArn],
             }),
           ],
         }),
       },
     });
 
-    const dummyDeployment = new cr.AwsCustomResource(this, 'DeployDummyFirmware', {
-      // Tie the execution strictly to the CloudFormation "Create" event
+    /* Upload a placeholder on first deploy to confirm the bucket and policy
+     * are operational before any real firmware is pushed. */
+    new cr.AwsCustomResource(this, 'DeployDummyFirmware', {
       onCreate: {
         service: 'S3',
-        action: 'putObject', 
+        action: 'putObject',
         parameters: {
           Bucket: firmwareBucket.bucketName,
-          Key: 'firmware/latest.bin',
-          Body: 'dummy placeholder payload',
+          Key: 'firmware/placeholder.bin',
+          Body: 'placeholder',
         },
-        // A static ID ensures CloudFormation knows this resource hasn't changed on future deploys
         physicalResourceId: cr.PhysicalResourceId.of('dummy-firmware-deployment'),
       },
-      
-      // Automatically generates the IAM policy for the underlying Lambda to write to the bucket
       policy: cr.AwsCustomResourcePolicy.fromSdkCalls({
-        resources: [`${firmwareBucket.bucketArn}/firmware/latest.bin`],
+        resources: [`${firmwareBucket.bucketArn}/firmware/placeholder.bin`],
       }),
     });
 
-    // Job Template: Rollout config AND Base Document
-    const jobTemplate = new iot.CfnJobTemplate(this, 'CabinetOtaTemplate', {
-      jobTemplateId: 'cabinet-custom-ota',
-      description: 'Standard rollout rules for CabiNET. Points to latest.bin in S3.',
-      
-      // 1. DYNAMIC BUCKET URL
-      document: JSON.stringify({
-        url: `\${aws:iot:s3-presigned-url:https://${firmwareBucket.bucketRegionalDomainName}/firmware/latest.bin}`
-      }),
-
-      // 2. THE ROLE FIX (Workaround for CDK casing bug)
-      presignedUrlConfig: {
-        RoleArn: presignRole.roleArn,
-        ExpiresInSec: 3600,
-      } as any,
-      
-      // Workaround for AWS CloudFormation Backend Null-Pointer Bug
-      jobExecutionsRolloutConfig: {
-        MaximumPerMinute: 10, 
-        ExponentialRolloutRate: {
-          BaseRatePerMinute: 10,
-          IncrementFactor: 1.2,
-          RateIncreaseCriteria: {
-            NumberOfNotifiedThings: 1,
-          }
-        }
-      } as any,
-      
-      // Workaround for CDK casing bug
-      abortConfig: {
-        CriteriaList: [{
-          Action: 'CANCEL',
-          FailureType: 'FAILED',
-          MinNumberOfExecutedThings: 10,
-          ThresholdPercentage: 20, 
-        }],
-      } as any,
-    });
-
-    jobTemplate.node.addDependency(dummyDeployment);
-    
-    // Output the role ARN so it's easy to find in the console later
-    new cdk.CfnOutput(this, 'PresignRoleArn', { value: presignRole.roleArn });
+    this.firmwareBucketArn = firmwareBucket.bucketArn;
+    this.firmwareBucketName = firmwareBucket.bucketName;
+    this.presignRoleArn = presignRole.roleArn;
+    new cdk.CfnOutput(this, 'FirmwareBucketArn', { value: this.firmwareBucketArn });
+    new cdk.CfnOutput(this, 'FirmwareBucketName', { value: this.firmwareBucketName });
+    new cdk.CfnOutput(this, 'PresignRoleArn', { value: this.presignRoleArn });
   }
 }
