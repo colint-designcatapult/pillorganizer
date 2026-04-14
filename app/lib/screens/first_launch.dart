@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:app/provider/authentication_provider.dart';
-import 'package:app/screens/auth/launch_page_login.dart';
 import 'package:app/service/amplify_service.dart';
 import 'package:app/utils/takecare_link_util.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +26,9 @@ class _FirstLaunchPageState extends ConsumerState<FirstLaunchPage> {
     const double topPadding = 100;
     const double bottomPadding = 80;
     const double buttonHeight = 48;
+    final localizations = AppLocalizations.of(context)!;
+    final signInOrCreateAccountLabel =
+        '${localizations.signInAction} ${localizations.or} ${localizations.createAccount}';
 
     return Scaffold(
       backgroundColor: Theme.of(context).primaryColor,
@@ -42,7 +44,7 @@ class _FirstLaunchPageState extends ConsumerState<FirstLaunchPage> {
             Padding(
               padding: const EdgeInsets.only(top: topPadding).h,
               child: Text(
-                AppLocalizations.of(context)!.appName,
+                localizations.appName,
                 style: Theme.of(context)
                     .textTheme
                     .titleLarge
@@ -78,16 +80,14 @@ class _FirstLaunchPageState extends ConsumerState<FirstLaunchPage> {
                                       const EdgeInsets.symmetric(horizontal: 20)
                                           .w,
                                   child: Text(
-                                      AppLocalizations.of(context)!
-                                          .welcomeCabinetLong,
+                                      localizations.welcomeCabinetLong,
                                       textAlign: TextAlign.center,
                                       style: Theme.of(context)
                                           .textTheme
                                           .displaySmall
                                           ?.copyWith(color: Colors.white)))),
                           Padding(
-                            padding:
-                                const EdgeInsets.only(top: 32, bottom: 24).h,
+                            padding: const EdgeInsets.only(top: 32).h,
                             child: SizedBox(
                               width: double.infinity,
                               height: buttonHeight.h,
@@ -103,8 +103,7 @@ class _FirstLaunchPageState extends ConsumerState<FirstLaunchPage> {
                                     backgroundColor: Colors.white,
                                   ),
                                   child: Text(
-                                      AppLocalizations.of(context)!
-                                          .createAnAccount,
+                                      signInOrCreateAccountLabel,
                                       style: Theme.of(context)
                                           .textTheme
                                           .displaySmall
@@ -112,27 +111,6 @@ class _FirstLaunchPageState extends ConsumerState<FirstLaunchPage> {
                                               color: Theme.of(context)
                                                   .primaryColor))),
                             ),
-                          ),
-                          SizedBox(
-                            width: double.infinity,
-                            height: buttonHeight.h,
-                            child: OutlinedButton(
-                                onPressed: () {
-                                  _signInWithAmplify();
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8.0).r,
-                                  ),
-                                  side: const BorderSide(
-                                      width: 1.0, color: Colors.white),
-                                ),
-                                child: Text(
-                                    AppLocalizations.of(context)!.signInAction,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .displaySmall
-                                        ?.copyWith(color: Colors.white))),
                           ),
                         ],
                       );
