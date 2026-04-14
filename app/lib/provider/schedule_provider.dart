@@ -22,13 +22,9 @@ class Schedule extends _$Schedule {
       return const DeviceScheduleState();
     }
 
-    try {
-      final dto = await client.getSchedule(device.id);
-      final state = dto.toDomain();
-      return state;
-    } catch (e, st) {
-      rethrow;
-    }
+    final dto = await client.getSchedule(device.id);
+    final state = dto.toDomain();
+    return state;
   }
 
   Future<void> load(String deviceID) async {

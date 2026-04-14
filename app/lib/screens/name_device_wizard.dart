@@ -1,7 +1,5 @@
 import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
-import 'package:app/provider/schedule_provider.dart';
-import 'package:app/service/provisioning_service.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:app/widgets/wizard.dart';
 import 'package:flutter/material.dart';
@@ -77,21 +75,28 @@ class _NameDeviceWizard extends ConsumerState<NameDeviceWizard> {
   }
 
   Future<void> _handleNextStep() async {
-    if (_textController.text.isNotEmpty &&
-        _textController.text != _initialDeviceName) {
+    final hasUpdatedName = _textController.text.isNotEmpty &&
+        _textController.text != _initialDeviceName;
+
+    if (widget.deviceId != null) {
+      setState(() => _isWaitingForDevice = true);
+      await _waitForDeviceInList(widget.deviceId!);
+      await ref
+          .read(activeDeviceProvider.notifier)
+          .selectDeviceByID(widget.deviceId!);
+      if (mounted) {
+        setState(() => _isWaitingForDevice = false);
+      }
+
+      if (hasUpdatedName) {
+        await ref.read(deviceListProvider.notifier).updateDeviceName(
+            widget.deviceId!, _textController.text);
+      }
+    } else if (hasUpdatedName) {
       final activeDevice = ref.read(activeDeviceProvider);
       if (activeDevice != null) {
         await ref.read(deviceListProvider.notifier).updateDeviceName(
             activeDevice.id, _textController.text);
-      }
-    }
-
-    // If we have a provisioned device ID, wait for it to appear in the device list
-    if (widget.deviceId != null) {
-      setState(() => _isWaitingForDevice = true);
-      await _waitForDeviceInList(widget.deviceId!);
-      if (mounted) {
-        setState(() => _isWaitingForDevice = false);
       }
     }
 
