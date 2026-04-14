@@ -27,8 +27,7 @@ class _FirstLaunchPageState extends ConsumerState<FirstLaunchPage> {
     const double bottomPadding = 80;
     const double buttonHeight = 48;
     final localizations = AppLocalizations.of(context)!;
-    final signInOrCreateAccountLabel =
-        '${localizations.signInAction} ${localizations.or} ${localizations.createAccount}';
+    final signInOrCreateAccountLabel = localizations.signInOrCreateAccountAction;
 
     return Scaffold(
       backgroundColor: Theme.of(context).primaryColor,
