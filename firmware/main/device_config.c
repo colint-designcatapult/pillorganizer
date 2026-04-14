@@ -5,18 +5,32 @@
 #include <sys/param.h>
 #include <nvs.h>
 #include <cJSON.h>
+#include "sdkconfig.h"
 
 #define TAG "devcfg"
 
 static uint8_t s_mac[6];
+
+#if CONFIG_EMULATOR_MODE
+/* In emulator mode the serial number is sourced from sdkconfig rather than
+ * the eFuse MAC address (which is all-zeros inside QEMU). */
+static char s_emu_serial[SERIAL_NUMBER_STR_SIZE];
+#endif
 
 #define NVS_DEV_STATE_NS "dev_state"
 #define NVS_DEV_SCHEDULE_NS "dev_sched"
 
 void devcfg_init()
 {
+#if CONFIG_EMULATOR_MODE
+    /* Copy the Kconfig-provided serial number, truncate to fit. */
+    strncpy(s_emu_serial, CONFIG_EMULATOR_SERIAL_NUMBER, SERIAL_NUMBER_STR_SIZE - 1);
+    s_emu_serial[SERIAL_NUMBER_STR_SIZE - 1] = '\0';
+    ESP_LOGI(TAG, "Emulator mode: using configured serial number");
+#else
     // Load MAC address (for serial number)
     esp_efuse_mac_get_default(s_mac);
+#endif
 
     char sn[SERIAL_NUMBER_STR_SIZE];
     devcfg_get_serial_number_str(sn, sizeof(sn));
@@ -35,13 +49,25 @@ void devcfg_init()
 
 void devcfg_get_serial_number(uint8_t sn[SERIAL_NUMBER_SIZE], size_t size)
 {
+#if CONFIG_EMULATOR_MODE
+    /* Provide a synthetic MAC-like blob derived from the emulator serial. */
+    memset(sn, 0, MIN(SERIAL_NUMBER_SIZE, size));
+    size_t copy_len = MIN(SERIAL_NUMBER_SIZE, strlen(s_emu_serial));
+    memcpy(sn, s_emu_serial, MIN(copy_len, size));
+#else
     memcpy(sn, s_mac, MIN(SERIAL_NUMBER_SIZE, size));
+#endif
 }
 
 void devcfg_get_serial_number_str(char serial_number[SERIAL_NUMBER_STR_SIZE], size_t size)
 {
+#if CONFIG_EMULATOR_MODE
+    strncpy(serial_number, s_emu_serial, size - 1);
+    serial_number[size - 1] = '\0';
+#else
     snprintf(serial_number, size, "%02x%02x%02x%02x%02x%02x", s_mac[0], s_mac[1], s_mac[2], s_mac[3], s_mac[4], s_mac[5]);
     serial_number[SERIAL_NUMBER_STR_SIZE - 1] = '\0';
+#endif
 }
 
 // Checks if all three required identity components exist in NVS
