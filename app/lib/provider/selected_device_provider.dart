@@ -34,6 +34,10 @@ class ActiveDevice extends _$ActiveDevice {
   }
 
   Future<void> selectDeviceByID(String id) async {
+    // Refresh device list to pick up newly provisioned devices
+    await ref.read(deviceListProvider.notifier).refresh();
+
+    // Now wait for the refreshed list to load
     final deviceListState = await ref.read(deviceListProvider.future);
     final device = deviceListState.firstWhereOrNull((d) => d.id == id);
     if (device != null) {

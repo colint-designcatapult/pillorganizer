@@ -24,16 +24,7 @@ class _NameDeviceWizard extends ConsumerState<NameDeviceWizard> {
   @override
   void initState() {
     super.initState();
-
-    if (widget.deviceId != null) {
-      // Select device by ID after waiting for device list to load
-      // This is done in a post-frame callback to ensure Riverpod is ready
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(activeDeviceProvider.notifier).selectDeviceByID(widget.deviceId!).catchError((e) {
-          print('[NameDeviceWizard] Error selecting device: $e');
-        });
-      });
-    }
+    // Don't select device here — we'll do it in _handleNextStep before navigating
   }
 
   @override
@@ -79,10 +70,9 @@ class _NameDeviceWizard extends ConsumerState<NameDeviceWizard> {
   }
 
   Future<void> _handleNextStep() async {
-    final activeDevice = ref.read(activeDeviceProvider);
-
     if (_textController.text.isNotEmpty &&
         _textController.text != _initialDeviceName) {
+      final activeDevice = ref.read(activeDeviceProvider);
       if (activeDevice != null) {
         await ref.read(deviceListProvider.notifier).updateDeviceName(
             activeDevice.id, _textController.text);
@@ -90,8 +80,9 @@ class _NameDeviceWizard extends ConsumerState<NameDeviceWizard> {
     }
 
     if (mounted) {
+      // Pass device ID to PostSetupWizard so it can load the schedule directly
       Navigator.of(context, rootNavigator: true)
-          .pushNamedAndRemoveUntil('/post_setup', (route) => false);
+          .pushNamedAndRemoveUntil('/post_setup?id=${widget.deviceId}', (route) => false);
     }
   }
 }

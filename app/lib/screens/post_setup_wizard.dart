@@ -25,13 +25,37 @@ import 'package:validatorless/validatorless.dart';
 import '../widgets/basic_page.dart';
 
 class PostSetupWizard extends ConsumerStatefulWidget {
-  const PostSetupWizard({super.key});
+  final String? deviceId;
+
+  const PostSetupWizard({super.key, this.deviceId});
 
   @override
   ConsumerState<PostSetupWizard> createState() => _PostSetupWizardState();
 }
 
 class _PostSetupWizardState extends ConsumerState<PostSetupWizard> {
+  @override
+  void initState() {
+    super.initState();
+    // If we have a device ID from provisioning, select and load it
+    if (widget.deviceId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _selectAndLoadDevice();
+      });
+    }
+  }
+
+  Future<void> _selectAndLoadDevice() async {
+    if (widget.deviceId == null) return;
+    try {
+      // Select the device by ID (this will refresh the device list)
+      await ref.read(activeDeviceProvider.notifier).selectDeviceByID(widget.deviceId!);
+      // Once selected, the scheduleProvider will auto-load via its watch
+    } catch (e) {
+      print('[PostSetupWizard] Error selecting device: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(3, 1);
