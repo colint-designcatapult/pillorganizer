@@ -272,7 +272,7 @@ class Provision extends _$Provision {
 
       final networks = await repo.scanWifiNetworks(name)
           .timeout(const Duration(seconds: 25));
-      final wifiEntries = networks.map((n) => WifiEntry(name: n)).toList();
+I      var wifiEntries = networks.map((n) => WifiEntry(name: n)).toList();
       developer.log('Session established. Found ${networks.length} networks', name: 'ProvisionNotifier');
 
       // Step 2: Fetch hardware serial number from device
@@ -283,7 +283,28 @@ class Provision extends _$Provision {
       );
       developer.log('Fetching serial number from hardware...', name: 'ProvisionNotifier');
 
-      final serial = await repo.fetchHardwareSerial(name);
+      // Retry serial fetch up to 3 attempts, reconnecting on each failure.
+      // BLE status 133 (GATT_ERROR) can occur when the WiFi scan left the
+      // session in a stale/cached state; a fresh disconnect + rescan fixes it.
+      String serial = '';
+      for (int attempt = 1; attempt <= 3; attempt++) {
+        try {
+          serial = await repo.fetchHardwareSerial(name);
+          break;
+        } catch (e) {
+          if (attempt == 3) rethrow;
+          developer.log(
+            'Serial fetch attempt $attempt failed ($e). Reconnecting...',
+            name: 'ProvisionNotifier',
+          );
+          try { await repo.disconnectDevice(name); } catch (_) {}
+          await Future.delayed(const Duration(seconds: 2));
+          // Re-establish BLE session before next attempt
+          final retryNetworks = await repo.scanWifiNetworks(name)
+              .timeout(const Duration(seconds: 25));
+          wifiEntries = retryNetworks.map((n) => WifiEntry(name: n)).toList();
+        }
+      }
 
       developer.log('Serial number retrieved: $serial', name: 'ProvisionNotifier');
 
