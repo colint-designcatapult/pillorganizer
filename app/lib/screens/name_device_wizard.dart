@@ -7,6 +7,8 @@ import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../service/provisioning_service.dart';
+
 class NameDeviceWizard extends ConsumerStatefulWidget {
   final String? deviceId;
 

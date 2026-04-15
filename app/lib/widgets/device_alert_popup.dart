@@ -195,8 +195,10 @@ class DeviceAlertPopup extends StatelessWidget {
         return AppLocalizations.of(context)!.noticePhoneDisconnectedAction;
       case DeviceError.noSchedule:
         return AppLocalizations.of(context)!.noticeNoScheduleAction;
+      case DeviceError.noTimezone:
+        return AppLocalizations.of(context)!.noticeNoTimezoneAction;
       default:
-        return AppLocalizations.of(context)!.noticeUnknownErrorAction;
+        return null;
     }
   }
 }
