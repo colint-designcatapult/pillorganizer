@@ -365,11 +365,13 @@ class WizardStep extends StatelessWidget {
                       child: Container(
                         height: navFooterHeight,
                         decoration: BoxDecoration(
-                          color: (canGoNext &&
-                                  onNextPressed == null &&
-                                  isLoading)
-                              ? Theme.of(context).primaryColor.withValues(alpha: 0.7)
-                              : Theme.of(context).primaryColor,
+                          color: (canGoNext && onNextPressed == null)
+                              ? Theme.of(context).primaryColor.withValues(alpha: 0.5)
+                              : (!canGoNext && onSkipPressed == null)
+                                  ? Theme.of(context).primaryColor.withValues(alpha: 0.5)
+                                  : (isLoading)
+                                      ? Theme.of(context).primaryColor.withValues(alpha: 0.7)
+                                      : Theme.of(context).primaryColor,
                           borderRadius: BorderRadius.only(
                             topLeft: const Radius.circular(32).r,
                           ),
@@ -377,7 +379,7 @@ class WizardStep extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            if (canGoNext && onNextPressed == null && isLoading)
+                            if (isLoading && canGoNext && onNextPressed == null)
                               SizedBox(
                                 width: 16.w,
                                 height: 16.h,
@@ -395,20 +397,22 @@ class WizardStep extends StatelessWidget {
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodyMedium
-                                    ?.copyWith(color: Colors.white),
+                                    ?.copyWith(
+                                      color: (!canGoNext && onSkipPressed == null) ||
+                                              (canGoNext && onNextPressed == null && !isLoading)
+                                          ? Colors.white.withValues(alpha: 0.6)
+                                          : Colors.white,
+                                    ),
                               ),
-                            if (!(canGoNext &&
-                                onNextPressed == null &&
-                                isLoading))
-                              SizedBox(
-                                width: 8.w,
-                              ),
-                            if (!(canGoNext &&
-                                onNextPressed == null &&
-                                isLoading))
+                            if (!(isLoading && canGoNext && onNextPressed == null))
+                              SizedBox(width: 8.w),
+                            if (!(isLoading && canGoNext && onNextPressed == null))
                               Icon(
                                 Icons.arrow_forward,
-                                color: Colors.white,
+                                color: (!canGoNext && onSkipPressed == null) ||
+                                        (canGoNext && onNextPressed == null && !isLoading)
+                                    ? Colors.white.withValues(alpha: 0.6)
+                                    : Colors.white,
                                 size: 24.h,
                               ),
                           ],

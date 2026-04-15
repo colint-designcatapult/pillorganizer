@@ -53,7 +53,11 @@ typedef enum {
     EVENT_RELOAD_COMPLETE,
     EVENT_BATTERY_CHANGE,
     EVENT_RESET_PENDING_BINS,
-    EVENT_MQTT_PUBACK     /* payload = (intptr_t)(int) client-assigned packet id */
+    EVENT_MQTT_PUBACK,     /* payload = (intptr_t)(int) client-assigned packet id */
+    EVENT_OTA_JOB_RECEIVED,
+    EVENT_OTA_COMPLETE,
+    EVENT_OTA_FAILED,
+    EVENT_DEEP_SLEEP_REQUESTED
 } supervisor_event_id_t;
 
 typedef struct {
@@ -184,3 +188,5 @@ esp_err_t supervisor_get_schedule(device_schedule_t* sched);
 void supervisor_assert_error(device_error_flag_t error);
 void supervisor_clear_error(device_error_flag_t error);
 device_error_flag_t supervisor_get_error_flags();
+
+void supervisor_prep_deep_sleep();

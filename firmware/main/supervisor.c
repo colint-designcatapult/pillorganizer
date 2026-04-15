@@ -18,6 +18,7 @@
 #include "ledc.h"
 #include "nvs_wrapper.h"
 #include "esp_task_wdt.h"
+#include "sleep_state.h"
 
 #define TAG "SUPERVISOR"
 
@@ -107,12 +108,16 @@ void supervisor_run()
         supervisor_operation_init();
     }
 
+#if !CONFIG_EMULATOR_MODE
     // Subscribe main supervisor task to hardware watchdog
     ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
+#endif
 
     // Main event loop
     while (true) {
+#if !CONFIG_EMULATOR_MODE
         esp_task_wdt_reset();
+#endif
         event_received = xQueueReceive(s_supervisor_event_queue, &event, pdMS_TO_TICKS(1000));
 
         if (event_received) {
@@ -122,6 +127,15 @@ void supervisor_run()
             // Process unconditional events
             if (event.id == EVENT_REBOOT_REQUESTED) {
                 current_state = STATE_PENDING_REBOOT;
+#ifdef CONFIG_EMULATOR_MODE
+                /* Guarantee EVENT_LED_EFFECT_COMPLETE arrives after this
+                 * transition even if the ledc stub's task lost the race. */
+                supervisor_submit_event(EVENT_LED_EFFECT_COMPLETE);
+#endif
+            } else if (event.id == EVENT_DEEP_SLEEP_REQUESTED) {
+                // Exit supervisor loop
+                ESP_LOGI(TAG, "Deep sleep requested, exiting supervisor loop");
+                return;
             }
 
             switch (current_state) {
@@ -205,4 +219,9 @@ void supervisor_clear_error(device_error_flag_t error)
 device_error_flag_t supervisor_get_error_flags()
 {
     return (device_error_flag_t)xEventGroupGetBits(s_supervisor_error_group);
+}
+
+void supervisor_prep_deep_sleep()
+{
+    sleep_store_time_base();
 }

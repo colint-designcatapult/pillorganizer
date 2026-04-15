@@ -829,6 +829,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get signInAction => 'Se connecter';
 
   @override
+  String get signInOrCreateAccountAction => 'Se connecter ou créer un compte';
+
+  @override
   String get signInConfirm => 'Connectez-vous';
 
   @override

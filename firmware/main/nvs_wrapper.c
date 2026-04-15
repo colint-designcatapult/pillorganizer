@@ -91,3 +91,24 @@ void nvs_factory_reset() {
     ESP_ERROR_CHECK(nvs_erase_all(h));
     esp_wifi_restore();
 }
+
+esp_err_t nvs_erase_key_entry(const char* key)
+{
+    nvs_handle_t h;
+    esp_err_t err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &h);
+    if (err != ESP_OK) return err;
+
+    err = nvs_erase_key(h, key);
+    if (err == ESP_ERR_NVS_NOT_FOUND) {
+        nvs_close(h);
+        return ESP_OK;  /* already absent — not an error */
+    }
+    if (err != ESP_OK) {
+        nvs_close(h);
+        return err;
+    }
+
+    err = nvs_commit(h);
+    nvs_close(h);
+    return err;
+}

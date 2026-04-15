@@ -8,7 +8,7 @@ import 'package:app/provider/user_registration_provider.dart';
 import 'package:app/screens/modals/add_new_pills_modal.dart';
 import 'package:app/service/error_handler.dart';
 import 'package:app/service/provisioning_service.dart';
-import 'package:app/service/time_service.dart';
+import 'package:app/apiv2/models/schedule.dart';
 import 'package:app/widgets/addNewPill/medication_card_entry.dart';
 import 'package:app/widgets/medication_card.dart';
 import 'package:app/widgets/notifications_settings.dart';
@@ -20,56 +20,62 @@ import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:validatorless/validatorless.dart';
 
 import '../widgets/basic_page.dart';
 
 class PostSetupWizard extends ConsumerStatefulWidget {
-  const PostSetupWizard({super.key});
+  final String? deviceId;
+
+  const PostSetupWizard({super.key, this.deviceId});
 
   @override
   ConsumerState<PostSetupWizard> createState() => _PostSetupWizardState();
 }
 
 class _PostSetupWizardState extends ConsumerState<PostSetupWizard> {
-  bool _timezoneInitialized = false;
+  @override
+  void initState() {
+    super.initState();
+    if (widget.deviceId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _selectAndLoadDevice();
+      });
+    }
+  }
+
+  Future<void> _selectAndLoadDevice() async {
+    if (widget.deviceId == null) return;
+    try {
+      await ref.read(activeDeviceProvider.notifier).selectDeviceByID(widget.deviceId!);
+    } catch (e) {
+      // Device selection failed, proceed anyway
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     ProvisionningProgress provisionningProgress = ProvisionningProgress(3, 1);
 
-    final activeDevice = ref.watch(activeDeviceProvider);
     final schedule = ref.watch(scheduleProvider);
 
-    // Once the schedule finishes loading, initialize timezone to the phone's
-    // default if the device has no timezone set yet.
-    ref.listen(scheduleProvider, (previous, next) {
-      if (_timezoneInitialized) return;
-      if (next.isLoading || !next.hasValue) return;
-      _timezoneInitialized = true;
-
-      final timezone = next.value?.effectiveTimezoneIana;
-      if (timezone == null && activeDevice != null) {
-        FlutterTimezone.getLocalTimezone().then((tz) {
-          ref.read(scheduleProvider.notifier)
-              .updateTimezone(activeDevice.id, normalizeIanaTimezone(tz.identifier));
-        }).catchError((_) {});
-      }
-    });
-
-    bool canGoNext = !schedule.isLoading;
-
+    // Next is enabled once the user has saved a schedule with both AM and PM set.
+    final scheduleState = schedule.asData?.value;
+    final effective = scheduleState?.effectiveSchedule;
+    final simple = effective is SimpleSchedule ? effective : null;
+    bool canGoNext = simple?.amPeriod != null &&
+        simple?.pmPeriod != null &&
+        scheduleState?.effectiveTimezoneIana != null;
+    
     return WizardStep(
         provisionningProgress: provisionningProgress,
         title: AppLocalizations.of(context)!.welcomeCabinet,
         subtext: AppLocalizations.of(context)!.postSetupSubtitle,
         onBackPressed: () => Navigator.of(context)
             .pushNamedAndRemoveUntil('/name_new_device', (route) => false),
-        onNextPressed: () =>
-            Navigator.of(context).push(NotificationStep.route(context)),
-        onSkipPressed: () =>
-            Navigator.of(context).push(NotificationStep.route(context)),
+        onNextPressed: canGoNext ? () =>
+            Navigator.of(context).push(NotificationStep.route(context)) : null,
+        onSkipPressed: null,
         canGoNext: canGoNext,
         child: const Expanded(
             child: Padding(

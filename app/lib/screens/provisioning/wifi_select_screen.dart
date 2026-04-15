@@ -85,7 +85,8 @@ class ProvisionSelectWifiPage extends ConsumerWidget {
                                     .provRescanWifi),
                               ),
                             ])),
-                      if (state is ProvisionStateScanningWifi || (state.wifiNetworks.isEmpty && state is! ProvisionStateSelectWifi))
+                      // Only show WiFi list when we're in SelectWifi state
+                      if (state is! ProvisionStateSelectWifi || state.wifiNetworks.isEmpty)
                         Center(
                             child: Column(children: [
                               const CircularProgressIndicator(),
@@ -113,7 +114,7 @@ class ProvisionSelectWifiPage extends ConsumerWidget {
                             children: [
                               ...state.wifiNetworks
                                   .map(
-                                      (e) => _buildWifiCard(context, e, ref))
+                                      (e) => _buildWifiCard(context, e, ref, state))
                                   .toList(growable: false),
                               TextButton(
                                 onPressed: () {
@@ -138,19 +139,19 @@ class ProvisionSelectWifiPage extends ConsumerWidget {
   }
 
   void _showPasswordDialog(
-      BuildContext context, WifiEntry entry, WidgetRef ref) {
-    final state = ref.read(provisionProvider);
-    if (state is ProvisionStateSelectWifi) {
-      PasswordEntryModal.show(context, entry, ref).then((value) {
-        if (value != null) {
-          ref.read(provisionProvider.notifier).provisionWifi(ssid: entry.name, password: value);
-        }
-      });
+      BuildContext context, WifiEntry entry, WidgetRef ref, ProvisionState state) {
+    // Guard: only proceed if we're in the SelectWifi state
+    if (state is! ProvisionStateSelectWifi) {
+      return;
     }
+    PasswordEntryModal.show(context, entry, ref).then((value) {
+      if (value != null) {
+        ref.read(provisionProvider.notifier).provisionWifi(ssid: entry.name, password: value);
+      }
+    });
   }
 
-  Widget _buildWifiCard(BuildContext context, WifiEntry entry, WidgetRef ref) {
-    final state = ref.watch(provisionProvider);
+  Widget _buildWifiCard(BuildContext context, WifiEntry entry, WidgetRef ref, ProvisionState state) {
     Widget? subtitle;
 
     if (state.ssid == entry.name) {
@@ -177,13 +178,13 @@ class ProvisionSelectWifiPage extends ConsumerWidget {
                 ? SizedBox(
               width: 24.w,
               height: 24.h,
-              child: CircularProgressIndicator(),
+              child: const CircularProgressIndicator(),
             )
                 : Icon(_wifiIcon(entry)),
             title: Text(entry.name),
             subtitle: subtitle,
             onTap: () {
-              _showPasswordDialog(context, entry, ref);
+              _showPasswordDialog(context, entry, ref, state);
             },
           ),
         ));

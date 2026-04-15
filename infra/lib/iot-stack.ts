@@ -57,7 +57,8 @@ export class IotStack extends cdk.Stack {
             Action: ['iot:Publish', 'iot:Receive', 'iot:RetainPublish'],
             Resource: [
               `arn:aws:iot:${this.region}:${this.account}:topic/healthe/things/\${iot:Connection.Thing.ThingName}/*`,
-              `arn:aws:iot:${this.region}:${this.account}:topic/$aws/things/\${iot:Connection.Thing.ThingName}/shadow/*`
+              `arn:aws:iot:${this.region}:${this.account}:topic/$aws/things/\${iot:Connection.Thing.ThingName}/shadow/*`,
+              `arn:aws:iot:${this.region}:${this.account}:topic/$aws/things/\${iot:Connection.Thing.ThingName}/jobs/*`
             ]
           },
           {
@@ -65,7 +66,8 @@ export class IotStack extends cdk.Stack {
             Action: 'iot:Subscribe',
             Resource: [
               `arn:aws:iot:${this.region}:${this.account}:topicfilter/healthe/things/\${iot:Connection.Thing.ThingName}/*`,
-              `arn:aws:iot:${this.region}:${this.account}:topicfilter/$aws/things/\${iot:Connection.Thing.ThingName}/shadow/*`
+              `arn:aws:iot:${this.region}:${this.account}:topicfilter/$aws/things/\${iot:Connection.Thing.ThingName}/shadow/*`,
+              `arn:aws:iot:${this.region}:${this.account}:topicfilter/$aws/things/\${iot:Connection.Thing.ThingName}/jobs/*`
             ]
           }
         ]
@@ -117,6 +119,11 @@ export class IotStack extends cdk.Stack {
     // @relation(INFRA-REQ-15, scope=range_end)
 
     // --- Fleet Provisioning ---
+
+    const v1ThingGroup = new iot.CfnThingGroup(this, 'V1ThingGroup', {
+      thingGroupName: 'v1',
+    });
+    v1ThingGroup.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
 
     // IoT Provisioning
     const iotProvisioner = createGlobalLambda(this, 'IotProvisioningHook',
@@ -185,7 +192,8 @@ export class IotStack extends cdk.Stack {
                 "tenantId": { "Ref": "TenantId" },
                 "deviceId": { "Ref": "DeviceId" },
                 "serialNumber": { "Ref": "SerialNumber" }
-              }
+              },
+              ThingGroups: ["v1", { "Ref": "TenantId" }]
             }
           },
           certificate: {
@@ -207,6 +215,8 @@ export class IotStack extends cdk.Stack {
 
     // Ensure the policy exists before the template tries to reference it
     provisioningTemplate.addDependency(logicalIsolationPolicy);
+    // Ensure the v1 thing group exists before the template is created
+    provisioningTemplate.addDependency(v1ThingGroup);
 
   }
 }

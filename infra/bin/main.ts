@@ -9,6 +9,7 @@ import { ControlPlaneStack } from '../lib/control-plane-stack';
 import { IotStack } from '../lib/iot-stack';
 import { TenantPlatformStack } from '../lib/tenant-platform-stack';
 import { ControlPlaneDataStack } from '../lib/control-plane-data-stack';
+import { FirmwareStack } from '../lib/firmware-stack';
 
 const app = new cdk.App();
 
@@ -59,6 +60,10 @@ const iotStack = new IotStack(app, `HealtheIotStack`, {
   mqttWsDomain: platformStack.mqttWsDomain,
 });
 
+const firmwareStack = new FirmwareStack(app, 'HealtheFirmwareStack', {
+  env: globalEnv,
+});
+
 // Environment-specific Stacks (Data, App)
 // These require an 'env' context (e.g. -c env=staging)
 
@@ -93,6 +98,7 @@ if (envKey) {
     subdomain: envConfig.subdomain || envKey,
     zone: platformStack.zone,
     removalPolicy: removalPolicy,
+    environmentName: envKey,
   });
 
   const appStack = new AppStack(app, `HealtheAppStack-${envKey}`, {

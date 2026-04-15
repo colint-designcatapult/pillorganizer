@@ -232,6 +232,7 @@
 	"setupCompleteSubtitle": "Votre pilulier est prêt à être utilisé.",
 	"shape": "Forme",
 	"signInAction": "Se connecter",
+	"signInOrCreateAccountAction": "Se connecter ou créer un compte",
 	"signInConfirm": "Connectez-vous",
 	"signInPrompt": "Veuillez vous connecter",
 	"signInError": "Un problème est survenu lors de votre connexion: {error}",

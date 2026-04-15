@@ -1,4 +1,8 @@
 #include "wifi_provision.h"
+#include "sdkconfig.h"
+
+#if !CONFIG_EMULATOR_MODE
+
 #include <esp_wifi.h>
 #include <esp_event.h>
 #include <esp_err.h>
@@ -224,3 +228,11 @@ void wifiprov_start_provision()
     ESP_LOGI(TAG, "device_claim_token_set endpoint handler registered successfully"); 
 }
 
+#else /* CONFIG_EMULATOR_MODE — stubs so the linker is happy */
+
+bool wifiprov_is_provisioned(void) { return false; }
+void wifiprov_start_provision(void) { }
+void wifiprov_reset_provision(void) { }
+void wifiprov_deinit(void) { }
+
+#endif /* !CONFIG_EMULATOR_MODE */
