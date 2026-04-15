@@ -27,9 +27,19 @@ class Schedule extends _$Schedule {
     return _fetchScheduleWithRetry(device.id, client, maxAttempts: 3);
   }
 
-  /// Fetches schedule for a device, with graceful handling for newly provisioned devices.
-  /// For newly provisioned devices that don't have a schedule yet, returns an empty
-  /// schedule instead of failing. This lets the user set their first schedule in post_setup.
+  /// Fetches schedule for a device with automatic retry on transient errors.
+  /// 
+  /// Retries silently with exponential backoff for:
+  /// - Auth errors (401/403) - device endpoint might not be ready yet
+  /// - Connection errors - network or server temporarily unavailable
+  /// - NoSuchMethodError - extension loading race condition
+  /// 
+  /// For newly provisioned devices with no schedule set, the API returns
+  /// 200 OK with null currentSchedule/requestedSchedule fields. This is
+  /// handled correctly by the DTO mapper and results in an empty DeviceScheduleState.
+  /// 
+  /// For all other failures after retries exhausted, rethrows the error
+  /// to let the UI show it and give the user a manual retry option.
   Future<DeviceScheduleState> _fetchScheduleWithRetry(
     String deviceId,
     dynamic client, {
@@ -45,37 +55,34 @@ class Schedule extends _$Schedule {
         return state;
       } catch (e, st) {
         final errorStr = e.toString();
-        final isAuthError = errorStr.contains('401') || errorStr.contains('Unauthorized') || errorStr.contains('403');
-        final isNotFound = errorStr.contains('404') || errorStr.contains('Not Found');
+        print('[Schedule] Error on attempt $attempt: $errorStr');
         
-        // For newly provisioned devices, no schedule exists yet → return empty schedule
-        if (isNotFound) {
-          print('[Schedule] Device has no schedule yet (404) - returning empty schedule for setup');
-          return const DeviceScheduleState();
-        }
+        final isAuthError = errorStr.contains('401') || errorStr.contains('Unauthorized') || errorStr.contains('403') || errorStr.contains('Forbidden');
+        final isConnectionError = errorStr.contains('SocketException') || errorStr.contains('TimeoutException') || errorStr.contains('Connection refused');
+        final isNoSuchMethod = e is NoSuchMethodError;
         
-        // For auth errors, retry with exponential backoff (device endpoint might not be ready)
-        if (isAuthError && attempt < maxAttempts) {
+        // For transient errors, retry with exponential backoff
+        if ((isAuthError || isConnectionError || isNoSuchMethod) && attempt < maxAttempts) {
           final delayMs = retryDelayMs * (1 << (attempt - 1)); // 500ms, 1s, 2s
-          print('[Schedule] Auth error on attempt $attempt, retrying in ${delayMs}ms...');
+          print('[Schedule] Transient error, retrying after ${delayMs}ms...');
           await Future.delayed(Duration(milliseconds: delayMs));
           continue;
         }
         
-        // On final attempt with auth error, also return empty schedule
-        // This allows the user to set up the device even if auth is temporarily failing
-        if (isAuthError && attempt == maxAttempts) {
-          print('[Schedule] Auth error after $maxAttempts attempts - returning empty schedule for user setup');
-          return const DeviceScheduleState();
+        // If we've exhausted retries for transient errors, rethrow
+        // Don't silently fall back - let the UI show the error and retry button
+        if ((isAuthError || isConnectionError || isNoSuchMethod) && attempt == maxAttempts) {
+          print('[Schedule] Exhausted retries after $maxAttempts attempts - returning error to UI');
+          rethrow;
         }
         
-        // Other errors - rethrow
-        print('[Schedule] Failed to fetch schedule: $e');
+        // Unexpected error - rethrow immediately
+        print('[Schedule] Unexpected error type, rethrowing: $e');
         rethrow;
       }
     }
     
-    // Should never reach here
+    // Should never reach here due to rethrows above
     return const DeviceScheduleState();
   }
 
