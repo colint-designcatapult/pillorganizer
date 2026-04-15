@@ -74,7 +74,6 @@ static bool RTC_IRAM_ATTR wake_stub_check_pending_bins(void)
         if (bin->status == PENDING
             && bin->scheduled_time > 0
             && bin->scheduled_time <= current_unix) {
-            bin->status  = TAKE_NOW;
             any_updated  = true;
         }
     }

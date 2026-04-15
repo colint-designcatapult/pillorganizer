@@ -563,7 +563,7 @@ static void reload_complete()
 
     // Ensure the new state is persisted
     ESP_ERROR_CHECK(devcfg_flush_state_to_nvs());
-    
+
     ESP_ERROR_CHECK(update_device_state());
 }
 
@@ -635,6 +635,7 @@ static void check_state_transitions()
 
     if (changed) {
         ESP_ERROR_CHECK(update_device_state());
+        ESP_ERROR_CHECK(devcfg_flush_state_to_nvs());
     }
 }
 
