@@ -1574,6 +1574,12 @@ abstract class AppLocalizations {
   /// **'Sign in'**
   String get signInAction;
 
+  /// No description provided for @signInOrCreateAccountAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In or Create Account'**
+  String get signInOrCreateAccountAction;
+
   /// No description provided for @signInConfirm.
   ///
   /// In en, this message translates to:
