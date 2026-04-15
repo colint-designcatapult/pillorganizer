@@ -37,17 +37,60 @@
 #include "ledc.h"
 #include <esp_private/sar_periph_ctrl.h>
 #include "battery.h"
+#include "sleep_state.h"
 #endif
 
 #define TAG "MAIN"
 
 #if !CONFIG_EMULATOR_MODE
 
+/* Check whether any PENDING bin has reached its scheduled time.
+ * Runs in the wake stub (every ~180 ms ULP cycle) before full boot.
+ * If a bin's time has arrived, its status is promoted to TAKE_NOW in the
+ * RTC-cached state so the subsequent full boot picks it up immediately. */
+static bool RTC_IRAM_ATTR wake_stub_check_pending_bins(void)
+{
+    if (g_rtc_state_magic != RTC_STATE_MAGIC) {
+        return false;
+    }
+
+    /* Latch current RTC timer ticks via direct register access (IRAM-safe) */
+    REG_SET_BIT(RTC_CNTL_TIME_UPDATE_REG, RTC_CNTL_TIME_UPDATE);
+    while (!REG_GET_BIT(RTC_CNTL_TIME_UPDATE_REG, RTC_CNTL_TIME_VALID)) {}
+    uint64_t current_ticks = ((uint64_t)REG_READ(RTC_CNTL_TIME1_REG) << 32)
+                             | REG_READ(RTC_CNTL_TIME0_REG);
+
+    if (s_sleep_rtc_ticks_per_sec == 0) {
+        return false;
+    }
+
+    uint64_t elapsed_ticks = current_ticks - s_sleep_entry_rtc_ticks;
+    time_t   elapsed_sec   = (time_t)(elapsed_ticks / s_sleep_rtc_ticks_per_sec);
+    time_t   current_unix  = s_sleep_entry_unix_sec + elapsed_sec;
+
+    bool any_updated = false;
+    for (int i = 0; i < DEVICE_NUM_BINS; i++) {
+        bin_persistent_state_t* bin = &g_rtc_device_state.bins[i];
+        if (bin->status == PENDING
+            && bin->scheduled_time > 0
+            && bin->scheduled_time <= current_unix) {
+            bin->status  = TAKE_NOW;
+            any_updated  = true;
+        }
+    }
+    return any_updated;
+}
+
 void RTC_IRAM_ATTR esp_wake_deep_sleep(void)
-{ 
+{
     if (mux_wake_deep_sleep_early()) {
+        /* Door or battery event — always do a full boot */
+        esp_default_wake_deep_sleep();
+    } else if (wake_stub_check_pending_bins()) {
+        /* A scheduled bin time has arrived — full boot to show LEDs and sync MQTT */
         esp_default_wake_deep_sleep();
     } else {
+        /* Nothing to do — go back to sleep */
         esp_deep_sleep_start();
     }
 }
@@ -308,6 +351,13 @@ void app_main(void)
     } else {
         ESP_LOGI(TAG, "Cold boot");
         app_fresh_boot();
+    }
+
+    // Brownout recovery: RTC memory survives brownout; flush it to NVS before anything
+    // else so the full device state is durable against the next potential power loss.
+    if (reset_reason == ESP_RST_BROWNOUT) {
+        ESP_LOGW(TAG, "Brownout detected — flushing RTC state to NVS");
+        devcfg_flush_state_to_nvs();
     }
 
     // Initialize hardware peripherals
