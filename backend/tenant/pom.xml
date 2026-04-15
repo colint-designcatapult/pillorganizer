@@ -53,6 +53,7 @@
         <dependency>
             <groupId>io.micronaut</groupId>
             <artifactId>micronaut-retry</artifactId>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>io.micronaut.reactor</groupId>

@@ -114,7 +114,7 @@ class UserServiceSpec extends BaseIntegrationSpec {
 
         then:
         retryable != null
-        retryable.includes().contains(DataAccessException)
+        DataAccessException in retryable.includes()
         retryable.attempts() == "5"
         retryable.delay() == "100ms"
         retryable.multiplier() == "2.0"
