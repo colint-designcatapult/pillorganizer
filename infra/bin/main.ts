@@ -98,6 +98,7 @@ if (envKey) {
     subdomain: envConfig.subdomain || envKey,
     zone: platformStack.zone,
     removalPolicy: removalPolicy,
+    environmentName: envKey,
   });
 
   const appStack = new AppStack(app, `HealtheAppStack-${envKey}`, {

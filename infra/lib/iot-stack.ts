@@ -120,6 +120,11 @@ export class IotStack extends cdk.Stack {
 
     // --- Fleet Provisioning ---
 
+    const v1ThingGroup = new iot.CfnThingGroup(this, 'V1ThingGroup', {
+      thingGroupName: 'v1',
+    });
+    v1ThingGroup.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
+
     // IoT Provisioning
     const iotProvisioner = createGlobalLambda(this, 'IotProvisioningHook',
           'jct.pillorganizer.global.function.IotProvisioningHook', props.controlPlaneTable);
@@ -187,7 +192,8 @@ export class IotStack extends cdk.Stack {
                 "tenantId": { "Ref": "TenantId" },
                 "deviceId": { "Ref": "DeviceId" },
                 "serialNumber": { "Ref": "SerialNumber" }
-              }
+              },
+              ThingGroups: ["v1", { "Ref": "TenantId" }]
             }
           },
           certificate: {
@@ -209,6 +215,8 @@ export class IotStack extends cdk.Stack {
 
     // Ensure the policy exists before the template tries to reference it
     provisioningTemplate.addDependency(logicalIsolationPolicy);
+    // Ensure the v1 thing group exists before the template is created
+    provisioningTemplate.addDependency(v1ThingGroup);
 
   }
 }

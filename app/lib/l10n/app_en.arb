@@ -245,6 +245,7 @@
 	"shape": "Shape",
 	"share": "Share",
 	"signInAction": "Sign in",
+	"signInOrCreateAccountAction": "Sign In or Create Account",
 	"signInConfirm": "Sign In",
 	"signInPrompt": "Sign In",
 	"signInError": "There was a problem signing you in: {error}",

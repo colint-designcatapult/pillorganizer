@@ -3,6 +3,7 @@ import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import * as targets from 'aws-cdk-lib/aws-route53-targets';
+import * as iot from 'aws-cdk-lib/aws-iot';
 import { Construct } from 'constructs';
 
 export interface TenantPlatformStackProps extends cdk.StackProps {
@@ -10,6 +11,7 @@ export interface TenantPlatformStackProps extends cdk.StackProps {
   subdomain: string;
   zone: route53.IHostedZone;
   removalPolicy: cdk.RemovalPolicy;
+  environmentName: string;
 }
 
 /**
@@ -18,6 +20,7 @@ export interface TenantPlatformStackProps extends cdk.StackProps {
  */
 export class TenantPlatformStack extends cdk.Stack {
   public readonly domainName: apigwv2.DomainName;
+  public readonly tenantThingGroupName: string;
 
   constructor(scope: Construct, id: string, props: TenantPlatformStackProps) {
     super(scope, id, props);
@@ -41,5 +44,12 @@ export class TenantPlatformStack extends cdk.Stack {
       recordName: props.subdomain,
       target: route53.RecordTarget.fromAlias(new targets.ApiGatewayv2DomainProperties(this.domainName.regionalDomainName, this.domainName.regionalHostedZoneId))
     });
+
+    const tenantThingGroup = new iot.CfnThingGroup(this, 'TenantThingGroup', {
+      thingGroupName: props.environmentName,
+    });
+    tenantThingGroup.applyRemovalPolicy(props.removalPolicy);
+
+    this.tenantThingGroupName = props.environmentName;
   }
 }

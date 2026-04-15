@@ -826,6 +826,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signInAction => 'Sign in';
 
   @override
+  String get signInOrCreateAccountAction => 'Sign In or Create Account';
+
+  @override
   String get signInConfirm => 'Sign In';
 
   @override
