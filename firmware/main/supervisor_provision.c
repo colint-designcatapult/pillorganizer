@@ -5,6 +5,7 @@
 #include <esp_log.h>
 #include "network.h"
 #include "claim.h"
+#include <stdint.h> 
 
 #define TAG "SUPERVISOR_PROVISION"
 
@@ -18,10 +19,24 @@ typedef enum {
     STATE_FAILED
 } supervisor_provision_state_t;
 
+typedef struct {
+    led_task_t task; 
+    led_task_param_t param; 
+    uint32_t duration_ms;
+} provision_ledc_setting_t; 
+
 static supervisor_provision_state_t s_state = STATE_INIT;
+static provision_ledc_setting_t provision_ledc_setting; 
+extern device_state_t s_device_state;
 
 // Number of provision failures this boot
 static uint8_t s_provision_fail_ctr = 0;
+
+static void update_provision_ledc_setting(led_task_t task, led_task_param_t param, uint32_t duration_ms) {
+    provision_ledc_setting.task = task; 
+    provision_ledc_setting.param = param; 
+    provision_ledc_setting.duration_ms = duration_ms; 
+}
 
 static void provisioning_failed()
 {
@@ -37,6 +52,7 @@ static void provisioning_failed()
         }
     };
     ledc_set_task(LED_BLINK, param, 3000);
+    update_provision_ledc_setting(LED_BLINK, param, 3000);
 
     ESP_ERROR_CHECK(supervisor_submit_event(EVENT_REBOOT_REQUESTED));
 }
@@ -57,6 +73,27 @@ bool supervisor_provision_init()
     return true;
 }
 
+static void charging_start_led_indicator(const supervisor_event_t* event) {
+    if (event->id == EVENT_BATTERY_CHANGE) {
+        battery_state_t new_battery_state = battery_get_state(); 
+        // LED effect (blink green for 2s) when charging starts 
+        if (s_device_state.battery.charge_state != BATTERY_CHARGE_CHARGING && new_battery_state.charge_state == BATTERY_CHARGE_CHARGING) {
+            ledc_set_task(LED_BLINK, (led_task_param_t) {
+                .blink = {
+                    .red = 0,
+                    .green = LED_ALL_DOORS
+                }
+            }, 2000);
+        }
+
+        s_device_state.battery = new_battery_state;
+    } else {
+        if (event->id == EVENT_LED_EFFECT_COMPLETE) {
+            ledc_set_task(provision_ledc_setting.task, provision_ledc_setting.param, provision_ledc_setting.duration_ms);
+        }
+    }
+}
+
 void supervisor_provision_event(const supervisor_event_t* event)
 {
     switch (s_state) {
@@ -69,34 +106,40 @@ void supervisor_provision_event(const supervisor_event_t* event)
                     }
                 };
                 ledc_set_task(LED_BREATHE, param, 0);
+                update_provision_ledc_setting(LED_BREATHE, param, 0);
 
                 s_state = STATE_WIFI_PROVISIONING;
             }
             break;
         case STATE_WIFI_PROVISIONING:
             if (event->id == EVENT_PROVISION_WIFI_SUCCESS) {
+                ESP_LOGI(TAG, "EVENT_PROVISION_WIFI_SUCCESS"); 
                 wifiprov_deinit();
                 
                 s_state = STATE_SYNCING_TIME;
                 app_rtc_sync();
 
-                ledc_set_task(LED_PROGRESS, (led_task_param_t) {
-                    .progress = {
+                led_task_param_t param = {
+                   .progress = {
                         .red = 0x00,
                         .green = LED_ALL_DOORS,
                         .progress = 2
-                    }
-                }, 0);
+                   }
+                };
+                ledc_set_task(LED_PROGRESS, param, 0);
+                update_provision_ledc_setting(LED_PROGRESS, param, 0);
 
                 s_provision_fail_ctr = 0;
                 ESP_LOGI(TAG, "Wi-Fi provisioning success");
             } else if (event->id == EVENT_PROVISION_FAILED) {              
-                ledc_set_task(LED_BLINK, (led_task_param_t) {
-                    .blink = {
+                led_task_param_t param = {
+                   .blink = {
                         .red = LED_ALL_DOORS,
                         .green = 0x00
                     }
-                }, 3000);
+                };
+                ledc_set_task(LED_BLINK, param, 3000);
+                update_provision_ledc_setting(LED_BLINK, param, 3000);
 
                 s_provision_fail_ctr++;
                 ESP_LOGW(TAG, "Wi-Fi provision failed, count = %d", s_provision_fail_ctr);
@@ -113,6 +156,8 @@ void supervisor_provision_event(const supervisor_event_t* event)
                     }
                 };
                 ledc_set_task(LED_BREATHE, param, 0);
+                update_provision_ledc_setting(LED_BREATHE, param, 0);
+                
             }
             break;
         case STATE_CONNECTING_NETIF:
@@ -130,13 +175,15 @@ void supervisor_provision_event(const supervisor_event_t* event)
                 if (claim_has_credentials()) {
                     s_state = STATE_FETCHING_CERT;
 
-                    ledc_set_task(LED_PROGRESS, (led_task_param_t) {
+                    led_task_param_t param = {
                         .progress = {
                             .red = 0x00,
                             .green = LED_ALL_DOORS,
                             .progress = 3
                         }
-                    }, 0);
+                    };
+                    ledc_set_task(LED_PROGRESS, param, 0);
+                    update_provision_ledc_setting(LED_PROGRESS, param, 0);
 
                     claim_execute_fetch();
                 } else {
@@ -153,13 +200,14 @@ void supervisor_provision_event(const supervisor_event_t* event)
                 ESP_LOGI(TAG, "Claim certificate fetched successfully. Moving to STATE_FLEET_PROVISIONING.");
                 s_state = STATE_FLEET_PROVISIONING;
 
-                ledc_set_task(LED_PROGRESS, (led_task_param_t) {
+                led_task_param_t param = {
                     .progress = {
                         .red = 0x00,
                         .green = LED_ALL_DOORS,
                         .progress = 4
-                    }
-                }, 0);
+                }};
+                ledc_set_task(LED_PROGRESS, param, 0);
+                update_provision_ledc_setting(LED_PROGRESS, param, 0);
 
                 claim_fleet_provision();
             } else if (event->id == EVENT_CERT_CLAIM_FAILED) {
@@ -173,13 +221,14 @@ void supervisor_provision_event(const supervisor_event_t* event)
         case STATE_FLEET_PROVISIONING:
             if(event->id == EVENT_FLEET_PROVISION_SUCCESS) {
                 ESP_LOGI(TAG, "Fleet provision success!");
-                ledc_set_task(LED_PROGRESS, (led_task_param_t) {
+                led_task_param_t param = {
                     .progress = {
                         .red = 0x00,
                         .green = LED_ALL_DOORS,
                         .progress = 7
-                    }
-                }, 3000);
+                }};
+                ledc_set_task(LED_PROGRESS, param, 3000);
+                update_provision_ledc_setting(LED_PROGRESS, param, 3000);
 
                 // Reboot when effect is complete
                 ESP_ERROR_CHECK(supervisor_submit_event(EVENT_REBOOT_REQUESTED));
@@ -191,9 +240,12 @@ void supervisor_provision_event(const supervisor_event_t* event)
                 network_reconnect();
             }
             break;
+
         default:
             break;
     }
+
+    charging_start_led_indicator(event); 
 }
 
 void supervisor_provision_tick()

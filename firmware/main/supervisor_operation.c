@@ -24,7 +24,7 @@ typedef enum {
 
 static atomic_bool s_init = ATOMIC_VAR_INIT(false);
 static supervisor_operation_state_t s_state;
-static device_state_t s_device_state;
+device_state_t s_device_state;
 
 static int MISSED_THRESHOLD_SEC = 15 * 60;  // 15 minutes (15 * 60 seconds)
 static int RELOAD_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes (5 * 60 seconds * 1000 ms)
@@ -966,7 +966,19 @@ void supervisor_operation_event(const supervisor_event_t* event)
     } else if (event->id == EVENT_LED_EFFECT_COMPLETE) {
         set_led_idle_task();
     } else if (event->id == EVENT_BATTERY_CHANGE) {
-        s_device_state.battery = battery_get_state();
+        battery_state_t new_battery_state = battery_get_state(); 
+
+        // LED effect (blink green for 2s) when charging starts 
+        if (s_device_state.battery.charge_state != BATTERY_CHARGE_CHARGING && new_battery_state.charge_state == BATTERY_CHARGE_CHARGING) {
+            ledc_set_task(LED_BLINK, (led_task_param_t) {
+                        .blink = {
+                            .red = 0,
+                            .green = LED_ALL_DOORS
+                        }
+                    }, 2000);
+        }
+
+        s_device_state.battery = new_battery_state;
         ESP_LOGI(TAG, "New battery state: %s", battery_status_str(s_device_state.battery));
         update_device_state();
     }
