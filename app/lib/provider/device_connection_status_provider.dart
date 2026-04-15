@@ -7,7 +7,7 @@ part 'device_connection_status_provider.g.dart';
 
 bool isOnlineFromLastSeen(DateTime? lastSeen) {
   if (lastSeen == null) return false;
-  return DateTime.now().difference(lastSeen).inMinutes < 5;
+  return DateTime.now().difference(lastSeen).inMinutes < 60;
 }
 
 @riverpod
