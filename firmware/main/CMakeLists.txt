@@ -18,6 +18,7 @@ set(MAIN_SRCS
     supervisor.c
     wifi_provision.c
     device_config.c
+    sleep_state.c
     network.c
     rtc.c
     claim.c

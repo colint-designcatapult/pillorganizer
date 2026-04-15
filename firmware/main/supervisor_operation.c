@@ -10,7 +10,13 @@
 #include "shadow_state.h"
 #include "ota.h"
 #include "event_outbox.h"
+#include "sleep_state.h"
 #include <stdatomic.h>
+#include "sdkconfig.h"
+#if !CONFIG_EMULATOR_MODE
+#include "esp_sleep.h"
+#include "mux_io.h"
+#endif
 
 #define TAG "SUPERVISOR_OPERATION"
 #define DOOR_LEFT_OPEN_TIMEOUT_MS 60000  /* 60 seconds */
@@ -39,6 +45,9 @@ static deferred_action_t s_pending_deferred = DEFERRED_NONE;
 
 static int MISSED_THRESHOLD_SEC = 15 * 60;  // 15 minutes (15 * 60 seconds)
 static int RELOAD_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes (5 * 60 seconds * 1000 ms)
+#define IDLE_SLEEP_TIMEOUT_MS (60 * 1000)  // 1 minute of OPERATIONAL idle before deep sleep
+
+static rtc_relative_time_t s_idle_since = 0;
 
 static const char* get_day_of_week_str(device_schedule_day_of_week_t day) {
     switch(day) {
@@ -417,6 +426,8 @@ static void process_schedule_delta(const device_schedule_t* sched)
 
         ESP_ERROR_CHECK(update_device_state());
         ESP_ERROR_CHECK(shadow_state_report_schedule(&s_device_state.schedule));
+        /* Flush full state to NVS on schedule change — schedule must survive power loss */
+        devcfg_flush_state_to_nvs();
         return;
     }
 
@@ -549,6 +560,10 @@ static void reload_complete()
     
     cleanup_reload();
     ESP_LOGI(TAG, "Reload complete: epoch_week updated to %lld", s_device_state.epoch_week);
+
+    // Ensure the new state is persisted
+    ESP_ERROR_CHECK(devcfg_flush_state_to_nvs());
+
     ESP_ERROR_CHECK(update_device_state());
 }
 
@@ -620,6 +635,7 @@ static void check_state_transitions()
 
     if (changed) {
         ESP_ERROR_CHECK(update_device_state());
+        ESP_ERROR_CHECK(devcfg_flush_state_to_nvs());
     }
 }
 
@@ -635,6 +651,7 @@ static void load_state()
     if ((err = devcfg_get_device_state(&pers)) == ESP_OK) {
         // Copy fields
         s_device_state.modified_at = pers.modified_at;
+        s_device_state.synced_at   = pers.synced_at;
         s_device_state.schedule = pers.schedule;
         s_device_state.epoch_week = pers.epoch_week;
         snprintf(s_device_state.timezone_iana, sizeof(s_device_state.timezone_iana), "%s", pers.timezone_iana);
@@ -894,6 +911,8 @@ static void handle_device_event_bin(device_event_type_t event_type, int bin_id)
             s_device_state.bins[devev.bin_id].status = TAKEN;
             s_device_state.bins[devev.bin_id].event_time = devev.timestamp;
             ESP_ERROR_CHECK(update_device_state());
+            /* Flush full state to NVS on TAKEN — pill confirmed, must survive power loss */
+            devcfg_flush_state_to_nvs();
             break;
 
         default:
@@ -1058,6 +1077,7 @@ void supervisor_operation_event(const supervisor_event_t* event)
             break;
         case STATE_CONNECTING_MQTT:
             if (event->id == EVENT_MQTT_CONNECTED) {
+                app_rtc_get_utc_timestamp_ms(&s_device_state.synced_at);
                 mqtt_publish_device_state(&s_device_state);
                 shadow_state_on_connect();
                 ota_on_connect();
@@ -1086,7 +1106,8 @@ void supervisor_operation_event(const supervisor_event_t* event)
                     }
                 }, 6000);
             } else if (event->id == EVENT_STATE_CHANGED) {
-                print_state(&s_device_state);            
+                print_state(&s_device_state);
+                app_rtc_get_utc_timestamp_ms(&s_device_state.synced_at);
                 ESP_ERROR_CHECK(mqtt_publish_device_state(&s_device_state));
                 /* Drain any newly pushed outbox events. */
                 event_outbox_drain();
@@ -1195,6 +1216,43 @@ void supervisor_operation_tick()
             ota_execute();
         }
     }
+
+    /* Check for overdue sync */
+    rtc_utc_timestamp_ms current_utc_ms;
+    if (app_rtc_get_utc_timestamp_ms(&current_utc_ms) != ESP_OK) {
+        /* Cannot get current time: enter failsafe and skip sync check. */
+        supervisor_assert_error(DEVERR_NO_RTC_TIME);
+    } else {
+        int64_t diff = current_utc_ms - s_device_state.synced_at;
+
+        if (diff >= 300000) {
+            ESP_LOGI(TAG, "Last sync was %lld ms ago, syncing", diff);
+            ESP_ERROR_CHECK(update_device_state());
+        }
+    }
+
+
+
+    /* Deep sleep idle timeout: enter sleep after 1 minute of OPERATIONAL idle. */
+#if !CONFIG_EMULATOR_MODE
+/* Disable deep sleep for now to avoid issues with development and testing; will re-enable in a future PR after testing on hardware.
+    if (s_state == STATE_OPERATIONAL) {
+        if (supervisor_is_device_idle()) {
+            if (s_idle_since == 0) {
+                s_idle_since = app_rtc_get_relative_timestamp();
+            } else {
+                int64_t idle_ms = app_rtc_calc_duration_ms(s_idle_since, app_rtc_get_relative_timestamp());
+                if (idle_ms >= IDLE_SLEEP_TIMEOUT_MS) {
+                    ESP_LOGI(TAG, "Device idle for %lld ms — requesting deep sleep", idle_ms);
+                    ESP_ERROR_CHECK(supervisor_submit_event(EVENT_DEEP_SLEEP_REQUESTED));
+                }
+            }
+        } else {
+            s_idle_since = 0;
+        }
+    }
+        */
+#endif
 }
 
 esp_err_t supervisor_operation_get_schedule(device_schedule_t* sched)

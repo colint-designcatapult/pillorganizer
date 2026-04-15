@@ -29,6 +29,10 @@ static char s_emu_serial[SERIAL_NUMBER_STR_SIZE];
 #define NVS_DEV_STATE_NS "dev_state"
 #define NVS_DEV_SCHEDULE_NS "dev_sched"
 
+/* Two-tier persistence: RTC memory cache (fast) + NVS (durable, explicit flush only) */
+RTC_DATA_ATTR uint32_t                  g_rtc_state_magic  = 0;
+RTC_DATA_ATTR device_persistent_state_t g_rtc_device_state = {0};
+
 /* ------------------------------------------------------------------ */
 /*  Emulator: SD card VFS identity storage                            */
 /* ------------------------------------------------------------------ */
@@ -297,6 +301,9 @@ void devcfg_reset_identity(void)
         nvs_commit(h);
         nvs_close(h);
     }
+
+    g_rtc_state_magic = 0; // Invalidate RTC cache
+    g_rtc_device_state = (device_persistent_state_t){0}; // Clear RTC cache
 }
 
 // Retrieves the permanent certificate.
@@ -518,10 +525,27 @@ typedef struct {
 } bin_pod_state_t;
 
 /**
- * @brief Saves device state to NVS atomically.
+ * @brief Writes device state to RTC memory cache.
+ * NVS is NOT written here. Call devcfg_flush_state_to_nvs() explicitly on flush triggers.
  */
 esp_err_t devcfg_set_device_state(const device_persistent_state_t* state) {
     if (!state) return ESP_ERR_INVALID_ARG;
+    memcpy(&g_rtc_device_state, state, sizeof(device_persistent_state_t));
+    g_rtc_state_magic = RTC_STATE_MAGIC;
+    return ESP_OK;
+}
+
+/**
+ * @brief Flushes the RTC-cached device state to NVS atomically.
+ * Must be called on: bin → TAKEN, schedule changed, or ESP_RST_BROWNOUT at boot.
+ */
+esp_err_t devcfg_flush_state_to_nvs(void) {
+    if (g_rtc_state_magic != RTC_STATE_MAGIC) {
+        ESP_LOGE(TAG, "Cannot flush: RTC state cache is not valid");
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    const device_persistent_state_t* state = &g_rtc_device_state;
 
     nvs_handle_t handle;
     esp_err_t err = nvs_open(NVS_DEV_STATE_NS, NVS_READWRITE, &handle);
@@ -549,13 +573,10 @@ esp_err_t devcfg_set_device_state(const device_persistent_state_t* state) {
 
         char key[16];
         snprintf(key, sizeof(key), "bin_sch_%d", i);
-        
-        // Save the string if it is not empty. 
-        // (Removed the parent schedule ID optimization)
+
         if (state->bins[i].schedule_id[0] != '\0') {
             CHECK_GOTO(nvs_set_str(handle, key, state->bins[i].schedule_id));
         } else {
-            // Manual check: Erase but ignore ESP_ERR_NVS_NOT_FOUND
             esp_err_t erase_err = nvs_erase_key(handle, key);
             if (erase_err != ESP_OK && erase_err != ESP_ERR_NVS_NOT_FOUND) {
                 err = erase_err;
@@ -572,7 +593,7 @@ esp_err_t devcfg_set_device_state(const device_persistent_state_t* state) {
     CHECK_GOTO(nvs_set_u8(handle, "state_valid", 1));
     CHECK_GOTO(nvs_commit(handle));
 
-    ESP_LOGI(TAG, "Device state saved successfully.");
+    ESP_LOGI(TAG, "Device state flushed to NVS.");
 
 cleanup:
     nvs_close(handle);
@@ -580,11 +601,18 @@ cleanup:
 }
 
 /**
- * @brief Loads device state from NVS. 
+ * @brief Loads device state. Prefers RTC memory cache; falls back to NVS on first boot. 
  */
 esp_err_t devcfg_get_device_state(device_persistent_state_t* state) {
     if (!state) return ESP_ERR_INVALID_ARG;
 
+    // Fast path: RTC cache is valid (survives deep sleep and brownout)
+    if (g_rtc_state_magic == RTC_STATE_MAGIC) {
+        memcpy(state, &g_rtc_device_state, sizeof(device_persistent_state_t));
+        return ESP_OK;
+    }
+
+    // Fallback: load from NVS (first boot after full flash or RTC corruption)
     // Zero out buffers so any missing fields naturally default to 0/null
     memset(state, 0, sizeof(device_persistent_state_t));
 

@@ -7,7 +7,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <esp_err.h>
+#include "esp_attr.h"
 #include "rtc.h"
+
+/* Magic word stored alongside the RTC-cached persistent state.
+ * If this value is present in g_rtc_state_magic the cache is valid. */
+#define RTC_STATE_MAGIC 0xD33F5133u
 
 #define SERIAL_NUMBER_SIZE 6
 #define SERIAL_NUMBER_STR_SIZE 13
@@ -136,3 +141,12 @@ typedef struct {
 
 esp_err_t devcfg_get_device_state(device_persistent_state_t* state);
 esp_err_t devcfg_set_device_state(const device_persistent_state_t* state);
+
+/* RTC-retained persistent state cache. Written on every devcfg_set_device_state() call.
+ * Readable from the deep sleep wake stub in main.c. */
+extern RTC_DATA_ATTR uint32_t                  g_rtc_state_magic;
+extern RTC_DATA_ATTR device_persistent_state_t g_rtc_device_state;
+
+/* Flush the current RTC-cached state to NVS.
+ * Call only on: bin → TAKEN, schedule changed, or ESP_RST_BROWNOUT on boot. */
+esp_err_t devcfg_flush_state_to_nvs(void);
