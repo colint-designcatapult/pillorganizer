@@ -1,0 +1,50 @@
+{
+  "debug": {
+    "build": {
+      "compileArgs": [],
+      "ninjaArgs": [],
+      "buildDirectoryPath": "${workspaceFolder}/build_debug",
+      "sdkconfigDefaults": [],
+      "sdkconfigFilePath": "${workspaceFolder}/sdkconfig.defaults"
+    },
+    "env": {},
+    "idfTarget": "esp32",
+    "flashBaudRate": "",
+    "monitorBaudRate": "",
+    "openOCD": {
+      "debugLevel": -1,
+      "configs": [],
+      "args": []
+    },
+    "tasks": {
+      "preBuild": "",
+      "preFlash": "",
+      "postBuild": "",
+      "postFlash": ""
+    }
+  },
+  "emulator_profile": {
+    "build": {
+      "compileArgs": [],
+      "ninjaArgs": [],
+      "buildDirectoryPath": "${workspaceFolder}/build_emu",
+      "sdkconfigDefaults": [],
+      "sdkconfigFilePath": "${workspaceFolder}/sdkconfig.emulator"
+    },
+    "env": {},
+    "idfTarget": "esp32",
+    "flashBaudRate": "",
+    "monitorBaudRate": "",
+    "openOCD": {
+      "debugLevel": -1,
+      "configs": [],
+      "args": []
+    },
+    "tasks": {
+      "preBuild": "",
+      "preFlash": "",
+      "postBuild": "idf.py -B ${workspaceFolder}/build_emu qemu build",
+      "postFlash": ""
+    }
+  }
+}

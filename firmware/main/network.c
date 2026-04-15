@@ -156,4 +156,10 @@ void network_reconnect()
     esp_wifi_connect();
 }
 
+void network_prep_deep_sleep()
+{
+    // For Wi-Fi, we can just stop the driver to cleanly disconnect and free resources
+    ESP_ERROR_CHECK(esp_wifi_stop());
+}
+
 #endif /* CONFIG_EMULATOR_MODE */

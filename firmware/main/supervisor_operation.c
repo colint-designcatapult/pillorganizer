@@ -1217,8 +1217,25 @@ void supervisor_operation_tick()
         }
     }
 
+    /* Check for overdue sync */
+    rtc_utc_timestamp_ms current_utc_ms;
+    if (app_rtc_get_utc_timestamp_ms(&current_utc_ms) != ESP_OK) {
+        /* Cannot get current time: enter failsafe and skip sync check. */
+        supervisor_assert_error(DEVERR_NO_RTC_TIME);
+    } else {
+        int64_t diff = current_utc_ms - s_device_state.synced_at;
+
+        if (diff >= 300000) {
+            ESP_LOGI(TAG, "Last sync was %lld ms ago, syncing", diff);
+            ESP_ERROR_CHECK(update_device_state());
+        }
+    }
+
+
+
     /* Deep sleep idle timeout: enter sleep after 1 minute of OPERATIONAL idle. */
 #if !CONFIG_EMULATOR_MODE
+/* Disable deep sleep for now to avoid issues with development and testing; will re-enable in a future PR after testing on hardware.
     if (s_state == STATE_OPERATIONAL) {
         if (supervisor_is_device_idle()) {
             if (s_idle_since == 0) {
@@ -1226,17 +1243,15 @@ void supervisor_operation_tick()
             } else {
                 int64_t idle_ms = app_rtc_calc_duration_ms(s_idle_since, app_rtc_get_relative_timestamp());
                 if (idle_ms >= IDLE_SLEEP_TIMEOUT_MS) {
-                    ESP_LOGI(TAG, "Device idle for %lld ms — entering deep sleep", idle_ms);
-                    sleep_store_time_base();
-                    mux_prep_deep_sleep();
-                    esp_deep_sleep_start();
-                    /* Does not return */
+                    ESP_LOGI(TAG, "Device idle for %lld ms — requesting deep sleep", idle_ms);
+                    ESP_ERROR_CHECK(supervisor_submit_event(EVENT_DEEP_SLEEP_REQUESTED));
                 }
             }
         } else {
             s_idle_since = 0;
         }
     }
+        */
 #endif
 }
 

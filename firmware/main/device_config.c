@@ -301,6 +301,9 @@ void devcfg_reset_identity(void)
         nvs_commit(h);
         nvs_close(h);
     }
+
+    g_rtc_state_magic = 0; // Invalidate RTC cache
+    g_rtc_device_state = (device_persistent_state_t){0}; // Clear RTC cache
 }
 
 // Retrieves the permanent certificate.

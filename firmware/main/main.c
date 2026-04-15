@@ -20,6 +20,7 @@
 #include "eng_cli.h"
 #include <esp_log.h>
 #include "sdkconfig.h"
+#include <esp_rom_uart.h>
 
 #if !CONFIG_EMULATOR_MODE
 #include "esp_sleep.h"
@@ -91,9 +92,8 @@ void RTC_IRAM_ATTR esp_wake_deep_sleep(void)
     if (mux_wake_deep_sleep_early()) {
         /* Door or battery event — always do a full boot */
         esp_default_wake_deep_sleep();
-    } else if (wake_stub_check_pending_bins()) {
-        /* A scheduled bin time has arrived — full boot to show LEDs and sync MQTT */
-        esp_default_wake_deep_sleep();
+    /*} else if (wake_stub_check_pending_bins()) {
+        esp_default_wake_deep_sleep();*/
     } else {
         /* Nothing to do — go back to sleep */
         esp_deep_sleep_start();
@@ -395,6 +395,14 @@ void app_main(void)
     supervisor_run();
 
 #if !CONFIG_EMULATOR_MODE
+    mux_prep_deep_sleep();
+    network_prep_deep_sleep();
+    supervisor_prep_deep_sleep();
+
+    fflush(stdout); 
+    // Wait for UART0 (typically console) to finish transmitting
+    esp_rom_output_tx_wait_idle(0);
+
     // If we've reached here, there is nothing more to do
     // Go to sleep
     esp_deep_sleep_start();
