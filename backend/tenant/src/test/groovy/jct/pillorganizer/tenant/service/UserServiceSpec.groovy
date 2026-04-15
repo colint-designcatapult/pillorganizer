@@ -1,5 +1,7 @@
 package jct.pillorganizer.tenant.service
 
+import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.retry.annotation.Retryable
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import jct.pillorganizer.tenant.BaseIntegrationSpec
@@ -104,5 +106,17 @@ class UserServiceSpec extends BaseIntegrationSpec {
         then:
         result.isPresent()
         result.get().id == userId
+    }
+
+    def "ensureExists should be retryable for data access conflicts"() {
+        when:
+        Retryable retryable = UserService.getDeclaredMethod("ensureExists", String).getAnnotation(Retryable)
+
+        then:
+        retryable != null
+        DataAccessException in retryable.includes()
+        retryable.attempts() == "5"
+        retryable.delay() == "100ms"
+        retryable.multiplier() == "2.0"
     }
 }

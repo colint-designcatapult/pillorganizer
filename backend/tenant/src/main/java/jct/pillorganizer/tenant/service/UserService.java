@@ -1,5 +1,7 @@
 package jct.pillorganizer.tenant.service;
 
+import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.retry.annotation.Retryable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.core.service.TenantService;
@@ -31,6 +33,12 @@ public class UserService {
         return repository.upsert(userId, name, email);
     }
 
+    @Retryable(
+            includes = DataAccessException.class,
+            attempts = "5",
+            delay = "100ms",
+            multiplier = "2.0"
+    )
     public User ensureExists(String userId) {
         return repository.saveIdempotent(userId);
     }
