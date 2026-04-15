@@ -78,6 +78,12 @@ static bool RTC_IRAM_ATTR wake_stub_check_pending_bins(void)
             any_updated  = true;
         }
     }
+
+    // Wake every 60 seconds for testing
+    if (elapsed_sec >= 60) {
+        return true;
+    }
+
     return any_updated;
 }
 
