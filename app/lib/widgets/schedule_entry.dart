@@ -224,7 +224,40 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
         return const Center(child: CircularProgressIndicator());
       },
       error: (e, s) {
-        return Center(child: Text(e.toString()));
+        // Most 401/404 errors for new devices are handled gracefully by schedule_provider
+        // If we still get an error here, it's unexpected
+        print('[ScheduleEntry] Unexpected error: $e');
+        
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Error loading schedule',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'An unexpected error occurred. Please try again.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    // Trigger a refresh of the schedule
+                    if (targetDevice != null) {
+                      ref.read(scheduleProvider.notifier).load(targetDevice.id);
+                    }
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        );
       },
     );
   }

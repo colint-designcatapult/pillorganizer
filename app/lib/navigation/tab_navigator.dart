@@ -106,6 +106,7 @@ class _TabNavigatorState extends ConsumerState<TabNavigator> {
 
     return Scaffold(
       body: SafeArea(
+        top: false,
         bottom: true,
         child: Stack(
           children: [
