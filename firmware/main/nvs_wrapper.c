@@ -89,6 +89,7 @@ void nvs_factory_reset() {
     nvs_handle_t h;
     ESP_ERROR_CHECK(nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &h));
     ESP_ERROR_CHECK(nvs_erase_all(h));
+    ESP_ERROR_CHECK(nvs_commit(h));
     esp_wifi_restore();
 }
 

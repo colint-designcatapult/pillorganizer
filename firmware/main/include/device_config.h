@@ -27,6 +27,7 @@ void devcfg_get_serial_number_str(char serial_number[SERIAL_NUMBER_STR_SIZE], si
 
 bool devcfg_has_permanent_identity();
 void devcfg_reset_identity();
+void devcfg_reset_state();
 
 bool devcfg_get_thing_name_str(char* thing_name_out, size_t size);
 esp_err_t devcfg_set_thing_name(const char* thing_name);
