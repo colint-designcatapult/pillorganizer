@@ -17,6 +17,7 @@ import java.util.UUID;
 public class DeviceEventService {
 
     static final String EVENT_TAKEN = "TAKEN";
+    static final String EVENT_TAKE_NOW = "TAKE_NOW";
     static final String EVENT_MISSED = "MISSED";
     static final long NOTIFICATION_TTL_SECONDS = 15 * 60L; // 15 minutes
 
@@ -83,6 +84,26 @@ public class DeviceEventService {
         maybeNotify(logicalDevice, message.eventType(), message.binId(), Instant.ofEpochMilli(message.timestamp()));
     }
 
+    private String decodeBin(int binId) {
+        return switch(binId) {
+            case 0 -> "Monday PM";
+            case 1 -> "Monday AM";
+            case 2 -> "Tuesday PM";
+            case 3 -> "Tuesday AM";
+            case 4 -> "Wednesday PM";
+            case 5 -> "Wednesday AM";
+            case 6 -> "Thursday PM";
+            case 7 -> "Thursday AM";
+            case 8 -> "Friday PM";
+            case 9 -> "Friday AM";
+            case 10 -> "Saturday PM";
+            case 11 -> "Saturday AM";
+            case 12 -> "Sunday PM";
+            case 13 -> "Sunday AM";
+            default -> ""; // for all other cases, fall back to nothing (failsafe)
+        };
+    }
+
     private void maybeNotify(LogicalDevice device, String eventType, Integer binId, Instant eventTimestamp) {
         if (device.getTopicArn() == null) {
             return;
@@ -97,17 +118,16 @@ public class DeviceEventService {
 
         String notificationMessage;
         switch (eventType) {
-            case EVENT_TAKEN -> notificationMessage = "It's time to take your medication";
-            case EVENT_MISSED -> notificationMessage = "You missed your medication dose";
-            case "DOOR_OPENED" -> notificationMessage = "(Test) Door " + binId + " opened";
-            case "DOOR_CLOSED" -> notificationMessage = "(Test) Door " + binId + " closed";
+            case EVENT_TAKE_NOW -> notificationMessage = "Time for your scheduled " + decodeBin(binId) + " dose.";
+            case EVENT_TAKEN -> notificationMessage = "Your " + decodeBin(binId) + " dose was recorded as taken.";
+            case EVENT_MISSED -> notificationMessage = "Reminder: no activity detected for the " + decodeBin(binId) + " dose.";
             case null, default -> {
                 return;
             }
         }
 
         try {
-            notificationService.publish(device.getTopicArn(), "Medication Reminder", notificationMessage, ttlSeconds);
+            notificationService.publish(device.getTopicArn(), "CabiNET: " + device.getNickname(), notificationMessage, ttlSeconds);
             log.atInfo().log("Published %s notification for device %s (ttl=%ds)", eventType, device.getId(), ttlSeconds);
         } catch (Exception e) {
             log.atWarning().withCause(e).log("Failed to publish notification for device %s (event=%s)",
