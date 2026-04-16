@@ -393,20 +393,40 @@ class Provision extends _$Provision {
         final claimId = state.claim?.deviceId;
         if (claimId == null) {
           print('[ProvisionNotifier] ERROR: state.claim is null after WiFi provisioning. Cannot poll for device.');
+          state = ProvisionStateTimeout(
+            errorMessage: 'Device claim information lost. Cannot complete provisioning.',
+            deviceName: currentDeviceName,
+            serialNumber: state.serialNumber,
+            claim: state.claim,
+            wifiNetworks: state.wifiNetworks,
+            ssid: ssid,
+          );
         } else {
           print('[ProvisionNotifier] Waiting for device $claimId to complete fleet provisioning and appear in backend...');
-          await _waitForDeviceInBackend(claimId);
+          final deviceFoundInBackend = await _waitForDeviceInBackend(claimId);
+          
+          if (deviceFoundInBackend) {
+            // Device successfully appeared in backend — provisioning is complete
+            state = ProvisionStateComplete(
+              deviceName: currentDeviceName,
+              serialNumber: state.serialNumber,
+              claim: state.claim,
+              wifiNetworks: state.wifiNetworks,
+              ssid: ssid,
+              progress: 1.0,
+            );
+          } else {
+            // Device did not appear in backend within timeout period — provisioning failed
+            state = ProvisionStateTimeout(
+              errorMessage: 'Device did not sync to backend within timeout. Please check your network connection and try again.',
+              deviceName: currentDeviceName,
+              serialNumber: state.serialNumber,
+              claim: state.claim,
+              wifiNetworks: state.wifiNetworks,
+              ssid: ssid,
+            );
+          }
         }
-        
-        // Once device appears (or timeout), mark provisioning as complete
-        state = ProvisionStateComplete(
-          deviceName: currentDeviceName,
-          serialNumber: state.serialNumber,
-          claim: state.claim,
-          wifiNetworks: state.wifiNetworks,
-          ssid: ssid,
-          progress: 1.0,
-        );
       } else if (success == false) {
         // Espressif SDK returned false (e.g. AUTH_FAILED — wrong password).
         // Gracefully handle it: return to SelectWifi with an errorMessage
@@ -473,7 +493,7 @@ class Provision extends _$Provision {
     }
   }
 
-  Future<void> _waitForDeviceInBackend(String deviceId, {int maxRetries = 60}) async {
+  Future<bool> _waitForDeviceInBackend(String deviceId, {int maxRetries = 60}) async {
     print('[ProvisionNotifier] ===== Starting device backend poll =====');
     print('[ProvisionNotifier] Looking for deviceId: $deviceId (max retries: $maxRetries)');
     
@@ -486,7 +506,7 @@ class Provision extends _$Provision {
       final currentState = state;
       if (currentState is! ProvisionStateProvisioningWifi) {
         print('[ProvisionNotifier] Provisioning state changed, stopping poll (current: ${currentState.runtimeType})');
-        return;
+        return false;
       }
 
       try {
@@ -503,7 +523,7 @@ class Provision extends _$Provision {
         final deviceExists = devices.any((d) => d.id == deviceId);
         if (deviceExists) {
           print('[ProvisionNotifier] SUCCESS: Device $deviceId found in backend after ${i + 1} attempts!');
-          return;
+          return true;
         }
         
         print('[ProvisionNotifier] Device $deviceId not found yet (attempt ${i + 1}/$maxRetries)');
@@ -517,6 +537,7 @@ class Provision extends _$Provision {
     }
     
     print('[ProvisionNotifier] TIMEOUT: Device $deviceId did not appear in backend after $maxRetries attempts');
+    return false;
   }
 
   Future<void> cancelProvisioning() async {
