@@ -307,6 +307,14 @@ void devcfg_reset_state()
 {
     g_rtc_state_magic = 0; // Invalidate RTC cache
     g_rtc_device_state = (device_persistent_state_t){0}; // Clear RTC cache
+
+    // Erase persisted state from NVS so it isn't reloaded after reboot
+    nvs_handle_t h;
+    if (nvs_open(NVS_DEV_STATE_NS, NVS_READWRITE, &h) == ESP_OK) {
+        nvs_erase_all(h);
+        nvs_commit(h);
+        nvs_close(h);
+    }
 }
 
 // Retrieves the permanent certificate.

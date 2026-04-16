@@ -53,7 +53,7 @@ static void supervisor_check_factory_reset()
         devcfg_reset_identity();
         devcfg_reset_state();
         nvs_factory_reset();
-        //esp_restart();
+        esp_restart();
     }
 }
 
