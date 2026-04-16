@@ -54,6 +54,10 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
+            
+            // Minification disabled for MVP - R8 causes issues with Espressif BLE provisioning library
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
