@@ -971,7 +971,7 @@ abstract class AppLocalizations {
   /// No description provided for @noticeNeedsReloadSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Your device state needs to be re-synchronized.'**
+  /// **'Medication must be reloaded on your device. Please open a bin to initiate reload.'**
   String get noticeNeedsReloadSubtitle;
 
   /// No description provided for @noticeNeedsReloadAction.
@@ -1763,7 +1763,7 @@ abstract class AppLocalizations {
   /// No description provided for @welcomeCabinetLong.
   ///
   /// In en, this message translates to:
-  /// **'Welcome to CabiNET!\n Choose between the options below:'**
+  /// **'Welcome to CabiNET!'**
   String get welcomeCabinetLong;
 
   /// No description provided for @wirelessConnected.

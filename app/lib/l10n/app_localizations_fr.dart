@@ -493,7 +493,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noticeNeedsReloadSubtitle =>
-      'Your device state needs to be re-synchronized.';
+      'Medication must be reloaded on your device. Please open a bin to initiate reload.';
 
   @override
   String get noticeNeedsReloadAction => 'Reload Now';
@@ -930,8 +930,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get welcomeCabinet => 'Bienvenue à CabiNET!';
 
   @override
-  String get welcomeCabinetLong =>
-      'Bienvenue à CabiNET!\n Choisissez entre les options ci-dessous:';
+  String get welcomeCabinetLong => 'Bienvenue à CabiNET!';
 
   @override
   String get wirelessConnected => 'Connecté sans fil';

@@ -47,10 +47,11 @@ static void supervisor_check_factory_reset()
     }
 
     if (reset_pending == RESET_FLAG_FACTORY) {
+        ESP_LOGI(TAG, "Factory reset requested, erasing NVS and restarting...");
         // Immediately reset the value
         reset_pending = 0;
-
         devcfg_reset_identity();
+        devcfg_reset_state();
         nvs_factory_reset();
         esp_restart();
     }

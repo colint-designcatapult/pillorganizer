@@ -491,7 +491,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noticeNeedsReloadSubtitle =>
-      'Your device state needs to be re-synchronized.';
+      'Medication must be reloaded on your device. Please open a bin to initiate reload.';
 
   @override
   String get noticeNeedsReloadAction => 'Reload Now';
@@ -925,8 +925,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeCabinet => 'Welcome to CabiNET!';
 
   @override
-  String get welcomeCabinetLong =>
-      'Welcome to CabiNET!\n Choose between the options below:';
+  String get welcomeCabinetLong => 'Welcome to CabiNET!';
 
   @override
   String get wirelessConnected => 'Wireless connected';

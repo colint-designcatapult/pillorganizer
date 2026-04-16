@@ -301,9 +301,27 @@ void devcfg_reset_identity(void)
         nvs_commit(h);
         nvs_close(h);
     }
+}
 
+void devcfg_reset_state()
+{
     g_rtc_state_magic = 0; // Invalidate RTC cache
     g_rtc_device_state = (device_persistent_state_t){0}; // Clear RTC cache
+
+    // Erase persisted state from NVS so it isn't reloaded after reboot
+    nvs_handle_t h;
+    if (nvs_open(NVS_DEV_STATE_NS, NVS_READWRITE, &h) == ESP_OK) {
+        nvs_erase_all(h);
+        nvs_commit(h);
+        nvs_close(h);
+    }
+
+    // Also erase the device schedule
+    if (nvs_open(NVS_DEV_SCHEDULE_NS, NVS_READWRITE, &h) == ESP_OK) {
+        nvs_erase_all(h);
+        nvs_commit(h);
+        nvs_close(h);
+    }
 }
 
 // Retrieves the permanent certificate.
@@ -622,6 +640,13 @@ esp_err_t devcfg_get_device_state(device_persistent_state_t* state) {
         // If the namespace doesn't exist at all (e.g., fresh device), return OK 
         // with the safely zeroed state.
         return (err == ESP_ERR_NVS_NOT_FOUND) ? ESP_OK : err;
+    }
+
+    nvs_type_t type;
+    if (nvs_find_key(handle, "state_valid", &type) == ESP_ERR_NVS_NOT_FOUND) {
+        ESP_LOGI(TAG, "No existing device state found in NVS; starting with defaults.");
+        nvs_close(handle);
+        return ESP_OK;
     }
 
     // 1. Transaction Check (STRICT)
