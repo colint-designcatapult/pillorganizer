@@ -495,12 +495,7 @@ class Provision extends _$Provision {
         final devicesAsyncValue = ref.read(deviceListProvider);
         
         final devices = devicesAsyncValue.value ?? [];
-        print('[ProvisionNotifier] Found ${devices.length} devices in backend');
-        
-        // Log all device IDs and serials for debugging
-        for (var d in devices) {
-          print('[ProvisionNotifier]   Device: id=${d.id}, serialNo=${d.serialNo}, nickname=${d.nickname}');
-        }
+        print('[ProvisionNotifier] Found ${devices.length} devices in backend, checking for deviceId=$deviceId');
         
         // Check by ID only - this is the device ID from the current provisioning claim
         // Do NOT use serial number as fallback because the same physical device can have
