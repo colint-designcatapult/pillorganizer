@@ -481,6 +481,14 @@ class Provision extends _$Provision {
     final deviceListNotifier = ref.read(deviceListProvider.notifier);
     
     for (int i = 0; i < maxRetries; i++) {
+      // Check if provisioning is still active before each poll
+      // If it's been cancelled or disposed, stop polling immediately
+      final currentState = state;
+      if (currentState is! ProvisionStateProvisioningWifi) {
+        print('[ProvisionNotifier] Provisioning state changed, stopping poll (current: ${currentState.runtimeType})');
+        return;
+      }
+
       try {
         print('[ProvisionNotifier] Poll attempt ${i + 1}/$maxRetries...');
         await deviceListNotifier.refresh();
