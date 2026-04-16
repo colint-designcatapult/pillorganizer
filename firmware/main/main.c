@@ -293,7 +293,7 @@ static void app_init_gpio(void)
     sar_periph_ctrl_adc_oneshot_power_acquire();
 
     s_button_press_sem = xSemaphoreCreateBinary();
-    xTaskCreate(reset_button_task, "reset_button_task", 2048, NULL, 10, NULL);
+    xTaskCreate(reset_button_task, "reset_button_task", 4096, NULL, 10, NULL);
 
     // Configure the pin to fire ONLY on the press (Falling Edge)
     memset(&io_conf, 0, sizeof(io_conf));
