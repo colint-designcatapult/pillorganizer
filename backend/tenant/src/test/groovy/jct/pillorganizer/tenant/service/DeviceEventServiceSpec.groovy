@@ -175,7 +175,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         deviceEventService.processEvent(message)
 
         then:
-        1 * notificationService.publish(topicArn, "Medication Reminder", "It's time to take your medication", { it > 0 && it <= 900 })
+        1 * notificationService.publish(topicArn, "CabiNET", "Your dose was recorded as taken.", { it > 0 && it <= 900 })
         deviceEventRepository.findAll().findAll {
             it.logicalDevice.id == "des-notif-device-1" && it.eventType == "TAKEN"
         }.size() == 1
@@ -195,6 +195,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
                 .thingName("des-thing-n2")
                 .tenant("des-tenant")
                 .timestamp(recentTimestamp)
+                .binId(8)
                 .eventType("MISSED")
                 .build()
 
@@ -202,7 +203,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         deviceEventService.processEvent(message)
 
         then:
-        1 * notificationService.publish(topicArn, "Medication Reminder", "You missed your medication dose", { it > 0 && it <= 900 })
+        1 * notificationService.publish(topicArn, "CabiNET", "Reminder: no activity detected for the Friday PM dose.", { it > 0 && it <= 900 })
         deviceEventRepository.findAll().findAll {
             it.logicalDevice.id == "des-notif-device-2" && it.eventType == "MISSED"
         }.size() == 1
@@ -243,6 +244,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
                 .thingName("des-thing-n4")
                 .tenant("des-tenant")
                 .timestamp(expiredTimestamp)
+                .binId(5)
                 .eventType("TAKEN")
                 .build()
 
@@ -272,6 +274,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
                 .thingName("des-thing-n5")
                 .tenant("des-tenant")
                 .timestamp(borderTimestamp)
+                .binId(4)
                 .eventType("MISSED")
                 .build()
 
@@ -297,6 +300,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
                 .thingName("des-thing-n6")
                 .tenant("des-tenant")
                 .timestamp(fiveMinutesAgo)
+                .binId(10)
                 .eventType("TAKEN")
                 .build()
 
@@ -304,7 +308,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         deviceEventService.processEvent(message)
 
         then:
-        1 * notificationService.publish(topicArn, "Medication Reminder", "It's time to take your medication",
+        1 * notificationService.publish(topicArn, "CabiNET", "Your Saturday PM dose was recorded as taken.",
                 { long ttl -> ttl >= 595 && ttl <= 605 })
     }
 }

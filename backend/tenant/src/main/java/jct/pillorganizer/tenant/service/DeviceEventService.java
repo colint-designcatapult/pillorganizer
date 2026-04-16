@@ -84,7 +84,10 @@ public class DeviceEventService {
         maybeNotify(logicalDevice, message.eventType(), message.binId(), Instant.ofEpochMilli(message.timestamp()));
     }
 
-    private String decodeBin(int binId) {
+    private String decodeBin(Integer binId) {
+        if (binId == null) {
+            return null;
+        }
         return switch(binId) {
             case 0 -> "Monday PM";
             case 1 -> "Monday AM";
@@ -100,7 +103,7 @@ public class DeviceEventService {
             case 11 -> "Saturday AM";
             case 12 -> "Sunday PM";
             case 13 -> "Sunday AM";
-            default -> ""; // for all other cases, fall back to nothing (failsafe)
+            default -> null;
         };
     }
 
@@ -116,18 +119,20 @@ public class DeviceEventService {
             return;
         }
 
+        String bin = decodeBin(binId);
+
         String notificationMessage;
         switch (eventType) {
-            case EVENT_TAKE_NOW -> notificationMessage = "Time for your scheduled " + decodeBin(binId) + " dose.";
-            case EVENT_TAKEN -> notificationMessage = "Your " + decodeBin(binId) + " dose was recorded as taken.";
-            case EVENT_MISSED -> notificationMessage = "Reminder: no activity detected for the " + decodeBin(binId) + " dose.";
+            case EVENT_TAKE_NOW -> notificationMessage = "Time for your scheduled " + (bin != null ? bin + " " : "") + "dose.";
+            case EVENT_TAKEN -> notificationMessage = "Your " + (bin != null ? bin + " " : "") + "dose was recorded as taken.";
+            case EVENT_MISSED -> notificationMessage = "Reminder: no activity detected for the " + (bin != null ? bin + " " : "")+ "dose.";
             case null, default -> {
                 return;
             }
         }
 
         try {
-            notificationService.publish(device.getTopicArn(), "CabiNET: " + device.getNickname(), notificationMessage, ttlSeconds);
+            notificationService.publish(device.getTopicArn(), "CabiNET" + (device.getNickname() != null ? (": " + device.getNickname()) : ""), notificationMessage, ttlSeconds);
             log.atInfo().log("Published %s notification for device %s (ttl=%ds)", eventType, device.getId(), ttlSeconds);
         } catch (Exception e) {
             log.atWarning().withCause(e).log("Failed to publish notification for device %s (event=%s)",
