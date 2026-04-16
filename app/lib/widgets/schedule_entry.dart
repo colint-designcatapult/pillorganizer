@@ -188,9 +188,16 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
 
     return scheduleAsync.when(
       data: (scheduleData) {
-        // Initialize form fields only once when schedule first loads for this device
+        // Initialize form fields only once when schedule first loads for this device.
+        // Defer the initialization because it calls setState(), which must not run
+        // synchronously during build.
         if (_seededDeviceId != targetDevice.id) {
-          _initializeFromScheduleState(scheduleData, targetDevice.id);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            if (_seededDeviceId != targetDevice.id) {
+              _initializeFromScheduleState(scheduleData, targetDevice.id);
+            }
+          });
         }
 
         final isOnline = widget.ignoreOffline ||
