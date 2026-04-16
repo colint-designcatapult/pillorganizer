@@ -184,7 +184,11 @@ export class AppStack extends cdk.Stack {
     queueProcessor.node.addDependency(flywayFunction)
 
     // Wire up SQS trigger (using currentVersion to support SnapStart)
-    queueProcessor.currentVersion.addEventSource(new lambdaEventSources.SqsEventSource(tenantQueue));
+    queueProcessor.currentVersion.addEventSource(new lambdaEventSources.SqsEventSource(tenantQueue, {
+      batchSize: 10,
+      enabled: true,
+      reportBatchItemFailures: true,
+    }));
 
     // -- API Gateway --
 

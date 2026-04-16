@@ -1,7 +1,9 @@
 package jct.pillorganizer.tenant.service;
 
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.json.JsonMapper;
+import io.micronaut.retry.annotation.Retryable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
@@ -83,7 +85,11 @@ public class QueueProcessorService {
         deviceEventService.processEvent(message);
     }
 
-    @Transactional
+    @Retryable(
+            includes = DataAccessException.class,
+            delay = "100ms",
+            multiplier = "2.0"
+    )
     public void processQueueMessage(BaseMessage message) throws Exception {
         if(message instanceof GrantUserMessage) {
             grantUser((GrantUserMessage) message);
