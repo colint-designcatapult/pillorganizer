@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:app/apiv2/control_plane.dart';
 import 'package:app/provider/control_plane_providers.dart';
+import 'package:app/provider/device_provider.dart';
 import 'package:flutter_esp_ble_prov/flutter_esp_ble_prov.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:dart_mappable/dart_mappable.dart';
@@ -384,16 +385,48 @@ class Provision extends _$Provision {
       developer.log('Provisioning result: $success', name: 'ProvisionNotifier');
 
       if (success == true) {
-        developer.log('WiFi credentials sent and provisioned successfully.', name: 'ProvisionNotifier');
+        print('[ProvisionNotifier] WiFi credentials sent and provisioned successfully.');
         await repo.disconnectDevice(currentDeviceName);
-        state = ProvisionStateComplete(
-          deviceName: currentDeviceName,
-          serialNumber: state.serialNumber,
-          claim: state.claim,
-          wifiNetworks: state.wifiNetworks,
-          ssid: ssid,
-          progress: 1.0,
-        );
+        
+        // Keep showing provisioning state while waiting for device to appear in backend
+        // This reuses the existing "Finishing Setup" progress screen
+        final claimId = state.claim?.deviceId;
+        if (claimId == null) {
+          print('[ProvisionNotifier] ERROR: state.claim is null after WiFi provisioning. Cannot poll for device.');
+          state = ProvisionStateTimeout(
+            errorMessage: 'Device claim information lost. Cannot complete provisioning.',
+            deviceName: currentDeviceName,
+            serialNumber: state.serialNumber,
+            claim: state.claim,
+            wifiNetworks: state.wifiNetworks,
+            ssid: ssid,
+          );
+        } else {
+          print('[ProvisionNotifier] Waiting for device $claimId to complete fleet provisioning and appear in backend...');
+          final deviceFoundInBackend = await _waitForDeviceInBackend(claimId);
+          
+          if (deviceFoundInBackend) {
+            // Device successfully appeared in backend — provisioning is complete
+            state = ProvisionStateComplete(
+              deviceName: currentDeviceName,
+              serialNumber: state.serialNumber,
+              claim: state.claim,
+              wifiNetworks: state.wifiNetworks,
+              ssid: ssid,
+              progress: 1.0,
+            );
+          } else {
+            // Device did not appear in backend within timeout period — provisioning failed
+            state = ProvisionStateTimeout(
+              errorMessage: 'Device did not sync to backend within timeout. Please check your network connection and try again.',
+              deviceName: currentDeviceName,
+              serialNumber: state.serialNumber,
+              claim: state.claim,
+              wifiNetworks: state.wifiNetworks,
+              ssid: ssid,
+            );
+          }
+        }
       } else if (success == false) {
         // Espressif SDK returned false (e.g. AUTH_FAILED — wrong password).
         // Gracefully handle it: return to SelectWifi with an errorMessage
@@ -458,6 +491,53 @@ class Provision extends _$Provision {
         ssid: ssid,
       );
     }
+  }
+
+  Future<bool> _waitForDeviceInBackend(String deviceId, {int maxRetries = 60}) async {
+    print('[ProvisionNotifier] ===== Starting device backend poll =====');
+    print('[ProvisionNotifier] Looking for deviceId: $deviceId (max retries: $maxRetries)');
+    
+    // Use the existing deviceListProvider to poll for the device
+    final deviceListNotifier = ref.read(deviceListProvider.notifier);
+    
+    for (int i = 0; i < maxRetries; i++) {
+      // Check if provisioning is still active before each poll
+      // If it's been cancelled or disposed, stop polling immediately
+      final currentState = state;
+      if (currentState is! ProvisionStateProvisioningWifi) {
+        print('[ProvisionNotifier] Provisioning state changed, stopping poll (current: ${currentState.runtimeType})');
+        return false;
+      }
+
+      try {
+        print('[ProvisionNotifier] Poll attempt ${i + 1}/$maxRetries...');
+        await deviceListNotifier.refresh();
+        final devicesAsyncValue = ref.read(deviceListProvider);
+        
+        final devices = devicesAsyncValue.value ?? [];
+        print('[ProvisionNotifier] Found ${devices.length} devices in backend, checking for deviceId=$deviceId');
+        
+        // Check by ID only - this is the device ID from the current provisioning claim
+        // Do NOT use serial number as fallback because the same physical device can have
+        // multiple device IDs if factory reset/reprovisioned (each gets a new ID)
+        final deviceExists = devices.any((d) => d.id == deviceId);
+        if (deviceExists) {
+          print('[ProvisionNotifier] SUCCESS: Device $deviceId found in backend after ${i + 1} attempts!');
+          return true;
+        }
+        
+        print('[ProvisionNotifier] Device $deviceId not found yet (attempt ${i + 1}/$maxRetries)');
+        
+        await Future.delayed(const Duration(seconds: 1));
+      } catch (e, stack) {
+        print('[ProvisionNotifier] ERROR polling (attempt ${i + 1}/$maxRetries): $e');
+        developer.log('Poll error detail', name: 'ProvisionNotifier', error: e, stackTrace: stack);
+        await Future.delayed(const Duration(seconds: 1));
+      }
+    }
+    
+    print('[ProvisionNotifier] TIMEOUT: Device $deviceId did not appear in backend after $maxRetries attempts');
+    return false;
   }
 
   Future<void> cancelProvisioning() async {

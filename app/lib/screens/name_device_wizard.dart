@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:app/service/provisioning_service.dart';
 
 class NameDeviceWizard extends ConsumerStatefulWidget {
   final String? deviceId;
@@ -75,28 +76,37 @@ class _NameDeviceWizard extends ConsumerState<NameDeviceWizard> {
   }
 
   Future<void> _handleNextStep() async {
+    print('[NameDeviceWizard] _handleNextStep() called');
+    
+    if (!mounted) {
+      print('[NameDeviceWizard] Widget not mounted, aborting');
+      return;
+    }
+    
     final hasUpdatedName = _textController.text.isNotEmpty &&
         _textController.text != _initialDeviceName;
 
     if (widget.deviceId != null) {
+      print('[NameDeviceWizard] deviceId is present: ${widget.deviceId}');
       setState(() => _isWaitingForDevice = true);
-      await _waitForDeviceInList(widget.deviceId!);
-      await ref
-          .read(activeDeviceProvider.notifier)
-          .selectDeviceByID(widget.deviceId!);
+      
+      // Try to update device name if user provided one
+      if (hasUpdatedName) {
+        try {
+          print('[NameDeviceWizard] Attempting to update device name to: ${_textController.text}');
+          await ref.read(deviceListProvider.notifier).updateDeviceName(
+              widget.deviceId!, _textController.text);
+          print('[NameDeviceWizard] Device name updated successfully');
+        } catch (e) {
+          print('[NameDeviceWizard] Could not update device name (will proceed anyway): $e');
+          // Continue anyway - name update is not critical to the flow
+        }
+      } else {
+        print('[NameDeviceWizard] No name change, skipping update');
+      }
+      
       if (mounted) {
         setState(() => _isWaitingForDevice = false);
-      }
-
-      if (hasUpdatedName) {
-        await ref.read(deviceListProvider.notifier).updateDeviceName(
-            widget.deviceId!, _textController.text);
-      }
-    } else if (hasUpdatedName) {
-      final activeDevice = ref.read(activeDeviceProvider);
-      if (activeDevice != null) {
-        await ref.read(deviceListProvider.notifier).updateDeviceName(
-            activeDevice.id, _textController.text);
       }
     }
 
@@ -104,22 +114,9 @@ class _NameDeviceWizard extends ConsumerState<NameDeviceWizard> {
       final route = widget.deviceId != null
           ? '/post_setup?id=${widget.deviceId}'
           : '/post_setup';
+      print('[NameDeviceWizard] Navigating to: $route');
       Navigator.of(context, rootNavigator: true)
           .pushNamedAndRemoveUntil(route, (route) => false);
-    }
-  }
-
-  Future<void> _waitForDeviceInList(String deviceId, {int maxRetries = 30}) async {
-    for (int i = 0; i < maxRetries; i++) {
-      try {
-        await ref.read(deviceListProvider.notifier).refresh();
-        final devices = ref.read(deviceListProvider).value ?? [];
-        final deviceExists = devices.any((d) => d.id == deviceId);
-        if (deviceExists) return;
-        await Future.delayed(const Duration(seconds: 1));
-      } catch (e) {
-        // Continue trying
-      }
     }
   }
 }

@@ -12,19 +12,13 @@ class Schedule extends _$Schedule {
   @override
   FutureOr<DeviceScheduleState> build() async {
     final device = ref.watch(activeDeviceProvider);
-
-    if (device == null) {
-      return const DeviceScheduleState();
-    }
+    if (device == null) return const DeviceScheduleState();
 
     final client = ref.watch(activeTenantClientProvider);
-    if (client == null) {
-      return const DeviceScheduleState();
-    }
+    if (client == null) return const DeviceScheduleState();
 
     final dto = await client.getSchedule(device.id);
-    final state = dto.toDomain();
-    return state;
+    return dto.toDomain();
   }
 
   Future<void> load(String deviceID) async {
@@ -36,7 +30,6 @@ class Schedule extends _$Schedule {
       return dto.toDomain();
     });
   }
-
 
   Future<void> setScheduleAndTimezone(
       String deviceID, TimeOfDay amTime, TimeOfDay pmTime, String ianaTimezone) async {

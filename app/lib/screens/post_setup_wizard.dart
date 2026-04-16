@@ -34,27 +34,50 @@ class PostSetupWizard extends ConsumerStatefulWidget {
 }
 
 class _PostSetupWizardState extends ConsumerState<PostSetupWizard> {
+  bool _deviceSelected = false;
+
   @override
   void initState() {
     super.initState();
     if (widget.deviceId != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _selectAndLoadDevice();
-      });
+      // Select device immediately in initState, then rebuild
+      Future.microtask(() => _selectAndLoadDevice());
     }
   }
 
   Future<void> _selectAndLoadDevice() async {
     if (widget.deviceId == null) return;
+    if (_deviceSelected) return;
+    
     try {
       await ref.read(activeDeviceProvider.notifier).selectDeviceByID(widget.deviceId!);
+      if (mounted) {
+        setState(() {
+          _deviceSelected = true;
+        });
+      }
     } catch (e) {
-      // Device selection failed, proceed anyway
+      // Device selection failed, log but allow proceeding
+      print('[PostSetup] Device selection failed: $e');
+      if (mounted) {
+        setState(() {
+          _deviceSelected = true;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // If we have a deviceId to select and haven't selected it yet, show loading
+    if (widget.deviceId != null && !_deviceSelected) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     ProvisionningProgress provisionningProgress = ProvisionningProgress(3, 1);
 
     final schedule = ref.watch(scheduleProvider);

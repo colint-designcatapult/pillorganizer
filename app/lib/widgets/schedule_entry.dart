@@ -180,13 +180,6 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
       });
     }
 
-    // Seed form fields when schedule data arrives for the current device
-    ref.listen<AsyncValue<DeviceScheduleState>>(scheduleProvider, (_, next) {
-      if (next.hasValue && next.value != null && targetDevice != null) {
-        _initializeFromScheduleState(next.value!, targetDevice.id);
-      }
-    });
-
     if (targetDevice == null) {
       return const SizedBox.shrink();
     }
@@ -194,7 +187,19 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
     final scheduleAsync = ref.watch(scheduleProvider);
 
     return scheduleAsync.when(
-      data: (_) {
+      data: (scheduleData) {
+        // Initialize form fields only once when schedule first loads for this device.
+        // Defer the initialization because it calls setState(), which must not run
+        // synchronously during build.
+        if (_seededDeviceId != targetDevice.id) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            if (_seededDeviceId != targetDevice.id) {
+              _initializeFromScheduleState(scheduleData, targetDevice.id);
+            }
+          });
+        }
+
         final isOnline = widget.ignoreOffline ||
             connectionStatus == DeviceConnectionStatus.online;
 
@@ -224,7 +229,40 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
         return const Center(child: CircularProgressIndicator());
       },
       error: (e, s) {
-        return Center(child: Text(e.toString()));
+        // Errors from scheduleProvider surface here as AsyncError and are shown
+        // with a fallback message plus a retry action.
+        print('[ScheduleEntry] Schedule load error: $e');
+        
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Error loading schedule',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'An unexpected error occurred. Please try again.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    // Trigger a refresh of the schedule
+                    if (targetDevice != null) {
+                      ref.read(scheduleProvider.notifier).load(targetDevice.id);
+                    }
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        );
       },
     );
   }
