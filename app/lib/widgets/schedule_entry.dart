@@ -222,9 +222,9 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
         return const Center(child: CircularProgressIndicator());
       },
       error: (e, s) {
-        // Most 401/404 errors for new devices are handled gracefully by schedule_provider
-        // If we still get an error here, it's unexpected
-        print('[ScheduleEntry] Unexpected error: $e');
+        // Errors from scheduleProvider surface here as AsyncError and are shown
+        // with a fallback message plus a retry action.
+        print('[ScheduleEntry] Schedule load error: $e');
         
         return Center(
           child: Padding(
