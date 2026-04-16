@@ -135,7 +135,7 @@ class NotificationStep extends StatelessWidget {
         subtext: AppLocalizations.of(context)!.remindersSubtitle,
         onBackPressed: () => Navigator.of(context).pop(),
         onNextPressed: () =>
-            Navigator.of(context).push(MedicationEntryStep.route(context)),
+            Navigator.of(context).pushNamedAndRemoveUntil("/index", (route) => false),
         canGoNext: true,
         height: 550.h,
         child: Expanded(

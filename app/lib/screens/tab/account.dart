@@ -146,33 +146,34 @@ class AccountScreen extends ConsumerWidget {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             children: [
-                              SquareButton(
-                                color: const Color(0xFF043C4D),
-                                icon: PhosphorIconsFill.envelopeSimple,
-                                label:
-                                    AppLocalizations.of(context)!.changeEmail,
-                                onPressed: () {
-                                  changeEmail();
-                                },
-                              ),
-                              SquareButton(
-                                color: const Color(0xFF043C4D),
-                                icon: PhosphorIconsFill.key,
-                                label: AppLocalizations.of(context)!
-                                    .changePassword,
-                                onPressed: () {
-                                  changePassword();
-                                },
-                              ),
-                              SquareButton(
-                                color: const Color(0xFF043C4D),
-                                icon: PhosphorIconsRegular.translate,
-                                label: AppLocalizations.of(context)!
-                                    .changeLanguage,
-                                onPressed: () {
-                                  changeLanguage();
-                                },
-                              ),
+                              // TODO: Re-enable in future
+                              // SquareButton(
+                              //   color: const Color(0xFF043C4D),
+                              //   icon: PhosphorIconsFill.envelopeSimple,
+                              //   label:
+                              //       AppLocalizations.of(context)!.changeEmail,
+                              //   onPressed: () {
+                              //     changeEmail();
+                              //   },
+                              // ),
+                              // SquareButton(
+                              //   color: const Color(0xFF043C4D),
+                              //   icon: PhosphorIconsFill.key,
+                              //   label: AppLocalizations.of(context)!
+                              //       .changePassword,
+                              //   onPressed: () {
+                              //     changePassword();
+                              //   },
+                              // ),
+                              // SquareButton(
+                              //   color: const Color(0xFF043C4D),
+                              //   icon: PhosphorIconsRegular.translate,
+                              //   label: AppLocalizations.of(context)!
+                              //       .changeLanguage,
+                              //   onPressed: () {
+                              //     changeLanguage();
+                              //   },
+                              // ),
                               SquareButton(
                                 color: const Color(0xFF7A2C2C),
                                 icon: PhosphorIconsFill.power,
