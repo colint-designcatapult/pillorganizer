@@ -180,13 +180,6 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
       });
     }
 
-    // Seed form fields when schedule data arrives for the current device
-    ref.listen<AsyncValue<DeviceScheduleState>>(scheduleProvider, (_, next) {
-      if (next.hasValue && next.value != null && targetDevice != null) {
-        _initializeFromScheduleState(next.value!, targetDevice.id);
-      }
-    });
-
     if (targetDevice == null) {
       return const SizedBox.shrink();
     }
@@ -194,7 +187,12 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
     final scheduleAsync = ref.watch(scheduleProvider);
 
     return scheduleAsync.when(
-      data: (_) {
+      data: (scheduleData) {
+        // Initialize form fields only once when schedule first loads for this device
+        if (_seededDeviceId != targetDevice.id) {
+          _initializeFromScheduleState(scheduleData, targetDevice.id);
+        }
+
         final isOnline = widget.ignoreOffline ||
             connectionStatus == DeviceConnectionStatus.online;
 
