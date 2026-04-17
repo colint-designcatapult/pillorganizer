@@ -387,6 +387,9 @@ static void process_schedule_delta(const device_schedule_t* sched)
         return;
     }
 
+    // Track if transitioning from no schedule to a valid schedule (e.g., on first provision)
+    bool was_unscheduled = (s_device_state.schedule.type == SCHED_NONE);
+
     device_state_t state_copy;
     memcpy(&state_copy, &s_device_state, sizeof(device_state_t));
 
@@ -397,6 +400,12 @@ static void process_schedule_delta(const device_schedule_t* sched)
         
         // Copy updated state from the applied copy 
         memcpy(&s_device_state, &state_copy, sizeof(device_state_t));
+
+        // If transitioning from no schedule to a valid schedule, force reload immediately
+        if (was_unscheduled) {
+            s_device_state.reload_state.stage = RELOAD_NEEDS_RELOAD;
+            ESP_LOGI(TAG, "First schedule applied, forcing reload to verify dispensers");
+        }
 
         // Calculate and store the schedule length
         s_device_state.schedule_length_days = calculate_schedule_length_days(&s_device_state.schedule);
