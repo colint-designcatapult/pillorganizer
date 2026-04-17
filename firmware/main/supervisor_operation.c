@@ -404,7 +404,7 @@ static void process_schedule_delta(const device_schedule_t* sched)
         // If transitioning from no schedule to a valid schedule, force reload immediately
         if (was_unscheduled) {
             s_device_state.reload_state.stage = RELOAD_NEEDS_RELOAD;
-            ESP_LOGI(TAG, "First schedule applied, forcing reload to verify dispensers");
+            ESP_LOGI(TAG, "First schedule applied, forcing reload state.");
         }
 
         // Calculate and store the schedule length
