@@ -749,6 +749,11 @@ static bool should_mark_taken(bin_state_t* bin_state)
         return false;
     }
 
+    if (s_device_state.reload_state.stage != RELOAD_NONE) {
+        ESP_LOGW(TAG, "Skipping mark taken, reload in progress!");
+        return false;
+    }
+
     if (bin_state->status == TAKE_NOW) {
         return true;
     } else if (bin_state->status == MISSED) {
