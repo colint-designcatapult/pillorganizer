@@ -324,6 +324,13 @@ static device_schedule_validation_t apply_schedule(const device_schedule_t* sche
         return SCHED_ERR_TOO_MANY_PERIODS;
     }
 
+
+    // FIX #279
+    // Never apply a schedule immediately if we are coming from an empty schedule
+    // Rationale: device is freshly provisioned, it should be empty. We want to force the user to refill medication
+    bool no_current_sched = state->schedule.type == SCHED_NONE;
+    bool apply_now = !no_current_sched && (sched->take_effect == SCHED_IMMEDIATE || force);
+
     // Copy schedule into new state
     memcpy(&state->schedule, sched, sizeof(device_schedule_t));
 
@@ -345,13 +352,12 @@ static device_schedule_validation_t apply_schedule(const device_schedule_t* sche
         dow_ctr[bs->day_of_week]++;
     }
 
-    if (sched->take_effect == SCHED_IMMEDIATE || force) {
+    if (apply_now) {
         // Ensure we have a valid epoch week to work with
         if (state->epoch_week < 1) {
             ESP_ERROR_CHECK(app_rtc_get_current_epoch_week(&state->epoch_week));
         }
 
-        
         // Now loop through each day of week and assign to state
         for (int i = 0; i < 7; i++) {
             uint8_t periods_in_day = dow_ctr[i];
@@ -387,9 +393,6 @@ static void process_schedule_delta(const device_schedule_t* sched)
         return;
     }
 
-    // Track if transitioning from no schedule to a valid schedule (e.g., on first provision)
-    bool was_unscheduled = (s_device_state.schedule.type == SCHED_NONE);
-
     device_state_t state_copy;
     memcpy(&state_copy, &s_device_state, sizeof(device_state_t));
 
@@ -400,12 +403,6 @@ static void process_schedule_delta(const device_schedule_t* sched)
         
         // Copy updated state from the applied copy 
         memcpy(&s_device_state, &state_copy, sizeof(device_state_t));
-
-        // If transitioning from no schedule to a valid schedule, force reload immediately
-        if (was_unscheduled) {
-            s_device_state.reload_state.stage = RELOAD_NEEDS_RELOAD;
-            ESP_LOGI(TAG, "First schedule applied, forcing reload state.");
-        }
 
         // Calculate and store the schedule length
         s_device_state.schedule_length_days = calculate_schedule_length_days(&s_device_state.schedule);
@@ -752,6 +749,11 @@ static bool should_mark_taken(bin_state_t* bin_state)
         return false;
     }
 
+    if (s_device_state.reload_state.stage != RELOAD_NONE) {
+        ESP_LOGW(TAG, "Skipping mark taken, reload in progress!");
+        return false;
+    }
+
     if (bin_state->status == TAKE_NOW) {
         return true;
     } else if (bin_state->status == MISSED) {
@@ -913,8 +915,10 @@ static void handle_device_event_bin(device_event_type_t event_type, int bin_id)
             handle_door_close(devev.bin_id);
             break;
         case DEVEVT_DOOR_LEFT_OPEN:
-            /* Door was left open too long; update state to trigger drain and persist */
-            ESP_ERROR_CHECK(update_device_state());
+            /* Door was left open too long; reset mux state */
+#if !CONFIG_EMULATOR_MODE
+            mux_force_door_state_reset(devev.bin_id);
+#endif
             break;
         case DEVEVT_TAKEN:
             s_device_state.bins[devev.bin_id].status = TAKEN;

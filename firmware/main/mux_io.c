@@ -365,4 +365,11 @@ static void start_ulp_program(void)
     ESP_ERROR_CHECK(err);
 }
 
+void mux_force_door_state_reset(int door_id) {
+  if (door_id >= 0 && door_id < ADC_NUM_DOOR_CHANNELS) {
+    ch_stats[door_id].initialized = false;
+    ESP_LOGI(TAG, "Forced state reset for door %d", door_id);
+  }
+}
+
 #endif /* !CONFIG_EMULATOR_MODE */
