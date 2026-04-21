@@ -37,12 +37,12 @@ class HomeBody extends ConsumerWidget {
                   padding: EdgeInsets.symmetric(vertical: 24.h),
                   child: Builder(
                     builder: (context) {
-                      final dateStr = AppLocalizations.of(context)!.localeName == 'fr'
+                      final localeName = AppLocalizations.of(context)!.localeName;
+                      final dateStr = localeName == 'fr'
                           ? DateFormat('EEEE, d MMMM', 'fr').format(deviceTime)
                           : DateFormat('EEEE, d MMMM', 'en').format(deviceTime);
-                      
-                      final timeStr = DateFormat('h:mm a').format(deviceTime);
-                      
+
+                      final timeStr = DateFormat.jm(localeName).format(deviceTime);
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
