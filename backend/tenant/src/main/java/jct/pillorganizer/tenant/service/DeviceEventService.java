@@ -68,6 +68,8 @@ public class DeviceEventService {
         event.setBinId(message.binId());
         event.setMetadata(metadata);
         event.setScheduleId(message.scheduleId());
+        event.setEpochWeek(message.epochWeek() == null ? null : Instant.ofEpochSecond(message.epochWeek()));
+        event.setScheduledTime(message.scheduledTime() == null ? null : Instant.ofEpochSecond(message.scheduledTime()));
 
         deviceEventRepository.saveIdempotent(
                 event.getId(),
@@ -76,7 +78,9 @@ public class DeviceEventService {
                 event.getEventType(),
                 event.getBinId(),
                 event.getMetadata(),
-                event.getScheduleId()
+                event.getScheduleId(),
+                event.getEpochWeek(),
+                event.getScheduledTime()
         );
         log.atInfo().log("Processed device event for thing %s (type=%s)",
                 message.thingName(), event.getEventType());

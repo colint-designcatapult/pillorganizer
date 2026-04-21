@@ -14,7 +14,9 @@ public record IotDeviceEventMessage(
         @JsonProperty("event_type") String eventType,
         @Nullable @JsonProperty("bin_id") Integer binId,
         @Nullable Integer flags,
-        @Nullable @JsonProperty("schedule_id") String scheduleId
+        @Nullable @JsonProperty("schedule_id") String scheduleId,
+        @Nullable @JsonProperty("epoch_week") Long epochWeek,
+        @Nullable @JsonProperty("scheduled_time") Long scheduledTime
 ) implements BaseMessage {
     @Override
     public String getType() {
