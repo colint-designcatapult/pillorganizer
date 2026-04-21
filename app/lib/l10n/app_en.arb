@@ -142,6 +142,7 @@
 	"next": "Next",
 	"noDeviceDescription": "This is where you’ll see all the information about your pillbox.\n\nAdd a device now to start!",
 	"noMedicationLeft": "There is no medications left for today, come back tomorrow or update your schedule.",
+	"noMedicationScheduled": "No medication scheduled for today",
 	"noneTakenYet": "None taken yet",
 	"noneScheduled": "None scheduled",
 	"noticeDisconnected": "Device disconnected ?",

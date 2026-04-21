@@ -150,7 +150,7 @@ class TodayMedicationCard extends ConsumerWidget {
           ),
           SizedBox(height: 12.h),
           Text(
-            AppLocalizations.of(context)!.noMedicationLeft,
+            AppLocalizations.of(context)!.noMedicationScheduled,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Colors.grey[600],
             ),
