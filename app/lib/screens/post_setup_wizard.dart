@@ -50,7 +50,7 @@ class _PostSetupWizardState extends ConsumerState<PostSetupWizard> {
     if (_deviceSelected) return;
     
     try {
-      await ref.read(activeDeviceProvider.notifier).selectDeviceByID(widget.deviceId!);
+        ref.read(activeDeviceProvider.notifier).selectDeviceByID(widget.deviceId!);
       if (mounted) {
         setState(() {
           _deviceSelected = true;

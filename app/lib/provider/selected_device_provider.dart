@@ -27,19 +27,22 @@ class ActiveDevice extends _$ActiveDevice {
   }
 
   Future<void> selectDevice(DeviceMetadata metadata) async {
-    state = metadata;
+    // Avoid setting 'state' directly since build() computes it.
+    // Update the saved device ID synchronously to prevent async gap disposal issues.
+    ref.read(_savedDeviceIdProvider.notifier).updateId(metadata.id);
+    
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(lastSelectedKeyName, metadata.id);
-    ref.read(_savedDeviceIdProvider.notifier).updateId(metadata.id);
   }
 
-  Future<void> selectDeviceByID(String id) async {
-    await ref.read(deviceListProvider.notifier).refresh();
-    final deviceListState = await ref.read(deviceListProvider.future);
-    final device = deviceListState.firstWhereOrNull((d) => d.id == id);
-    if (device != null) {
-      await selectDevice(device);
-    }
+  void selectDeviceByID(String id) {
+    // No need to await deviceListProvider. If ID is provided, trust it and update synchronously.
+    // This avoids async gaps which can cause the Riverpod notifier to be disposed by background refreshes.
+    ref.read(_savedDeviceIdProvider.notifier).updateId(id);
+    
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString(lastSelectedKeyName, id);
+    });
   }
 }
 
