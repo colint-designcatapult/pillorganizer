@@ -53,5 +53,5 @@ public interface DeviceEventRepository extends CrudRepository<DeviceEvent, UUID>
         ORDER BY r.scheduled_time DESC
         LIMIT :limit
     """)
-    List<DoseHistoryView> getResolvedHistory(String deviceId, Instant cursorTime);
+    List<DoseHistoryView> getResolvedHistory(String deviceId, Instant cursorTime, int limit);
 }
