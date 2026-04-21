@@ -111,15 +111,7 @@ TodayMedicationStatus todayMedicationStatus(ref) {
     try {
       final timezone = tz.getLocation(timezoneIana);
       final tzDateTime = tz.TZDateTime.from(utcTime, timezone);
-      return DateTime(
-        tzDateTime.year,
-        tzDateTime.month,
-        tzDateTime.day,
-        tzDateTime.hour,
-        tzDateTime.minute,
-        tzDateTime.second,
-        tzDateTime.millisecond,
-      );
+      return tzDateTime;
     } catch (e) {
       print('[TodayMedicationStatus] Failed to lookup timezone $timezoneIana: $e');
       return utcTime.toLocal();
