@@ -210,6 +210,24 @@ class AppLocalizationsFr extends AppLocalizations {
   String get doseRefill => 'Pas remplis';
 
   @override
+  String get doseStatusMissed => 'MISSED';
+
+  @override
+  String get doseStatusPending => 'Pending';
+
+  @override
+  String get doseStatusTaken => 'TAKEN';
+
+  @override
+  String get doseStatusUnknown => 'Unknown';
+
+  @override
+  String get dosesCompleted => 'completed';
+
+  @override
+  String get dosesRemaining => 'remaining';
+
+  @override
   String get edit => 'Modifier';
 
   @override
@@ -459,6 +477,12 @@ class AppLocalizationsFr extends AppLocalizations {
       'Il ne reste plus de médicaments pour aujourd\'hui, revenez demain ou mettez à jour votre horaire.';
 
   @override
+  String get noneTakenYet => 'None taken yet';
+
+  @override
+  String get noneScheduled => 'None scheduled';
+
+  @override
   String get noticeDisconnected => 'Appareil déconnecté?';
 
   @override
@@ -571,6 +595,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get otherDevices => 'Autres appareils';
+
+  @override
+  String get past => 'Past';
 
   @override
   String get password => 'Mot de passe';
@@ -897,6 +924,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get time => 'Heure';
 
   @override
+  String get todayMedicationTitle => 'Today\'s Medication';
+
+  @override
   String get timeSetup => 'Configuration de l\'horaire:';
 
   @override
@@ -912,6 +942,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tuesday => 'Mardi';
+
+  @override
+  String get upcoming => 'Upcoming';
 
   @override
   String get validationWrongCode =>

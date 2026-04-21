@@ -3,6 +3,7 @@ import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/time_provider.dart';
 import 'package:app/widgets/dose_period_area.dart';
 import 'package:app/widgets/pillbox/pill_box.dart';
+import 'package:app/widgets/today_medication_card.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,6 +51,12 @@ class HomeBody extends ConsumerWidget {
               ),
 
               SliverToBoxAdapter(child: Pillbox()),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 24.h),
+                  child: const TodayMedicationCard(),
+                ),
+              ),
             ],
           ),
         ),

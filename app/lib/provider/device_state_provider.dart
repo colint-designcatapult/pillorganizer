@@ -30,7 +30,13 @@ Stream<DeviceState?> deviceState(Ref ref) async* {
     // or when the device changes.
     ref.onDispose(() {
       print('Unsubscribing from $topic');
-      client.unsubscribe(topic);
+      try {
+        if (client.connectionStatus?.state == MqttConnectionState.connected) {
+          client.unsubscribe(topic);
+        }
+      } catch (e) {
+        print('Error unsubscribing from $topic: $e');
+      }
     });
 
     // 5. Yield updates from the MQTT stream
