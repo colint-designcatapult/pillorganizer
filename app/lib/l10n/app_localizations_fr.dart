@@ -930,7 +930,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get time => 'Heure';
 
   @override
-  String get todayMedicationTitle => 'Today\'s Medication';
+  String get todayMedicationTitle => 'Médicaments d\'aujourd\'hui';
 
   @override
   String get timeSetup => 'Configuration de l\'horaire:';
