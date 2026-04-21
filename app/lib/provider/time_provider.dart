@@ -59,19 +59,10 @@ DateTime _convertUtcToDeviceTimezone(DateTime utcTime, String? timezoneIana) {
     // Look up the timezone location from IANA name
     final timezone = tz.getLocation(timezoneIana);
     
-    // Create TZDateTime from UTC DateTime
+    // Create TZDateTime from UTC DateTime and return it directly so the
+    // timezone-aware instant/offset are preserved.
     final tzDateTime = tz.TZDateTime.from(utcTime, timezone);
-    
-    // Return as a regular DateTime in the device's timezone
-    return DateTime(
-      tzDateTime.year,
-      tzDateTime.month,
-      tzDateTime.day,
-      tzDateTime.hour,
-      tzDateTime.minute,
-      tzDateTime.second,
-      tzDateTime.millisecond,
-    );
+    return tzDateTime;
   } catch (e) {
     // If timezone lookup fails, fall back to local time
     print('[deviceCurrentTime] Failed to lookup timezone $timezoneIana: $e');
