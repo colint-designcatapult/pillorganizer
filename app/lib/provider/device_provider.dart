@@ -39,22 +39,22 @@ class DeviceList extends _$DeviceList {
       orElse: () => throw StateError('Device $id not found in list'),
     );
 
-    // Optimistic update — UI reflects the change immediately.
-    final updated = previous
-        .map((d) => d.id == id ? d.copyWith(nickname: newName) : d)
-        .toList();
-    state = AsyncValue.data(updated);
-
     // Persist to backend using the device's own apiBase so this works
     // regardless of which device is currently active.
     try {
       await tenantClientForUrl(device.apiBase)
           .updateDeviceNickname(id, UpdateDeviceSettingsDto(deviceName: newName));
     } catch (e) {
-      // Revert optimistic update so UI stays in sync with server.
       state = AsyncValue.data(previous);
       rethrow;
     }
+
+    // Pessimistic update — UI reflects the change only after persistence.
+    final updated = previous
+        .map((d) => d.id == id ? d.copyWith(nickname: newName) : d)
+        .toList();
+    state = AsyncValue.data(updated);
+
 
     return updated.firstWhere((d) => d.id == id);
   }

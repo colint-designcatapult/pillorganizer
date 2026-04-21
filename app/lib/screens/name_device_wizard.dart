@@ -100,8 +100,14 @@ class _NameDeviceWizard extends ConsumerState<NameDeviceWizard> {
               widget.deviceId!, _textController.text);
           print('[NameDeviceWizard] Device name updated successfully');
         } catch (e) {
-          print('[NameDeviceWizard] Could not update device name (will proceed anyway): $e');
-          // Continue anyway - name update is not critical to the flow
+          print('[NameDeviceWizard] Could not update device name: $e');
+          if (mounted) {
+            setState(() => _isWaitingForDevice = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(AppLocalizations.of(context)!.noticeUnknownErrorSubtitle)),
+            );
+          }
+          return;
         }
       } else {
         print('[NameDeviceWizard] No name change, skipping update');
