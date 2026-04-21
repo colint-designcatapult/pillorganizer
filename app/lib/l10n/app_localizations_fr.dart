@@ -603,7 +603,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get otherDevices => 'Autres appareils';
 
   @override
-  String get past => 'Past';
+  String get past => 'Passé';
 
   @override
   String get password => 'Mot de passe';
