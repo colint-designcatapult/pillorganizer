@@ -165,10 +165,18 @@ typedef enum {
     DEVEVT_ERROR,
 } device_event_type_t;
 
+/* Sentinel values for optional device_event_t fields. */
+#define DEVICE_EVENT_BIN_ID_NONE         (-1)
+#define DEVICE_EVENT_EPOCH_WEEK_NONE     ((time_t)0)
+#define DEVICE_EVENT_SCHEDULED_TIME_NONE ((time_t)0)
+
 typedef struct {
     rtc_utc_timestamp_ms timestamp;
-    device_event_type_t event_type;
-    int bin_id;
+    device_event_type_t  event_type;
+    int                  bin_id;           /* DEVICE_EVENT_BIN_ID_NONE if not bin-specific */
+    int                  flags;            /* optional flags (e.g. error code)             */
+    time_t               epoch_week;       /* DEVICE_EVENT_EPOCH_WEEK_NONE if not set      */
+    time_t               scheduled_time;   /* DEVICE_EVENT_SCHEDULED_TIME_NONE if not set  */
 } device_event_t;
 
 void supervisor_init();

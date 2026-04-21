@@ -895,17 +895,21 @@ static void handle_device_event_bin(device_event_type_t event_type, int bin_id)
         return;
     }
 
+    bool has_bin = (bin_id >= 0 && bin_id < DEVICE_NUM_BINS);
+    device_event_t devev = {
+        .timestamp      = ts,
+        .event_type     = event_type,
+        .bin_id         = bin_id,
+        .flags          = 0,
+        .epoch_week     = has_bin ? s_device_state.epoch_week                        : DEVICE_EVENT_EPOCH_WEEK_NONE,
+        .scheduled_time = has_bin ? s_device_state.bins[bin_id].scheduled_time       : DEVICE_EVENT_SCHEDULED_TIME_NONE,
+    };
+
     /* Push to outbox unconditionally, regardless of MQTT connection state. */
-    esp_err_t push_err = event_outbox_push(ts, event_type, bin_id, 0);
+    esp_err_t push_err = event_outbox_push(&devev);
     if (push_err == ESP_ERR_NO_MEM) {
         supervisor_assert_error(DEVERR_OUTBOX_FULL);
     }
-
-    device_event_t devev = {
-        .timestamp = ts,
-        .event_type = event_type,
-        .bin_id = bin_id
-    };
 
     switch (devev.event_type) {
         case DEVEVT_DOOR_OPENED:
@@ -935,7 +939,7 @@ static void handle_device_event_bin(device_event_type_t event_type, int bin_id)
 
 static void handle_device_event_nobin(device_event_type_t event_type)
 {
-    handle_device_event_bin(event_type, EVENT_OUTBOX_BIN_ID_NONE);
+    handle_device_event_bin(event_type, DEVICE_EVENT_BIN_ID_NONE);
 }
 
 static void handle_device_event(const supervisor_event_t* ev)
