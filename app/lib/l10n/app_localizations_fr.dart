@@ -210,28 +210,28 @@ class AppLocalizationsFr extends AppLocalizations {
   String get doseRefill => 'Pas remplis';
 
   @override
-  String get doseStatusMissed => 'MISSED';
+  String get doseStatusMissed => 'MANQUÉ';
 
   @override
-  String get doseStatusNoRecord => 'NO RECORD';
+  String get doseStatusNoRecord => 'AUCUNE DONNÉE';
 
   @override
-  String get doseStatusPending => 'Pending';
+  String get doseStatusPending => 'En attente';
 
   @override
-  String get doseStatusTaken => 'TAKEN';
+  String get doseStatusTaken => 'PRIS';
 
   @override
-  String get doseStatusUnknown => 'Unknown';
+  String get doseStatusUnknown => 'Inconnu';
 
   @override
-  String get dosesCompleted => 'completed';
+  String get dosesCompleted => 'terminées';
 
   @override
-  String get dosesTakenLabel => 'taken';
+  String get dosesTakenLabel => 'prises';
 
   @override
-  String get dosesRemaining => 'remaining';
+  String get dosesRemaining => 'restantes';
 
   @override
   String get edit => 'Modifier';
