@@ -128,9 +128,15 @@ TodayMedicationStatus todayMedicationStatus(ref) {
 
   // Convert current time to device's timezone for consistent date comparison
   final nowInDeviceTimezone = convertToDeviceTimezone(now);
-  
+
   final todayDoses = deviceState.bins
-      .where((bin) => bin.scheduledTime != null && _isToday(bin.scheduledTime!, nowInDeviceTimezone))
+      .where((bin) {
+        if (bin.scheduledTime == null) {
+          return false;
+        }
+        final localScheduledTime = convertToDeviceTimezone(bin.scheduledTime!);
+        return _isToday(localScheduledTime, nowInDeviceTimezone);
+      })
       .map((bin) {
         // Convert UTC time to device's timezone
         final localScheduledTime = convertToDeviceTimezone(bin.scheduledTime!);
