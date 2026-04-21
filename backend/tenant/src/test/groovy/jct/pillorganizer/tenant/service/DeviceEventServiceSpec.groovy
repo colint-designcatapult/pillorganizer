@@ -69,6 +69,8 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         given:
         def user = userService.upsert("des-user-2", "User Two", "user2@example.com")
         deviceService.provision(user, "des-device-2", "des-serial-2", "des-claim-2", "des-thing-2")
+        def epochWeek = 1_700_000_640L
+        def scheduledTime = 1_700_001_200L
 
         def message = IotDeviceEventMessage.builder()
                 .thingName("des-thing-2")
@@ -78,6 +80,8 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
                 .binId(3)
                 .flags(1)
                 .scheduleId("sched-abc")
+                .epochWeek(epochWeek)
+                .scheduledTime(scheduledTime)
                 .build()
 
         when:
@@ -92,6 +96,8 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         events[0].binId == 3
         events[0].metadata == '{"flags":1}'
         events[0].scheduleId == "sched-abc"
+        events[0].epochWeek == Instant.ofEpochSecond(epochWeek)
+        events[0].scheduledTime == Instant.ofEpochSecond(scheduledTime)
     }
 
     def "should silently drop a duplicate event (same thingName, timestamp, eventType, binId)"() {
