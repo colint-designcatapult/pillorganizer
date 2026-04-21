@@ -17,7 +17,7 @@ class HomeBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final minuteBasedTime = ref.watch(minuteBasedTimeProvider);
+    final deviceTime = ref.watch(deviceCurrentTimeProvider);
 
     return ClipRRect(
       borderRadius: BorderRadius.only(topRight: const Radius.circular(40.0).r),
@@ -37,13 +37,26 @@ class HomeBody extends ConsumerWidget {
                   padding: EdgeInsets.symmetric(vertical: 24.h),
                   child: Builder(
                     builder: (context) {
-                      return Text(
-                        AppLocalizations.of(context)!.localeName == 'fr'
-                            ? DateFormat('EEEE, d MMMM', 'fr')
-                                .format(minuteBasedTime)
-                            : DateFormat('EEEE, d MMMM', 'en')
-                                .format(minuteBasedTime),
-                        style: Theme.of(context).textTheme.labelLarge,
+                      final dateStr = AppLocalizations.of(context)!.localeName == 'fr'
+                          ? DateFormat('EEEE, d MMMM', 'fr').format(deviceTime)
+                          : DateFormat('EEEE, d MMMM', 'en').format(deviceTime);
+                      
+                      final timeStr = DateFormat('h:mm a').format(deviceTime);
+                      
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            dateStr,
+                            style: Theme.of(context).textTheme.labelLarge,
+                          ),
+                          Text(
+                            timeStr,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       );
                     },
                   ),

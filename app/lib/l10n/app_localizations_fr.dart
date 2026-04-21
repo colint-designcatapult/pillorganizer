@@ -213,6 +213,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get doseStatusMissed => 'MISSED';
 
   @override
+  String get doseStatusNoRecord => 'NO RECORD';
+
+  @override
   String get doseStatusPending => 'Pending';
 
   @override
@@ -223,6 +226,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get dosesCompleted => 'completed';
+
+  @override
+  String get dosesTakenLabel => 'taken';
 
   @override
   String get dosesRemaining => 'remaining';

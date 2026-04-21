@@ -103,15 +103,37 @@ TodayMedicationStatus todayMedicationStatus(ref) {
   final schedule = scheduleAsync.value;
   final timezoneIana = schedule?.effectiveTimezoneIana;
 
-  // Filter bins for today and convert to TodayDose
-  // Convert now to local timezone for consistent comparison
-  final nowLocal = now.toLocal();
+  // Helper to convert UTC time to device's timezone
+  DateTime convertToDeviceTimezone(DateTime utcTime) {
+    if (timezoneIana == null || timezoneIana.isEmpty) {
+      return utcTime.toLocal();
+    }
+    try {
+      final timezone = tz.getLocation(timezoneIana);
+      final tzDateTime = tz.TZDateTime.from(utcTime, timezone);
+      return DateTime(
+        tzDateTime.year,
+        tzDateTime.month,
+        tzDateTime.day,
+        tzDateTime.hour,
+        tzDateTime.minute,
+        tzDateTime.second,
+        tzDateTime.millisecond,
+      );
+    } catch (e) {
+      print('[TodayMedicationStatus] Failed to lookup timezone $timezoneIana: $e');
+      return utcTime.toLocal();
+    }
+  }
+
+  // Convert current time to device's timezone for consistent date comparison
+  final nowInDeviceTimezone = convertToDeviceTimezone(now);
   
   final todayDoses = deviceState.bins
-      .where((bin) => bin.scheduledTime != null && _isToday(bin.scheduledTime!, nowLocal))
+      .where((bin) => bin.scheduledTime != null && _isToday(bin.scheduledTime!, nowInDeviceTimezone))
       .map((bin) {
         // Convert UTC time to device's timezone
-        final localScheduledTime = _convertUtcToDeviceTimezone(bin.scheduledTime!, timezoneIana);
+        final localScheduledTime = convertToDeviceTimezone(bin.scheduledTime!);
         return TodayDose(
           binId: bin.id,
           scheduledTime: localScheduledTime,
@@ -140,35 +162,4 @@ TodayMedicationStatus todayMedicationStatus(ref) {
 /// Helper to check if a DateTime is today
 bool _isToday(DateTime date, DateTime now) {
   return date.year == now.year && date.month == now.month && date.day == now.day;
-}
-
-/// Convert UTC time to device's timezone using IANA timezone name
-DateTime _convertUtcToDeviceTimezone(DateTime utcTime, String? timezoneIana) {
-  if (timezoneIana == null || timezoneIana.isEmpty) {
-    // If no timezone, treat as local time
-    return utcTime.toLocal();
-  }
-
-  try {
-    // Look up the timezone location from IANA name
-    final timezone = tz.getLocation(timezoneIana);
-    
-    // Create TZDateTime from UTC DateTime
-    final tzDateTime = tz.TZDateTime.from(utcTime, timezone);
-    
-    // Return as a regular DateTime in the device's timezone
-    return DateTime(
-      tzDateTime.year,
-      tzDateTime.month,
-      tzDateTime.day,
-      tzDateTime.hour,
-      tzDateTime.minute,
-      tzDateTime.second,
-      tzDateTime.millisecond,
-    );
-  } catch (e) {
-    // If timezone lookup fails, fall back to local time
-    print('[TodayMedicationStatus] Failed to lookup timezone $timezoneIana: $e');
-    return utcTime.toLocal();
-  }
 }

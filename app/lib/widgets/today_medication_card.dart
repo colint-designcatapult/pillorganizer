@@ -161,8 +161,8 @@ class TodayMedicationCard extends ConsumerWidget {
   }
 
   Widget _buildSummary(BuildContext context, TodayMedicationStatus status) {
-    // Only TAKEN doses count as completed
-    final completed = status.dosesTaken;
+    // Only TAKEN doses count as taken
+    final taken = status.dosesTaken;
     // Only upcoming doses are remaining
     final remaining = status.upcomingDoses.length;
 
@@ -174,14 +174,14 @@ class TodayMedicationCard extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '$completed/${status.totalDosesScheduled}',
+                '$taken/${status.totalDosesScheduled}',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: const Color(0xFF206B8B),
                 ),
               ),
               Text(
-                AppLocalizations.of(context)!.dosesCompleted,
+                AppLocalizations.of(context)!.dosesTakenLabel,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Colors.grey[600],
                 ),
@@ -189,25 +189,24 @@ class TodayMedicationCard extends ConsumerWidget {
             ],
           ),
         ),
-        if (remaining > 0)
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '$remaining',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange[700],
-                  ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '$remaining',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange[700],
                 ),
-                Text(
-                  AppLocalizations.of(context)!.dosesRemaining,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+              ),
+              Text(
+                AppLocalizations.of(context)!.dosesRemaining,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.grey[600],
                 ),
-              ],
+              ),
+            ],
             ),
           ),
       ],
@@ -300,7 +299,7 @@ class TodayMedicationCard extends ConsumerWidget {
       case BinStatus.take_now:
         return AppLocalizations.of(context)!.doseStatusPending;
       default:
-        return AppLocalizations.of(context)!.doseStatusUnknown;
+        return AppLocalizations.of(context)!.doseStatusNoRecord;
     }
   }
 

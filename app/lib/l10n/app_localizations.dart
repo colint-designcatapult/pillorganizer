@@ -476,6 +476,12 @@ abstract class AppLocalizations {
   /// **'MISSED'**
   String get doseStatusMissed;
 
+  /// No description provided for @doseStatusNoRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'NO RECORD'**
+  String get doseStatusNoRecord;
+
   /// No description provided for @doseStatusPending.
   ///
   /// In en, this message translates to:
@@ -499,6 +505,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'completed'**
   String get dosesCompleted;
+
+  /// No description provided for @dosesTakenLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'taken'**
+  String get dosesTakenLabel;
 
   /// No description provided for @dosesRemaining.
   ///
