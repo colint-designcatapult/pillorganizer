@@ -49,7 +49,7 @@ public interface DeviceEventRepository extends CrudRepository<DeviceEvent, UUID>
             r.resolved_time,
             s.timezone_iana AS device_time_zone 
         FROM ResolvedDoses r
-        JOIN device_schedule s ON r.schedule_id::uuid = s.id
+        JOIN device_schedule s ON s.id::text = r.schedule_id
         ORDER BY r.scheduled_time DESC
         LIMIT :limit
     """)
