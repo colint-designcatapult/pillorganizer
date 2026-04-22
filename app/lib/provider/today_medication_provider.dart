@@ -150,10 +150,15 @@ TodayMedicationStatus todayMedicationStatus(ref) {
   final upcomingDoses = sortedDoses.where((dose) => dose.isUpcoming()).toList();
   final pastDoses = sortedDoses.where((dose) => dose.isPast()).toList();
 
+  // Only count doses that are actively scheduled (not disabled or noRecord)
+  final activeDoses = sortedDoses.where((dose) {
+    return dose.status != BinStatus.disabled && dose.status != BinStatus.noRecord;
+  }).toList();
+
   return TodayMedicationStatus(
     upcomingDoses: upcomingDoses,
     pastDoses: pastDoses,
-    totalDosesScheduled: todayDoses.length,
+    totalDosesScheduled: activeDoses.length,
   );
 }
 
