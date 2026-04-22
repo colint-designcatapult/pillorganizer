@@ -34,10 +34,12 @@ public class RequestCacheService {
             return; // Anonymous request
         }
 
-        String userIdString = auth.get()
-                .getAttributes()
-                .get("userId")
-                .toString();
+        Object userId = auth.get().getAttributes().get("userId");
+        if (userId == null) {
+            return;
+        }
+
+        String userIdString = userId.toString();
 
         request.setAttribute(USER_ID_ATTRIBUTE, userIdString);
 

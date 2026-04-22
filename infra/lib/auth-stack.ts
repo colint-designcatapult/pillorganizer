@@ -7,10 +7,15 @@ import { createGlobalLambda } from './lambda-utils';
 
 interface AuthStackProps extends cdk.StackProps {
   controlPlaneTable: dynamodb.ITableV2;
+  baseDomain: string;
 }
 
 export class AuthStack extends cdk.Stack {
   public readonly userPool: cognito.UserPool;
+  public readonly adminUserPool: cognito.UserPool;
+  public readonly adminUserPoolIssuer: string;
+  public readonly adminUserPoolJwksUrl: string;
+  public readonly adminGlobalGroupName: string;
 
   constructor(scope: Construct, id: string, props: AuthStackProps) {
     super(scope, id, props);
@@ -82,5 +87,74 @@ export class AuthStack extends cdk.Stack {
       // This is the magic flag that tells Cognito to use its shiny new default styling
       useCognitoProvidedValues: true, 
     });
+
+    // -- Admin Cognito User Pool --
+    this.adminUserPool = new cognito.UserPool(this, 'HealtheAdminUserPool', {
+      userPoolName: 'healthe-admin-userpool',
+      selfSignUpEnabled: false,
+      standardAttributes: {
+        email: {
+          required: true,
+          mutable: true
+        }
+      },
+      signInAliases: {
+        email: true,
+        username: false
+      },
+      removalPolicy: cdk.RemovalPolicy.RETAIN
+    });
+
+    this.adminUserPool.addDomain('HealtheAdminCognitoDomain', {
+      cognitoDomain: {
+        domainPrefix: 'healthesolutions-admin'
+      }
+    });
+
+    const adminAppClient = this.adminUserPool.addClient('AdminDashboardClient', {
+      userPoolClientName: 'healthe-admin-dashboard',
+      generateSecret: false,
+      authFlows: {
+        userPassword: true,
+        userSrp: true
+      },
+      oAuth: {
+        flows: {
+          authorizationCodeGrant: true,
+        },
+        scopes: [
+          cognito.OAuthScope.OPENID,
+          cognito.OAuthScope.EMAIL,
+          cognito.OAuthScope.PROFILE
+        ],
+        callbackUrls: [
+          'http://localhost:4200/callback',
+          `https://admin.${props.baseDomain}/callback`
+        ],
+        logoutUrls: [
+          'http://localhost:4200/logout',
+          `https://admin.${props.baseDomain}/logout`
+        ],
+      },
+      supportedIdentityProviders: [
+        cognito.UserPoolClientIdentityProvider.COGNITO
+      ]
+    });
+
+    new cognito.CfnManagedLoginBranding(this, 'AdminManagedLoginBranding', {
+      userPoolId: this.adminUserPool.userPoolId,
+      clientId: adminAppClient.userPoolClientId,
+      useCognitoProvidedValues: true,
+    });
+
+    this.adminGlobalGroupName = 'admin-global';
+    new cognito.CfnUserPoolGroup(this, 'AdminGlobalGroup', {
+      groupName: this.adminGlobalGroupName,
+      userPoolId: this.adminUserPool.userPoolId,
+      description: 'Global admin role for dashboard access'
+    });
+
+    this.adminUserPoolIssuer = `https://${this.adminUserPool.userPoolProviderUrl}`;
+    this.adminUserPoolJwksUrl = `${this.adminUserPoolIssuer}/.well-known/jwks.json`;
   }
 }

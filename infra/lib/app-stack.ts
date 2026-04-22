@@ -5,6 +5,7 @@ import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as iot from 'aws-cdk-lib/aws-iot';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as lambdaEventSources from 'aws-cdk-lib/aws-lambda-event-sources';
 import { Construct } from 'constructs';
 
@@ -14,6 +15,10 @@ interface AppStackProps extends cdk.StackProps {
   removalPolicy: cdk.RemovalPolicy;
   environmentName: string;
   domainName: apigwv2.IDomainName;
+  adminUserPool: cognito.IUserPool;
+  adminCognitoJwksUrl: string;
+  adminCognitoIssuer: string;
+  adminGlobalGroup: string;
 }
 
 /* This stack configures the actual application. */
@@ -23,6 +28,14 @@ export class AppStack extends cdk.Stack {
 
   constructor(scope: Construct, id: string, props: AppStackProps) {
     super(scope, id, props);
+    const tenantId = props.environmentName;
+    const tenantAdminGroup = `admin-${tenantId}`;
+
+    new cognito.CfnUserPoolGroup(this, 'TenantAdminGroup', {
+      groupName: tenantAdminGroup,
+      userPoolId: props.adminUserPool.userPoolId,
+      description: `Tenant admin role for ${tenantId}`
+    });
 
     // -- SQS --
 
@@ -106,7 +119,12 @@ export class AppStack extends cdk.Stack {
           MICRONAUT_ENVIRONMENTS: `tenant,${props.environmentName}${env != '' ? ',' + env : ''}`,
           DB_HOST: props.dsqlEndpoint,
           DB_PORT: '5432',
-          DB_NAME: 'pillorganizer'
+          DB_NAME: 'pillorganizer',
+          TENANT_ID: tenantId,
+          ADMIN_TENANT_GROUP: tenantAdminGroup,
+          ADMIN_GLOBAL_GROUP: props.adminGlobalGroup,
+          ADMIN_COGNITO_ISSUER: props.adminCognitoIssuer,
+          ADMIN_COGNITO_JWKS_URL: props.adminCognitoJwksUrl,
         },
       });
 

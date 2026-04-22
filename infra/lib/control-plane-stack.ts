@@ -10,7 +10,10 @@ import { createGlobalLambda } from './lambda-utils';
 
 interface ControlPlaneStackProps extends cdk.StackProps {
   domainName: apigwv2.IDomainName,
-  controlPlaneTable: dynamodb.ITableV2
+  controlPlaneTable: dynamodb.ITableV2,
+  adminCognitoJwksUrl: string,
+  adminCognitoIssuer: string,
+  adminGlobalGroup: string,
 }
 
 /* This stack configures the "control plane" backend. */
@@ -25,6 +28,9 @@ export class ControlPlaneStack extends cdk.Stack {
     // Create the Control Plane Lambda function using the shared utility
     const appFunction = createGlobalLambda(this, 'ControlPlaneAppFunction',
        'io.micronaut.function.aws.proxy.payload2.APIGatewayV2HTTPEventFunction', this.controlPlaneTable);
+    appFunction.addEnvironment('ADMIN_COGNITO_JWKS_URL', props.adminCognitoJwksUrl);
+    appFunction.addEnvironment('ADMIN_COGNITO_ISSUER', props.adminCognitoIssuer);
+    appFunction.addEnvironment('ADMIN_GLOBAL_GROUP', props.adminGlobalGroup);
 
     // Grant function ability to create provisioning claims
     appFunction.addToRolePolicy(new iam.PolicyStatement({

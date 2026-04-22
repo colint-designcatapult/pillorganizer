@@ -20,6 +20,7 @@ micronaut:
     redirect:
       enabled: false
     token:
+      roles-name: cognito:groups
       propagation:
         enabled: true
         service-id-regex: ".*"
@@ -31,11 +32,19 @@ micronaut:
           jwks:
             cognito:
               url: https://cognito-idp.${aws.region}.amazonaws.com/${aws.cognito.public-pool}/.well-known/jwks.json
+            admin:
+              url: ${ADMIN_COGNITO_JWKS_URL:https://cognito-idp.${aws.region}.amazonaws.com/${aws.cognito.public-pool}/.well-known/jwks.json}
 endpoints:
   health:
     enabled: true
     sensitive: false
 app:
+  auth:
+    admin:
+      issuer: ${ADMIN_COGNITO_ISSUER:}
+      global-group: ${ADMIN_GLOBAL_GROUP:admin-global}
+      tenant-group: ${ADMIN_TENANT_GROUP:}
+      tenant-id: ${TENANT_ID:}
   iot-core:
     arn-prefix: "arn:aws:iot:ca-central-1:114829892869"
   tenant:
