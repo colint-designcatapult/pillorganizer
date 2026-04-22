@@ -272,7 +272,7 @@ class TodayMedicationCard extends ConsumerWidget {
             ),
           ),
         ),
-        if (isPast)
+        if (isPast || dose.status == BinStatus.take_now)
           Container(
             padding: EdgeInsets.symmetric(horizontal: 8.h, vertical: 4.h),
             decoration: BoxDecoration(
@@ -297,8 +297,9 @@ class TodayMedicationCard extends ConsumerWidget {
         return AppLocalizations.of(context)!.doseStatusTaken;
       case BinStatus.missed:
         return AppLocalizations.of(context)!.doseStatusMissed;
-      case BinStatus.pending:
       case BinStatus.take_now:
+        return AppLocalizations.of(context)!.doseStatusTakeNow;
+      case BinStatus.pending:
         return AppLocalizations.of(context)!.doseStatusPending;
       default:
         return AppLocalizations.of(context)!.doseStatusNoRecord;
@@ -308,6 +309,7 @@ class TodayMedicationCard extends ConsumerWidget {
   Color _getDoseStatusColor(BinStatus status) {
     switch (status) {
       case BinStatus.taken:
+      case BinStatus.take_now:
         return Colors.green;
       case BinStatus.missed:
         return Colors.red;
