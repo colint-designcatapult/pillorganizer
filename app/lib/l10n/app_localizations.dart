@@ -470,6 +470,54 @@ abstract class AppLocalizations {
   /// **'Not filled'**
   String get doseRefill;
 
+  /// No description provided for @doseStatusMissed.
+  ///
+  /// In en, this message translates to:
+  /// **'MISSED'**
+  String get doseStatusMissed;
+
+  /// No description provided for @doseStatusNoRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'NO RECORD'**
+  String get doseStatusNoRecord;
+
+  /// No description provided for @doseStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get doseStatusPending;
+
+  /// No description provided for @doseStatusTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'TAKEN'**
+  String get doseStatusTaken;
+
+  /// No description provided for @doseStatusUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get doseStatusUnknown;
+
+  /// No description provided for @dosesCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'completed'**
+  String get dosesCompleted;
+
+  /// No description provided for @dosesTakenLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'taken'**
+  String get dosesTakenLabel;
+
+  /// No description provided for @dosesRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'remaining'**
+  String get dosesRemaining;
+
   /// No description provided for @edit.
   ///
   /// In en, this message translates to:
@@ -908,6 +956,24 @@ abstract class AppLocalizations {
   /// **'There is no medications left for today, come back tomorrow or update your schedule.'**
   String get noMedicationLeft;
 
+  /// No description provided for @noMedicationScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'No medication scheduled for today'**
+  String get noMedicationScheduled;
+
+  /// No description provided for @noneTakenYet.
+  ///
+  /// In en, this message translates to:
+  /// **'None taken yet'**
+  String get noneTakenYet;
+
+  /// No description provided for @noneScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'None scheduled'**
+  String get noneScheduled;
+
   /// No description provided for @noticeDisconnected.
   ///
   /// In en, this message translates to:
@@ -1117,6 +1183,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Other Devices'**
   String get otherDevices;
+
+  /// No description provided for @past.
+  ///
+  /// In en, this message translates to:
+  /// **'Past'**
+  String get past;
 
   /// No description provided for @password.
   ///
@@ -1700,6 +1772,12 @@ abstract class AppLocalizations {
   /// **'Time'**
   String get time;
 
+  /// No description provided for @todayMedicationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Medication'**
+  String get todayMedicationTitle;
+
   /// No description provided for @timeSetup.
   ///
   /// In en, this message translates to:
@@ -1729,6 +1807,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tuesday'**
   String get tuesday;
+
+  /// No description provided for @upcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get upcoming;
 
   /// No description provided for @validationWrongCode.
   ///

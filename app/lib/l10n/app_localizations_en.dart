@@ -210,6 +210,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get doseRefill => 'Not filled';
 
   @override
+  String get doseStatusMissed => 'MISSED';
+
+  @override
+  String get doseStatusNoRecord => 'NO RECORD';
+
+  @override
+  String get doseStatusPending => 'Pending';
+
+  @override
+  String get doseStatusTaken => 'TAKEN';
+
+  @override
+  String get doseStatusUnknown => 'Unknown';
+
+  @override
+  String get dosesCompleted => 'completed';
+
+  @override
+  String get dosesTakenLabel => 'taken';
+
+  @override
+  String get dosesRemaining => 'remaining';
+
+  @override
   String get edit => 'Edit';
 
   @override
@@ -457,6 +481,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'There is no medications left for today, come back tomorrow or update your schedule.';
 
   @override
+  String get noMedicationScheduled => 'No medication scheduled for today';
+
+  @override
+  String get noneTakenYet => 'None taken yet';
+
+  @override
+  String get noneScheduled => 'None scheduled';
+
+  @override
   String get noticeDisconnected => 'Device disconnected ?';
 
   @override
@@ -570,6 +603,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get otherDevices => 'Other Devices';
+
+  @override
+  String get past => 'Past';
 
   @override
   String get password => 'Password';
@@ -892,6 +928,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get time => 'Time';
 
   @override
+  String get todayMedicationTitle => 'Today\'s Medication';
+
+  @override
   String get timeSetup => 'Time Setup:';
 
   @override
@@ -907,6 +946,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tuesday => 'Tuesday';
+
+  @override
+  String get upcoming => 'Upcoming';
 
   @override
   String get validationWrongCode =>
