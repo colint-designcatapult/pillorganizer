@@ -65,6 +65,7 @@
 	"doseStatusNoRecord": "NO RECORD",
 	"doseStatusPending": "Pending",
 	"doseStatusTaken": "TAKEN",
+	"doseStatusTakeNow": "TAKE NOW",
 	"doseStatusUnknown": "Unknown",
 	"dosesCompleted": "completed",
 	"dosesTakenLabel": "taken",

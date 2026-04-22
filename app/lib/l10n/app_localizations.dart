@@ -494,6 +494,12 @@ abstract class AppLocalizations {
   /// **'TAKEN'**
   String get doseStatusTaken;
 
+  /// No description provided for @doseStatusTakeNow.
+  ///
+  /// In en, this message translates to:
+  /// **'TAKE NOW'**
+  String get doseStatusTakeNow;
+
   /// No description provided for @doseStatusUnknown.
   ///
   /// In en, this message translates to:

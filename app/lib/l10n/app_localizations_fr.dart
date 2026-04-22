@@ -222,6 +222,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get doseStatusTaken => 'TAKEN';
 
   @override
+  String get doseStatusTakeNow => 'TAKE NOW';
+
+  @override
   String get doseStatusUnknown => 'Unknown';
 
   @override
