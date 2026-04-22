@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/zsh
 
 # Fail this script if any subcommand fails.
 set -e
@@ -15,6 +15,8 @@ flutter precache --ios
 
 # Install Flutter dependencies.
 flutter pub get
+
+dart run build_runner build --delete-conflicting-outputs
 
 # Install CocoaPods using Homebrew.
 HOMEBREW_NO_AUTO_UPDATE=1 # disable homebrew's automatic updates.
