@@ -26,12 +26,12 @@ class TodayDose {
   });
 
   /// Returns true if this dose is in the past.
-  /// Past doses are those with status: TAKEN, MISSED, DISABLED, or noRecord
-  /// (i.e., any dose that has already been processed or is no longer active)
+  /// Past doses are those with status: TAKEN, MISSED, or noRecord
+  /// (i.e., any dose that has been processed, missed, or has incomplete data)
+  /// DISABLED doses are excluded as they were never scheduled
   bool isPast() {
     return status == BinStatus.taken || 
            status == BinStatus.missed || 
-           status == BinStatus.disabled || 
            status == BinStatus.noRecord;
   }
 
@@ -150,9 +150,10 @@ TodayMedicationStatus todayMedicationStatus(ref) {
   final upcomingDoses = sortedDoses.where((dose) => dose.isUpcoming()).toList();
   final pastDoses = sortedDoses.where((dose) => dose.isPast()).toList();
 
-  // Only count doses that are actively scheduled (not disabled or noRecord)
+  // Only count doses that are actively scheduled (not disabled)
+  // noRecord may indicate a missed data point but the dose was still scheduled
   final activeDoses = sortedDoses.where((dose) {
-    return dose.status != BinStatus.disabled && dose.status != BinStatus.noRecord;
+    return dose.status != BinStatus.disabled;
   }).toList();
 
   return TodayMedicationStatus(
