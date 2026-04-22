@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -106,5 +108,20 @@ class BackgroundNotificationTranslator {
 
 /// Returns the current FCM registration token, or null if unavailable.
 Future<String?> getFcmToken() async {
+  NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    announcement: false,
+    badge: true,
+    carPlay: false,
+    criticalAlert: false,
+    provisional: false,
+    sound: true,
+  );
+  print('User granted permission: ${settings.authorizationStatus}');
+
+  if (Platform.isIOS) {
+    String? apns = await FirebaseMessaging.instance.getAPNSToken();
+    print('APNS: $apns');
+  }
   return FirebaseMessaging.instance.getToken();
 }

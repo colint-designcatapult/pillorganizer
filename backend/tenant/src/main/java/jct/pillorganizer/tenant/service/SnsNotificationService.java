@@ -63,15 +63,15 @@ public class SnsNotificationService implements NotificationService {
         try {
             NotificationData notificationData = new NotificationData(title, body);
 
-            FcmMessageWrapper fcmMessage = new FcmMessageWrapper(
-                    new FcmMessage(
-                            new FcmNotification(notificationData),
-                            // FCM v1 android.ttl is a duration string (e.g. "840s").
-                            // AWS.SNS.MOBILE.GCM.TTL message attribute carries the same value
-                            // as a numeric string for the SNS delivery-attempt window.
-                            new FcmAndroid(ttlSeconds + "s", new FcmAndroidNotification("medication_reminders"))
-                    )
+            // Assemble the core FCM message body with Android and APNs configurations
+            FcmMessageBody messageBody = new FcmMessageBody(
+                    notificationData,
+                    new FcmAndroid(ttlSeconds + "s", new FcmAndroidNotification("medication_reminders")),
+                    new FcmApns(new FcmApnsPayload(new FcmAps("default"))) // Add default sound for iOS
             );
+
+            // Wrap it correctly for the SNS GCM FCMv1 structure
+            FcmMessageWrapper fcmMessage = new FcmMessageWrapper(new FcmMessage(messageBody));
 
             DefaultPayload defaultPayload = new DefaultPayload(notificationData);
 
@@ -106,20 +106,36 @@ public class SnsNotificationService implements NotificationService {
             @JsonProperty("default") String defaultPayload
     ) {}
 
+    // Top-level wrapper required by AWS Pinpoint/SNS for FCM v1
     @Serdeable
     public record FcmMessageWrapper(FcmMessage fcmV1Message) {}
 
+    // Forces the "message" key root inside fcmV1Message
     @Serdeable
-    public record FcmMessage(FcmNotification message, FcmAndroid android) {}
+    public record FcmMessage(FcmMessageBody message) {}
 
+    // Notification, Android, and APNs are now correctly siblings inside the "message" object
     @Serdeable
-    public record FcmNotification(NotificationData notification) {}
+    public record FcmMessageBody(
+            NotificationData notification,
+            FcmAndroid android,
+            FcmApns apns
+    ) {}
 
     @Serdeable
     public record FcmAndroid(@JsonProperty("ttl") String ttl, FcmAndroidNotification notification) {}
 
     @Serdeable
     public record FcmAndroidNotification(@JsonProperty("channel_id") String channelId) {}
+
+    @Serdeable
+    public record FcmApns(FcmApnsPayload payload) {}
+
+    @Serdeable
+    public record FcmApnsPayload(FcmAps aps) {}
+
+    @Serdeable
+    public record FcmAps(String sound) {}
 
     @Serdeable
     public record DefaultPayload(NotificationData notification) {}
