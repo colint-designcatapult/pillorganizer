@@ -29,7 +29,7 @@ export class AppStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: AppStackProps) {
     super(scope, id, props);
     const tenantId = props.environmentName;
-    const tenantAdminGroup = `admin-${tenantId}`;
+    const tenantAdminGroup = `admin-tenant-${tenantId}`;
 
     new cognito.CfnUserPoolGroup(this, 'TenantAdminGroup', {
       groupName: tenantAdminGroup,
