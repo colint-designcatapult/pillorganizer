@@ -66,7 +66,16 @@ class MethodChannelFlutterEspBleProv extends FlutterEspBleProvPlatform {
       'path': path,
       'data': data
     };
-    return await methodChannel.invokeMethod<Uint8List?>('sendCustomData', args);
+    final result =
+        await methodChannel.invokeMethod<dynamic>('sendCustomData', args);
+    if (result == null) return null;
+    if (result is Uint8List) return result;
+    if (result is String) return Uint8List.fromList(result.codeUnits);
+    if (result is List) return Uint8List.fromList(result.cast<int>());
+    throw PlatformException(
+      code: 'TYPE_ERROR',
+      message: 'sendCustomData returned unexpected type: ${result.runtimeType}',
+    );
   }
 
   @override

@@ -58,8 +58,8 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyB9Iyi_lsFIiWNLQjAvUqLMGrV0gvZtM48',
-    appId: '1:665591360892:android:81ce0e5143a59bbaf608f9',
+    apiKey: 'AIzaSyC0qkjpBaWDQHDtENCbdgQzDd56CrauTx8',
+    appId: '1:665591360892:ios:ea2e96e45e106717f608f9',
     messagingSenderId: '665591360892',
     projectId: 'pillorganizer-d158c',
     storageBucket: 'pillorganizer-d158c.firebasestorage.app',

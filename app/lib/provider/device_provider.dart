@@ -89,6 +89,7 @@ class DeviceList extends _$DeviceList {
           'Please grant notification permission and try again.',
         );
       }
+      print("FCM Token: $token");
       await controlPlane.registerFcmToken(RegisterFcmTokenDto(fcmToken: token));
     }
 
