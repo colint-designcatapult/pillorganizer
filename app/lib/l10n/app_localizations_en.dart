@@ -481,6 +481,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'There is no medications left for today, come back tomorrow or update your schedule.';
 
   @override
+  String get noMedicationScheduled => 'No medication scheduled for today';
+
+  @override
   String get noneTakenYet => 'None taken yet';
 
   @override

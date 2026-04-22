@@ -226,7 +226,7 @@ class TodayMedicationCard extends ConsumerWidget {
           title,
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
             fontWeight: FontWeight.w600,
-            color: Colors.grey[700],
+            color: Colors.black,
           ),
         ),
         SizedBox(height: 8.h),
@@ -267,7 +267,9 @@ class TodayMedicationCard extends ConsumerWidget {
         Expanded(
           child: Text(
             timeStr,
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Colors.grey[600],
+            ),
           ),
         ),
         if (isPast)

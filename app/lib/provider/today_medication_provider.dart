@@ -62,12 +62,6 @@ class TodayMedicationStatus {
   /// Count of doses that have been missed.
   int get dosesMissed =>
       pastDoses.where((d) => d.status == BinStatus.missed).length;
-
-  /// Summary text showing completed doses (e.g., "2/2 doses taken today").
-  String getSummary() {
-    final completedCount = dosesTaken + dosesMissed;
-    return '$completedCount/$totalDosesScheduled doses completed today';
-  }
 }
 
 /// Provider that computes today's medication status from device state bins.

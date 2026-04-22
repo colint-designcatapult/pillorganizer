@@ -210,28 +210,28 @@ class AppLocalizationsFr extends AppLocalizations {
   String get doseRefill => 'Pas remplis';
 
   @override
-  String get doseStatusMissed => 'MANQUÉ';
+  String get doseStatusMissed => 'MISSED';
 
   @override
-  String get doseStatusNoRecord => 'AUCUNE DONNÉE';
+  String get doseStatusNoRecord => 'NO RECORD';
 
   @override
-  String get doseStatusPending => 'En attente';
+  String get doseStatusPending => 'Pending';
 
   @override
-  String get doseStatusTaken => 'PRIS';
+  String get doseStatusTaken => 'TAKEN';
 
   @override
-  String get doseStatusUnknown => 'Inconnu';
+  String get doseStatusUnknown => 'Unknown';
 
   @override
-  String get dosesCompleted => 'terminées';
+  String get dosesCompleted => 'completed';
 
   @override
-  String get dosesTakenLabel => 'prises';
+  String get dosesTakenLabel => 'taken';
 
   @override
-  String get dosesRemaining => 'restantes';
+  String get dosesRemaining => 'remaining';
 
   @override
   String get edit => 'Modifier';
@@ -483,6 +483,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Il ne reste plus de médicaments pour aujourd\'hui, revenez demain ou mettez à jour votre horaire.';
 
   @override
+  String get noMedicationScheduled => 'No medication scheduled for today';
+
+  @override
   String get noneTakenYet => 'None taken yet';
 
   @override
@@ -603,7 +606,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get otherDevices => 'Autres appareils';
 
   @override
-  String get past => 'Passé';
+  String get past => 'Past';
 
   @override
   String get password => 'Mot de passe';
@@ -930,7 +933,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get time => 'Heure';
 
   @override
-  String get todayMedicationTitle => 'Médicaments d\'aujourd\'hui';
+  String get todayMedicationTitle => 'Today\'s Medication';
 
   @override
   String get timeSetup => 'Configuration de l\'horaire:';

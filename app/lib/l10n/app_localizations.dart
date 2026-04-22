@@ -956,6 +956,12 @@ abstract class AppLocalizations {
   /// **'There is no medications left for today, come back tomorrow or update your schedule.'**
   String get noMedicationLeft;
 
+  /// No description provided for @noMedicationScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'No medication scheduled for today'**
+  String get noMedicationScheduled;
+
   /// No description provided for @noneTakenYet.
   ///
   /// In en, this message translates to:
