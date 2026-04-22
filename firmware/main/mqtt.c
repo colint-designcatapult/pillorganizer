@@ -86,19 +86,25 @@ esp_err_t mqtt_publish_event(const event_outbox_entry_t* entry,
     cJSON *root = cJSON_CreateObject();
     if (!root) return ESP_ERR_NO_MEM;
 
-    cJSON_AddNumberToObject(root, "timestamp",  (double)entry->timestamp);
-    cJSON_AddStringToObject(root, "event_type", event_type_to_str(entry->event_type));
-    if (entry->bin_id != EVENT_OUTBOX_BIN_ID_NONE) {
-        cJSON_AddNumberToObject(root, "bin_id", entry->bin_id);
+    cJSON_AddNumberToObject(root, "timestamp",  (double)entry->event.timestamp);
+    cJSON_AddStringToObject(root, "event_type", event_type_to_str(entry->event.event_type));
+    if (entry->event.bin_id != DEVICE_EVENT_BIN_ID_NONE) {
+        cJSON_AddNumberToObject(root, "bin_id", entry->event.bin_id);
         if (dev_state != NULL &&
-            entry->bin_id < DEVICE_NUM_BINS &&
-            dev_state->bins[entry->bin_id].schedule_id[0] != '\0') {
+            entry->event.bin_id < DEVICE_NUM_BINS &&
+            dev_state->bins[entry->event.bin_id].schedule_id[0] != '\0') {
             cJSON_AddStringToObject(root, "schedule_id",
-                                    dev_state->bins[entry->bin_id].schedule_id);
+                                    dev_state->bins[entry->event.bin_id].schedule_id);
         }
     }
-    if (entry->flags != 0) {
-        cJSON_AddNumberToObject(root, "flags", entry->flags);
+    if (entry->event.epoch_week != DEVICE_EVENT_EPOCH_WEEK_NONE) {
+        cJSON_AddNumberToObject(root, "epoch_week", (double)entry->event.epoch_week);
+    }
+    if (entry->event.scheduled_time != DEVICE_EVENT_SCHEDULED_TIME_NONE) {
+        cJSON_AddNumberToObject(root, "scheduled_time", (double)entry->event.scheduled_time);
+    }
+    if (entry->event.flags != 0) {
+        cJSON_AddNumberToObject(root, "flags", entry->event.flags);
     }
 
     char *json_str = cJSON_PrintUnformatted(root);
@@ -119,7 +125,7 @@ esp_err_t mqtt_publish_event(const event_outbox_entry_t* entry,
     }
 
     ESP_LOGI(TAG, "Event published seq=%" PRIu32 " msg_id=%d type=%s",
-             entry->seq, msg_id, event_type_to_str(entry->event_type));
+             entry->seq, msg_id, event_type_to_str(entry->event.event_type));
     *out_msg_id = msg_id;
     return ESP_OK;
 }

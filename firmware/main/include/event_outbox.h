@@ -27,17 +27,10 @@
  * exclusively from the supervisor event-loop task.
  */
 
-#define EVENT_OUTBOX_MAX_ENTRIES 100
-
-/* Sentinel value for event_outbox_entry_t.bin_id when the event is not
- * associated with a specific bin (e.g. reload, error events). */
-#define EVENT_OUTBOX_BIN_ID_NONE (-1)
+#define EVENT_OUTBOX_MAX_ENTRIES 90
 
 typedef struct {
-    rtc_utc_timestamp_ms timestamp;  /* UTC ms; guaranteed non-zero on push     */
-    device_event_type_t  event_type;
-    int                  bin_id;     /* EVENT_OUTBOX_BIN_ID_NONE if not bin-specific */
-    int                  flags;      /* optional flags (e.g. error code)        */
+    device_event_t       event;
     uint32_t             seq;        /* monotonic sequence number (stable handle) */
     int                  msg_id;     /* client-assigned packet ID once published; -1 = unpublished */
     bool                 delivered;  /* true = PUBACK confirmed by broker        */
@@ -58,10 +51,7 @@ void event_outbox_init(void);
  * Returns ESP_ERR_NO_MEM if the outbox is full (caller must assert
  * DEVERR_OUTBOX_FULL).
  */
-esp_err_t event_outbox_push(rtc_utc_timestamp_ms timestamp,
-                             device_event_type_t event_type,
-                             int bin_id,
-                             int flags);
+esp_err_t event_outbox_push(const device_event_t *event);
 
 /*
  * Read the entry at logical position `pos` (0 = oldest) into `out_entry`.

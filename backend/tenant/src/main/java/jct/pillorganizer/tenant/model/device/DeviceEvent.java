@@ -33,6 +33,14 @@ public class DeviceEvent {
     @Nullable
     private Integer binId;
 
+    /** UTC instant of the scheduled time of the bin (if relevant). */
+    @Nullable
+    private Instant scheduledTime;
+
+    /** Epoch marking device's week */
+    @Nullable
+    private Instant epochWeek;
+
     /** Serialized JSON derived from the MQTT {@code flags} field. */
     @Nullable
     private String metadata;

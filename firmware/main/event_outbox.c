@@ -184,10 +184,7 @@ void event_outbox_init(void)
     }
 }
 
-esp_err_t event_outbox_push(rtc_utc_timestamp_ms timestamp,
-                             device_event_type_t event_type,
-                             int bin_id,
-                             int flags)
+esp_err_t event_outbox_push(const device_event_t *event)
 {
     if (s_queue.count >= EVENT_OUTBOX_MAX_ENTRIES) {
         ESP_LOGE(TAG, "Outbox full!");
@@ -196,10 +193,7 @@ esp_err_t event_outbox_push(rtc_utc_timestamp_ms timestamp,
 
     int tail = (s_queue.head + s_queue.count) % EVENT_OUTBOX_MAX_ENTRIES;
     event_outbox_entry_t *e = &s_queue.entries[tail];
-    e->timestamp  = timestamp;
-    e->event_type = event_type;
-    e->bin_id     = bin_id;
-    e->flags      = flags;
+    e->event      = *event;
     e->seq        = s_next_seq++;
     e->msg_id     = -1;
     e->delivered  = false;
@@ -213,7 +207,7 @@ esp_err_t event_outbox_push(rtc_utc_timestamp_ms timestamp,
     }
 
     ESP_LOGI(TAG, "Pushed seq=%" PRIu32 " type=%d bin=%d count=%d",
-             e->seq, event_type, bin_id, s_queue.count);
+             e->seq, event->event_type, event->bin_id, s_queue.count);
 
     return ESP_OK;
 }
