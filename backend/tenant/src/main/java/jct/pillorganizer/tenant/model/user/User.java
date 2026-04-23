@@ -1,6 +1,7 @@
 package jct.pillorganizer.tenant.model.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.*;
 import io.micronaut.serde.annotation.Serdeable;
 import jakarta.validation.constraints.NotNull;
@@ -39,8 +40,10 @@ public class User {
     @JsonIgnore
     private List<DeviceUser> devices;
 
+    @Nullable
     private String name;
 
+    @Nullable
     private String email;
 
 }
