@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Map;
 
 /**
@@ -58,30 +59,47 @@ public class SnsNotificationService implements NotificationService {
         log.atInfo().log("SNS subscription deleted: %s", subscriptionArn);
     }
 
+    public String buildFinalSnsPayload(String title, String body, String channelId, long ttlInSeconds) throws IOException {
+        // 1. Calculate APNs Expiration (Absolute Epoch Time)
+        long apnsExpirationEpoch = Instant.now().getEpochSecond() + ttlInSeconds;
+
+        // 2. Build the deeply nested GCM/FCM Data Structure
+        var gcmPayload = new GcmPayload(
+                new FcmV1Message(
+                        new Message(
+                                new Notification(title, body),
+                                new AndroidConfig(
+                                        ttlInSeconds + "s",
+                                        "HIGH",
+                                        new AndroidNotification(channelId)
+                                ),
+                                new ApnsConfig(
+                                        new ApnsHeaders(
+                                                String.valueOf(apnsExpirationEpoch),
+                                                "10"
+                                        )
+                                )
+                        )
+                )
+        );
+
+        // 3. Serialize the GcmPayload to a JSON String
+        String stringifiedGcm = objectMapper.writeValueAsString(gcmPayload);
+
+        // 4. Build the top-level SNS Message
+        var snsMessage = new SnsMessage(
+                body,           // Fallback text
+                stringifiedGcm // The stringified JSON from step 3
+        );
+
+        // 5. Serialize the entire SNS Message for the AWS SDK `Message` parameter
+        return objectMapper.writeValueAsString(snsMessage);
+    }
+
     @Override
     public void publish(String topicArn, String title, String body, long ttlSeconds) {
         try {
-            NotificationData notificationData = new NotificationData(title, body);
-
-            // Assemble the core FCM message body with Android and APNs configurations
-            FcmMessageBody messageBody = new FcmMessageBody(
-                    notificationData,
-                    new FcmAndroid(ttlSeconds + "s", new FcmAndroidNotification("medication_reminders")),
-                    new FcmApns(new FcmApnsPayload(new FcmAps("default"))) // Add default sound for iOS
-            );
-
-            // Wrap it correctly for the SNS GCM FCMv1 structure
-            FcmMessageWrapper fcmMessage = new FcmMessageWrapper(new FcmMessage(messageBody));
-
-            DefaultPayload defaultPayload = new DefaultPayload(notificationData);
-
-            String gcmPayloadStr = objectMapper.writeValueAsString(fcmMessage);
-            String defaultPayloadStr = objectMapper.writeValueAsString(defaultPayload);
-
-            SnsPayload snsPayload = new SnsPayload(gcmPayloadStr, defaultPayloadStr);
-
-            String snsMessage = objectMapper.writeValueAsString(snsPayload);
-
+            String snsMessage = buildFinalSnsPayload(title, body, "medication_reminders", ttlSeconds);
             snsClient.publish(PublishRequest.builder()
                     .topicArn(topicArn)
                     .message(snsMessage)
@@ -100,46 +118,61 @@ public class SnsNotificationService implements NotificationService {
         }
     }
 
+    // 1. The top-level SNS Message Object
     @Serdeable
-    public record SnsPayload(
-            @JsonProperty("GCM") String gcm,
-            @JsonProperty("default") String defaultPayload
+    record SnsMessage(
+            @JsonProperty("default") String defaultMessage,
+            @JsonProperty("GCM") String gcm // This MUST be the stringified GcmPayload
     ) {}
 
-    // Top-level wrapper required by AWS Pinpoint/SNS for FCM v1
+    // 2. The GCM Payload Wrapper
     @Serdeable
-    public record FcmMessageWrapper(FcmMessage fcmV1Message) {}
-
-    // Forces the "message" key root inside fcmV1Message
-    @Serdeable
-    public record FcmMessage(FcmMessageBody message) {}
-
-    // Notification, Android, and APNs are now correctly siblings inside the "message" object
-    @Serdeable
-    public record FcmMessageBody(
-            NotificationData notification,
-            FcmAndroid android,
-            FcmApns apns
+    record GcmPayload(
+            @JsonProperty("fcmV1Message") FcmV1Message fcmV1Message
     ) {}
 
     @Serdeable
-    public record FcmAndroid(@JsonProperty("ttl") String ttl, FcmAndroidNotification notification) {}
+    record FcmV1Message(
+            @JsonProperty("message") Message message
+    ) {}
+
+    // 3. The Core Message Structure
+    @Serdeable
+    record Message(
+            @JsonProperty("notification") Notification notification,
+            @JsonProperty("android") AndroidConfig android,
+            @JsonProperty("apns") ApnsConfig apns
+    ) {}
 
     @Serdeable
-    public record FcmAndroidNotification(@JsonProperty("channel_id") String channelId) {}
+    record Notification(
+            @JsonProperty("title") String title,
+            @JsonProperty("body") String body
+    ) {}
+
+    // 4. Android Specific Overrides
+    @Serdeable
+    record AndroidConfig(
+            @JsonProperty("ttl") String ttl, // e.g., "86400s"
+            @JsonProperty("priority") String priority, // "HIGH" or "NORMAL"
+            @JsonProperty("notification") AndroidNotification notification
+    ) {}
 
     @Serdeable
-    public record FcmApns(FcmApnsPayload payload) {}
+    record AndroidNotification(
+            @JsonProperty("channel_id") String channelId
+    ) {}
+
+    // 5. iOS (APNs) Specific Overrides
+    @Serdeable
+    record ApnsConfig(
+            @JsonProperty("headers") ApnsHeaders headers
+    ) {}
 
     @Serdeable
-    public record FcmApnsPayload(FcmAps aps) {}
+    record ApnsHeaders(
+            @JsonProperty("apns-expiration") String apnsExpiration, // Absolute epoch time string
+            @JsonProperty("apns-priority") String apnsPriority      // "10" (immediate) or "5" (background)
+    ) {}
 
-    @Serdeable
-    public record FcmAps(String sound) {}
-
-    @Serdeable
-    public record DefaultPayload(NotificationData notification) {}
-
-    @Serdeable
-    public record NotificationData(String title, String body) {}
 }
