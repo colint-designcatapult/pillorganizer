@@ -31,6 +31,22 @@ class UserServiceSpec extends BaseIntegrationSpec {
         result.email == email
     }
 
+    def "upsert should create a new user if missing name"() {
+        given:
+        String userId = "user123"
+        String email = "john.doe@example.com"
+
+        when:
+        User result = userService.upsert(userId, null, email)
+
+        then:
+        result != null
+        result.id == userId
+        result.name == null
+        result.email == email
+    }
+
+
     def "upsert should update existing user"() {
         given:
         String userId = "user456"
