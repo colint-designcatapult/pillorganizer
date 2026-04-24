@@ -1,14 +1,10 @@
 name: Create Release PR
 
 on:
-  push:
-    tags:
-      - '[0-9]*'
-      - 'v[0-9]*'
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g., 1.2.3+90 or v1.2.3+90)'
+        description: 'Version to release (e.g., 0.0.2+90)'
         required: true
         type: string
 
@@ -24,22 +20,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: master
 
-      - name: Extract version from tag or input
+      - name: Extract version from input
         id: vars
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            # Manual trigger - use input version
-            TAG="${{ github.event.inputs.version }}"
-          else
-            # Tag push - extract from git ref
-            TAG=${GITHUB_REF#refs/tags/}
-          fi
-          # Remove 'v' prefix if present (works whether v is there or not)
-          VERSION=${TAG#v}
-          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          VERSION="${{ github.event.inputs.version }}"
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "Tag: ${TAG}"
           echo "Version: ${VERSION}"
 
       - name: Update pubspec.yaml
@@ -72,14 +59,12 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          branch: "release/${{ steps.vars.outputs.tag }}"
-          title: "Release ${{ steps.vars.outputs.tag }}"
+          branch: "release/${{ steps.vars.outputs.version }}"
+          title: "Release ${{ steps.vars.outputs.version }}"
           body: |
             ## Automated Release PR
             
             **Version:** `${{ steps.vars.outputs.version }}`
-            
-            **Tag:** `${{ steps.vars.outputs.tag }}`
             
             ### Changes Since Last Release
             ```
@@ -87,9 +72,9 @@ jobs:
             ```
             
             ### What This Does
-            [*] Updates app version in `app/pubspec.yaml`
-            [*] Creates audit trail in PR
-            [*] Ready for manual merge when approved
+            - Updates app version in `app/pubspec.yaml`
+            - Creates audit trail in PR
+            - Ready for manual merge when approved
             
             **Next Steps:**
             1. Review the version change
