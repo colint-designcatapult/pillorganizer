@@ -27,7 +27,8 @@ jobs:
         run: |
           BASE_VERSION="${{ github.event.inputs.version }}"
           RUN_NUMBER="${{ github.run_number }}"
-          APP_VERSION="${BASE_VERSION}+${RUN_NUMBER}"
+          BUILD_NUMBER=$((RUN_NUMBER + 1000))
+          APP_VERSION="${BASE_VERSION}+${BUILD_NUMBER}"
           BRANCH_VERSION=$(echo "${APP_VERSION}" | sed 's/[.+]/-/g')
           echo "base_version=${BASE_VERSION}" >> $GITHUB_OUTPUT
           echo "app_version=${APP_VERSION}" >> $GITHUB_OUTPUT
