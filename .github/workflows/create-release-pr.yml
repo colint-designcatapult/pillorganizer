@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           fetch-depth: 0
           ref: master
@@ -39,14 +39,16 @@ jobs:
       - name: Get commit history for changelog
         id: changelog
         run: |
-          # Get the previous tag
-          PREV_TAG=$(git describe --tags --abbrev=0 @^ 2>/dev/null || echo "")
+          # Get the most recent tag (excluding current HEAD if tagged)
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           
           if [ -z "$PREV_TAG" ]; then
             # First release - get all commits
+            echo "First release detected, getting all commits"
             COMMIT_LOG=$(git log --oneline --pretty=format:"- %h: %s")
           else
             # Get commits since previous tag
+            echo "Previous tag: ${PREV_TAG}, getting commits since then"
             COMMIT_LOG=$(git log ${PREV_TAG}..HEAD --oneline --pretty=format:"- %h: %s")
           fi
           
@@ -56,7 +58,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: "release/${{ steps.vars.outputs.version }}"
