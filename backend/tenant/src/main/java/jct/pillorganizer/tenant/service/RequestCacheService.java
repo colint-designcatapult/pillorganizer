@@ -5,6 +5,7 @@ import io.micronaut.http.context.ServerRequestContext;
 import io.micronaut.security.utils.SecurityService;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jct.pillorganizer.core.auth.AppSecurityRule;
 import jct.pillorganizer.tenant.model.device.DeviceUser;
 import jct.pillorganizer.tenant.model.user.User;
 
@@ -30,8 +31,16 @@ public class RequestCacheService {
 
     public void processRequest(HttpRequest<?> request) {
         var auth = securityService.getAuthentication();
+
+        // Anonymous request
         if (auth.isEmpty()) {
-            return; // Anonymous request
+            return;
+        }
+
+        var roles = auth.get().getRoles();
+        if (roles != null && roles.contains(AppSecurityRule.IS_ADMIN)) {
+            // Skip admins
+            return;
         }
 
         Object userId = auth.get().getAttributes().get("userId");

@@ -16,9 +16,6 @@ interface AppStackProps extends cdk.StackProps {
   environmentName: string;
   domainName: apigwv2.IDomainName;
   adminUserPool: cognito.IUserPool;
-  adminCognitoJwksUrl: string;
-  adminCognitoIssuer: string;
-  adminGlobalGroup: string;
 }
 
 /* This stack configures the actual application. */
@@ -121,10 +118,6 @@ export class AppStack extends cdk.Stack {
           DB_PORT: '5432',
           DB_NAME: 'pillorganizer',
           TENANT_ID: tenantId,
-          ADMIN_TENANT_GROUP: tenantAdminGroup,
-          ADMIN_GLOBAL_GROUP: props.adminGlobalGroup,
-          ADMIN_COGNITO_ISSUER: props.adminCognitoIssuer,
-          ADMIN_COGNITO_JWKS_URL: props.adminCognitoJwksUrl,
         },
       });
 

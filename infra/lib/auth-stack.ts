@@ -11,11 +11,7 @@ interface AuthStackProps extends cdk.StackProps {
 }
 
 export class AuthStack extends cdk.Stack {
-  public readonly userPool: cognito.UserPool;
-  public readonly adminUserPool: cognito.UserPool;
-  public readonly adminUserPoolIssuer: string;
-  public readonly adminUserPoolJwksUrl: string;
-  public readonly adminGlobalGroupName: string;
+  public readonly adminUserPool: cognito.IUserPool;
 
   constructor(scope: Construct, id: string, props: AuthStackProps) {
     super(scope, id, props);
@@ -28,7 +24,7 @@ export class AuthStack extends cdk.Stack {
       'jct.pillorganizer.global.function.CognitoPreTokenGenerationHandler', props.controlPlaneTable);
 
     // -- Cognito User Pool --
-    this.userPool = new cognito.UserPool(this, 'HealtheUserPool', {
+    var userPool = new cognito.UserPool(this, 'HealtheUserPool', {
       userPoolName: 'healthe-userpool',
       selfSignUpEnabled: true,
       standardAttributes: {
@@ -48,13 +44,13 @@ export class AuthStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.RETAIN
     });
 
-    this.userPool.addDomain('HealtheCognitoDomain', {
+    userPool.addDomain('HealtheCognitoDomain', {
       cognitoDomain: {
         domainPrefix: 'healthesolutions'
       }
     })
 
-    const flutterAppClient = this.userPool.addClient('CabinetAppClient', {
+    const flutterAppClient = userPool.addClient('CabinetAppClient', {
       userPoolClientName: 'healthe-cabinet-mobile',
       generateSecret: false, 
       authFlows: {
@@ -82,14 +78,14 @@ export class AuthStack extends cdk.Stack {
     });
 
     new cognito.CfnManagedLoginBranding(this, 'DefaultManagedLoginBranding', {
-      userPoolId: this.userPool.userPoolId,
+      userPoolId: userPool.userPoolId,
       clientId: flutterAppClient.userPoolClientId,
       // This is the magic flag that tells Cognito to use its shiny new default styling
       useCognitoProvidedValues: true, 
     });
 
     // -- Admin Cognito User Pool --
-    this.adminUserPool = new cognito.UserPool(this, 'HealtheAdminUserPool', {
+    var adminUserPool = new cognito.UserPool(this, 'HealtheAdminUserPool', {
       userPoolName: 'healthe-admin-userpool',
       selfSignUpEnabled: false,
       standardAttributes: {
@@ -105,13 +101,13 @@ export class AuthStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.RETAIN
     });
 
-    this.adminUserPool.addDomain('HealtheAdminCognitoDomain', {
+    adminUserPool.addDomain('HealtheAdminCognitoDomain', {
       cognitoDomain: {
         domainPrefix: 'healthesolutions-admin'
       }
     });
 
-    const adminAppClient = this.adminUserPool.addClient('AdminDashboardClient', {
+    const adminAppClient = adminUserPool.addClient('AdminDashboardClient', {
       userPoolClientName: 'healthe-admin-dashboard',
       generateSecret: false,
       authFlows: {
@@ -142,19 +138,17 @@ export class AuthStack extends cdk.Stack {
     });
 
     new cognito.CfnManagedLoginBranding(this, 'AdminManagedLoginBranding', {
-      userPoolId: this.adminUserPool.userPoolId,
+      userPoolId: adminUserPool.userPoolId,
       clientId: adminAppClient.userPoolClientId,
       useCognitoProvidedValues: true,
     });
 
-    this.adminGlobalGroupName = 'admin-global';
     new cognito.CfnUserPoolGroup(this, 'AdminGlobalGroup', {
-      groupName: this.adminGlobalGroupName,
-      userPoolId: this.adminUserPool.userPoolId,
+      groupName: 'admin-global',
+      userPoolId: adminUserPool.userPoolId,
       description: 'Global admin role for dashboard access'
     });
 
-    this.adminUserPoolIssuer = `https://${this.adminUserPool.userPoolProviderUrl}`;
-    this.adminUserPoolJwksUrl = `${this.adminUserPoolIssuer}/.well-known/jwks.json`;
+    this.adminUserPool = adminUserPool;
   }
 }

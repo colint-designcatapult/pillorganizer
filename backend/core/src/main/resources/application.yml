@@ -1,8 +1,6 @@
 
 aws:
   region: ca-central-1
-  cognito:
-    public-pool: ca-central-1_PHR6msiks
 micronaut:
   application:
     name: backend
@@ -20,31 +18,29 @@ micronaut:
     redirect:
       enabled: false
     token:
-      roles-name: cognito:groups
       propagation:
         enabled: true
         service-id-regex: ".*"
       jwt:
         enabled: true
-        claims-validators:
-          issuer: https://cognito-idp.${aws.region}.amazonaws.com/${aws.cognito.public-pool}
         signatures:
           jwks:
-            cognito:
-              url: https://cognito-idp.${aws.region}.amazonaws.com/${aws.cognito.public-pool}/.well-known/jwks.json
+            public:
+              url: https://cognito-idp.${aws.region}.amazonaws.com/${app.auth.public.pool}/.well-known/jwks.json
             admin:
-              url: ${ADMIN_COGNITO_JWKS_URL:https://cognito-idp.${aws.region}.amazonaws.com/${aws.cognito.public-pool}/.well-known/jwks.json}
+              url: https://cognito-idp.${aws.region}.amazonaws.com/${app.auth.admin.pool}/.well-known/jwks.json
 endpoints:
   health:
     enabled: true
     sensitive: false
 app:
   auth:
+    public:
+      pool: "ca-central-1_PHR6msiks"
+      issuer: https://cognito-idp.${aws.region}.amazonaws.com/${app.auth.public.pool}
     admin:
-      issuer: ${ADMIN_COGNITO_ISSUER:}
-      global-group: ${ADMIN_GLOBAL_GROUP:admin-global}
-      tenant-group: ${ADMIN_TENANT_GROUP:}
-      tenant-id: ${TENANT_ID:}
+      pool: "ca-central-1_liR9FZX79"
+      issuer: https://cognito-idp.${aws.region}.amazonaws.com/${app.auth.admin.pool}
   iot-core:
     arn-prefix: "arn:aws:iot:ca-central-1:114829892869"
   tenant:
