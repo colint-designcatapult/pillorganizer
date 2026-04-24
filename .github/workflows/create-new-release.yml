@@ -133,7 +133,7 @@ jobs:
           echo "Release workflow completed successfully"
           echo "Base Version: ${{ steps.vars.outputs.base_version }}"
           echo "App Version: ${{ steps.vars.outputs.app_version }}"
-          echo "Build Number: ${{ github.run_number }}"
+          echo "Build Number: ${{ github.run_number + 1000 }}"
           echo "Branch: release/${{ steps.vars.outputs.branch_version }}"
           echo "Tag: ${{ steps.vars.outputs.app_version }}"
           echo "Release: v${{ steps.vars.outputs.app_version }}"
