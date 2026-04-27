@@ -32,6 +32,11 @@ public class CognitoIssuerRolesFinder implements RolesFinder {
 
     @Override
     public @NonNull List<String> resolveRoles(@Nullable Map<String, Object> attributes) {
+        // If no attributes, return empty role list
+        if (attributes == null || attributes.isEmpty()) {
+            return List.of();
+        }
+
         String issuer = (String) attributes.get("iss");
 
         if (adminIssuer.isBlank()) {
