@@ -14,7 +14,7 @@ micronaut:
     tenantresolver:
       fixed:
         enabled: true
-        tenant-id: ${TENANT_ID:local}
+        tenant-id: ${TENANT_ID}
   security:
     intercept-url-map:
       - access: isAnonymous()

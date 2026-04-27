@@ -18,12 +18,6 @@ import reactor.core.publisher.Mono;
 @Singleton
 public class TenantAdminRule implements SecurityRule<HttpRequest<?>> {
 
-    private final TenantResolver tenantResolver;
-
-    // Constructor injection
-    public TenantAdminRule(TenantResolver tenantResolver) {
-        this.tenantResolver = tenantResolver;
-    }
 
     @Override
     public int getOrder() {
@@ -42,22 +36,11 @@ public class TenantAdminRule implements SecurityRule<HttpRequest<?>> {
             return Mono.just(SecurityRuleResult.ALLOWED);
         }
 
-        // At this point, the request must be a tenant admin
-
-        try {
-            String tenantId = tenantResolver.resolveTenantId();
-            if (authentication.getRoles().contains(AppSecurityRule.isTenantAdmin(tenantId))) {
-                // Add tenant admin role so it can be picked up by @Secured
-                authentication.getRoles().add(AppSecurityRule.IS_TENANT_ADMIN);
-                // Allow request to proceed to @Secured filter
-                // Make no specific determination
-                return Mono.just(SecurityRuleResult.UNKNOWN);
-            }
-        } catch (TenantNotFoundException ex) {
-            // No tenant detected.
-            // Tenant admin requests must be scoped to a specific tenant
-            return Mono.just(SecurityRuleResult.REJECTED);
+        if (authentication.getRoles().contains(AppSecurityRule.IS_TENANT_ADMIN)) {
+            // This user is a tenant admin. Pass to next rule.
+            return Mono.just(SecurityRuleResult.UNKNOWN);
         }
+
         return Mono.just(SecurityRuleResult.REJECTED); // default-deny
     }
 }
