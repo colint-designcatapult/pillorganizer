@@ -74,6 +74,11 @@ public class CognitoIssuerRolesFinder implements RolesFinder {
                         // Add tenant admin role so it can be picked up by @Secured
                         list.add(AppSecurityRule.IS_TENANT_ADMIN);
                     }
+
+                    if (list.contains(AppSecurityRule.IS_GLOBAL_ADMIN)) {
+                        // If the user is a global admin. they are a tenant admin, too
+                        list.add(AppSecurityRule.IS_TENANT_ADMIN);
+                    }
                 } catch (TenantNotFoundException ex) {
                     // No tenant detected.
                     // Do not add any additional roles.
