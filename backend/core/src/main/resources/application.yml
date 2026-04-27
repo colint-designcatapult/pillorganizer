@@ -12,6 +12,20 @@ micronaut:
   multitenancy:
     filter:
       enabled: true
+  server:
+    cors:
+      enabled: true
+      configurations:
+        web:
+          allowed-origins:
+            - "https://admin.app.healthesolutions.ca"
+            - "http://localhost:4200"
+          allowed-methods:
+            - GET
+            - POST
+          allowed-headers:
+            - Content-Type
+            - Authorization
   security:
     enabled: true
     authentication: idtoken
