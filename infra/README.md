@@ -40,8 +40,11 @@ Changes to Cognito may result in a different user pool ID, client credentials, e
 Take care to review the diff before deploying changes.
 
 * Defines Cognito user pool.
+* Defines a separate Cognito admin user pool.
 * Creates a fixed domain for the user pool.
 * Creates a Cognito client for the mobile app (Flutter).
+* Creates a Cognito client for admin web dashboards (hosted UI).
+* Creates an `admin-global` group in the admin pool.
 * Creates a default managed login.
 
 ### HealtheControlPlaneStack
@@ -112,5 +115,4 @@ Then, deploy the changes with `cdk deploy`:
 **Example (HealtheAppStack production environment):** `$ cdk deploy HealtheAppStack-prod --profile AdministratorAccess-114829892869 -c env=prod`
 
 If deployment fails, CDK will by default perform a rollback.
-
 

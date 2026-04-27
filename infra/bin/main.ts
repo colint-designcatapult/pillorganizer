@@ -40,15 +40,16 @@ const controlPlaneDataStack = new ControlPlaneDataStack(app, 'HealtheControlPlan
   env: globalEnv,
 });
 
+const authStack = new AuthStack(app, 'HealtheAuthStack', {
+  env: globalEnv,
+  controlPlaneTable: controlPlaneDataStack.controlPlaneTable,
+  baseDomain: globals.baseDomain,
+});
+
 const controlPlaneStack = new ControlPlaneStack(app, 'HealtheControlPlaneStack', {
   env: globalEnv,
   domainName: platformStack.controlPlaneDomainName,
-  controlPlaneTable: controlPlaneDataStack.controlPlaneTable
-});
-
-const authStack = new AuthStack(app, 'HealtheAuthStack', {
-  env: globalEnv,
-  controlPlaneTable: controlPlaneDataStack.controlPlaneTable
+  controlPlaneTable: controlPlaneDataStack.controlPlaneTable,
 });
 
 const iotStack = new IotStack(app, `HealtheIotStack`, {
@@ -108,6 +109,7 @@ if (envKey) {
     removalPolicy: removalPolicy,
     environmentName: envKey,
     domainName: tenantPlatformStack.domainName,
+    adminUserPool: authStack.adminUserPool
   });
 
   // Apply config tags to environment stacks

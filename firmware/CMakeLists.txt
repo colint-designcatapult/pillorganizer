@@ -10,5 +10,5 @@ list(APPEND EXTRA_COMPONENT_DIRS
 )
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-set(PROJECT_VER "0.0.1")
+set(PROJECT_VER "0.0.0")
 project(pill-box)
