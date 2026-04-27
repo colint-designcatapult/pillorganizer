@@ -10,6 +10,7 @@ import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
+import jct.pillorganizer.core.auth.AppSecurityRule;
 import jct.pillorganizer.tenant.auth.AuthService;
 import jct.pillorganizer.tenant.dto.DeviceScheduleStateDTO;
 import jct.pillorganizer.tenant.dto.SetScheduleRequestDTO;
@@ -20,6 +21,7 @@ import lombok.extern.flogger.Flogger;
 
 @Controller("/api/v1/device")
 @Flogger
+@Secured(AppSecurityRule.IS_USER)
 public class AppScheduleController {
 
     @Inject

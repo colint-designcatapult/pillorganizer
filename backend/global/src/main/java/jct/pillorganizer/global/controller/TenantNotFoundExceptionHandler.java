@@ -16,6 +16,7 @@ import java.net.URI;
 @Produces
 @Singleton
 @Requires(classes = {TenantNotFoundException.class, ExceptionHandler.class})
+
 public class TenantNotFoundExceptionHandler implements ExceptionHandler<TenantNotFoundException, HttpResponse> {
     @Override
     public HttpResponse handle(HttpRequest request, TenantNotFoundException exception) {

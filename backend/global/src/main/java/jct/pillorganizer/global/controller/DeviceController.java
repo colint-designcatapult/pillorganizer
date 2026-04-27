@@ -6,6 +6,7 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import jakarta.inject.Inject;
+import jct.pillorganizer.core.auth.AppSecurityRule;
 import jct.pillorganizer.core.service.GlobalAuthService;
 import jct.pillorganizer.global.dto.ClaimCertRequestDto;
 import jct.pillorganizer.global.dto.DeviceClaimCertDto;
@@ -19,6 +20,7 @@ import reactor.core.publisher.Mono;
 
 
 @Controller("/device")
+@Secured(AppSecurityRule.IS_USER)
 public class DeviceController {
 
     @Inject

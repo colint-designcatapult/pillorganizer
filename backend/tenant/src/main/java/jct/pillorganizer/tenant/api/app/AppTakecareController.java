@@ -1,5 +1,6 @@
 package jct.pillorganizer.tenant.api.app;
 
+import jct.pillorganizer.core.auth.AppSecurityRule;
 import org.zalando.problem.Problem;
 
 import io.micronaut.http.HttpResponse;
@@ -20,6 +21,7 @@ import reactor.core.publisher.Mono;
 
 @Controller("/api/v1/takecare")
 @Flogger
+@Secured(AppSecurityRule.IS_USER)
 public class AppTakecareController {
 
     @Operation(summary = "Validate and link a Takecare patient with form data")

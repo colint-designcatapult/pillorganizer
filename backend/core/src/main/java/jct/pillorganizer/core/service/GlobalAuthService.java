@@ -16,9 +16,13 @@ public class GlobalAuthService {
 
     public String getUserID() {
         Optional<Authentication> auth = securityService.getAuthentication();
-        return auth.orElseThrow(() -> new AuthenticationException("No authentication"))
+        Object userId = auth.orElseThrow(() -> new AuthenticationException("No authentication"))
                 .getAttributes()
-                .get("userId").toString();
+                .get("userId");
+        if (userId == null) {
+            throw new AuthenticationException("No userId in token");
+        }
+        return userId.toString();
     }
 
 }

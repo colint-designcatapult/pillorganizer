@@ -76,6 +76,10 @@
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>iam-policy-builder</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.micronaut.reactor</groupId>
+      <artifactId>micronaut-reactor</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

@@ -7,6 +7,7 @@ import io.micronaut.security.rules.SecurityRule;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jct.pillorganizer.core.TenantDetails;
+import jct.pillorganizer.core.auth.AppSecurityRule;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.core.dto.DeviceClaimEligibilityDto;
 import jct.pillorganizer.core.dto.DeviceEligibilityCheckDto;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Controller("/internal/user")
+@Secured(AppSecurityRule.IS_USER)
 public class InternalUserController {
 
     @Inject

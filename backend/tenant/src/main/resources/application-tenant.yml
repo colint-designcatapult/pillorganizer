@@ -11,6 +11,10 @@ micronaut:
       httpheader:
         enabled: true
         header-name: "x-tenant-id"
+    tenantresolver:
+      fixed:
+        enabled: true
+        tenant-id: ${TENANT_ID}
   security:
     intercept-url-map:
       - access: isAnonymous()

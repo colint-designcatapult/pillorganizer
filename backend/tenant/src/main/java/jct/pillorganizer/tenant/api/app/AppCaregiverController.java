@@ -12,6 +12,7 @@ import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
+import jct.pillorganizer.core.auth.AppSecurityRule;
 import jct.pillorganizer.tenant.auth.AuthService;
 import jct.pillorganizer.tenant.service.DeviceService;
 import lombok.extern.flogger.Flogger;
@@ -21,6 +22,7 @@ import lombok.extern.flogger.Flogger;
  */
 @Controller("/api/v1/caregiver")
 @Flogger
+@Secured(AppSecurityRule.IS_USER)
 public class AppCaregiverController {
 
     @Operation(summary = "Validate caregiver's code")
