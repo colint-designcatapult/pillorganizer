@@ -55,6 +55,7 @@ public class UserPoolValidator<T> implements GenericJwtClaimsValidator<T> {
         }
         @Override
         public boolean isOpenidIdtoken() {
-            return true;
-        }}
+            return false;
+        }
+    }
 }

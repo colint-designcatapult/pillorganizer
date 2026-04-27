@@ -26,6 +26,11 @@ public class TenantAdminRule implements SecurityRule<HttpRequest<?>> {
 
     @Override
     public Publisher<SecurityRuleResult> check(HttpRequest<?> request, @Nullable Authentication authentication) {
+        // Exit this fast if no authentication exists
+        if (authentication == null) {
+            return Mono.just(SecurityRuleResult.UNKNOWN);
+        }
+
         if (!authentication.getRoles().contains(AppSecurityRule.IS_ADMIN)) {
             // Only run this rule if an admin is making the request
             return Mono.just(SecurityRuleResult.UNKNOWN);
