@@ -4,6 +4,7 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
+import jct.pillorganizer.core.auth.AppSecurityRule;
 import jct.pillorganizer.tenant.auth.AuthService;
 import jct.pillorganizer.tenant.dto.*;
 import jct.pillorganizer.tenant.model.user.User;
@@ -15,6 +16,7 @@ import reactor.core.publisher.Mono;
 import java.util.Optional;
 
 @Controller("/api/v1/user")
+@Secured(AppSecurityRule.IS_USER)
 public class AppUserController {
 
     @Inject
