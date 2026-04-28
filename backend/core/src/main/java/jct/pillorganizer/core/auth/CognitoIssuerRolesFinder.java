@@ -12,7 +12,6 @@ import io.micronaut.security.token.DefaultRolesFinder;
 import io.micronaut.security.token.RolesFinder;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
