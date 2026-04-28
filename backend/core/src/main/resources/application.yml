@@ -16,7 +16,7 @@ micronaut:
       configurations:
         angular:
           allowed-origins:
-            - "http://localhost:4200/"
+            - "http://localhost:4200"
           allowed-methods:
             - GET
             - POST

@@ -14,7 +14,6 @@ interface LayoutState {
     configSidebarVisible: boolean;
     mobileMenuActive: boolean;
     menuHoverActive: boolean;
-    activePath: string | null;
 }
 
 @Injectable({
@@ -34,8 +33,7 @@ export class LayoutService {
         overlayMenuActive: false,
         configSidebarVisible: false,
         mobileMenuActive: false,
-        menuHoverActive: false,
-        activePath: null
+        menuHoverActive: false
     });
 
     theme = computed(() => (this.layoutConfig().darkTheme ? 'light' : 'dark'));

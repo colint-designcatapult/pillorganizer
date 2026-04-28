@@ -3,5 +3,5 @@ aws:
   secret-key: test
   services:
     dynamodb:
-      endpoint-override: http://localhost:4566
+      endpoint-override: http://localhost:8000
       schema: http

@@ -7,6 +7,10 @@ import { Landing } from './app/pages/landing/landing';
 import { Notfound } from './app/pages/notfound/notfound';
 import { AdminDevices } from './app/pages/admin/admin-devices';
 import { AdminUsers } from './app/pages/admin/admin-users';
+import { AdminUserDetail } from './app/pages/admin/admin-user-detail';
+import { AdminDeviceDetail } from './app/pages/admin/admin-device-detail';
+import { AdminTenants } from './app/pages/admin/admin-tenants';
+import { AdminTenantDetail } from './app/pages/admin/admin-tenant-detail';
 import { authGuard } from './app/guards/auth.guard';
 
 export const appRoutes: Routes = [
@@ -20,7 +24,11 @@ export const appRoutes: Routes = [
             { path: 'documentation', component: Documentation },
             { path: 'pages', loadChildren: () => import('./app/pages/pages.routes') },
             { path: 'admin/users', component: AdminUsers },
-            { path: 'admin/devices', component: AdminDevices }
+            { path: 'admin/users/:userId', component: AdminUserDetail },
+            { path: 'admin/devices', component: AdminDevices },
+            { path: 'admin/devices/:serialNumber', component: AdminDeviceDetail },
+            { path: 'admin/tenants', component: AdminTenants },
+            { path: 'admin/tenants/:tenantId', component: AdminTenantDetail }
         ]
     },
     { path: 'landing', component: Landing },
@@ -29,3 +37,4 @@ export const appRoutes: Routes = [
     { path: 'auth', loadChildren: () => import('./app/pages/auth/auth.routes') },
     { path: '**', redirectTo: '/notfound' }
 ];
+

@@ -1,15 +1,20 @@
 package jct.pillorganizer.global.repo;
 
+import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.global.model.UserEntity;
 import software.amazon.awssdk.enhanced.dynamodb.Expression;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -60,6 +65,39 @@ public class UserRepo extends BaseControlPlaneRepo<UserEntity> {
                 .findFirst();
     }
 
+    /**
+     * Returns a single page of all users (up to {@code size}), queried via GSI1.
+     * Optional {@code userIdFilter} narrows results to users whose userId begins with the filter.
+     * Pass {@code cursor} from the previous page's {@link PageResult#nextCursor()} to advance;
+     * pass {@code null} to start from the beginning.
+     */
+    public PageResult<UserEntity> findAllPaginated(int size, @Nullable String cursor, @Nullable String userIdFilter) {
+        Map<String, AttributeValue> exclusiveStartKey = DynamoDbCursorUtil.decode(cursor);
+
+        String skPrefix = (userIdFilter != null && !userIdFilter.isBlank())
+                ? UserEntity.gsi1Sk(userIdFilter)
+                : UserEntity.gsi1Sk("");
+
+        QueryEnhancedRequest.Builder requestBuilder = QueryEnhancedRequest.builder()
+                .queryConditional(QueryConditional.sortBeginsWith(
+                        Key.builder()
+                                .partitionValue(UserEntity.gsi1Pk())
+                                .sortValue(skPrefix)
+                                .build()))
+                .limit(size);
+
+        if (exclusiveStartKey != null) {
+            requestBuilder.exclusiveStartKey(exclusiveStartKey);
+        }
+
+        Page<UserEntity> page = this.gsi1.query(requestBuilder.build()).iterator().next();
+        return new PageResult<>(page.items(), DynamoDbCursorUtil.encode(page.lastEvaluatedKey()));
+    }
+
+    public PageResult<UserEntity> findAllPaginated(int size, @Nullable String cursor) {
+        return findAllPaginated(size, cursor, null);
+    }
+
     public void updateFcmEndpointArn(UserEntity user, String fcmEndpointArn) {
         UserEntity updated = user.toBuilder()
                 .fcmEndpointArn(fcmEndpointArn)
@@ -67,3 +105,4 @@ public class UserRepo extends BaseControlPlaneRepo<UserEntity> {
         this.table.putItem(updated);
     }
 }
+

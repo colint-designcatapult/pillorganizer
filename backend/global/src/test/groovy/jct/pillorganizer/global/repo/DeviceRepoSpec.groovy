@@ -104,4 +104,80 @@ class DeviceRepoSpec extends BaseDeviceControlPlaneSpec {
         then:
         device.isEmpty()
     }
+
+    // ── findAllPaginated ──────────────────────────────────────────────────────
+
+    def "findAllPaginated should return first page and a non-null cursor when more devices exist"() {
+        given: "three DEVICE entities in the table"
+        insertDevice("tenant-1", "SN-P1", "device-p1")
+        insertDevice("tenant-1", "SN-P2", "device-p2")
+        insertDevice("tenant-1", "SN-P3", "device-p3")
+
+        when: "the first page is requested with page size 2"
+        def result = repo.findAllPaginated(2, null)
+
+        then: "exactly 2 devices are returned"
+        result.items().size() == 2
+
+        and: "a cursor is present to fetch the remaining device"
+        result.nextCursor() != null
+    }
+
+    def "findAllPaginated should traverse all devices across pages via cursor"() {
+        given:
+        insertDevice("tenant-1", "SN-T1", "device-t1")
+        insertDevice("tenant-1", "SN-T2", "device-t2")
+        insertDevice("tenant-1", "SN-T3", "device-t3")
+
+        when:
+        def page1 = repo.findAllPaginated(2, null)
+        def page2 = repo.findAllPaginated(2, page1.nextCursor())
+
+        then: "combined results cover all three devices without duplication"
+        def allSerials = (page1.items() + page2.items()).collect { it.serialNumber }
+        allSerials.size() == 3
+        allSerials.containsAll(["SN-T1", "SN-T2", "SN-T3"])
+
+        and: "second page has the remaining device and signals end-of-results"
+        page2.items().size() == 1
+        page2.nextCursor() == null
+    }
+
+    def "findAllPaginated should return null cursor when all devices fit in one scan page"() {
+        given:
+        insertDevice("tenant-1", "SN-F1", "device-f1")
+        insertDevice("tenant-1", "SN-F2", "device-f2")
+
+        when:
+        def result = repo.findAllPaginated(10, null)
+
+        then:
+        result.items().size() == 2
+        result.nextCursor() == null
+    }
+
+    def "findAllPaginated should exclude non-DEVICE entities from results"() {
+        given: "two devices and a user entity in the same table"
+        insertDevice("tenant-1", "SN-D1", "device-d1")
+        insertDevice("tenant-1", "SN-D2", "device-d2")
+        insertUser("user-extra", "Extra User", "sub-extra")
+
+        when: "page size larger than total items so all are evaluated in one scan"
+        def result = repo.findAllPaginated(20, null)
+
+        then: "only DEVICE entities are returned"
+        result.items().size() == 2
+        result.items().every { it.serialNumber.startsWith("SN-D") }
+        result.nextCursor() == null
+    }
+
+    def "findAllPaginated should return empty list and null cursor when no devices exist"() {
+        when:
+        def result = repo.findAllPaginated(20, null)
+
+        then:
+        result.items().isEmpty()
+        result.nextCursor() == null
+    }
 }
+

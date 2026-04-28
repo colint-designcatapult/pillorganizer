@@ -51,12 +51,9 @@ export class AppSidebar implements OnInit, OnDestroy {
                 filter((event) => event instanceof NavigationEnd),
                 takeUntil(this.destroy$)
             )
-            .subscribe((event) => {
-                const navEvent = event as NavigationEnd;
-                this.onRouteChange(navEvent.urlAfterRedirects);
-            });
+            .subscribe(() => this.onRouteChange());
 
-        this.onRouteChange(this.router.url);
+        this.onRouteChange();
     }
 
     ngOnDestroy() {
@@ -65,12 +62,10 @@ export class AppSidebar implements OnInit, OnDestroy {
         this.unbindOutsideClickListener();
     }
 
-    private onRouteChange(path: string) {
+    private onRouteChange() {
         this.layoutService.layoutState.update((val) => ({
             ...val,
-            activePath: path,
             overlayMenuActive: false,
-            staticMenuMobileActive: false,
             mobileMenuActive: false,
             menuHoverActive: false
         }));

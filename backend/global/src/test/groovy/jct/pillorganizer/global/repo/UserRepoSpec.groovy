@@ -92,4 +92,65 @@ class UserRepoSpec extends BaseDeviceControlPlaneSpec {
         then:
         user.isEmpty()
     }
+
+    // ── findAllPaginated ──────────────────────────────────────────────────────
+
+    def "findAllPaginated should return first page and a non-null cursor when more users exist"() {
+        given: "three users whose GSI1_SK values sort as user-a < user-b < user-c"
+        insertUser("user-a", "Alice", "sub-a")
+        insertUser("user-b", "Bob",   "sub-b")
+        insertUser("user-c", "Carol", "sub-c")
+
+        when:
+        def result = repo.findAllPaginated(2, null)
+
+        then: "first page contains exactly 2 items"
+        result.items().size() == 2
+
+        and: "a cursor is returned because there is one more user"
+        result.nextCursor() != null
+    }
+
+    def "findAllPaginated should return second page via cursor with no further cursor"() {
+        given:
+        insertUser("user-a", "Alice", "sub-a")
+        insertUser("user-b", "Bob",   "sub-b")
+        insertUser("user-c", "Carol", "sub-c")
+
+        when:
+        def page1 = repo.findAllPaginated(2, null)
+        def page2 = repo.findAllPaginated(2, page1.nextCursor())
+
+        then: "all three users are returned across two pages without overlap"
+        def allIds = (page1.items() + page2.items()).collect { it.userId }
+        allIds.size() == 3
+        allIds.containsAll(["user-a", "user-b", "user-c"])
+
+        and: "second page has the remaining 1 user and signals end-of-results"
+        page2.items().size() == 1
+        page2.nextCursor() == null
+    }
+
+    def "findAllPaginated should return null cursor when all users fit on a single page"() {
+        given:
+        insertUser("user-a", "Alice", "sub-a")
+        insertUser("user-b", "Bob",   "sub-b")
+
+        when:
+        def result = repo.findAllPaginated(10, null)
+
+        then:
+        result.items().size() == 2
+        result.nextCursor() == null
+    }
+
+    def "findAllPaginated should return empty list and null cursor when no users exist"() {
+        when:
+        def result = repo.findAllPaginated(20, null)
+
+        then:
+        result.items().isEmpty()
+        result.nextCursor() == null
+    }
 }
+
