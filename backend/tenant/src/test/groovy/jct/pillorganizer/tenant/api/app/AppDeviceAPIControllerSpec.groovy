@@ -92,7 +92,7 @@ class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
         _ * tenantService.getCurrentTenant() >> Optional.of(TenantDetails.TEST_TENANT)
     }
 
-    void "test getDeviceHistory returns dose history for device with recent events"() {
+    void "test getDeviceAdherenceHistory returns dose history for device with recent events"() {
         given:
         String userId = ksuidService.generateKsuid()
         String deviceId = ksuidService.generateKsuid()
@@ -159,7 +159,7 @@ class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
         response[0].binId in [0, 1]
     }
 
-    void "test getDeviceHistory returns empty list when device has no events"() {
+    void "test getDeviceAdherenceHistory returns empty list when device has no events"() {
         given:
         String userId = ksuidService.generateKsuid()
         String deviceId = ksuidService.generateKsuid()
@@ -180,7 +180,7 @@ class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
         response.size() == 0
     }
 
-    void "test getDeviceHistory respects limit parameter"() {
+    void "test getDeviceAdherenceHistory respects limit parameter"() {
         given:
         String userId = ksuidService.generateKsuid()
         String deviceId = ksuidService.generateKsuid()
@@ -230,7 +230,7 @@ class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
         response.size() == 2
     }
 
-    void "test getDeviceHistory returns 404 for non-existent device"() {
+    void "test getDeviceAdherenceHistory returns 404 for non-existent device"() {
         given:
         String userId = ksuidService.generateKsuid()
         String fakeDeviceId = "nonexistent-device-id"
@@ -250,7 +250,7 @@ class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
         e.status == HttpStatus.NOT_FOUND
     }
 
-    void "test getDeviceHistory returns 404 when accessing other user's device"() {
+    void "test getDeviceAdherenceHistory returns 404 when accessing other user's device"() {
         given:
         String user1Id = ksuidService.generateKsuid()
         String user2Id = ksuidService.generateKsuid()
@@ -276,7 +276,7 @@ class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
         e.status == HttpStatus.NOT_FOUND
     }
 
-    void "test getDeviceHistory uses default limit of 50 when not specified"() {
+    void "test getDeviceAdherenceHistory uses default limit of 50 when not specified"() {
         given:
         String userId = ksuidService.generateKsuid()
         String deviceId = ksuidService.generateKsuid()
