@@ -323,4 +323,87 @@ class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
         _ * securityService.getAuthentication() >> Optional.of(auth)
         response.size() >= 1
     }
+
+    void "test getDeviceAdherenceHistory filters by date parameter in device timezone"() {
+        given:
+        String userId = ksuidService.generateKsuid()
+        String deviceId = ksuidService.generateKsuid()
+        String claimId = ksuidService.generateKsuid()
+        String thingName = "thing-" + ksuidService.generateKsuid()
+        
+        User user = userService.ensureExists(userId)
+        def provisionRecord = deviceService.provision(user, deviceId, "sn-6", claimId, thingName)
+        def logicalDevice = provisionRecord.logicalDevice
+        
+        // Create a device schedule with LA timezone
+        def schedule = new DeviceSchedule()
+        schedule.id = UUID.randomUUID()
+        schedule.device = logicalDevice
+        schedule.createdBy = user
+        schedule.timezoneIana = "America/Los_Angeles"
+        schedule.status = ScheduleStatus.APPLIED
+        schedule.takeEffect = ScheduleTakeEffect.IMMEDIATE
+        schedule.scheduleJson = '{"schedules": []}'
+        deviceScheduleRepository.save(schedule)
+        
+        // Create events on different dates
+        def now = Instant.now()
+        def yesterday = now.minusSeconds(86400) // 1 day ago
+        def twoDaysAgo = now.minusSeconds(172800) // 2 days ago
+        
+        // Event from 2 days ago
+        def event1 = IotDeviceEventMessage.builder()
+                .thingName(thingName)
+                .tenant(TenantDetails.TEST_TENANT.id)
+                .timestamp(twoDaysAgo.toEpochMilli())
+                .eventType("TAKEN")
+                .binId(0)
+                .scheduleId(schedule.id.toString())
+                .epochWeek(twoDaysAgo.epochSecond)
+                .scheduledTime(twoDaysAgo.epochSecond)
+                .build()
+        
+        // Event from yesterday
+        def event2 = IotDeviceEventMessage.builder()
+                .thingName(thingName)
+                .tenant(TenantDetails.TEST_TENANT.id)
+                .timestamp(yesterday.toEpochMilli())
+                .eventType("MISSED")
+                .binId(1)
+                .scheduleId(schedule.id.toString())
+                .epochWeek(yesterday.epochSecond)
+                .scheduledTime(yesterday.epochSecond)
+                .build()
+        
+        // Event from today
+        def event3 = IotDeviceEventMessage.builder()
+                .thingName(thingName)
+                .tenant(TenantDetails.TEST_TENANT.id)
+                .timestamp(now.toEpochMilli())
+                .eventType("TAKEN")
+                .binId(2)
+                .scheduleId(schedule.id.toString())
+                .epochWeek(now.epochSecond)
+                .scheduledTime(now.epochSecond)
+                .build()
+        
+        deviceEventService.processEvent(event1)
+        deviceEventService.processEvent(event2)
+        deviceEventService.processEvent(event3)
+
+        def auth = Mock(Authentication)
+        auth.getAttributes() >> [userId: userId]
+
+        when:
+        // Query for today's date
+        def today = java.time.LocalDate.now()
+        def request = HttpRequest.GET("/api/v1/device/" + deviceId + "/adherencehistory?date=" + today + "&limit=50")
+        def response = client.toBlocking().retrieve(request, Argument.listOf(DoseHistoryDto))
+
+        then:
+        _ * securityService.getAuthentication() >> Optional.of(auth)
+        response.size() >= 1
+        response.every { it.finalStatus in ["TAKEN", "MISSED", "TAKE_NOW"] }
+        response.every { it.logicalDeviceId == deviceId }
+    }
 }

@@ -54,4 +54,36 @@ public interface DeviceEventRepository extends CrudRepository<DeviceEvent, UUID>
         LIMIT :limit
     """)
     List<DoseHistoryView> getResolvedHistory(String deviceId, Instant cursorTime, int limit);
+
+    @Query("""
+            WITH ResolvedDoses AS (
+            SELECT DISTINCT ON (logical_device_id, epoch_week, bin_id)
+                logical_device_id,
+                epoch_week,
+                bin_id,
+                scheduled_time,
+                event_type AS final_status,
+                timestamp AS resolved_time,
+                schedule_id
+            FROM device_event
+            WHERE logical_device_id = :deviceId\s
+              AND scheduled_time >= :startTime
+              AND scheduled_time < :endTime
+              AND event_type IN ('TAKEN', 'MISSED', 'TAKE_NOW')
+            ORDER BY logical_device_id, epoch_week, bin_id, timestamp DESC
+        )
+        SELECT\s
+            r.logical_device_id,
+            r.epoch_week,
+            r.bin_id,
+            r.scheduled_time,
+            r.final_status,
+            r.resolved_time,
+            s.timezone_iana AS device_time_zone 
+        FROM ResolvedDoses r
+        JOIN device_schedule s ON s.id::text = r.schedule_id
+        ORDER BY r.scheduled_time DESC
+        LIMIT :limit
+    """)
+    List<DoseHistoryView> getResolvedHistoryByDateRange(String deviceId, Instant startTime, Instant endTime, int limit);
 }

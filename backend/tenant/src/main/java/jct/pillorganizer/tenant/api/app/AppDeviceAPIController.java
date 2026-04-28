@@ -12,12 +12,18 @@ import jct.pillorganizer.tenant.auth.AuthService;
 import jct.pillorganizer.tenant.dto.UpdateDeviceNickname;
 import jct.pillorganizer.tenant.dto.DoseHistoryDto;
 import jct.pillorganizer.tenant.model.user.User;
+import jct.pillorganizer.tenant.projection.DoseHistoryView;
 import jct.pillorganizer.tenant.repo.DeviceEventRepository;
+import jct.pillorganizer.tenant.repo.DeviceScheduleRepository;
 import jct.pillorganizer.tenant.service.DeviceService;
 import lombok.extern.flogger.Flogger;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * API endpoints for the app to configure and view device information and state.
@@ -35,6 +41,9 @@ public class AppDeviceAPIController {
 
     @Inject
     DeviceEventRepository deviceEventRepository;
+
+    @Inject
+    DeviceScheduleRepository deviceScheduleRepository;
 
     @Operation(summary = "Lists devices that the user has access to")
     @Get("/list")
@@ -59,10 +68,38 @@ public class AppDeviceAPIController {
     @Get("/{id}/adherencehistory")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public List<DoseHistoryDto> getDeviceAdherenceHistory(@PathVariable("id") String deviceID,
-                                                          @QueryValue(defaultValue = "50") int limit) {
+                                                          @QueryValue(defaultValue = "50") int limit,
+                                                          @QueryValue Optional<LocalDate> date) {
         authService.accessDevice(deviceID, false);
         log.atInfo().log("Retrieving adherence history for device: %s, limit: %d", deviceID, limit);
-        var doseHistory = deviceEventRepository.getResolvedHistory(deviceID, Instant.now(), limit);
+        
+        List<DoseHistoryView> doseHistory;
+        if (date.isPresent()) {
+            // Query for specific date in device's timezone
+            var schedules = deviceScheduleRepository.findByDeviceId(deviceID);
+            if (schedules.isEmpty()) {
+                log.atWarning().log("No schedules found for device: %s", deviceID);
+                return List.of();
+            }
+            
+            String deviceTimeZone = schedules.get(0).getTimezoneIana();
+            ZoneId zoneId = ZoneId.of(deviceTimeZone);
+            
+            LocalDateTime startOfDay = date.get().atStartOfDay();
+            LocalDateTime endOfDay = date.get().plusDays(1).atStartOfDay();
+            
+            Instant startUtc = startOfDay.atZone(zoneId).toInstant();
+            Instant endUtc = endOfDay.atZone(zoneId).toInstant();
+            
+            log.atInfo().log("Querying adherence history for date: %s in timezone: %s (UTC: %s to %s)", 
+                date.get(), deviceTimeZone, startUtc, endUtc);
+            
+            doseHistory = deviceEventRepository.getResolvedHistoryByDateRange(deviceID, startUtc, endUtc, limit);
+        } else {
+            // Default: query last 14 days from now
+            doseHistory = deviceEventRepository.getResolvedHistory(deviceID, Instant.now(), limit);
+        }
+        
         log.atInfo().log("Query returned %d results", doseHistory.size());
         return doseHistory.stream()
                 .map(view -> new DoseHistoryDto(
