@@ -1,11 +1,12 @@
-package jct.pillorganizer.tenant.projection;
+package jct.pillorganizer.tenant.dto;
 
 import io.micronaut.core.annotation.Introspected;
-
+import io.micronaut.serde.annotation.Serdeable;
 import java.time.Instant;
 
 @Introspected
-public record DoseHistoryView(
+@Serdeable
+public record DoseHistoryDto(
         String logicalDeviceId,
         Instant epochWeek,
         Integer binId,
