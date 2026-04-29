@@ -35,8 +35,8 @@ public interface DeviceEventRepository extends CrudRepository<DeviceEvent, UUID>
                 schedule_id
             FROM device_event
             WHERE logical_device_id = :deviceId\s
-              AND scheduled_time <= :cursorTime
-              AND scheduled_time >= CAST(:cursorTime AS TIMESTAMPTZ) - INTERVAL '14 days'
+              AND scheduled_time >= make_timestamptz(:year, :month, 1, 0, 0, 0, :timezone)
+              AND scheduled_time < make_timestamptz(:year, :month, 1, 0, 0, 0, :timezone) + INTERVAL '1 month'
               AND event_type IN ('TAKEN', 'MISSED', 'TAKE_NOW')
             ORDER BY logical_device_id, epoch_week, bin_id, timestamp DESC
         )
@@ -51,7 +51,6 @@ public interface DeviceEventRepository extends CrudRepository<DeviceEvent, UUID>
         FROM ResolvedDoses r
         JOIN device_schedule s ON s.id::text = r.schedule_id
         ORDER BY r.scheduled_time DESC
-        LIMIT :limit
     """)
-    List<DoseHistoryView> getResolvedHistory(String deviceId, Instant cursorTime, int limit);
+    List<DoseHistoryView> getResolvedMonthAdherenceHistory(String deviceId, int year, int month, String timezone);
 }
