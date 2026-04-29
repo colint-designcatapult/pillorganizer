@@ -11,6 +11,7 @@ import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.tenant.auth.AuthService;
 import jct.pillorganizer.tenant.dto.UpdateDeviceNickname;
 import jct.pillorganizer.tenant.dto.DoseHistoryDto;
+import jct.pillorganizer.tenant.dto.MonthDaysWithDataDto;
 import jct.pillorganizer.tenant.model.user.User;
 import jct.pillorganizer.tenant.projection.DoseHistoryView;
 import jct.pillorganizer.tenant.repo.DeviceEventRepository;
@@ -112,6 +113,34 @@ public class AppDeviceAPIController {
                         view.deviceTimeZone()
                 ))
                 .toList();
+    }
+
+    @Operation(summary = "Retrieves days with adherence data for a given month")
+    @Get("/{id}/adherencehistory/month-days-with-data")
+    @Secured(SecurityRule.IS_AUTHENTICATED)
+    public MonthDaysWithDataDto getMonthDaysWithData(@PathVariable("id") String deviceID,
+                                                      @QueryValue int year,
+                                                      @QueryValue int month) {
+        authService.accessDevice(deviceID, false);
+        log.atInfo().log("Retrieving days with data for device: %s, year: %d, month: %d", deviceID, year, month);
+        
+        // Fetch device's timezone from schedules
+        var schedules = deviceScheduleRepository.findByDeviceId(deviceID);
+        if (schedules.isEmpty()) {
+            log.atWarning().log("No schedules found for device: %s", deviceID);
+            return new MonthDaysWithDataDto(year, month, List.of());
+        }
+        
+        String deviceTimeZone = schedules.get(0).getTimezoneIana();
+        var daysWithData = deviceEventRepository.getMonthDaysWithData(deviceID, year, month, deviceTimeZone);
+        
+        // Handle null result from empty query
+        if (daysWithData == null) {
+            daysWithData = List.of();
+        }
+        
+        log.atInfo().log("Found %d days with data for %d-%02d", daysWithData.size(), year, month);
+        return new MonthDaysWithDataDto(year, month, daysWithData);
     }
 
 }

@@ -56,6 +56,18 @@ public interface DeviceEventRepository extends CrudRepository<DeviceEvent, UUID>
     List<DoseHistoryView> getResolvedHistory(String deviceId, Instant cursorTime, int limit);
 
     @Query("""
+            SELECT DISTINCT
+                EXTRACT(DAY FROM scheduled_time AT TIME ZONE :timezone)::INT AS day
+            FROM device_event
+            WHERE logical_device_id = :deviceId
+              AND EXTRACT(YEAR FROM scheduled_time AT TIME ZONE :timezone) = :year
+              AND EXTRACT(MONTH FROM scheduled_time AT TIME ZONE :timezone) = :month
+              AND event_type IN ('TAKEN', 'MISSED', 'TAKE_NOW')
+            ORDER BY day ASC
+    """)
+    List<Integer> getMonthDaysWithData(String deviceId, int year, int month, String timezone);
+
+    @Query("""
             WITH ResolvedDoses AS (
             SELECT DISTINCT ON (logical_device_id, epoch_week, bin_id)
                 logical_device_id,

@@ -17,6 +17,7 @@ import jct.pillorganizer.core.service.TenantService
 import jct.pillorganizer.core.uid.KsuidService
 import jct.pillorganizer.tenant.BaseIntegrationSpec
 import jct.pillorganizer.tenant.dto.DoseHistoryDto
+import jct.pillorganizer.tenant.dto.MonthDaysWithDataDto
 import jct.pillorganizer.tenant.model.device.DeviceEvent
 import jct.pillorganizer.tenant.model.device.DeviceSchedule
 import jct.pillorganizer.tenant.model.device.ScheduleStatus
@@ -405,5 +406,110 @@ class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
         response.size() >= 1
         response.every { it.finalStatus in ["TAKEN", "MISSED", "TAKE_NOW"] }
         response.every { it.logicalDeviceId == deviceId }
+    }
+
+    void "test getMonthDaysWithData returns days with adherence data for a given month"() {
+        given:
+        String userId = ksuidService.generateKsuid()
+        String deviceId = ksuidService.generateKsuid()
+        String claimId = ksuidService.generateKsuid()
+        String thingName = "thing-" + ksuidService.generateKsuid()
+        
+        User user = userService.ensureExists(userId)
+        def provisionRecord = deviceService.provision(user, deviceId, "sn-7", claimId, thingName)
+        def logicalDevice = provisionRecord.logicalDevice
+        
+        // Create a device schedule
+        def schedule = new DeviceSchedule()
+        schedule.id = UUID.randomUUID()
+        schedule.device = logicalDevice
+        schedule.createdBy = user
+        schedule.timezoneIana = "UTC"
+        schedule.status = ScheduleStatus.APPLIED
+        schedule.takeEffect = ScheduleTakeEffect.IMMEDIATE
+        schedule.scheduleJson = '{"schedules": []}'
+        deviceScheduleRepository.save(schedule)
+        
+        // Create events on specific days in current month (days 3, 10, 15)
+        def today = java.time.LocalDate.now()
+        def year = today.year
+        def month = today.monthValue
+        
+        // Create LocalDate objects for specific days
+        def day3 = java.time.LocalDate.of(year, month, 3).atStartOfDay().atZone(java.time.ZoneId.of("UTC")).toInstant()
+        def day10 = java.time.LocalDate.of(year, month, 10).atStartOfDay().atZone(java.time.ZoneId.of("UTC")).toInstant()
+        def day15 = java.time.LocalDate.of(year, month, 15).atStartOfDay().atZone(java.time.ZoneId.of("UTC")).toInstant()
+        
+        // Also create an event in the previous month to verify it's NOT included
+        def lastMonth = today.minusMonths(1)
+        def lastMonthEvent = java.time.LocalDate.of(lastMonth.year, lastMonth.monthValue, 20).atStartOfDay().atZone(java.time.ZoneId.of("UTC")).toInstant()
+        
+        [day3, day10, day15, lastMonthEvent].each { day ->
+            def event = IotDeviceEventMessage.builder()
+                    .thingName(thingName)
+                    .tenant(TenantDetails.TEST_TENANT.id)
+                    .timestamp(day.toEpochMilli())
+                    .eventType("TAKEN")
+                    .binId(0)
+                    .scheduleId(schedule.id.toString())
+                    .epochWeek(day.epochSecond)
+                    .scheduledTime(day.epochSecond)
+                    .build()
+            deviceEventService.processEvent(event)
+        }
+
+        def auth = Mock(Authentication)
+        auth.getAttributes() >> [userId: userId]
+
+        when:
+        def request = HttpRequest.GET("/api/v1/device/" + deviceId + "/adherencehistory/month-days-with-data?year=" + year + "&month=" + month)
+        def response = client.toBlocking().retrieve(request, MonthDaysWithDataDto)
+
+        then:
+        _ * securityService.getAuthentication() >> Optional.of(auth)
+        response.year == year
+        response.month == month
+        response.daysWithData.size() == 3
+        response.daysWithData.containsAll([3, 10, 15])
+        !response.daysWithData.contains(20) // Ensure previous month's data is not included
+    }
+
+    void "test getMonthDaysWithData returns empty list when no events in month"() {
+        given:
+        String userId = ksuidService.generateKsuid()
+        String deviceId = ksuidService.generateKsuid()
+        String claimId = ksuidService.generateKsuid()
+        
+        User user = userService.ensureExists(userId)
+        def provisionRecord = deviceService.provision(user, deviceId, "sn-8", claimId, "thing-8")
+        def logicalDevice = provisionRecord.logicalDevice
+        
+        // Create a device schedule but don't add any events
+        def schedule = new DeviceSchedule()
+        schedule.id = UUID.randomUUID()
+        schedule.device = logicalDevice
+        schedule.createdBy = user
+        schedule.timezoneIana = "UTC"
+        schedule.status = ScheduleStatus.APPLIED
+        schedule.takeEffect = ScheduleTakeEffect.IMMEDIATE
+        schedule.scheduleJson = '{"schedules": []}'
+        deviceScheduleRepository.save(schedule)
+
+        def auth = Mock(Authentication)
+        auth.getAttributes() >> [userId: userId]
+
+        when:
+        def today = java.time.LocalDate.now()
+        def year = today.year
+        def month = today.monthValue
+        
+        def request = HttpRequest.GET("/api/v1/device/" + deviceId + "/adherencehistory/month-days-with-data?year=" + year + "&month=" + month)
+        def response = client.toBlocking().retrieve(request, MonthDaysWithDataDto)
+
+        then:
+        _ * securityService.getAuthentication() >> Optional.of(auth)
+        response.year == year
+        response.month == month
+        response.daysWithData.size() == 0
     }
 }
