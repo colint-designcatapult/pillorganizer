@@ -17,7 +17,6 @@ import jct.pillorganizer.core.service.TenantService
 import jct.pillorganizer.core.uid.KsuidService
 import jct.pillorganizer.tenant.BaseIntegrationSpec
 import jct.pillorganizer.tenant.dto.DoseHistoryDto
-import jct.pillorganizer.tenant.dto.MonthDaysWithDataDto
 import jct.pillorganizer.tenant.model.device.DeviceEvent
 import jct.pillorganizer.tenant.model.device.DeviceSchedule
 import jct.pillorganizer.tenant.model.device.ScheduleStatus
@@ -31,7 +30,9 @@ import jct.pillorganizer.tenant.service.NotificationService
 import jct.pillorganizer.tenant.service.UserService
 
 import java.time.Instant
+import java.time.LocalDate
 import java.util.UUID
+import java.util.Optional
 
 @MicronautTest(transactional = false)
 class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
@@ -93,7 +94,7 @@ class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
         _ * tenantService.getCurrentTenant() >> Optional.of(TenantDetails.TEST_TENANT)
     }
 
-    void "test getDeviceAdherenceHistory returns dose history for device with recent events"() {
+    void "test getDeviceAdherenceHistory returns dose history for entire month"() {
         given:
         String userId = ksuidService.generateKsuid()
         String deviceId = ksuidService.generateKsuid()
@@ -115,52 +116,69 @@ class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
         schedule.scheduleJson = '{"schedules": []}'
         deviceScheduleRepository.save(schedule)
         
-        // Create some device events with TAKEN, MISSED, TAKE_NOW statuses
-        def now = Instant.now()
-        def scheduledTimeToday = now.minusSeconds(3600) // 1 hour ago
+        // Create device events on different days in the current month
+        def today = LocalDate.now()
+        def year = today.year
+        def month = today.monthValue
+        
+        def day1 = LocalDate.of(year, month, 1).atStartOfDay().atZone(java.time.ZoneId.of("America/Toronto")).toInstant()
+        def day10 = LocalDate.of(year, month, 10).atStartOfDay().atZone(java.time.ZoneId.of("America/Toronto")).toInstant()
+        def day20 = LocalDate.of(year, month, 20).atStartOfDay().atZone(java.time.ZoneId.of("America/Toronto")).toInstant()
         
         def event1 = IotDeviceEventMessage.builder()
                 .thingName(thingName)
                 .tenant(TenantDetails.TEST_TENANT.id)
-                .timestamp(scheduledTimeToday.toEpochMilli())
+                .timestamp(day1.toEpochMilli())
                 .eventType("TAKEN")
                 .binId(0)
                 .scheduleId(schedule.id.toString())
-                .epochWeek(Instant.now().epochSecond)
-                .scheduledTime(scheduledTimeToday.epochSecond)
+                .epochWeek(day1.epochSecond)
+                .scheduledTime(day1.epochSecond)
                 .build()
         
         def event2 = IotDeviceEventMessage.builder()
                 .thingName(thingName)
                 .tenant(TenantDetails.TEST_TENANT.id)
-                .timestamp(scheduledTimeToday.plusSeconds(3600).toEpochMilli())
+                .timestamp(day10.toEpochMilli())
                 .eventType("MISSED")
                 .binId(1)
                 .scheduleId(schedule.id.toString())
-                .epochWeek(Instant.now().epochSecond)
-                .scheduledTime(scheduledTimeToday.plusSeconds(3600).epochSecond)
+                .epochWeek(day10.epochSecond)
+                .scheduledTime(day10.epochSecond)
+                .build()
+        
+        def event3 = IotDeviceEventMessage.builder()
+                .thingName(thingName)
+                .tenant(TenantDetails.TEST_TENANT.id)
+                .timestamp(day20.toEpochMilli())
+                .eventType("TAKE_NOW")
+                .binId(2)
+                .scheduleId(schedule.id.toString())
+                .epochWeek(day20.epochSecond)
+                .scheduledTime(day20.epochSecond)
                 .build()
         
         deviceEventService.processEvent(event1)
         deviceEventService.processEvent(event2)
+        deviceEventService.processEvent(event3)
 
         def auth = Mock(Authentication)
         auth.getAttributes() >> [userId: userId]
 
         when:
-        def request = HttpRequest.GET("/api/v1/device/" + deviceId + "/adherencehistory?limit=50")
+        def request = HttpRequest.GET("/api/v1/device/" + deviceId + "/adherencehistory?year=" + year + "&month=" + month)
         def response = client.toBlocking().retrieve(request, Argument.listOf(DoseHistoryDto))
 
         then:
         _ * securityService.getAuthentication() >> Optional.of(auth)
-        response.size() >= 2
-        response[0].logicalDeviceId == deviceId
-        response[0].finalStatus in ["TAKEN", "MISSED"]
-        response[0].deviceTimeZone == "America/Toronto"
-        response[0].binId in [0, 1]
+        response.size() == 3
+        response.every { it.logicalDeviceId == deviceId }
+        response.every { it.finalStatus in ["TAKEN", "MISSED", "TAKE_NOW"] }
+        response.every { it.deviceTimeZone == "America/Toronto" }
     }
 
-    void "test getDeviceAdherenceHistory returns empty list when device has no events"() {
+
+    void "test getDeviceAdherenceHistory returns empty list when device has no events in month"() {
         given:
         String userId = ksuidService.generateKsuid()
         String deviceId = ksuidService.generateKsuid()
@@ -173,13 +191,15 @@ class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
         auth.getAttributes() >> [userId: userId]
 
         when:
-        def request = HttpRequest.GET("/api/v1/device/" + deviceId + "/adherencehistory?limit=50")
+        def today = LocalDate.now()
+        def request = HttpRequest.GET("/api/v1/device/" + deviceId + "/adherencehistory?year=" + today.year + "&month=" + today.monthValue)
         def response = client.toBlocking().retrieve(request, Argument.listOf(DoseHistoryDto))
 
         then:
         _ * securityService.getAuthentication() >> Optional.of(auth)
         response.size() == 0
     }
+
 
     void "test getDeviceAdherenceHistory respects limit parameter"() {
         given:
@@ -202,273 +222,19 @@ class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
         schedule.scheduleJson = '{"schedules": []}'
         deviceScheduleRepository.save(schedule)
         
-        // Create 5 events
-        def now = Instant.now()
-        for (int i = 0; i < 5; i++) {
-            def scheduledTime = now.minusSeconds(3600 * (5 - i))
-            def event = IotDeviceEventMessage.builder()
-                    .thingName(thingName)
-                    .tenant(TenantDetails.TEST_TENANT.id)
-                    .timestamp(scheduledTime.toEpochMilli())
-                    .eventType("TAKEN")
-                    .binId(i)
-                    .scheduleId(schedule.id.toString())
-                    .epochWeek(now.epochSecond)
-                    .scheduledTime(scheduledTime.epochSecond)
-                    .build()
-            deviceEventService.processEvent(event)
-        }
-
-        def auth = Mock(Authentication)
-        auth.getAttributes() >> [userId: userId]
-
-        when:
-        def request = HttpRequest.GET("/api/v1/device/" + deviceId + "/adherencehistory?limit=2")
-        def response = client.toBlocking().retrieve(request, Argument.listOf(DoseHistoryDto))
-
-        then:
-        _ * securityService.getAuthentication() >> Optional.of(auth)
-        response.size() == 2
-    }
-
-    void "test getDeviceAdherenceHistory returns 404 for non-existent device"() {
-        given:
-        String userId = ksuidService.generateKsuid()
-        String fakeDeviceId = "nonexistent-device-id"
-        
-        User user = userService.ensureExists(userId)
-
-        def auth = Mock(Authentication)
-        auth.getAttributes() >> [userId: userId]
-
-        when:
-        def request = HttpRequest.GET("/api/v1/device/" + fakeDeviceId + "/adherencehistory")
-        client.toBlocking().retrieve(request, Argument.listOf(DoseHistoryDto))
-
-        then:
-        _ * securityService.getAuthentication() >> Optional.of(auth)
-        HttpClientResponseException e = thrown()
-        e.status == HttpStatus.NOT_FOUND
-    }
-
-    void "test getDeviceAdherenceHistory returns 404 when accessing other user's device"() {
-        given:
-        String user1Id = ksuidService.generateKsuid()
-        String user2Id = ksuidService.generateKsuid()
-        String deviceId = ksuidService.generateKsuid()
-        String claimId = ksuidService.generateKsuid()
-        
-        User user1 = userService.ensureExists(user1Id)
-        User user2 = userService.ensureExists(user2Id)
-        
-        // User1 provisions the device
-        deviceService.provision(user1, deviceId, "sn-4", claimId, "thing-4")
-
-        def auth = Mock(Authentication)
-        auth.getAttributes() >> [userId: user2Id]
-
-        when:
-        def request = HttpRequest.GET("/api/v1/device/" + deviceId + "/adherencehistory")
-        client.toBlocking().retrieve(request, Argument.listOf(DoseHistoryDto))
-
-        then:
-        _ * securityService.getAuthentication() >> Optional.of(auth)
-        HttpClientResponseException e = thrown()
-        e.status == HttpStatus.NOT_FOUND
-    }
-
-    void "test getDeviceAdherenceHistory uses default limit of 50 when not specified"() {
-        given:
-        String userId = ksuidService.generateKsuid()
-        String deviceId = ksuidService.generateKsuid()
-        String claimId = ksuidService.generateKsuid()
-        String thingName = "thing-" + ksuidService.generateKsuid()
-        
-        User user = userService.ensureExists(userId)
-        def provisionRecord = deviceService.provision(user, deviceId, "sn-5", claimId, thingName)
-        def logicalDevice = provisionRecord.logicalDevice
-        
-        def schedule = new DeviceSchedule()
-        schedule.id = UUID.randomUUID()
-        schedule.device = logicalDevice
-        schedule.createdBy = user
-        schedule.timezoneIana = "Europe/London"
-        schedule.status = ScheduleStatus.APPLIED
-        schedule.takeEffect = ScheduleTakeEffect.IMMEDIATE
-        schedule.scheduleJson = '{"schedules": []}'
-        deviceScheduleRepository.save(schedule)
-        
-        // Create 1 event
-        def now = Instant.now()
-        def event = IotDeviceEventMessage.builder()
-                .thingName(thingName)
-                .tenant(TenantDetails.TEST_TENANT.id)
-                .timestamp(now.toEpochMilli())
-                .eventType("TAKEN")
-                .binId(5)
-                .scheduleId(schedule.id.toString())
-                .epochWeek(now.epochSecond)
-                .scheduledTime(now.epochSecond)
-                .build()
-        deviceEventService.processEvent(event)
-
-        def auth = Mock(Authentication)
-        auth.getAttributes() >> [userId: userId]
-
-        when:
-        // Note: no ?limit parameter specified
-        def request = HttpRequest.GET("/api/v1/device/" + deviceId + "/adherencehistory")
-        def response = client.toBlocking().retrieve(request, Argument.listOf(DoseHistoryDto))
-
-        then:
-        _ * securityService.getAuthentication() >> Optional.of(auth)
-        response.size() >= 1
-    }
-
-    void "test getDeviceAdherenceHistory filters by date parameter in device timezone"() {
-        given:
-        String userId = ksuidService.generateKsuid()
-        String deviceId = ksuidService.generateKsuid()
-        String claimId = ksuidService.generateKsuid()
-        String thingName = "thing-" + ksuidService.generateKsuid()
-        
-        User user = userService.ensureExists(userId)
-        def provisionRecord = deviceService.provision(user, deviceId, "sn-6", claimId, thingName)
-        def logicalDevice = provisionRecord.logicalDevice
-        
-        // Create a device schedule with LA timezone
-        def schedule = new DeviceSchedule()
-        schedule.id = UUID.randomUUID()
-        schedule.device = logicalDevice
-        schedule.createdBy = user
-        schedule.timezoneIana = "America/Los_Angeles"
-        schedule.status = ScheduleStatus.APPLIED
-        schedule.takeEffect = ScheduleTakeEffect.IMMEDIATE
-        schedule.scheduleJson = '{"schedules": []}'
-        deviceScheduleRepository.save(schedule)
-        
-        // Create events on different dates
-        def now = Instant.now()
-        def yesterday = now.minusSeconds(86400) // 1 day ago
-        def twoDaysAgo = now.minusSeconds(172800) // 2 days ago
-        
-        // Event from 2 days ago
-        def event1 = IotDeviceEventMessage.builder()
-                .thingName(thingName)
-                .tenant(TenantDetails.TEST_TENANT.id)
-                .timestamp(twoDaysAgo.toEpochMilli())
-                .eventType("TAKEN")
-                .binId(0)
-                .scheduleId(schedule.id.toString())
-                .epochWeek(twoDaysAgo.epochSecond)
-                .scheduledTime(twoDaysAgo.epochSecond)
-                .build()
-        
-        // Event from yesterday
-        def event2 = IotDeviceEventMessage.builder()
-                .thingName(thingName)
-                .tenant(TenantDetails.TEST_TENANT.id)
-                .timestamp(yesterday.toEpochMilli())
-                .eventType("MISSED")
-                .binId(1)
-                .scheduleId(schedule.id.toString())
-                .epochWeek(yesterday.epochSecond)
-                .scheduledTime(yesterday.epochSecond)
-                .build()
-        
-        // Event from today
-        def event3 = IotDeviceEventMessage.builder()
-                .thingName(thingName)
-                .tenant(TenantDetails.TEST_TENANT.id)
-                .timestamp(now.toEpochMilli())
-                .eventType("TAKEN")
-                .binId(2)
-                .scheduleId(schedule.id.toString())
-                .epochWeek(now.epochSecond)
-                .scheduledTime(now.epochSecond)
-                .build()
-        
-        deviceEventService.processEvent(event1)
-        deviceEventService.processEvent(event2)
-        deviceEventService.processEvent(event3)
-
-        def auth = Mock(Authentication)
-        auth.getAttributes() >> [userId: userId]
-
-        when:
-        // Query for today's date in device's timezone
-        def deviceZone = java.time.ZoneId.of("America/Los_Angeles")
-        def today = java.time.LocalDate.now(deviceZone)
-        def tomorrow = today.plusDays(1)
-        
-        // Create an event on tomorrow (different day in device timezone) to verify filtering
-        def tomorrowEvent = IotDeviceEventMessage.builder()
-                .thingName(thingName)
-                .tenant(TenantDetails.TEST_TENANT.id)
-                .timestamp(tomorrow.atStartOfDay().atZone(deviceZone).toInstant().toEpochMilli())
-                .eventType("TAKEN")
-                .binId(3)
-                .scheduleId(schedule.id.toString())
-                .epochWeek(tomorrow.atStartOfDay().atZone(deviceZone).toInstant().epochSecond)
-                .scheduledTime(tomorrow.atStartOfDay().atZone(deviceZone).toInstant().epochSecond)
-                .build()
-        deviceEventService.processEvent(tomorrowEvent)
-        
-        def request = HttpRequest.GET("/api/v1/device/" + deviceId + "/adherencehistory?date=" + today + "&limit=50")
-        def response = client.toBlocking().retrieve(request, Argument.listOf(DoseHistoryDto))
-
-        then:
-        _ * securityService.getAuthentication() >> Optional.of(auth)
-        response.size() >= 1
-        response.every { it.finalStatus in ["TAKEN", "MISSED", "TAKE_NOW"] }
-        response.every { it.logicalDeviceId == deviceId }
-        // Verify tomorrow's event is not included
-        !response.any { it.binId == 3 }
-    }
-
-    void "test getMonthDaysWithData returns days with adherence data for a given month"() {
-        given:
-        String userId = ksuidService.generateKsuid()
-        String deviceId = ksuidService.generateKsuid()
-        String claimId = ksuidService.generateKsuid()
-        String thingName = "thing-" + ksuidService.generateKsuid()
-        
-        User user = userService.ensureExists(userId)
-        def provisionRecord = deviceService.provision(user, deviceId, "sn-7", claimId, thingName)
-        def logicalDevice = provisionRecord.logicalDevice
-        
-        // Create a device schedule
-        def schedule = new DeviceSchedule()
-        schedule.id = UUID.randomUUID()
-        schedule.device = logicalDevice
-        schedule.createdBy = user
-        schedule.timezoneIana = "UTC"
-        schedule.status = ScheduleStatus.APPLIED
-        schedule.takeEffect = ScheduleTakeEffect.IMMEDIATE
-        schedule.scheduleJson = '{"schedules": []}'
-        deviceScheduleRepository.save(schedule)
-        
-        // Create events on specific days in current month (days 3, 10, 15)
-        def today = java.time.LocalDate.now()
+        // Create 10 events in current month
+        def today = LocalDate.now()
         def year = today.year
         def month = today.monthValue
         
-        // Create LocalDate objects for specific days
-        def day3 = java.time.LocalDate.of(year, month, 3).atStartOfDay().atZone(java.time.ZoneId.of("UTC")).toInstant()
-        def day10 = java.time.LocalDate.of(year, month, 10).atStartOfDay().atZone(java.time.ZoneId.of("UTC")).toInstant()
-        def day15 = java.time.LocalDate.of(year, month, 15).atStartOfDay().atZone(java.time.ZoneId.of("UTC")).toInstant()
-        
-        // Also create an event in the previous month to verify it's NOT included
-        def lastMonth = today.minusMonths(1)
-        def lastMonthEvent = java.time.LocalDate.of(lastMonth.year, lastMonth.monthValue, 20).atStartOfDay().atZone(java.time.ZoneId.of("UTC")).toInstant()
-        
-        [day3, day10, day15, lastMonthEvent].each { day ->
+        for (int i = 1; i <= 10; i++) {
+            def day = LocalDate.of(year, month, Math.min(i, 28)).atStartOfDay().atZone(java.time.ZoneId.of("UTC")).toInstant()
             def event = IotDeviceEventMessage.builder()
                     .thingName(thingName)
                     .tenant(TenantDetails.TEST_TENANT.id)
                     .timestamp(day.toEpochMilli())
                     .eventType("TAKEN")
-                    .binId(0)
+                    .binId(i)
                     .scheduleId(schedule.id.toString())
                     .epochWeek(day.epochSecond)
                     .scheduledTime(day.epochSecond)
@@ -480,54 +246,60 @@ class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
         auth.getAttributes() >> [userId: userId]
 
         when:
-        def request = HttpRequest.GET("/api/v1/device/" + deviceId + "/adherencehistory/month-days-with-data?year=" + year + "&month=" + month)
-        def response = client.toBlocking().retrieve(request, MonthDaysWithDataDto)
+        def request = HttpRequest.GET("/api/v1/device/" + deviceId + "/adherencehistory?year=" + year + "&month=" + month)
+        def response = client.toBlocking().retrieve(request, Argument.listOf(DoseHistoryDto))
 
         then:
         _ * securityService.getAuthentication() >> Optional.of(auth)
-        response.year == year
-        response.month == month
-        response.daysWithData.size() == 3
-        response.daysWithData.containsAll([3, 10, 15])
-        !response.daysWithData.contains(20) // Ensure previous month's data is not included
+        response.size() == 10
     }
 
-    void "test getMonthDaysWithData returns empty list when no events in month"() {
+    void "test getDeviceAdherenceHistory returns 404 for non-existent device"() {
         given:
         String userId = ksuidService.generateKsuid()
-        String deviceId = ksuidService.generateKsuid()
-        String claimId = ksuidService.generateKsuid()
+        String fakeDeviceId = "nonexistent-device-id"
+        def today = LocalDate.now()
         
         User user = userService.ensureExists(userId)
-        def provisionRecord = deviceService.provision(user, deviceId, "sn-8", claimId, "thing-8")
-        def logicalDevice = provisionRecord.logicalDevice
-        
-        // Create a device schedule but don't add any events
-        def schedule = new DeviceSchedule()
-        schedule.id = UUID.randomUUID()
-        schedule.device = logicalDevice
-        schedule.createdBy = user
-        schedule.timezoneIana = "UTC"
-        schedule.status = ScheduleStatus.APPLIED
-        schedule.takeEffect = ScheduleTakeEffect.IMMEDIATE
-        schedule.scheduleJson = '{"schedules": []}'
-        deviceScheduleRepository.save(schedule)
 
         def auth = Mock(Authentication)
         auth.getAttributes() >> [userId: userId]
 
         when:
-        def today = java.time.LocalDate.now()
-        def year = today.year
-        def month = today.monthValue
-        
-        def request = HttpRequest.GET("/api/v1/device/" + deviceId + "/adherencehistory/month-days-with-data?year=" + year + "&month=" + month)
-        def response = client.toBlocking().retrieve(request, MonthDaysWithDataDto)
+        def request = HttpRequest.GET("/api/v1/device/" + fakeDeviceId + "/adherencehistory?year=" + today.year + "&month=" + today.monthValue)
+        client.toBlocking().retrieve(request, Argument.listOf(DoseHistoryDto))
 
         then:
         _ * securityService.getAuthentication() >> Optional.of(auth)
-        response.year == year
-        response.month == month
-        response.daysWithData.size() == 0
+        HttpClientResponseException e = thrown()
+        e.status == HttpStatus.NOT_FOUND
+    }
+
+
+    void "test getDeviceAdherenceHistory returns 404 when accessing other user's device"() {
+        given:
+        String user1Id = ksuidService.generateKsuid()
+        String user2Id = ksuidService.generateKsuid()
+        String deviceId = ksuidService.generateKsuid()
+        String claimId = ksuidService.generateKsuid()
+        def today = LocalDate.now()
+        
+        User user1 = userService.ensureExists(user1Id)
+        User user2 = userService.ensureExists(user2Id)
+        
+        // User1 provisions the device
+        deviceService.provision(user1, deviceId, "sn-4", claimId, "thing-4")
+
+        def auth = Mock(Authentication)
+        auth.getAttributes() >> [userId: user2Id]
+
+        when:
+        def request = HttpRequest.GET("/api/v1/device/" + deviceId + "/adherencehistory?year=" + today.year + "&month=" + today.monthValue)
+        client.toBlocking().retrieve(request, Argument.listOf(DoseHistoryDto))
+
+        then:
+        _ * securityService.getAuthentication() >> Optional.of(auth)
+        HttpClientResponseException e = thrown()
+        e.status == HttpStatus.NOT_FOUND
     }
 }

@@ -11,7 +11,6 @@ import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.tenant.auth.AuthService;
 import jct.pillorganizer.tenant.dto.UpdateDeviceNickname;
 import jct.pillorganizer.tenant.dto.DoseHistoryDto;
-import jct.pillorganizer.tenant.dto.MonthDaysWithDataDto;
 import jct.pillorganizer.tenant.model.device.ScheduleStatus;
 import jct.pillorganizer.tenant.model.user.User;
 import jct.pillorganizer.tenant.projection.DoseHistoryView;
@@ -21,11 +20,7 @@ import jct.pillorganizer.tenant.service.DeviceService;
 import lombok.extern.flogger.Flogger;
 
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * API endpoints for the app to configure and view device information and state.
@@ -66,47 +61,31 @@ public class AppDeviceAPIController {
                         io.micronaut.http.HttpStatus.NOT_FOUND, "Device not found"));
     }
 
-    @Operation(summary = "Retrieves medication adherence history for a device")
+    @Operation(summary = "Retrieves medication adherence history for an entire month")
     @Get("/{id}/adherencehistory")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public List<DoseHistoryDto> getDeviceAdherenceHistory(@PathVariable("id") String deviceID,
-                                                          @QueryValue(defaultValue = "50") int limit,
-                                                          @QueryValue Optional<LocalDate> date) {
+                                                          @QueryValue int year,
+                                                          @QueryValue int month) {
         authService.accessDevice(deviceID, false);
-        log.atInfo().log("Retrieving adherence history for device: %s, limit: %d", deviceID, limit);
+        log.atInfo().log("Retrieving adherence history for device: %s, year: %d, month: %d", deviceID, year, month);
         
-        List<DoseHistoryView> doseHistory;
-        if (date.isPresent()) {
-            // Query for specific date in device's timezone
-            var appliedSchedules = deviceScheduleRepository.findByDeviceIdAndStatus(deviceID, ScheduleStatus.APPLIED);
-            if (appliedSchedules.isEmpty()) {
-                log.atWarning().log("No APPLIED schedules found for device: %s", deviceID);
-                return List.of();
-            }
-            
-            String deviceTimeZone = appliedSchedules.get(0).getTimezoneIana();
-            if (deviceTimeZone == null) {
-                log.atSevere().log("APPLIED schedule has null timezone for device: %s", deviceID);
-                return List.of();
-            }
-            ZoneId zoneId = ZoneId.of(deviceTimeZone);
-            
-            LocalDateTime startOfDay = date.get().atStartOfDay();
-            LocalDateTime endOfDay = date.get().plusDays(1).atStartOfDay();
-            
-            Instant startUtc = startOfDay.atZone(zoneId).toInstant();
-            Instant endUtc = endOfDay.atZone(zoneId).toInstant();
-            
-            log.atInfo().log("Querying adherence history for date: %s in timezone: %s (UTC: %s to %s)", 
-                date.get(), deviceTimeZone, startUtc, endUtc);
-            
-            doseHistory = deviceEventRepository.getResolvedHistoryByDateRange(deviceID, startUtc, endUtc, limit);
-        } else {
-            // Default: query last 14 days from now
-            doseHistory = deviceEventRepository.getResolvedHistory(deviceID, Instant.now(), limit);
+        // Fetch device's APPLIED schedule timezone
+        var appliedSchedules = deviceScheduleRepository.findByDeviceIdAndStatus(deviceID, ScheduleStatus.APPLIED);
+        if (appliedSchedules.isEmpty()) {
+            log.atWarning().log("No APPLIED schedules found for device: %s", deviceID);
+            return List.of();
         }
         
-        log.atInfo().log("Query returned %d results", doseHistory.size());
+        String deviceTimeZone = appliedSchedules.get(0).getTimezoneIana();
+        if (deviceTimeZone == null) {
+            log.atSevere().log("APPLIED schedule has null timezone for device: %s", deviceID);
+            return List.of();
+        }
+        
+        List<DoseHistoryView> doseHistory = deviceEventRepository.getResolvedMonthAdherenceHistory(deviceID, year, month, deviceTimeZone);
+        
+        log.atInfo().log("Query returned %d results for %d-%02d", doseHistory.size(), year, month);
         return doseHistory.stream()
                 .map(view -> new DoseHistoryDto(
                         view.logicalDeviceId(),
@@ -118,38 +97,6 @@ public class AppDeviceAPIController {
                         view.deviceTimeZone()
                 ))
                 .toList();
-    }
-
-    @Operation(summary = "Retrieves days with adherence data for a given month")
-    @Get("/{id}/adherencehistory/month-days-with-data")
-    @Secured(SecurityRule.IS_AUTHENTICATED)
-    public MonthDaysWithDataDto getMonthDaysWithData(@PathVariable("id") String deviceID,
-                                                      @QueryValue int year,
-                                                      @QueryValue int month) {
-        authService.accessDevice(deviceID, false);
-        log.atInfo().log("Retrieving days with data for device: %s, year: %d, month: %d", deviceID, year, month);
-        
-        // Fetch device's APPLIED schedule timezone
-        var appliedSchedules = deviceScheduleRepository.findByDeviceIdAndStatus(deviceID, ScheduleStatus.APPLIED);
-        if (appliedSchedules.isEmpty()) {
-            log.atWarning().log("No APPLIED schedules found for device: %s", deviceID);
-            return new MonthDaysWithDataDto(year, month, List.of());
-        }
-        
-        String deviceTimeZone = appliedSchedules.get(0).getTimezoneIana();
-        if (deviceTimeZone == null) {
-            log.atSevere().log("APPLIED schedule has null timezone for device: %s", deviceID);
-            return new MonthDaysWithDataDto(year, month, List.of());
-        }
-        var daysWithData = deviceEventRepository.getMonthDaysWithData(deviceID, year, month, deviceTimeZone);
-        
-        // Handle null result from empty query
-        if (daysWithData == null) {
-            daysWithData = List.of();
-        }
-        
-        log.atInfo().log("Found %d days with data for %d-%02d", daysWithData.size(), year, month);
-        return new MonthDaysWithDataDto(year, month, daysWithData);
     }
 
 }
