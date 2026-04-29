@@ -60,6 +60,7 @@ public interface DeviceEventRepository extends CrudRepository<DeviceEvent, UUID>
                 EXTRACT(DAY FROM scheduled_time AT TIME ZONE :timezone)::INT AS day
             FROM device_event
             WHERE logical_device_id = :deviceId
+              AND scheduled_time IS NOT NULL
               AND EXTRACT(YEAR FROM scheduled_time AT TIME ZONE :timezone) = :year
               AND EXTRACT(MONTH FROM scheduled_time AT TIME ZONE :timezone) = :month
               AND event_type IN ('TAKEN', 'MISSED', 'TAKE_NOW')
