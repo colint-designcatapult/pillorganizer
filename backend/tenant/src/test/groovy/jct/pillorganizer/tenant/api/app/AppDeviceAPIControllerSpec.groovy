@@ -396,8 +396,24 @@ class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
         auth.getAttributes() >> [userId: userId]
 
         when:
-        // Query for today's date
-        def today = java.time.LocalDate.now()
+        // Query for today's date in device's timezone
+        def deviceZone = java.time.ZoneId.of("America/Los_Angeles")
+        def today = java.time.LocalDate.now(deviceZone)
+        def tomorrow = today.plusDays(1)
+        
+        // Create an event on tomorrow (different day in device timezone) to verify filtering
+        def tomorrowEvent = IotDeviceEventMessage.builder()
+                .thingName(thingName)
+                .tenant(TenantDetails.TEST_TENANT.id)
+                .timestamp(tomorrow.atStartOfDay().atZone(deviceZone).toInstant().toEpochMilli())
+                .eventType("TAKEN")
+                .binId(3)
+                .scheduleId(schedule.id.toString())
+                .epochWeek(tomorrow.atStartOfDay().atZone(deviceZone).toInstant().epochSecond)
+                .scheduledTime(tomorrow.atStartOfDay().atZone(deviceZone).toInstant().epochSecond)
+                .build()
+        deviceEventService.processEvent(tomorrowEvent)
+        
         def request = HttpRequest.GET("/api/v1/device/" + deviceId + "/adherencehistory?date=" + today + "&limit=50")
         def response = client.toBlocking().retrieve(request, Argument.listOf(DoseHistoryDto))
 
@@ -406,6 +422,8 @@ class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
         response.size() >= 1
         response.every { it.finalStatus in ["TAKEN", "MISSED", "TAKE_NOW"] }
         response.every { it.logicalDeviceId == deviceId }
+        // Verify tomorrow's event is not included
+        !response.any { it.binId == 3 }
     }
 
     void "test getMonthDaysWithData returns days with adherence data for a given month"() {

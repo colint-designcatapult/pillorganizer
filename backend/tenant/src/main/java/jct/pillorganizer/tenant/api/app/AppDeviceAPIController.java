@@ -12,6 +12,7 @@ import jct.pillorganizer.tenant.auth.AuthService;
 import jct.pillorganizer.tenant.dto.UpdateDeviceNickname;
 import jct.pillorganizer.tenant.dto.DoseHistoryDto;
 import jct.pillorganizer.tenant.dto.MonthDaysWithDataDto;
+import jct.pillorganizer.tenant.model.device.ScheduleStatus;
 import jct.pillorganizer.tenant.model.user.User;
 import jct.pillorganizer.tenant.projection.DoseHistoryView;
 import jct.pillorganizer.tenant.repo.DeviceEventRepository;
@@ -77,13 +78,17 @@ public class AppDeviceAPIController {
         List<DoseHistoryView> doseHistory;
         if (date.isPresent()) {
             // Query for specific date in device's timezone
-            var schedules = deviceScheduleRepository.findByDeviceId(deviceID);
-            if (schedules.isEmpty()) {
-                log.atWarning().log("No schedules found for device: %s", deviceID);
+            var appliedSchedules = deviceScheduleRepository.findByDeviceIdAndStatus(deviceID, ScheduleStatus.APPLIED);
+            if (appliedSchedules.isEmpty()) {
+                log.atWarning().log("No APPLIED schedules found for device: %s", deviceID);
                 return List.of();
             }
             
-            String deviceTimeZone = schedules.get(0).getTimezoneIana();
+            String deviceTimeZone = appliedSchedules.get(0).getTimezoneIana();
+            if (deviceTimeZone == null) {
+                log.atSevere().log("APPLIED schedule has null timezone for device: %s", deviceID);
+                return List.of();
+            }
             ZoneId zoneId = ZoneId.of(deviceTimeZone);
             
             LocalDateTime startOfDay = date.get().atStartOfDay();
@@ -124,14 +129,18 @@ public class AppDeviceAPIController {
         authService.accessDevice(deviceID, false);
         log.atInfo().log("Retrieving days with data for device: %s, year: %d, month: %d", deviceID, year, month);
         
-        // Fetch device's timezone from schedules
-        var schedules = deviceScheduleRepository.findByDeviceId(deviceID);
-        if (schedules.isEmpty()) {
-            log.atWarning().log("No schedules found for device: %s", deviceID);
+        // Fetch device's APPLIED schedule timezone
+        var appliedSchedules = deviceScheduleRepository.findByDeviceIdAndStatus(deviceID, ScheduleStatus.APPLIED);
+        if (appliedSchedules.isEmpty()) {
+            log.atWarning().log("No APPLIED schedules found for device: %s", deviceID);
             return new MonthDaysWithDataDto(year, month, List.of());
         }
         
-        String deviceTimeZone = schedules.get(0).getTimezoneIana();
+        String deviceTimeZone = appliedSchedules.get(0).getTimezoneIana();
+        if (deviceTimeZone == null) {
+            log.atSevere().log("APPLIED schedule has null timezone for device: %s", deviceID);
+            return new MonthDaysWithDataDto(year, month, List.of());
+        }
         var daysWithData = deviceEventRepository.getMonthDaysWithData(deviceID, year, month, deviceTimeZone);
         
         // Handle null result from empty query
