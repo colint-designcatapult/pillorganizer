@@ -23,15 +23,6 @@ class MedicationHistoryModal extends ConsumerStatefulWidget {
 class _MedicationHistoryModalState extends ConsumerState<MedicationHistoryModal> {
   final TimeService _timeService = TimeService();
 
-  @override
-  void initState() {
-    super.initState();
-    // Load initial current month history
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(medicationHistoryProvider(widget.deviceId).notifier).loadCurrentMonth();
-    });
-  }
-
   void _clearDate() {
     ref.read(medicationHistoryProvider(widget.deviceId).notifier).clearDate();
   }
