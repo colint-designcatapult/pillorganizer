@@ -26,4 +26,9 @@ abstract class TenantApiClient {
       @Path("id") String deviceId,
       @Body() UpdateDeviceSettingsDto request);
 
+  @GET("/api/v1/device/{id}/adherencehistory")
+  Future<List<DoseHistoryDto>> getAdherenceHistory(
+      @Path("id") String deviceId,
+      {@Query("year") required int year,
+       @Query("month") required int month});
 }

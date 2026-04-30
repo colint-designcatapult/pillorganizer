@@ -1,7 +1,9 @@
+import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/device_state_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/time_provider.dart';
 import 'package:app/widgets/dose_period_area.dart';
+import 'package:app/widgets/medication_history_modal.dart';
 import 'package:app/widgets/pillbox/pill_box.dart';
 import 'package:app/widgets/today_medication_card.dart';
 import 'package:flutter/material.dart';
@@ -68,6 +70,61 @@ class HomeBody extends ConsumerWidget {
                 child: Padding(
                   padding: EdgeInsets.only(bottom: 24.h),
                   child: const TodayMedicationCard(),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 120.h),
+                  child: Consumer(
+                    builder: (context, ref, _) {
+                      final selectedDevice = ref.watch(activeDeviceProvider);
+                      final deviceStateAsync = ref.watch(deviceStateProvider);
+                      final deviceError = ref.watch(deviceErrorProvider);
+                      
+                      if (selectedDevice == null) {
+                        return const SizedBox.shrink();
+                      }
+                      
+                      final isLoading = deviceStateAsync.isLoading;
+                      final isDisconnected = deviceError == DeviceError.disconnected;
+                      final isDisabled = isLoading || isDisconnected;
+                      
+                      return SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isDisabled ? Colors.grey[400] : const Color(0xFF206B8B),
+                            padding: EdgeInsets.symmetric(vertical: 18.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                          ),
+                          onPressed: isDisabled ? null : () {
+                            showDialog(
+                              context: context,
+                              builder: (_) => MedicationHistoryModal(
+                                deviceId: selectedDevice.id,
+                              ),
+                            );
+                          },
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                                )
+                              : Text(
+                                  'Device Medication History',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ],
