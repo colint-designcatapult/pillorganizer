@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:app/apiv2/models/dto.dart';
-import 'package:app/apiv2/tenant.dart';
 import 'package:app/provider/tenant_providers.dart';
-import 'package:app/service/time_service.dart';
+import 'package:app/provider/schedule_provider.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 part 'medication_history_provider.g.dart';
 
@@ -20,7 +19,6 @@ class MedicationHistoryState {
   final int calendarViewMonth;
   final Set<int> daysWithDataInMonth;
   final bool isLoadingCalendarMonth;
-  final bool showCalendar;
 
   MedicationHistoryState({
     this.history,
@@ -34,7 +32,6 @@ class MedicationHistoryState {
     this.calendarViewMonth = 0,
     this.daysWithDataInMonth = const {},
     this.isLoadingCalendarMonth = false,
-    this.showCalendar = true,
   });
 
   MedicationHistoryState copyWith({
@@ -49,7 +46,6 @@ class MedicationHistoryState {
     int? calendarViewMonth,
     Set<int>? daysWithDataInMonth,
     bool? isLoadingCalendarMonth,
-    bool? showCalendar,
   }) {
     return MedicationHistoryState(
       history: history ?? this.history,
@@ -63,7 +59,6 @@ class MedicationHistoryState {
       calendarViewMonth: calendarViewMonth ?? this.calendarViewMonth,
       daysWithDataInMonth: daysWithDataInMonth ?? this.daysWithDataInMonth,
       isLoadingCalendarMonth: isLoadingCalendarMonth ?? this.isLoadingCalendarMonth,
-      showCalendar: showCalendar ?? this.showCalendar,
     );
   }
 }
@@ -73,6 +68,20 @@ class MedicationHistory extends _$MedicationHistory {
   static const int debounceDelayMs = 750;
   Timer? _debounceTimer;
 
+  /// Converts UTC time to device's timezone (matching todayMedicationProvider approach)
+  DateTime convertToDeviceTimezone(DateTime utcTime, String? timezoneIana) {
+    if (timezoneIana == null || timezoneIana.isEmpty) {
+      return utcTime.toLocal();
+    }
+    try {
+      final timezone = tz.getLocation(timezoneIana);
+      final tzDateTime = tz.TZDateTime.from(utcTime, timezone);
+      return tzDateTime;
+    } catch (e) {
+      return utcTime.toLocal();
+    }
+  }
+
   @override
   MedicationHistoryState build(String deviceId) {
     ref.onDispose(() {
@@ -81,26 +90,33 @@ class MedicationHistory extends _$MedicationHistory {
     });
     final now = DateTime.now();
     // Initialize with current month data visible, calendar hidden.
-    // Loading is triggered explicitly by the UI/caller when needed.
+    // Load current month data on initialization
+    Future.microtask(() => loadCurrentMonth());
     return MedicationHistoryState(
       calendarViewYear: now.year,
       calendarViewMonth: now.month,
-      showCalendar: false,
     );
   }
 
   Future<void> loadCurrentMonth() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final now = DateTime.now();
+      // Get device's timezone from schedule
+      final scheduleAsync = ref.watch(scheduleProvider);
+      final timezoneIana = scheduleAsync.value?.effectiveTimezoneIana;
+      
+      // Get current time in device timezone
+      final now = DateTime.now().toUtc();
+      final nowInDeviceTimezone = convertToDeviceTimezone(now, timezoneIana);
+      
       final apiClient = ref.watch(activeTenantClientProvider);
       if (apiClient == null) {
         throw Exception('No active tenant client available');
       }
       final history = await apiClient.getAdherenceHistory(
         deviceId,
-        year: now.year,
-        month: now.month,
+        year: nowInDeviceTimezone.year,
+        month: nowInDeviceTimezone.month,
       );
       state = state.copyWith(
         history: history,
@@ -110,8 +126,7 @@ class MedicationHistory extends _$MedicationHistory {
         selectedMonth: null,
         selectedDay: null,
       );
-    } catch (e, st) {
-
+    } catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to load medication history: ${e.toString()}',
@@ -120,7 +135,15 @@ class MedicationHistory extends _$MedicationHistory {
   }
 
   Future<void> loadMonth(int year, int month, {int? day}) async {
-    state = state.copyWith(isLoading: true, error: null);
+    // Update selected date immediately for UI consistency
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+      isDateSelected: day != null,
+      selectedYear: year,
+      selectedMonth: month,
+      selectedDay: day,
+    );
     try {
       final apiClient = ref.watch(activeTenantClientProvider);
       if (apiClient == null) {
@@ -134,13 +157,8 @@ class MedicationHistory extends _$MedicationHistory {
       state = state.copyWith(
         history: history,
         isLoading: false,
-        isDateSelected: day != null,
-        selectedYear: year,
-        selectedMonth: month,
-        selectedDay: day,
       );
-    } catch (e, st) {
-
+    } catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to load medication history for selected date: ${e.toString()}',
@@ -159,6 +177,10 @@ class MedicationHistory extends _$MedicationHistory {
       calendarViewMonth: month,
     );
     try {
+      // Get device's timezone from schedule
+      final scheduleAsync = ref.watch(scheduleProvider);
+      final timezoneIana = scheduleAsync.value?.effectiveTimezoneIana;
+      
       final apiClient = ref.watch(activeTenantClientProvider);
       if (apiClient == null) {
         throw Exception('No active tenant client available');
@@ -169,20 +191,21 @@ class MedicationHistory extends _$MedicationHistory {
         month: month,
       );
 
-      // Extract available days from the history, but only keep dates that
-      // still belong to the requested calendar month after conversion.
-      final TimeService timeService = TimeService();
+      // Extract available days from the history (using device timezone)
       final Set<int> availableDays = history
-          .map((item) => timeService.timeToLocal(item.scheduledTime ?? item.resolvedTime))
-          .where((localTime) => localTime.year == year && localTime.month == month)
-          .map((localTime) => localTime.day)
+          .map((item) {
+            final utcTime = item.scheduledTime ?? item.resolvedTime;
+            final deviceTime = convertToDeviceTimezone(utcTime, timezoneIana);
+            return deviceTime;
+          })
+          .where((deviceTime) => deviceTime.year == year && deviceTime.month == month)
+          .map((deviceTime) => deviceTime.day)
           .toSet();
       state = state.copyWith(
         daysWithDataInMonth: availableDays,
         isLoadingCalendarMonth: false,
       );
     } catch (e) {
-
       state = state.copyWith(
         isLoadingCalendarMonth: false,
         daysWithDataInMonth: const {},
@@ -195,7 +218,13 @@ class MedicationHistory extends _$MedicationHistory {
   }
 
   void goToNextMonth() {
-    final now = DateTime.now();
+    // Get device's timezone from schedule
+    final scheduleAsync = ref.watch(scheduleProvider);
+    final timezoneIana = scheduleAsync.value?.effectiveTimezoneIana;
+    
+    final now = DateTime.now().toUtc();
+    final nowInDeviceTimezone = convertToDeviceTimezone(now, timezoneIana);
+    
     int newYear = state.calendarViewYear;
     int newMonth = state.calendarViewMonth + 1;
     if (newMonth > 12) {
@@ -203,7 +232,7 @@ class MedicationHistory extends _$MedicationHistory {
       newYear++;
     }
     // Don't allow navigation beyond current month
-    if (newYear > now.year || (newYear == now.year && newMonth > now.month)) {
+    if (newYear > nowInDeviceTimezone.year || (newYear == nowInDeviceTimezone.year && newMonth > nowInDeviceTimezone.month)) {
       return;
     }
     _updateMonthWithDebounce(newYear, newMonth);
@@ -220,6 +249,19 @@ class MedicationHistory extends _$MedicationHistory {
   }
 
   void _updateMonthWithDebounce(int year, int month) {
+    // Get device's timezone from schedule for month change
+    final scheduleAsync = ref.watch(scheduleProvider);
+    final timezoneIana = scheduleAsync.value?.effectiveTimezoneIana;
+    
+    // Check month boundary in device timezone (not phone timezone)
+    final now = DateTime.now().toUtc();
+    final nowInDeviceTimezone = convertToDeviceTimezone(now, timezoneIana);
+    
+    // Don't allow navigation beyond current month
+    if (year > nowInDeviceTimezone.year || (year == nowInDeviceTimezone.year && month > nowInDeviceTimezone.month)) {
+      return;
+    }
+    
     // Update UI immediately and clear previous month's days
     state = state.copyWith(
       calendarViewYear: year,
@@ -241,6 +283,6 @@ class MedicationHistory extends _$MedicationHistory {
     if (state.daysWithDataInMonth.isEmpty && !state.isLoadingCalendarMonth) {
       loadCalendarMonth(state.calendarViewYear, state.calendarViewMonth);
     }
-    state = state.copyWith(showCalendar: true);
+
   }
 }

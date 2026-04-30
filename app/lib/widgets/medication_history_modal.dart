@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:timezone/timezone.dart' as tz;
 import 'package:app/apiv2/models/dto.dart';
 import 'package:app/provider/medication_history_provider.dart';
-import 'package:app/service/time_service.dart';
+import 'package:app/provider/schedule_provider.dart';
 
 class MedicationHistoryModal extends ConsumerStatefulWidget {
   final String deviceId;
@@ -21,7 +22,28 @@ class MedicationHistoryModal extends ConsumerStatefulWidget {
 }
 
 class _MedicationHistoryModalState extends ConsumerState<MedicationHistoryModal> {
-  final TimeService _timeService = TimeService();
+  /// Converts UTC time to device's timezone
+  DateTime convertToDeviceTimezone(DateTime utcTime, String? timezoneIana) {
+    if (timezoneIana == null || timezoneIana.isEmpty) {
+      return utcTime.toLocal();
+    }
+    try {
+      final timezone = tz.getLocation(timezoneIana);
+      final tzDateTime = tz.TZDateTime.from(utcTime, timezone);
+      return tzDateTime;
+    } catch (e) {
+      return utcTime.toLocal();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Load initial current month history
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(medicationHistoryProvider(widget.deviceId).notifier).loadCurrentMonth();
+    });
+  }
 
   void _clearDate() {
     ref.read(medicationHistoryProvider(widget.deviceId).notifier).clearDate();
@@ -158,8 +180,11 @@ class _MedicationHistoryModalState extends ConsumerState<MedicationHistoryModal>
       final selectedDay = state.selectedDay!;
       filteredHistory = history
           .where((dose) {
-            final doseLocalTime = _timeService.timeToLocal(dose.scheduledTime ?? dose.resolvedTime);
-            return doseLocalTime.day == selectedDay;
+            // Get device timezone for date comparison
+            final scheduleAsync = ref.watch(scheduleProvider);
+            final timezoneIana = scheduleAsync.value?.effectiveTimezoneIana;
+            final doseDeviceTime = convertToDeviceTimezone(dose.scheduledTime ?? dose.resolvedTime, timezoneIana);
+            return doseDeviceTime.day == selectedDay;
           })
           .toList();
     } else {
@@ -171,12 +196,15 @@ class _MedicationHistoryModalState extends ConsumerState<MedicationHistoryModal>
       return Center(child: Text('No medication history found'));
     }
 
-    // Group history by date
+    // Group history by date (using device timezone)
     final groupedByDate = <String, List<DoseHistoryDto>>{};
-    final timeService = TimeService();
+    // Get device timezone
+    final scheduleAsync = ref.watch(scheduleProvider);
+    final timezoneIana = scheduleAsync.value?.effectiveTimezoneIana;
+    
     for (var dose in filteredHistory) {
-      final doseLocalTime = timeService.timeToLocal(dose.scheduledTime ?? dose.resolvedTime);
-      final dateKey = DateFormat('MMMM d, yyyy').format(doseLocalTime);
+      final doseDeviceTime = convertToDeviceTimezone(dose.scheduledTime ?? dose.resolvedTime, timezoneIana);
+      final dateKey = DateFormat('MMMM d, yyyy').format(doseDeviceTime);
       groupedByDate.putIfAbsent(dateKey, () => []).add(dose);
     }
 
@@ -201,8 +229,11 @@ class _MedicationHistoryModalState extends ConsumerState<MedicationHistoryModal>
             SizedBox(height: 8.h),
             ...doses.reversed.map((dose) {
               final doseDateTime = dose.scheduledTime ?? dose.resolvedTime;
-              final doseLocalTime = _timeService.timeToLocal(doseDateTime);
-              final doseTime = DateFormat('h:mm a').format(doseLocalTime);
+              // Get device timezone for time conversion
+              final scheduleAsync = ref.watch(scheduleProvider);
+              final timezoneIana = scheduleAsync.value?.effectiveTimezoneIana;
+              final doseDeviceTime = convertToDeviceTimezone(doseDateTime, timezoneIana);
+              final doseTime = DateFormat('h:mm a').format(doseDeviceTime);
               final status = dose.finalStatus;
               
               // Determine display text and color based on status
