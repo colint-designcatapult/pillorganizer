@@ -392,7 +392,7 @@ class _CalendarDialog extends ConsumerWidget {
             SizedBox(height: 13.h),
             // Calendar - fixed height to accommodate 6 weeks
             SizedBox(
-              height: 360.h,
+              height: 380.h,
               child: historyState.isLoadingCalendarMonth
                   ? Center(
                       child: SizedBox(
