@@ -1,5 +1,6 @@
 package jct.pillorganizer.global.service;
 
+import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.global.dto.AdminCognitoUserDto;
@@ -18,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Singleton
 @Flogger
 @Requires(env = {"local", "test"})
+@Replaces(CognitoAdminUserService.class)
 public class LocalAdminUserService implements AdminUserService {
 
     private static final List<AdminCognitoUserDto> MOCK_USERS = List.of(

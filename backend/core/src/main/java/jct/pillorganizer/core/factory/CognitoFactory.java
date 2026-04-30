@@ -1,4 +1,4 @@
-package jct.pillorganizer.tenant.factory;
+package jct.pillorganizer.core.factory;
 
 import io.micronaut.context.annotation.Factory;
 import jakarta.inject.Singleton;

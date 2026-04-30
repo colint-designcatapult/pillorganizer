@@ -41,7 +41,7 @@ type TagSeverity = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contr
                             @for (group of user.groups; track group) {
                                 <p-tag [value]="group" severity="secondary" styleClass="mr-1" />
                             }
-                            @if (user.groups.length === 0) {
+                            @if (!user.groups || user.groups.length === 0) {
                                 <span class="text-muted-color text-sm">—</span>
                             }
                         </td>

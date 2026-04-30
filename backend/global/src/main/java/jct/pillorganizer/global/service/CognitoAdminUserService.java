@@ -23,7 +23,6 @@ import java.util.List;
  */
 @Singleton
 @Flogger
-@Requires(env = "global")
 public class CognitoAdminUserService implements AdminUserService {
 
     private final CognitoIdentityProviderClient cognitoClient;
