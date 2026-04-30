@@ -75,6 +75,10 @@ class MedicationHistory extends _$MedicationHistory {
 
   @override
   MedicationHistoryState build(String deviceId) {
+    ref.onDispose(() {
+      _debounceTimer?.cancel();
+      _debounceTimer = null;
+    });
     final now = DateTime.now();
     // Initialize with current month data visible, calendar hidden.
     // Loading is triggered explicitly by the UI/caller when needed.
