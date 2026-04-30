@@ -76,8 +76,8 @@ class MedicationHistory extends _$MedicationHistory {
   @override
   MedicationHistoryState build(String deviceId) {
     final now = DateTime.now();
-    // Initialize with current month data visible, calendar hidden
-    Future.microtask(() => loadCurrentMonth());
+    // Initialize with current month data visible, calendar hidden.
+    // Loading is triggered explicitly by the UI/caller when needed.
     return MedicationHistoryState(
       calendarViewYear: now.year,
       calendarViewMonth: now.month,
