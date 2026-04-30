@@ -57,6 +57,19 @@ export class ControlPlaneStack extends cdk.Stack {
       ],
     }));
 
+    // Grant read-only access to the Cognito admin user pool for listing users and groups
+    appFunction.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'cognito-idp:ListUsers',
+        'cognito-idp:ListUsersInGroup',
+        'cognito-idp:AdminListGroupsForUser',
+      ],
+      resources: [
+        `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/*`,
+      ],
+    }));
+
     const version = appFunction.currentVersion;
     
     const alias = new lambda.Alias(this, 'ControlPlaneAppAlias', {

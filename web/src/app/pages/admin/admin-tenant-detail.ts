@@ -15,8 +15,11 @@ import { MessageService } from 'primeng/api';
 import {
     AdminService,
     AdminTenantDetail as AdminTenantDetailDto,
-    AdminTenantDeviceRow
+    AdminTenantDeviceRow,
+    AdminCognitoUser
 } from '@/app/services/admin.service';
+
+type TagSeverity = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast';
 
 @Component({
     selector: 'app-admin-tenant-detail',
@@ -140,6 +143,50 @@ import {
                         </div>
                     </div>
                 </div>
+
+                <!-- Tenant Admins table -->
+                <div class="card">
+                    <p-table [value]="tenantAdmins()" [loading]="loadingAdmins()" [rowHover]="true" [showGridlines]="true" dataKey="sub">
+                        <ng-template #caption>
+                            <span class="text-xl font-semibold">Tenant Administrators</span>
+                        </ng-template>
+                        <ng-template #header>
+                            <tr>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Sub</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template #body let-admin>
+                            <tr>
+                                <td>{{ admin.email ?? '—' }}</td>
+                                <td>
+                                    <p-tag [value]="adminStatusLabel(admin.status)"
+                                           [severity]="adminStatusSeverity(admin.status)" />
+                                </td>
+                                <td><code class="text-xs">{{ admin.sub }}</code></td>
+                            </tr>
+                        </ng-template>
+                        <ng-template #emptymessage>
+                            <tr><td colspan="3" class="text-center text-muted-color py-6">No tenant administrators found.</td></tr>
+                        </ng-template>
+                        <ng-template #footer>
+                            <tr>
+                                <td colspan="3">
+                                    <div class="flex justify-between items-center">
+                                        <p-button label="Previous" icon="pi pi-chevron-left" [text]="true"
+                                            [disabled]="adminCursorStack().length === 0 || loadingAdmins()"
+                                            (click)="prevAdminPage()" />
+                                        <span class="text-muted-color text-sm">Page {{ adminCursorStack().length + 1 }}</span>
+                                        <p-button label="Next" icon="pi pi-chevron-right" iconPos="right" [text]="true"
+                                            [disabled]="!adminNextCursor() || loadingAdmins()"
+                                            (click)="nextAdminPage()" />
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </div>
             } @else {
                 <div class="card">
                     <p class="text-muted-color">Tenant not found.</p>
@@ -156,6 +203,11 @@ export class AdminTenantDetail implements OnInit {
     loadingTenant = signal(false);
     loadingDevices = signal(false);
     assigning = signal(false);
+
+    tenantAdmins = signal<AdminCognitoUser[]>([]);
+    loadingAdmins = signal(false);
+    adminNextCursor = signal<string | null>(null);
+    adminCursorStack = signal<(string | null)[]>([]);
 
     snFilterValue = '';
     assignSerialNumber = '';
@@ -182,6 +234,7 @@ export class AdminTenantDetail implements OnInit {
         });
 
         this.loadDevices(null);
+        this.loadAdmins(null);
 
         this.filterSubject.pipe(debounceTime(400), distinctUntilChanged()).subscribe(() => {
             this.cursorStack.set([]);
@@ -198,6 +251,19 @@ export class AdminTenantDetail implements OnInit {
                 this.loadingDevices.set(false);
             },
             error: () => this.loadingDevices.set(false)
+        });
+    }
+
+    private loadAdmins(cursor: string | null) {
+        this.loadingAdmins.set(true);
+        const groupName = `admin-tenant-${this.tenantId}`;
+        this.adminService.listGroupUsers(groupName, cursor, this.pageSize).subscribe({
+            next: (data) => {
+                this.tenantAdmins.set(data.items);
+                this.adminNextCursor.set(data.nextCursor);
+                this.loadingAdmins.set(false);
+            },
+            error: () => this.loadingAdmins.set(false)
         });
     }
 
@@ -226,6 +292,22 @@ export class AdminTenantDetail implements OnInit {
         this.loadDevices(prevCursor);
     }
 
+    nextAdminPage() {
+        const cursor = this.adminNextCursor();
+        if (!cursor) return;
+        this.adminCursorStack.set([...this.adminCursorStack(), cursor]);
+        this.loadAdmins(cursor);
+    }
+
+    prevAdminPage() {
+        const stack = this.adminCursorStack();
+        if (stack.length === 0) return;
+        const newStack = stack.slice(0, -1);
+        const prevCursor = newStack.length === 0 ? null : newStack[newStack.length - 1];
+        this.adminCursorStack.set(newStack);
+        this.loadAdmins(prevCursor);
+    }
+
     assignDevice() {
         const sn = this.assignSerialNumber.trim();
         if (!sn) return;
@@ -251,6 +333,29 @@ export class AdminTenantDetail implements OnInit {
 
     goBack() {
         this.router.navigate(['/admin/tenants']);
+    }
+
+    adminStatusLabel(status: string): string {
+        const map: Record<string, string> = {
+            CONFIRMED: 'Active',
+            FORCE_CHANGE_PASSWORD: 'Invited',
+            UNCONFIRMED: 'Unconfirmed',
+            RESET_REQUIRED: 'Reset Required',
+            COMPROMISED: 'Compromised',
+            UNKNOWN: 'Unknown',
+        };
+        return map[status] ?? status;
+    }
+
+    adminStatusSeverity(status: string): TagSeverity {
+        const map: Record<string, TagSeverity> = {
+            CONFIRMED: 'success',
+            FORCE_CHANGE_PASSWORD: 'info',
+            UNCONFIRMED: 'warn',
+            RESET_REQUIRED: 'warn',
+            COMPROMISED: 'danger',
+        };
+        return map[status] ?? 'secondary';
     }
 }
 

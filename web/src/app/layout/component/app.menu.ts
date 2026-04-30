@@ -107,7 +107,8 @@ const ADMIN_SECTION: MenuItem = {
     items: [
         { label: 'Users', icon: 'pi pi-fw pi-users', routerLink: ['/admin/users'] },
         { label: 'Devices', icon: 'pi pi-fw pi-tablet', routerLink: ['/admin/devices'] },
-        { label: 'Tenants', icon: 'pi pi-fw pi-building', routerLink: ['/admin/tenants'] }
+        { label: 'Tenants', icon: 'pi pi-fw pi-building', routerLink: ['/admin/tenants'] },
+        { label: 'Administrators', icon: 'pi pi-fw pi-shield', routerLink: ['/admin/administrators'] }
     ]
 };
 

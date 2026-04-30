@@ -97,6 +97,18 @@ export interface AdminTenantDevicePage {
     nextCursor: string | null;
 }
 
+export interface AdminCognitoUser {
+    sub: string;
+    email: string | null;
+    status: string;
+    groups: string[];
+}
+
+export interface AdminCognitoUserPage {
+    items: AdminCognitoUser[];
+    nextCursor: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminService {
     private http = inject(HttpClient);
@@ -144,5 +156,17 @@ export class AdminService {
             `${this.base}/admin/tenants/${tenantId}/device-mappings`,
             { serialNumber }
         );
+    }
+
+    listCognitoUsers(cursor?: string | null, size = 20): Observable<AdminCognitoUserPage> {
+        const params: Record<string, string | number> = { size };
+        if (cursor) params['cursor'] = cursor;
+        return this.http.get<AdminCognitoUserPage>(`${this.base}/admin/cognito-users`, { params });
+    }
+
+    listGroupUsers(groupName: string, cursor?: string | null, size = 20): Observable<AdminCognitoUserPage> {
+        const params: Record<string, string | number> = { size };
+        if (cursor) params['cursor'] = cursor;
+        return this.http.get<AdminCognitoUserPage>(`${this.base}/admin/groups/${encodeURIComponent(groupName)}/users`, { params });
     }
 }

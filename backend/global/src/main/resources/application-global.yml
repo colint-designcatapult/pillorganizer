@@ -8,11 +8,3 @@ micronaut:
       httpheader:
         enabled: true
         header-name: "x-tenant-id"
-aws:
-  access-key-id: test
-  secret-key: test
-  region: ca-central-1
-  services:
-    dynamodb:
-      endpoint-override: http://localhost:8000
-      schema: http
