@@ -77,7 +77,7 @@ export class DashboardStack extends cdk.Stack {
 
     // Deploy the Angular SPA build output to S3 and invalidate CloudFront cache
     new s3deploy.BucketDeployment(this, 'DashboardDeployment', {
-      sources: [s3deploy.Source.asset(path.join(__dirname, '../../web/dist/sakai-ng'))],
+      sources: [s3deploy.Source.asset(path.join(__dirname, '../../web/dist/sakai-ng/browser'))],
       destinationBucket: bucket,
       distribution: distribution,
       distributionPaths: ['/*'],
