@@ -404,8 +404,9 @@ class _CalendarDialog extends ConsumerWidget {
                   : TableCalendar(
                       focusedDay: focusedDay,
                       firstDay: DateTime(2000),
-                      lastDay: DateTime(now.year + 1),
+                      lastDay: DateTime(now.year, now.month + 1, 0),
                       calendarFormat: CalendarFormat.month,
+                      availableGestures: AvailableGestures.none,
                       onDaySelected: (selectedDay, focusedDay) {
                         if (historyState.daysWithDataInMonth.contains(selectedDay.day)) {
                           ref
