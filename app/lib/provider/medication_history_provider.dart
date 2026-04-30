@@ -164,17 +164,15 @@ class MedicationHistory extends _$MedicationHistory {
         year: year,
         month: month,
       );
-      
-      // Extract available days from the history (using local time)
+
+      // Extract available days from the history, but only keep dates that
+      // still belong to the requested calendar month after conversion.
       final TimeService timeService = TimeService();
       final Set<int> availableDays = history
-          .map((item) {
-            final localTime = timeService.timeToLocal(item.scheduledTime ?? item.resolvedTime);
-            return localTime.day;
-          })
+          .map((item) => timeService.timeToLocal(item.scheduledTime ?? item.resolvedTime))
+          .where((localTime) => localTime.year == year && localTime.month == month)
+          .map((localTime) => localTime.day)
           .toSet();
-      
-
       state = state.copyWith(
         daysWithDataInMonth: availableDays,
         isLoadingCalendarMonth: false,
