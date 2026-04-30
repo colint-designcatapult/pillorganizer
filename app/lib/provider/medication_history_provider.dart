@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:app/apiv2/models/dto.dart';
 import 'package:app/apiv2/tenant.dart';
 import 'package:app/provider/tenant_providers.dart';
+import 'package:app/service/time_service.dart';
 
 part 'medication_history_provider.g.dart';
 
@@ -171,9 +172,13 @@ class MedicationHistory extends _$MedicationHistory {
         month: month,
       );
       
-      // Extract available days from the history
+      // Extract available days from the history (using local time)
+      final TimeService timeService = TimeService();
       final Set<int> availableDays = history
-          .map((item) => (item.scheduledTime ?? item.resolvedTime).day)
+          .map((item) {
+            final localTime = timeService.timeToLocal(item.scheduledTime ?? item.resolvedTime);
+            return localTime.day;
+          })
           .toSet();
       
       print('DEBUG: Calendar loaded for $year-$month, available days: $availableDays');

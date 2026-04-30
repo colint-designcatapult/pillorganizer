@@ -31,7 +31,7 @@ class HomeBody extends ConsumerWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+          padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 0),
           child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:app/apiv2/models/dto.dart';
 import 'package:app/provider/medication_history_provider.dart';
+import 'package:app/service/time_service.dart';
 
 class MedicationHistoryModal extends ConsumerStatefulWidget {
   final String deviceId;
@@ -20,6 +21,8 @@ class MedicationHistoryModal extends ConsumerStatefulWidget {
 }
 
 class _MedicationHistoryModalState extends ConsumerState<MedicationHistoryModal> {
+  final TimeService _timeService = TimeService();
+
   @override
   void initState() {
     super.initState();
@@ -80,7 +83,7 @@ class _MedicationHistoryModalState extends ConsumerState<MedicationHistoryModal>
                     children: [
                       Expanded(
                         child: _buildButton(
-                          'Enter Date',
+                          'Select Date',
                           onPressed: _showCalendarDialog,
                           isBlue: true,
                         ),
@@ -164,8 +167,8 @@ class _MedicationHistoryModalState extends ConsumerState<MedicationHistoryModal>
       final selectedDay = state.selectedDay!;
       filteredHistory = history
           .where((dose) {
-            final doseDate = (dose.scheduledTime ?? dose.resolvedTime);
-            return doseDate.day == selectedDay;
+            final doseLocalTime = _timeService.timeToLocal(dose.scheduledTime ?? dose.resolvedTime);
+            return doseLocalTime.day == selectedDay;
           })
           .toList();
     } else {
@@ -179,8 +182,10 @@ class _MedicationHistoryModalState extends ConsumerState<MedicationHistoryModal>
 
     // Group history by date
     final groupedByDate = <String, List<DoseHistoryDto>>{};
+    final timeService = TimeService();
     for (var dose in filteredHistory) {
-      final dateKey = DateFormat('MMMM d, yyyy').format(dose.scheduledTime ?? dose.resolvedTime);
+      final doseLocalTime = timeService.timeToLocal(dose.scheduledTime ?? dose.resolvedTime);
+      final dateKey = DateFormat('MMMM d, yyyy').format(doseLocalTime);
       groupedByDate.putIfAbsent(dateKey, () => []).add(dose);
     }
 
@@ -204,27 +209,53 @@ class _MedicationHistoryModalState extends ConsumerState<MedicationHistoryModal>
             ),
             SizedBox(height: 8.h),
             ...doses.map((dose) {
-              final doseTime = DateFormat('h:mm a').format(dose.scheduledTime ?? dose.resolvedTime);
+              final doseDateTime = dose.scheduledTime ?? dose.resolvedTime;
+              final doseLocalTime = _timeService.timeToLocal(doseDateTime);
+              final doseTime = DateFormat('h:mm a').format(doseLocalTime);
               final status = dose.finalStatus;
+              
+              // Determine display text and color based on status
+              String displayStatus;
+              Color statusColor;
+              
+              if (status == 'TAKEN') {
+                displayStatus = 'TAKEN';
+                statusColor = Colors.green;
+              } else if (status == 'MISSED') {
+                displayStatus = 'MISSED';
+                statusColor = Colors.red;
+              } else if (status == 'TAKE_NOW') {
+                displayStatus = 'TAKE NOW';
+                statusColor = Colors.green;
+              } else {
+                displayStatus = status;
+                statusColor = Colors.grey;
+              }
+              
+              final statusBackgroundColor = statusColor.withOpacity(0.15);
 
               return Padding(
-                padding: EdgeInsets.only(bottom: 4.h),
+                padding: EdgeInsets.only(bottom: 8.h),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       doseTime,
                       style: TextStyle(fontSize: 12.sp),
                     ),
-                    Text(
-                      status,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: status == 'TAKEN'
-                            ? Colors.green
-                            : status == 'MISSED'
-                                ? Colors.red
-                                : Colors.orange,
+                    SizedBox(width: 32.w),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        color: statusBackgroundColor,
+                        borderRadius: BorderRadius.circular(4.r),
+                      ),
+                      child: Text(
+                        displayStatus,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: statusColor,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ],
@@ -244,6 +275,11 @@ class _CalendarDialog extends ConsumerWidget {
   final String deviceId;
 
   const _CalendarDialog({required this.deviceId});
+
+  bool _isCurrentMonth(MedicationHistoryState historyState) {
+    final now = DateTime.now();
+    return historyState.calendarViewYear == now.year && historyState.calendarViewMonth == now.month;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -347,8 +383,11 @@ class _CalendarDialog extends ConsumerWidget {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.chevron_right, color: Colors.white),
-                    onPressed: historyState.isLoadingCalendarMonth
+                    icon: Icon(
+                      Icons.chevron_right,
+                      color: _isCurrentMonth(historyState) ? Colors.grey[600] : Colors.white,
+                    ),
+                    onPressed: (historyState.isLoadingCalendarMonth || _isCurrentMonth(historyState))
                         ? null
                         : () => ref
                             .read(medicationHistoryProvider(deviceId).notifier)
