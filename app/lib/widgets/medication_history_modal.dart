@@ -208,7 +208,7 @@ class _MedicationHistoryModalState extends ConsumerState<MedicationHistoryModal>
               ),
             ),
             SizedBox(height: 8.h),
-            ...doses.map((dose) {
+            ...doses.reversed.map((dose) {
               final doseDateTime = dose.scheduledTime ?? dose.resolvedTime;
               final doseLocalTime = _timeService.timeToLocal(doseDateTime);
               final doseTime = DateFormat('h:mm a').format(doseLocalTime);
