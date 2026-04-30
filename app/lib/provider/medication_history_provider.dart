@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:app/apiv2/models/dto.dart';
@@ -14,6 +15,11 @@ class MedicationHistoryState {
   final int? selectedYear;
   final int? selectedMonth;
   final int? selectedDay;
+  final int calendarViewYear;
+  final int calendarViewMonth;
+  final Set<int> daysWithDataInMonth;
+  final bool isLoadingCalendarMonth;
+  final bool showCalendar;
 
   MedicationHistoryState({
     this.history,
@@ -23,6 +29,11 @@ class MedicationHistoryState {
     this.selectedYear,
     this.selectedMonth,
     this.selectedDay,
+    this.calendarViewYear = 0,
+    this.calendarViewMonth = 0,
+    this.daysWithDataInMonth = const {},
+    this.isLoadingCalendarMonth = false,
+    this.showCalendar = true,
   });
 
   MedicationHistoryState copyWith({
@@ -33,6 +44,11 @@ class MedicationHistoryState {
     int? selectedYear,
     int? selectedMonth,
     int? selectedDay,
+    int? calendarViewYear,
+    int? calendarViewMonth,
+    Set<int>? daysWithDataInMonth,
+    bool? isLoadingCalendarMonth,
+    bool? showCalendar,
   }) {
     return MedicationHistoryState(
       history: history ?? this.history,
@@ -42,15 +58,29 @@ class MedicationHistoryState {
       selectedYear: selectedYear ?? this.selectedYear,
       selectedMonth: selectedMonth ?? this.selectedMonth,
       selectedDay: selectedDay ?? this.selectedDay,
+      calendarViewYear: calendarViewYear ?? this.calendarViewYear,
+      calendarViewMonth: calendarViewMonth ?? this.calendarViewMonth,
+      daysWithDataInMonth: daysWithDataInMonth ?? this.daysWithDataInMonth,
+      isLoadingCalendarMonth: isLoadingCalendarMonth ?? this.isLoadingCalendarMonth,
+      showCalendar: showCalendar ?? this.showCalendar,
     );
   }
 }
 
 @riverpod
 class MedicationHistory extends _$MedicationHistory {
+  Timer? _debounceTimer;
+
   @override
   MedicationHistoryState build(String deviceId) {
-    return MedicationHistoryState();
+    final now = DateTime.now();
+    // Initialize with current month data visible, calendar hidden
+    Future.microtask(() => loadCurrentMonth());
+    return MedicationHistoryState(
+      calendarViewYear: now.year,
+      calendarViewMonth: now.month,
+      showCalendar: false,
+    );
   }
 
   Future<void> loadCurrentMonth() async {
@@ -122,5 +152,95 @@ class MedicationHistory extends _$MedicationHistory {
 
   void clearDate() {
     loadCurrentMonth();
+  }
+
+  Future<void> loadCalendarMonth(int year, int month) async {
+    state = state.copyWith(
+      isLoadingCalendarMonth: true,
+      calendarViewYear: year,
+      calendarViewMonth: month,
+    );
+    try {
+      final apiClient = ref.watch(activeTenantClientProvider);
+      if (apiClient == null) {
+        throw Exception('No active tenant client available');
+      }
+      final history = await apiClient.getAdherenceHistory(
+        deviceId,
+        year: year,
+        month: month,
+      );
+      
+      // Extract available days from the history
+      final Set<int> availableDays = history
+          .map((item) => (item.scheduledTime ?? item.resolvedTime).day)
+          .toSet();
+      
+      print('DEBUG: Calendar loaded for $year-$month, available days: $availableDays');
+      state = state.copyWith(
+        daysWithDataInMonth: availableDays,
+        isLoadingCalendarMonth: false,
+      );
+    } catch (e) {
+      print('DEBUG: Error loading calendar month: $e');
+      state = state.copyWith(
+        isLoadingCalendarMonth: false,
+        daysWithDataInMonth: const {},
+      );
+    }
+  }
+
+  void selectDateFromCalendar(DateTime selectedDate) {
+    loadMonth(selectedDate.year, selectedDate.month, day: selectedDate.day);
+  }
+
+  void goToNextMonth() {
+    final now = DateTime.now();
+    int newYear = state.calendarViewYear;
+    int newMonth = state.calendarViewMonth + 1;
+    if (newMonth > 12) {
+      newMonth = 1;
+      newYear++;
+    }
+    // Don't allow navigation beyond current month
+    if (newYear > now.year || (newYear == now.year && newMonth > now.month)) {
+      return;
+    }
+    _updateMonthWithDebounce(newYear, newMonth);
+  }
+
+  void goToPreviousMonth() {
+    int newYear = state.calendarViewYear;
+    int newMonth = state.calendarViewMonth - 1;
+    if (newMonth < 1) {
+      newMonth = 12;
+      newYear--;
+    }
+    _updateMonthWithDebounce(newYear, newMonth);
+  }
+
+  void _updateMonthWithDebounce(int year, int month) {
+    // Update UI immediately and clear previous month's days
+    state = state.copyWith(
+      calendarViewYear: year,
+      calendarViewMonth: month,
+      daysWithDataInMonth: const {},
+    );
+
+    // Cancel previous timer
+    _debounceTimer?.cancel();
+
+    // Schedule data load after 500ms of inactivity
+    _debounceTimer = Timer(Duration(milliseconds: 500), () {
+      loadCalendarMonth(year, month);
+    });
+  }
+
+  void openCalendarDialog() {
+    // Ensure calendar data is loaded for current month view
+    if (state.daysWithDataInMonth.isEmpty && !state.isLoadingCalendarMonth) {
+      loadCalendarMonth(state.calendarViewYear, state.calendarViewMonth);
+    }
+    state = state.copyWith(showCalendar: true);
   }
 }
