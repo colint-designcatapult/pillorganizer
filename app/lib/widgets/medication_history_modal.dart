@@ -286,7 +286,7 @@ class _CalendarDialog extends ConsumerWidget {
     final historyState = ref.watch(medicationHistoryProvider(deviceId));
 
     return Dialog(
-      insetPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 32.h),
+      insetPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -295,17 +295,6 @@ class _CalendarDialog extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Close button
-            Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: EdgeInsets.all(16.w),
-                child: GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: Icon(Icons.close, size: 24.sp),
-                ),
-              ),
-            ),
             // Calendar widget
             Flexible(
               child: SingleChildScrollView(
@@ -313,7 +302,7 @@ class _CalendarDialog extends ConsumerWidget {
                 child: _buildCalendarWidget(historyState, context, ref),
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 24.h),
             // Cancel button
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -334,7 +323,7 @@ class _CalendarDialog extends ConsumerWidget {
                 ),
               ),
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 24.h),
           ],
         ),
       ),
@@ -356,16 +345,19 @@ class _CalendarDialog extends ConsumerWidget {
         padding: EdgeInsets.all(8.w),
         child: Column(
           children: [
+            SizedBox(height: 16.h),
             // Month navigation header
-            Container(
-              decoration: BoxDecoration(
-                color: Color(0xFF206B8B),
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+            SizedBox(
+              height: 56.h,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Color(0xFF206B8B),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
                   IconButton(
                     icon: Icon(Icons.chevron_left, color: Colors.white),
                     onPressed: historyState.isLoadingCalendarMonth
@@ -396,96 +388,98 @@ class _CalendarDialog extends ConsumerWidget {
                 ],
               ),
             ),
+            ),
             SizedBox(height: 13.h),
-            // Calendar
-            if (historyState.isLoadingCalendarMonth)
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: 20.h),
-                child: SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              )
-            else
-              TableCalendar(
-                focusedDay: focusedDay,
-                firstDay: DateTime(2000),
-                lastDay: DateTime(now.year + 1),
-                calendarFormat: CalendarFormat.month,
-                onDaySelected: (selectedDay, focusedDay) {
-                  if (historyState.daysWithDataInMonth.contains(selectedDay.day)) {
-                    ref
-                        .read(medicationHistoryProvider(deviceId).notifier)
-                        .selectDateFromCalendar(selectedDay);
-                    Navigator.of(context).pop();
-                  }
-                },
-                enabledDayPredicate: (day) {
-                  // Only enable days that are in the current month view AND have data
-                  return day.month == focusedDay.month &&
-                      day.year == focusedDay.year &&
-                      historyState.daysWithDataInMonth.contains(day.day);
-                },
-                calendarStyle: CalendarStyle(
-                  todayDecoration: BoxDecoration(
-                    color: Colors.orange,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.orange.withOpacity(0.4),
-                        blurRadius: 6,
-                        offset: Offset(0, 2),
+            // Calendar - fixed height to accommodate 6 weeks
+            SizedBox(
+              height: 360.h,
+              child: historyState.isLoadingCalendarMonth
+                  ? Center(
+                      child: SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       ),
-                    ],
-                  ),
-                  selectedDecoration: BoxDecoration(
-                    color: Color(0xFF206B8B),
-                    shape: BoxShape.circle,
-                  ),
-                  disabledDecoration: BoxDecoration(
-                    color: Colors.transparent,
-                  ),
-                  disabledTextStyle: TextStyle(
-                    color: Colors.grey[400],
-                  ),
-                  weekendTextStyle: TextStyle(
-                    color: Color(0xFF206B8B),
-                    fontWeight: FontWeight.w600,
-                  ),
-                  defaultTextStyle: TextStyle(
-                    color: Color(0xFF206B8B),
-                    fontWeight: FontWeight.w600,
-                  ),
-                  outsideTextStyle: TextStyle(
-                    color: Colors.grey[400],
-                  ),
-                  markerDecoration: BoxDecoration(
-                    color: Color(0xFF206B8B),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                headerStyle: HeaderStyle(
-                  formatButtonVisible: false,
-                  titleCentered: false,
-                  leftChevronVisible: false,
-                  rightChevronVisible: false,
-                ),
-                daysOfWeekStyle: DaysOfWeekStyle(
-                  weekdayStyle: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  weekendStyle: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                eventLoader: (day) {
-                  // Show markers on days with data
-                  return historyState.daysWithDataInMonth.contains(day.day) ? [day] : [];
-                },
-              ),
+                    )
+                  : TableCalendar(
+                      focusedDay: focusedDay,
+                      firstDay: DateTime(2000),
+                      lastDay: DateTime(now.year + 1),
+                      calendarFormat: CalendarFormat.month,
+                      onDaySelected: (selectedDay, focusedDay) {
+                        if (historyState.daysWithDataInMonth.contains(selectedDay.day)) {
+                          ref
+                              .read(medicationHistoryProvider(deviceId).notifier)
+                              .selectDateFromCalendar(selectedDay);
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      enabledDayPredicate: (day) {
+                        // Only enable days that are in the current month view AND have data
+                        return day.month == focusedDay.month &&
+                            day.year == focusedDay.year &&
+                            historyState.daysWithDataInMonth.contains(day.day);
+                      },
+                      calendarStyle: CalendarStyle(
+                        todayDecoration: BoxDecoration(
+                          color: Colors.orange,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.orange.withOpacity(0.4),
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        selectedDecoration: BoxDecoration(
+                          color: Color(0xFF206B8B),
+                          shape: BoxShape.circle,
+                        ),
+                        disabledDecoration: BoxDecoration(
+                          color: Colors.transparent,
+                        ),
+                        disabledTextStyle: TextStyle(
+                          color: Colors.grey[400],
+                        ),
+                        weekendTextStyle: TextStyle(
+                          color: Color(0xFF206B8B),
+                          fontWeight: FontWeight.w600,
+                        ),
+                        defaultTextStyle: TextStyle(
+                          color: Color(0xFF206B8B),
+                          fontWeight: FontWeight.w600,
+                        ),
+                        outsideTextStyle: TextStyle(
+                          color: Colors.grey[400],
+                        ),
+                        markerDecoration: BoxDecoration(
+                          color: Color(0xFF206B8B),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      headerStyle: HeaderStyle(
+                        formatButtonVisible: false,
+                        titleCentered: false,
+                        leftChevronVisible: false,
+                        rightChevronVisible: false,
+                      ),
+                      daysOfWeekStyle: DaysOfWeekStyle(
+                        weekdayStyle: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        weekendStyle: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      eventLoader: (day) {
+                        // Show markers on days with data
+                        return historyState.daysWithDataInMonth.contains(day.day) ? [day] : [];
+                      },
+                    ),
+            ),
           ],
         ),
       ),

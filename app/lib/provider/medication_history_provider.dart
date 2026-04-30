@@ -70,6 +70,7 @@ class MedicationHistoryState {
 
 @riverpod
 class MedicationHistory extends _$MedicationHistory {
+  static const int debounceDelayMs = 750;
   Timer? _debounceTimer;
 
   @override
@@ -92,14 +93,11 @@ class MedicationHistory extends _$MedicationHistory {
       if (apiClient == null) {
         throw Exception('No active tenant client available');
       }
-      final urlCall = 'Device: $deviceId, Year: ${now.year}, Month: ${now.month}';
-      print('DEBUG: Making API call: $urlCall');
       final history = await apiClient.getAdherenceHistory(
         deviceId,
         year: now.year,
         month: now.month,
       );
-      print('DEBUG: Received ${history.length} records from API');
       state = state.copyWith(
         history: history,
         isLoading: false,
@@ -109,8 +107,7 @@ class MedicationHistory extends _$MedicationHistory {
         selectedDay: null,
       );
     } catch (e, st) {
-      print('DEBUG: Error loading medication history: $e');
-      print('DEBUG: Stack trace: $st');
+
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to load medication history: ${e.toString()}',
@@ -125,14 +122,11 @@ class MedicationHistory extends _$MedicationHistory {
       if (apiClient == null) {
         throw Exception('No active tenant client available');
       }
-      final urlCall = 'Device: $deviceId, Year: $year, Month: $month, Day: $day';
-      print('DEBUG: Making API call: $urlCall');
       final history = await apiClient.getAdherenceHistory(
         deviceId,
         year: year,
         month: month,
       );
-      print('DEBUG: Received ${history.length} records from API for specific date');
       state = state.copyWith(
         history: history,
         isLoading: false,
@@ -142,8 +136,7 @@ class MedicationHistory extends _$MedicationHistory {
         selectedDay: day,
       );
     } catch (e, st) {
-      print('DEBUG: Error loading medication history for specific date: $e');
-      print('DEBUG: Stack trace: $st');
+
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to load medication history for selected date: ${e.toString()}',
@@ -181,13 +174,13 @@ class MedicationHistory extends _$MedicationHistory {
           })
           .toSet();
       
-      print('DEBUG: Calendar loaded for $year-$month, available days: $availableDays');
+
       state = state.copyWith(
         daysWithDataInMonth: availableDays,
         isLoadingCalendarMonth: false,
       );
     } catch (e) {
-      print('DEBUG: Error loading calendar month: $e');
+
       state = state.copyWith(
         isLoadingCalendarMonth: false,
         daysWithDataInMonth: const {},
@@ -235,8 +228,8 @@ class MedicationHistory extends _$MedicationHistory {
     // Cancel previous timer
     _debounceTimer?.cancel();
 
-    // Schedule data load after 500ms of inactivity
-    _debounceTimer = Timer(Duration(milliseconds: 500), () {
+    // Schedule data load after debounce delay
+    _debounceTimer = Timer(Duration(milliseconds: debounceDelayMs), () {
       loadCalendarMonth(year, month);
     });
   }
