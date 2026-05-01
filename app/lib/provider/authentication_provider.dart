@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:app/api/user.dart';
 import 'package:app/exceptions/auth_failed.dart';
+import 'package:app/main.dart';
 import 'package:app/service/amplify_service.dart';
 import 'package:app/utils/api_utils.dart';
 import 'package:dio/dio.dart';
@@ -65,8 +67,25 @@ class Authentication extends _$Authentication {
     await userService.newPassword(creds);
   }
 
-  Future<void> signOut(BuildContext context) async {
-    await AmplifyService().signOut();
+  Future<void> signOut() async {
+    try {
+      await AmplifyService().signOut();
+    } catch (e) {
+      safePrint('Error calling Amplify signOut: $e');
+    }
+
+    try {
+      await credentialManager.cleanCredentials();
+    } catch (e) {
+      safePrint('Error cleaning credentials: $e');
+    }
+
+    // Clear the local authentication state
+    state = null;
+
+    // Use the global navigator key to navigate — this bypasses any stale
+    // dialog/context issues and works regardless of where signOut is called from.
+    navigatorKey.currentState?.pushNamedAndRemoveUntil('/', (route) => false);
   }
 
   Future<void> changePassword({

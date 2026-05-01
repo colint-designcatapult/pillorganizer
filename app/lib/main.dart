@@ -27,6 +27,10 @@ import 'firebase_options.dart';
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
 
+/// Global navigator key — lets us navigate without a BuildContext,
+/// which is essential for sign-out triggered from within dialog callbacks.
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   tz.initializeTimeZones();
@@ -78,6 +82,7 @@ class MyApp extends StatelessWidget {
                   children: [
                     MaterialApp(
                       title: 'Cabinet Pills',
+                      navigatorKey: navigatorKey,
                       themeMode: ThemeMode.system,
                       locale: languageLocale,
                       onGenerateRoute: (RouteSettings settings) {
