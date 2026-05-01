@@ -24,6 +24,8 @@ class _CustomTimePickerState extends State<CustomTimePicker> {
   late FocusNode _hourFocusNode;
   late FocusNode _minuteFocusNode;
   String? _errorMessage;
+  late String _initialHourDisplay;
+  late String _initialMinuteDisplay;
 
   @override
   void initState() {
@@ -31,9 +33,13 @@ class _CustomTimePickerState extends State<CustomTimePicker> {
     _hourFocusNode = FocusNode();
     _minuteFocusNode = FocusNode();
 
+    // Store initial display values (current schedule)
+    _initialHourDisplay = _formatHourForDisplay(widget.initialTime.hour);
+    _initialMinuteDisplay = widget.initialTime.minute.toString().padLeft(2, '0');
+
+    // Initialize controllers as empty (will show placeholder)
     _hourController = TextEditingController();
-    _minuteController = TextEditingController(
-        text: widget.initialTime.minute.toString().padLeft(2, '0'));
+    _minuteController = TextEditingController();
   }
 
   @override
@@ -45,34 +51,34 @@ class _CustomTimePickerState extends State<CustomTimePicker> {
     super.dispose();
   }
 
+  /// Format hour for 12-hour display
+  String _formatHourForDisplay(int hour) {
+    if (hour == 0) return '12';
+    if (hour > 12) return (hour - 12).toString();
+    return hour.toString();
+  }
+
+  /// Validate time inputs - both fields must be valid
+  bool _isTimeValid() {
+    return _isHourValid() && _isMinuteValid();
+  }
+
   TimeOfDay? _getValidatedTime() {
     try {
       final hour = int.parse(_hourController.text);
       final minute = int.parse(_minuteController.text);
-      final localizations = AppLocalizations.of(context)!;
 
-      if (minute < 0 || minute > 59) return null;
+      // Final validation
+      if (!_isHourValid() || !_isMinuteValid()) {
+        return null;
+      }
 
       int finalHour = hour;
 
-      if (localizations.localeName != 'fr') {
-        if (hour < 1 || hour > 12) return null;
-
-        if (widget.isAM) {
-          finalHour = hour == 12 ? 0 : hour;
-        } else {
-          finalHour = hour == 12 ? 12 : hour + 12;
-        }
+      if (widget.isAM) {
+        finalHour = hour == 12 ? 0 : hour;
       } else {
-        if (hour < 0 || hour > 23) return null;
-
-        if (widget.isAM) {
-          if (hour > 11) return null;
-        } else {
-          if (hour < 12) return null;
-        }
-
-        finalHour = hour;
+        finalHour = hour == 12 ? 12 : hour + 12;
       }
 
       return TimeOfDay(hour: finalHour, minute: minute);
@@ -81,42 +87,74 @@ class _CustomTimePickerState extends State<CustomTimePicker> {
     }
   }
 
-  void _onHourChanged(String value) {
-    if (value.length == 2) {
-      _minuteFocusNode.requestFocus();
-    }
-    if (_errorMessage != null) {
-      setState(() {
+  void _updateValidation() {
+    setState(() {
+      // Show error only for invalid 2-digit entries
+      bool hourErrorNeeded = _hourController.text.length == 2 && !_isHourValid();
+      bool minuteErrorNeeded = _minuteController.text.length == 2 && !_isMinuteValid();
+
+      if (hourErrorNeeded || minuteErrorNeeded) {
+        _errorMessage = AppLocalizations.of(context)!.validTimeError;
+      } else {
         _errorMessage = null;
-      });
+      }
+    });
+  }
+
+  bool _isHourValid() {
+    String text = _hourController.text;
+    if (text.isEmpty) return false;
+    
+    try {
+      final hour = int.parse(text);
+      // Single digit: 1-9 are valid (0 is not valid but no error shown)
+      if (text.length == 1) {
+        return hour >= 1 && hour <= 9;
+      }
+      // Two digits: 01-12 are valid
+      if (text.length == 2) {
+        return hour >= 1 && hour <= 12;
+      }
+      return false;
+    } catch (e) {
+      return false;
     }
   }
 
-  void _onMinuteChanged(String value) {
-    if (_errorMessage != null) {
-      setState(() {
-        _errorMessage = null;
-      });
+  bool _isMinuteValid() {
+    String text = _minuteController.text;
+    if (text.isEmpty) return false;
+    
+    try {
+      final minute = int.parse(text);
+      // Single digit: 1-9 are valid (0 is not valid but no error shown)
+      if (text.length == 1) {
+        return minute >= 1 && minute <= 9;
+      }
+      // Two digits: 00-59 are valid
+      if (text.length == 2) {
+        return minute >= 0 && minute <= 59;
+      }
+      return false;
+    } catch (e) {
+      return false;
     }
+  }
+
+  void _onHourChanged(String value) {
+    _updateValidation();
+  }
+
+  void _onMinuteChanged(String value) {
+    _updateValidation();
   }
 
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
-
-    if (_hourController.text.isEmpty) {
-      int displayHour = widget.initialTime.hour;
-
-      if (localizations.localeName != 'fr') {
-        if (displayHour == 0) {
-          displayHour = 12;
-        } else if (displayHour > 12) {
-          displayHour = displayHour - 12;
-        }
-      }
-
-      _hourController.text = displayHour.toString().padLeft(2, '0');
-    }
+    
+    // Determine if save button should be enabled
+    final isSaveEnabled = _isTimeValid();
 
     return Container(
       decoration: BoxDecoration(
@@ -164,7 +202,11 @@ class _CustomTimePickerState extends State<CustomTimePicker> {
                     ],
                     decoration: InputDecoration(
                       counterText: "",
-                      hintText: widget.initialTime.hour.toString(),
+                      hintText: _initialHourDisplay,
+                      hintStyle: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: Theme.of(context).textTheme.headlineMedium?.fontSize,
+                      ),
                       filled: true,
                       fillColor: const Color(0xFFF1F5F6),
                       border: OutlineInputBorder(
@@ -197,6 +239,7 @@ class _CustomTimePickerState extends State<CustomTimePicker> {
                   child: TextField(
                     controller: _minuteController,
                     focusNode: _minuteFocusNode,
+                    enabled: _isHourValid(),
                     keyboardType: TextInputType.number,
                     textAlign: TextAlign.center,
                     maxLength: 2,
@@ -206,14 +249,22 @@ class _CustomTimePickerState extends State<CustomTimePicker> {
                     ],
                     decoration: InputDecoration(
                       counterText: "",
-                      hintText: widget.initialTime.minute.toString(),
+                      hintText: _initialMinuteDisplay,
+                      hintStyle: TextStyle(
+                        color: _isHourValid() ? Colors.grey[400] : Colors.grey[600],
+                        fontSize: Theme.of(context).textTheme.headlineMedium?.fontSize,
+                      ),
                       filled: true,
-                      fillColor: const Color(0xFFF1F5F6),
+                      fillColor: _isHourValid() ? const Color(0xFFF1F5F6) : Colors.grey[300],
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.r),
                         borderSide: BorderSide.none,
                       ),
                       enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                        borderSide: BorderSide.none,
+                      ),
+                      disabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.r),
                         borderSide: BorderSide.none,
                       ),
@@ -263,19 +314,20 @@ class _CustomTimePickerState extends State<CustomTimePicker> {
                 SizedBox(width: 16.w),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      final time = _getValidatedTime();
-                      if (time != null) {
-                        Navigator.of(context).pop(time);
-                      } else {
-                        setState(() {
-                          _errorMessage = localizations.validTimeError;
-                        });
-                      }
-                    },
+                    onPressed: isSaveEnabled
+                        ? () {
+                            final time = _getValidatedTime();
+                            if (time != null) {
+                              Navigator.of(context).pop(time);
+                            }
+                          }
+                        : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF206B8B),
-                      foregroundColor: Colors.white,
+                      backgroundColor: isSaveEnabled
+                          ? const Color(0xFF206B8B)
+                          : Colors.grey[300],
+                      foregroundColor:
+                          isSaveEnabled ? Colors.white : Colors.grey,
                       padding:
                           EdgeInsets.symmetric(vertical: 8.h, horizontal: 8.w),
                       shape: RoundedRectangleBorder(
