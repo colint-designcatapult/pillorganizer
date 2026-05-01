@@ -251,3 +251,24 @@ class DeviceNotificationRequestDto with DeviceNotificationRequestDtoMappable {
     required this.subscribe,
   });
 }
+
+@MappableClass(caseStyle: CaseStyle.camelCase)
+class DoseHistoryDto with DoseHistoryDtoMappable {
+  final String logicalDeviceId;
+  final DateTime epochWeek;
+  final int? binId;
+  final DateTime? scheduledTime;
+  final String finalStatus;
+  final DateTime resolvedTime;
+  final String deviceTimeZone;
+
+  const DoseHistoryDto({
+    required this.logicalDeviceId,
+    required this.epochWeek,
+    this.binId,
+    this.scheduledTime,
+    required this.finalStatus,
+    required this.resolvedTime,
+    required this.deviceTimeZone,
+  });
+}
