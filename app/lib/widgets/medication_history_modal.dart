@@ -188,8 +188,8 @@ class _MedicationHistoryModalState extends ConsumerState<MedicationHistoryModal>
           })
           .toList();
     } else {
-      // When showing current month: limit to 50 results
-      filteredHistory = history.take(50).toList();
+      // When showing current month: limit to 62 results
+      filteredHistory = history.take(62).toList();
     }
 
     if (filteredHistory.isEmpty) {
