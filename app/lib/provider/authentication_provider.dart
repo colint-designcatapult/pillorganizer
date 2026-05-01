@@ -68,24 +68,49 @@ class Authentication extends _$Authentication {
   }
 
   Future<void> signOut() async {
+    safePrint('🔐 Signing out...');
+    
+    // Do all async cleanup work FIRST
     try {
       await AmplifyService().signOut();
+      safePrint('✓ Amplify signOut complete');
     } catch (e) {
-      safePrint('Error calling Amplify signOut: $e');
+      safePrint('⚠️ Amplify signOut error (expected): $e');
     }
 
     try {
       await credentialManager.cleanCredentials();
+      safePrint('✓ Credentials cleaned up');
     } catch (e) {
-      safePrint('Error cleaning credentials: $e');
+      safePrint('⚠️ Credential cleanup error: $e');
     }
 
-    // Clear the local authentication state
-    state = null;
-
-    // Use the global navigator key to navigate — this bypasses any stale
-    // dialog/context issues and works regardless of where signOut is called from.
-    navigatorKey.currentState?.pushNamedAndRemoveUntil('/', (route) => false);
+    // Update state if provider is still active
+    try {
+      state = null;
+      safePrint('✓ Auth state cleared');
+    } catch (e) {
+      safePrint('ℹ️ Provider disposed (normal)');
+    }
+    
+    // NOW that cleanup is complete, schedule navigation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _navigateToLoginViaGlobalKey();
+    });
+    
+    safePrint('✓ Sign out complete, navigating to login');
+  }
+  
+  static void _navigateToLoginViaGlobalKey() {
+    final navState = navigatorKey.currentState;
+    if (navState != null) {
+      try {
+        navState.pushNamedAndRemoveUntil('/', (route) => false);
+        safePrint('✓ Navigated to login');
+      } catch (e) {
+        safePrint('✗ Navigation error: $e');
+      }
+    }
   }
 
   Future<void> changePassword({
