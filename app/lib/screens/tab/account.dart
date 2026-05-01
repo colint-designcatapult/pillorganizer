@@ -11,11 +11,28 @@ import '../../provider/authentication_provider.dart';
 import '../../provider/device_provider.dart';
 import '../../provider/language_provider.dart';
 
-class AccountScreen extends ConsumerWidget {
+class AccountScreen extends ConsumerStatefulWidget {
   const AccountScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AccountScreen> createState() => _AccountScreenState();
+}
+
+class _AccountScreenState extends ConsumerState<AccountScreen> {
+  bool _isSigningOut = false;
+
+  Future<void> _performSignOut() async {
+    setState(() => _isSigningOut = true);
+    try {
+      await ref.read(authenticationProvider.notifier).signOut();
+    } catch (_) {
+      // signOut() swallows all errors internally; this is a safety net only
+      if (mounted) setState(() => _isSigningOut = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     void signout(BuildContext context) {
       showDialog(
           context: context,
@@ -25,7 +42,8 @@ class AccountScreen extends ConsumerWidget {
                 subtitle: AppLocalizations.of(context)!.signingOutSubtitle,
                 saveWidgetText: AppLocalizations.of(context)!.signOut,
                 saveWidgetAction: () {
-                   ref.read(authenticationProvider.notifier).signOut(context);
+                  Navigator.of(context).pop(); // close the confirmation dialog
+                  _performSignOut();
                 },
               ));
     }
@@ -115,77 +133,106 @@ class AccountScreen extends ConsumerWidget {
       );
     }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFBFD2DB),
-      body: SafeArea(
-          child: Padding(
-              padding: EdgeInsets.only(top: 75.h),
-              child: SingleChildScrollView(
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: const Color(0xFFBFD2DB),
+          body: SafeArea(
+              child: Padding(
+                  padding: EdgeInsets.only(top: 75.h),
+                  child: SingleChildScrollView(
+                    child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 24.w),
+                              child: Text(
+                                AppLocalizations.of(context)!.accountSettings,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(fontSize: 32.h),
+                              )),
+                          SizedBox(height: 8.h),
+                          Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 24.w, vertical: 24.h),
+                              child: GridView.count(
+                                crossAxisCount: 2,
+                                childAspectRatio: 1,
+                                crossAxisSpacing: 24.w,
+                                mainAxisSpacing: 24.h,
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                children: [
+                                  // TODO: Re-enable in future
+                                  // SquareButton(
+                                  //   color: const Color(0xFF043C4D),
+                                  //   icon: PhosphorIconsFill.envelopeSimple,
+                                  //   label:
+                                  //       AppLocalizations.of(context)!.changeEmail,
+                                  //   onPressed: () {
+                                  //     changeEmail();
+                                  //   },
+                                  // ),
+                                  // SquareButton(
+                                  //   color: const Color(0xFF043C4D),
+                                  //   icon: PhosphorIconsFill.key,
+                                  //   label: AppLocalizations.of(context)!
+                                  //       .changePassword,
+                                  //   onPressed: () {
+                                  //     changePassword();
+                                  //   },
+                                  // ),
+                                  // SquareButton(
+                                  //   color: const Color(0xFF043C4D),
+                                  //   icon: PhosphorIconsRegular.translate,
+                                  //   label: AppLocalizations.of(context)!
+                                  //       .changeLanguage,
+                                  //   onPressed: () {
+                                  //     changeLanguage();
+                                  //   },
+                                  // ),
+                                  SquareButton(
+                                    color: const Color(0xFF7A2C2C),
+                                    icon: PhosphorIconsFill.power,
+                                    label: AppLocalizations.of(context)!.signOut,
+                                    onPressed: _isSigningOut
+                                        ? () {}
+                                        : () {
+                                            signout(context);
+                                          },
+                                  ),
+                                ],
+                              ))
+                        ]),
+                  ))),
+        ),
+        // Full-screen loading overlay shown while sign-out is in progress
+        if (_isSigningOut)
+          Positioned.fill(
+            child: ColoredBox(
+              color: const Color(0x80000000),
+              child: Center(
                 child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 24.w),
-                          child: Text(
-                            AppLocalizations.of(context)!.accountSettings,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
-                                ?.copyWith(fontSize: 32.h),
-                          )),
-                      SizedBox(height: 8.h),
-                      Padding(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 24.w, vertical: 24.h),
-                          child: GridView.count(
-                            crossAxisCount: 2,
-                            childAspectRatio: 1,
-                            crossAxisSpacing: 24.w,
-                            mainAxisSpacing: 24.h,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            children: [
-                              // TODO: Re-enable in future
-                              // SquareButton(
-                              //   color: const Color(0xFF043C4D),
-                              //   icon: PhosphorIconsFill.envelopeSimple,
-                              //   label:
-                              //       AppLocalizations.of(context)!.changeEmail,
-                              //   onPressed: () {
-                              //     changeEmail();
-                              //   },
-                              // ),
-                              // SquareButton(
-                              //   color: const Color(0xFF043C4D),
-                              //   icon: PhosphorIconsFill.key,
-                              //   label: AppLocalizations.of(context)!
-                              //       .changePassword,
-                              //   onPressed: () {
-                              //     changePassword();
-                              //   },
-                              // ),
-                              // SquareButton(
-                              //   color: const Color(0xFF043C4D),
-                              //   icon: PhosphorIconsRegular.translate,
-                              //   label: AppLocalizations.of(context)!
-                              //       .changeLanguage,
-                              //   onPressed: () {
-                              //     changeLanguage();
-                              //   },
-                              // ),
-                              SquareButton(
-                                color: const Color(0xFF7A2C2C),
-                                icon: PhosphorIconsFill.power,
-                                label: AppLocalizations.of(context)!.signOut,
-                                onPressed: () {
-                                  signout(context);
-                                },
-                              ),
-                            ],
-                          ))
-                    ]),
-              ))),
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(color: Colors.white),
+                    SizedBox(height: 16.h),
+                    Text(
+                      AppLocalizations.of(context)!.signingOut,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:app/api/user.dart';
 import 'package:app/exceptions/auth_failed.dart';
+import 'package:app/navigation/navigator_key.dart';
 import 'package:app/service/amplify_service.dart';
 import 'package:app/utils/api_utils.dart';
 import 'package:dio/dio.dart';
@@ -65,8 +67,42 @@ class Authentication extends _$Authentication {
     await userService.newPassword(creds);
   }
 
-  Future<void> signOut(BuildContext context) async {
-    await AmplifyService().signOut();
+  Future<void> signOut() async {
+    // Do all async cleanup work FIRST
+    try {
+      await AmplifyService().signOut();
+    } catch (e) {
+      safePrint('Error calling Amplify signOut: $e');
+    }
+
+    try {
+      await credentialManager.cleanCredentials();
+    } catch (e) {
+      safePrint('Error cleaning credentials: $e');
+    }
+
+    // Clear the local authentication state
+    try {
+      state = null;
+    } catch (e) {
+      safePrint('Provider already disposed: $e');
+    }
+    
+    // NOW that cleanup is complete, schedule navigation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _navigateToLoginViaGlobalKey();
+    });
+  }
+  
+  static void _navigateToLoginViaGlobalKey() {
+    final navState = navigatorKey.currentState;
+    if (navState != null) {
+      try {
+        navState.pushNamedAndRemoveUntil('/', (route) => false);
+      } catch (e) {
+        safePrint('Navigation error after sign-out: $e');
+      }
+    }
   }
 
   Future<void> changePassword({

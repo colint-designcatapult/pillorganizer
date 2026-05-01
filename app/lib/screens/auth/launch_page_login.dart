@@ -4,6 +4,7 @@ import 'package:app/service/amplify_service.dart';
 import 'package:app/utils/takecare_link_util.dart';
 import 'package:app/widgets/basic_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -32,7 +33,14 @@ class _LaunchPageLoginState extends ConsumerState<LaunchPageLogin> {
   Widget build(BuildContext context) {
     var topSize = MediaQuery.of(context).viewPadding.top + 55;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
       backgroundColor: const Color(0xFFBFD2DB),
       body: Stack(
         children: [
@@ -118,6 +126,7 @@ class _LaunchPageLoginState extends ConsumerState<LaunchPageLogin> {
             ),
         ],
       ),
+    ),
     );
   }
 

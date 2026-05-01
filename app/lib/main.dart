@@ -1,4 +1,5 @@
 import 'package:app/navigation/tab_navigator.dart';
+import 'package:app/navigation/navigator_key.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -78,6 +79,7 @@ class MyApp extends StatelessWidget {
                   children: [
                     MaterialApp(
                       title: 'Cabinet Pills',
+                      navigatorKey: navigatorKey,
                       themeMode: ThemeMode.system,
                       locale: languageLocale,
                       onGenerateRoute: (RouteSettings settings) {

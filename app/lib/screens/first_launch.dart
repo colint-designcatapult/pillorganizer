@@ -4,6 +4,7 @@ import 'package:app/provider/authentication_provider.dart';
 import 'package:app/service/amplify_service.dart';
 import 'package:app/utils/takecare_link_util.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -29,7 +30,14 @@ class _FirstLaunchPageState extends ConsumerState<FirstLaunchPage> {
     final localizations = AppLocalizations.of(context)!;
     final signInOrCreateAccountLabel = localizations.signInOrCreateAccountAction;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
       backgroundColor: Theme.of(context).primaryColor,
       resizeToAvoidBottomInset: true,
       body: Stack(
@@ -131,6 +139,7 @@ class _FirstLaunchPageState extends ConsumerState<FirstLaunchPage> {
             ),
           ),
       ]),
+    ),
     );
   }
 
