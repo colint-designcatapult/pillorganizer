@@ -199,7 +199,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                                     icon: PhosphorIconsFill.power,
                                     label: AppLocalizations.of(context)!.signOut,
                                     onPressed: _isSigningOut
-                                        ? null
+                                        ? () {}
                                         : () {
                                             signout(context);
                                           },

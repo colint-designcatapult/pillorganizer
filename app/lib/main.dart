@@ -1,4 +1,5 @@
 import 'package:app/navigation/tab_navigator.dart';
+import 'package:app/navigation/navigator_key.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,10 +27,6 @@ import 'firebase_options.dart';
 
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
-
-/// Global navigator key — lets us navigate without a BuildContext,
-/// which is essential for sign-out triggered from within dialog callbacks.
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

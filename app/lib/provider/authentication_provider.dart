@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:app/api/user.dart';
 import 'package:app/exceptions/auth_failed.dart';
-import 'package:app/main.dart';
+import 'package:app/navigation/navigator_key.dart';
 import 'package:app/service/amplify_service.dart';
 import 'package:app/utils/api_utils.dart';
 import 'package:dio/dio.dart';
@@ -68,37 +68,30 @@ class Authentication extends _$Authentication {
   }
 
   Future<void> signOut() async {
-    safePrint('🔐 Signing out...');
-    
     // Do all async cleanup work FIRST
     try {
       await AmplifyService().signOut();
-      safePrint('✓ Amplify signOut complete');
     } catch (e) {
-      safePrint('⚠️ Amplify signOut error (expected): $e');
+      safePrint('Error calling Amplify signOut: $e');
     }
 
     try {
       await credentialManager.cleanCredentials();
-      safePrint('✓ Credentials cleaned up');
     } catch (e) {
-      safePrint('⚠️ Credential cleanup error: $e');
+      safePrint('Error cleaning credentials: $e');
     }
 
-    // Update state if provider is still active
+    // Clear the local authentication state
     try {
       state = null;
-      safePrint('✓ Auth state cleared');
     } catch (e) {
-      safePrint('ℹ️ Provider disposed (normal)');
+      safePrint('Provider already disposed: $e');
     }
     
     // NOW that cleanup is complete, schedule navigation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _navigateToLoginViaGlobalKey();
     });
-    
-    safePrint('✓ Sign out complete, navigating to login');
   }
   
   static void _navigateToLoginViaGlobalKey() {
@@ -106,9 +99,8 @@ class Authentication extends _$Authentication {
     if (navState != null) {
       try {
         navState.pushNamedAndRemoveUntil('/', (route) => false);
-        safePrint('✓ Navigated to login');
       } catch (e) {
-        safePrint('✗ Navigation error: $e');
+        safePrint('Navigation error after sign-out: $e');
       }
     }
   }
