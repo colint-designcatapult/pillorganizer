@@ -298,9 +298,22 @@ class _CalendarDialog extends ConsumerWidget {
 
   const _CalendarDialog({required this.deviceId});
 
-  bool _isCurrentMonth(MedicationHistoryState historyState) {
-    final now = DateTime.now();
-    return historyState.calendarViewYear == now.year && historyState.calendarViewMonth == now.month;
+  bool _isCurrentMonth(MedicationHistoryState historyState, WidgetRef ref) {
+    final scheduleAsync = ref.watch(scheduleProvider);
+    final timezoneIana = scheduleAsync.value?.effectiveTimezoneIana;
+    final nowInDeviceTimezone = _convertToDeviceTimezone(DateTime.now().toUtc(), timezoneIana);
+    return historyState.calendarViewYear == nowInDeviceTimezone.year && historyState.calendarViewMonth == nowInDeviceTimezone.month;
+  }
+
+  /// Converts UTC time to device's timezone
+  DateTime _convertToDeviceTimezone(DateTime utcTime, String? timezoneIana) {
+    if (timezoneIana == null || timezoneIana.isEmpty) return utcTime.toLocal();
+    try {
+      final timezone = tz.getLocation(timezoneIana);
+      return tz.TZDateTime.from(utcTime, timezone);
+    } catch (e) {
+      return utcTime.toLocal();
+    }
   }
 
   @override
@@ -357,7 +370,9 @@ class _CalendarDialog extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) {
-    final now = DateTime.now();
+    final scheduleAsync = ref.watch(scheduleProvider);
+    final timezoneIana = scheduleAsync.value?.effectiveTimezoneIana;
+    final nowInDeviceTimezone = _convertToDeviceTimezone(DateTime.now().toUtc(), timezoneIana);
     final focusedDay = DateTime(historyState.calendarViewYear, historyState.calendarViewMonth);
 
     return Card(
@@ -399,9 +414,9 @@ class _CalendarDialog extends ConsumerWidget {
                   IconButton(
                     icon: Icon(
                       Icons.chevron_right,
-                      color: _isCurrentMonth(historyState) ? Colors.grey[600] : Colors.white,
+                      color: _isCurrentMonth(historyState, ref) ? Colors.grey[600] : Colors.white,
                     ),
-                    onPressed: (historyState.isLoadingCalendarMonth || _isCurrentMonth(historyState))
+                    onPressed: (historyState.isLoadingCalendarMonth || _isCurrentMonth(historyState, ref))
                         ? null
                         : () => ref
                             .read(medicationHistoryProvider(deviceId).notifier)
@@ -426,7 +441,7 @@ class _CalendarDialog extends ConsumerWidget {
                   : TableCalendar(
                       focusedDay: focusedDay,
                       firstDay: DateTime(2000),
-                      lastDay: DateTime(now.year, now.month + 1, 0),
+                      lastDay: DateTime(nowInDeviceTimezone.year, nowInDeviceTimezone.month + 1, 0),
                       calendarFormat: CalendarFormat.month,
                       availableGestures: AvailableGestures.none,
                       onDaySelected: (selectedDay, focusedDay) {
@@ -438,6 +453,8 @@ class _CalendarDialog extends ConsumerWidget {
                         }
                       },
                       enabledDayPredicate: (day) {
+                        // Always enable today (in device timezone) so the orange indicator shows
+                        if (isSameDay(day, nowInDeviceTimezone)) return true;
                         // Only enable days that are in the current month view AND have data
                         return day.month == focusedDay.month &&
                             day.year == focusedDay.year &&
