@@ -221,7 +221,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                     const CircularProgressIndicator(color: Colors.white),
                     SizedBox(height: 16.h),
                     Text(
-                      'Signing out...',
+                      AppLocalizations.of(context)!.signingOut,
                       style: Theme.of(context)
                           .textTheme
                           .bodyMedium
