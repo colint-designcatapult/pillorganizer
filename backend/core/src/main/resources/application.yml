@@ -17,6 +17,7 @@ micronaut:
         angular:
           allowed-origins:
             - "http://localhost:4200"
+            - "https://admin.app.healthesolutions.ca"
           allowed-methods:
             - GET
             - POST

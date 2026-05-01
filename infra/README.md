@@ -58,6 +58,22 @@ This stack hosts the control plane, which is a resource shared between all tenan
 * Configures Route 53 for `control-plane.app.healthesolutions.ca` points to the control plane.
 * Generates HTTPS certificates for the domain.
 
+### HealtheDashboardStack
+
+**Note:** this stack is *shared* between environments (deployed once globally).
+
+This stack hosts the admin web dashboard SPA at `admin.${baseDomain}`.
+
+* Creates a private S3 bucket for static assets.
+* Deploys the Angular SPA from `/web/dist/sakai-ng` using `s3deploy.BucketDeployment`.
+* Distributes assets via CloudFront with HTTPS enforcement (HTTP redirects to HTTPS).
+* Routes 403/404 errors to `index.html` so Angular's client-side router handles deep links.
+* Generates an HTTPS certificate via ACM (deployed to `us-east-1`, required for CloudFront).
+* Configures Route 53 for `admin.${baseDomain}` to point to the CloudFront distribution.
+
+> **Note:** the Angular SPA must be built before deploying this stack (`cd web && pnpm build`).
+> The deploy sources `/web/dist/sakai-ng` which is produced by the Angular production build.
+
 ### HealtheDataStack-${env}
 
 Defines persistent data storage.

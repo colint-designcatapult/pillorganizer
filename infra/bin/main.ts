@@ -10,6 +10,7 @@ import { IotStack } from '../lib/iot-stack';
 import { TenantPlatformStack } from '../lib/tenant-platform-stack';
 import { ControlPlaneDataStack } from '../lib/control-plane-data-stack';
 import { FirmwareStack } from '../lib/firmware-stack';
+import { DashboardStack } from '../lib/dashboard-stack';
 
 const app = new cdk.App();
 
@@ -63,6 +64,11 @@ const iotStack = new IotStack(app, `HealtheIotStack`, {
 
 const firmwareStack = new FirmwareStack(app, 'HealtheFirmwareStack', {
   env: globalEnv,
+});
+
+new DashboardStack(app, 'HealtheDashboardStack', {
+  env: { account: globals.account, region: 'us-east-1' },
+  baseDomain: globals.baseDomain,
 });
 
 // Environment-specific Stacks (Data, App)
