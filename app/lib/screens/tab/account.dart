@@ -198,9 +198,11 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                                     color: const Color(0xFF7A2C2C),
                                     icon: PhosphorIconsFill.power,
                                     label: AppLocalizations.of(context)!.signOut,
-                                    onPressed: _isSigningOut ? () {} : () {
-                                      signout(context);
-                                    },
+                                    onPressed: _isSigningOut
+                                        ? null
+                                        : () {
+                                            signout(context);
+                                          },
                                   ),
                                 ],
                               ))
