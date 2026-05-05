@@ -12,6 +12,8 @@ import { AdminDeviceDetail } from './app/pages/admin/admin-device-detail';
 import { AdminTenants } from './app/pages/admin/admin-tenants';
 import { AdminTenantDetail } from './app/pages/admin/admin-tenant-detail';
 import { AdminAdministrators } from './app/pages/admin/admin-administrators';
+import { TenantDevices } from './app/pages/service/tenant-devices';
+import { TenantDeviceDetail } from './app/pages/service/tenant-device-detail';
 import { authGuard } from './app/guards/auth.guard';
 
 export const appRoutes: Routes = [
@@ -30,7 +32,9 @@ export const appRoutes: Routes = [
             { path: 'admin/devices/:serialNumber', component: AdminDeviceDetail },
             { path: 'admin/tenants', component: AdminTenants },
             { path: 'admin/tenants/:tenantId', component: AdminTenantDetail },
-            { path: 'admin/administrators', component: AdminAdministrators }
+            { path: 'admin/administrators', component: AdminAdministrators },
+            { path: 'tenant/:tenantId/devices', component: TenantDevices },
+            { path: 'tenant/:tenantId/devices/:deviceId', component: TenantDeviceDetail }
         ]
     },
     { path: 'landing', component: Landing },
