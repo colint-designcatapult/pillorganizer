@@ -6,11 +6,12 @@ import { authInterceptor, provideAuth, withAppInitializerAuthCheck } from 'angul
 import { providePrimeNG } from 'primeng/config';
 import { environment } from './environments/environment';
 import { appRoutes } from './app.routes';
+import { tenantAuthInterceptor } from './app/interceptors/tenant-auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
     providers: [
         provideRouter(appRoutes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }), withEnabledBlockingInitialNavigation()),
-        provideHttpClient(withFetch(), withInterceptors([authInterceptor()])),
+        provideHttpClient(withFetch(), withInterceptors([authInterceptor(), tenantAuthInterceptor])),
         provideZonelessChangeDetection(),
         providePrimeNG({ theme: { preset: Aura, options: { darkModeSelector: '.app-dark' } } }),
         provideAuth(
