@@ -1,7 +1,12 @@
 package jct.pillorganizer.tenant.service
 
-import jakarta.inject.Inject
-import jct.pillorganizer.core.TenantDetails
+// @relation(UN-501, scope=file)
+// @relation(UN-502, scope=file)
+// @relation(UN-503, scope=file)
+// @relation(UN-504, scope=file)
+// @relation(UN-7313, scope=file)
+// @relation(UN-7314, scope=file)
+// @relation(SYS-REQ-37, scope=file)
 import jct.pillorganizer.core.service.TenantService
 import jct.pillorganizer.core.uid.KsuidService
 import jct.pillorganizer.tenant.BaseIntegrationSpec

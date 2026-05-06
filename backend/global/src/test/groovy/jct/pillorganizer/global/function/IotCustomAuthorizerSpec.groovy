@@ -1,6 +1,13 @@
 package jct.pillorganizer.global.function
 
-import io.micronaut.context.ApplicationContext
+// @relation(CTRL-REQ-2, scope=file)
+// @relation(CTRL-REQ-3, scope=file)
+// @relation(CTRL-REQ-27, scope=file)
+// @relation(UN-302, scope=file)
+// @relation(UN-602, scope=file)
+// @relation(UN-7311, scope=file)
+// @relation(SYS-REQ-14, scope=file)
+// @relation(SYS-REQ-18, scope=file)
 import io.micronaut.serde.ObjectMapper
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject

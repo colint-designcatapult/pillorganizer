@@ -1,9 +1,10 @@
 package jct.pillorganizer.global.repo
 
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import jakarta.inject.Inject
-import jct.pillorganizer.global.model.DeviceControlPlaneEntityType
-import jct.pillorganizer.global.model.UserEntity
+// @relation(CTRL-REQ-4, scope=file)
+// @relation(CTRL-REQ-5, scope=file)
+// @relation(UN-301, scope=file)
+// @relation(UN-306, scope=file)
+// @relation(SYS-REQ-22, scope=file)
 import jct.pillorganizer.global.persistence.BaseDeviceControlPlaneSpec
 import spock.lang.Shared
 import spock.lang.Subject

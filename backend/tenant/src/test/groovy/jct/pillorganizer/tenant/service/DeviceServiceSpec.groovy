@@ -1,5 +1,16 @@
 package jct.pillorganizer.tenant.service
 
+// @relation(CTRL-REQ-11, scope=file)
+// @relation(CTRL-REQ-25, scope=file)
+// @relation(UN-201, scope=file)
+// @relation(UN-202, scope=file)
+// @relation(UN-204, scope=file)
+// @relation(UN-305, scope=file)
+// @relation(UN-307, scope=file)
+// @relation(UN-601, scope=file)
+// @relation(UN-602, scope=file)
+// @relation(SYS-REQ-27, scope=file)
+// @relation(SYS-REQ-36, scope=file)
 import io.micronaut.test.annotation.MockBean
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject

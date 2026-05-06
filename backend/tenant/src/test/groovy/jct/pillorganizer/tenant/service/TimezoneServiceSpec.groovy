@@ -1,5 +1,8 @@
 package jct.pillorganizer.tenant.service
 
+// @relation(UN-102, scope=file)
+// @relation(UN-101, scope=file)
+// @relation(UN-105, scope=file)
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.jackson.databind.JacksonDatabindMapper
 import spock.lang.Specification

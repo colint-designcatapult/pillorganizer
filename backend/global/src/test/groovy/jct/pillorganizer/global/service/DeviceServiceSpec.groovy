@@ -1,5 +1,9 @@
 package jct.pillorganizer.global.service
 
+// @relation(CTRL-REQ-16, scope=file)
+// @relation(UN-602, scope=file)
+// @relation(UN-7309, scope=file)
+// @relation(SYS-REQ-15, scope=file)
 import jct.pillorganizer.global.model.DeviceTenantMappingEntity
 import jct.pillorganizer.global.repo.DeviceTenantMappingRepo
 import spock.lang.Specification

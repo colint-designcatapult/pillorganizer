@@ -1,5 +1,10 @@
 package jct.pillorganizer.tenant.service
 
+// @relation(CTRL-REQ-3, scope=file)
+// @relation(UN-407, scope=file)
+// @relation(UN-408, scope=file)
+// @relation(SYS-REQ-14, scope=file)
+// @relation(SYS-REQ-18, scope=file)
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import jct.pillorganizer.tenant.model.device.LogicalDevice

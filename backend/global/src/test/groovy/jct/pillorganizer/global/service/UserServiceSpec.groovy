@@ -10,6 +10,12 @@ import spock.lang.Subject
 
 // @relation(CTRL-REQ-4, scope=file)
 // @relation(CTRL-REQ-5, scope=file)
+// @relation(UN-301, scope=file)
+// @relation(UN-302, scope=file)
+// @relation(UN-306, scope=file)
+// @relation(UN-7313, scope=file)
+// @relation(SYS-REQ-22, scope=file)
+// @relation(SYS-REQ-33, scope=file)
 class UserServiceSpec extends Specification {
 
     UserRepo userRepo = Mock()

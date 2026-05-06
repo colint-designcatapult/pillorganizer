@@ -30,6 +30,14 @@ import java.time.temporal.ChronoUnit
 
 // @relation(CTRL-REQ-17, scope=file)
 // @relation(CTRL-REQ-18, scope=file)
+// @relation(UN-601, scope=file)
+// @relation(UN-602, scope=file)
+// @relation(UN-603, scope=file)
+// @relation(SYS-REQ-43, scope=file)
+// @relation(SYS-REQ-44, scope=file)
+// @relation(SYS-REQ-45, scope=file)
+// @relation(SYS-REQ-46, scope=file)
+// @relation(SYS-REQ-47, scope=file)
 class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
 
     IotClient iotClient = Mock()

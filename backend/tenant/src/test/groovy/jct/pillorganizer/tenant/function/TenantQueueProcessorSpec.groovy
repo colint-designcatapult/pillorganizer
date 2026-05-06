@@ -1,5 +1,12 @@
 package jct.pillorganizer.tenant.function
 
+// @relation(CTRL-REQ-4, scope=file)
+// @relation(CTRL-REQ-8, scope=file)
+// @relation(CTRL-REQ-25, scope=file)
+// @relation(UN-404, scope=file)
+// @relation(UN-601, scope=file)
+// @relation(UN-602, scope=file)
+// @relation(SYS-REQ-43, scope=file)
 import com.amazonaws.services.lambda.runtime.events.SQSEvent
 import io.micronaut.serde.ObjectMapper
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
