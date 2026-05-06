@@ -394,9 +394,9 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
         if (state == null) return const SizedBox.shrink();
 
         final reloadState = state.reloadState;
-        // Determine if in reloading stage (has progress data)
+        // needed=true + progress!=null → RELOAD_RELOADING (device is actively reloading bins)
         final isReloading = reloadState != null && reloadState.needed && reloadState.progress != null;
-        // Determine if needs reload or no reload
+        // needed=true + progress==null → RELOAD_NEEDS_RELOAD (all bins dispensed, waiting for reload)
         final needsReload = reloadState != null && reloadState.needed && reloadState.progress == null;
 
         String label;
