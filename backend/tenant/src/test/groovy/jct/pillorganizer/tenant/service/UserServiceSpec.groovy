@@ -1,5 +1,10 @@
 package jct.pillorganizer.tenant.service
 
+// @relation(CTRL-REQ-4, scope=file)
+// @relation(UN-301, scope=file)
+// @relation(UN-302, scope=file)
+// @relation(UN-306, scope=file)
+// @relation(SYS-REQ-22, scope=file)
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.retry.annotation.Retryable
 import io.micronaut.test.extensions.spock.annotation.MicronautTest

@@ -1,6 +1,13 @@
 package jct.pillorganizer.global.service
 
-import jct.pillorganizer.global.exception.DeviceAccessException
+// @relation(CTRL-REQ-2, scope=file)
+// @relation(CTRL-REQ-3, scope=file)
+// @relation(CTRL-REQ-27, scope=file)
+// @relation(UN-302, scope=file)
+// @relation(UN-602, scope=file)
+// @relation(UN-7311, scope=file)
+// @relation(SYS-REQ-14, scope=file)
+// @relation(SYS-REQ-18, scope=file)
 import jct.pillorganizer.global.model.DeviceEntity
 import jct.pillorganizer.global.model.UserEntity
 import reactor.core.publisher.Mono

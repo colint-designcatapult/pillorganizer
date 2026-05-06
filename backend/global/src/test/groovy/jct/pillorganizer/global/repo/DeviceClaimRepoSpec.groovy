@@ -1,5 +1,11 @@
 package jct.pillorganizer.global.repo
 
+// @relation(CTRL-REQ-22, scope=file)
+// @relation(CTRL-REQ-23, scope=file)
+// @relation(UN-601, scope=file)
+// @relation(UN-602, scope=file)
+// @relation(SYS-REQ-44, scope=file)
+// @relation(SYS-REQ-47, scope=file)
 import com.github.ksuid.Ksuid
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject

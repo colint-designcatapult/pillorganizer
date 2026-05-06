@@ -1,5 +1,14 @@
 package jct.pillorganizer.tenant.api.internal
 
+// @relation(CTRL-REQ-8, scope=file)
+// @relation(CTRL-REQ-11, scope=file)
+// @relation(CTRL-REQ-13, scope=file)
+// @relation(UN-201, scope=file)
+// @relation(UN-305, scope=file)
+// @relation(UN-307, scope=file)
+// @relation(UN-501, scope=file)
+// @relation(SYS-REQ-11, scope=file)
+// @relation(SYS-REQ-36, scope=file)
 import io.micronaut.core.type.Argument
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.client.HttpClient

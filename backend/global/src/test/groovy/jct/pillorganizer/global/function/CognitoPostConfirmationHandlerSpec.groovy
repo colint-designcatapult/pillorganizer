@@ -12,6 +12,9 @@ import spock.lang.Specification
 import spock.lang.Subject
 
 // @relation(CTRL-REQ-4, scope=file)
+// @relation(UN-301, scope=file)
+// @relation(UN-302, scope=file)
+// @relation(SYS-REQ-22, scope=file)
 @MicronautTest
 class CognitoPostConfirmationHandlerSpec extends BaseIntegrationSpec {
 

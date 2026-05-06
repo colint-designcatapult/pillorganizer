@@ -9,8 +9,9 @@ import spock.lang.Shared
 import spock.lang.Subject
 
 // @relation(CTRL-REQ-16, scope=file)
-@MicronautTest
-class DeviceTenantMappingRepoSpec extends BaseDeviceControlPlaneSpec {
+// @relation(UN-602, scope=file)
+// @relation(UN-7309, scope=file)
+// @relation(SYS-REQ-15, scope=file)extends BaseDeviceControlPlaneSpec {
 
     @Inject
     @Shared

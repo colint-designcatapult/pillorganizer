@@ -1,6 +1,15 @@
 package jct.pillorganizer.tenant.service
 
-import jct.pillorganizer.tenant.BaseIntegrationSpec
+// @relation(UN-501, scope=file)
+// @relation(UN-502, scope=file)
+// @relation(UN-503, scope=file)
+// @relation(UN-504, scope=file)
+// @relation(UN-7313, scope=file)
+// @relation(UN-7314, scope=file)
+// @relation(UN-7315, scope=file)
+// @relation(SYS-REQ-33, scope=file)
+// @relation(SYS-REQ-35, scope=file)
+// @relation(SYS-REQ-37, scope=file)
 import jakarta.inject.Inject
 import spock.lang.Subject
 
