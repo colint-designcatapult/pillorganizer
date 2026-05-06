@@ -11,6 +11,7 @@ package jct.pillorganizer.tenant.service
 // @relation(SYS-REQ-35, scope=file)
 // @relation(SYS-REQ-37, scope=file)
 import jakarta.inject.Inject
+import jct.pillorganizer.tenant.BaseIntegrationSpec
 import spock.lang.Subject
 
 /**
