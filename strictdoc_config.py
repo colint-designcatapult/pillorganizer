@@ -6,8 +6,9 @@ def create_config() -> ProjectConfig:
         "/.venv",
         "/backend/.mvn",
         "/infra/node_modules",
-        "/firmware/.pio",
-        "/firmware/components"
+        "/web",
+        "/app",
+        "/firmware"
     ]
 
     config = ProjectConfig(
@@ -21,20 +22,17 @@ def create_config() -> ProjectConfig:
             "SOURCE_FILE_LANGUAGE_PARSERS"
         ],
         include_doc_paths=[
-            "/docs/**.sdoc",
+            "/docs/requirements/0_stakeholder_and_risk/1_user_needs.sdoc",
+            "/docs/requirements/0_stakeholder_and_risk/2_risk_analysis.sdoc",
+            "/docs/requirements/1_system/system_reqs.sdoc",
+            "/docs/requirements/2_vnv/*.sdoc",
+            "/docs/requirements/2_software_reqs/control_plane.sdoc",
+            "/docs/requirements/1_system/interface_control.sdoc",
         ],
         exclude_doc_paths=global_exclude,
         include_source_paths=[
             "/backend/**.java",
-            "/backend/**.groovy",
-
-            "/app/lib/**.dart",
-
-            "/infra/**.ts",
-
-            "/firmware/**.c",
-            "/firmware/**.cpp",
-            "/firmware/platformio.ini"
+            "/backend/**.groovy"
         ],
         exclude_source_paths=global_exclude
     )

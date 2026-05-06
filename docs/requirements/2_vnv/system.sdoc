@@ -1,0 +1,1494 @@
+[DOCUMENT]
+TITLE: System Verification & Validation Matrix
+
+[GRAMMAR]
+ELEMENTS:
+- TAG: SECTION
+  PROPERTIES:
+    IS_COMPOSITE: True
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: False
+  - TITLE: LEVEL
+    TYPE: String
+    REQUIRED: False
+  - TITLE: PREFIX
+    TYPE: String
+    REQUIRED: False
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: True
+- TAG: TEXT
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: False
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: True
+- TAG: TEST
+  PROPERTIES:
+    PREFIX: TEST-
+    VIEW_STYLE: Narrative
+  FIELDS:
+  - TITLE: MID
+    TYPE: String
+    REQUIRED: False
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: RUN_RESULT
+    TYPE: SingleChoice(Passed, Failed, Blocked)
+    REQUIRED: False
+  - TITLE: RUN_BY
+    TYPE: String
+    REQUIRED: False
+  - TITLE: RUN_DATE
+    TYPE: String
+    REQUIRED: False
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: True
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: True
+  - TITLE: RESULT_STRING
+    TYPE: String
+    REQUIRED: False
+  RELATIONS:
+  - TYPE: Parent
+    ROLE: Verifies
+
+[[SECTION]]
+TITLE: Device Hardware & Physical Operation
+
+[TEST]
+UID: TEST-1
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/04/2026
+TITLE: Visual Dose Indicators and Bin Identification
+STATEMENT: >>>
+Prerequisites: A provisioned device with an active medication schedule that includes at least one AM dose and one PM dose for the current day. The device is powered on and connected to Wi-Fi.
+
+Steps:
+1. Observe the physical device at the scheduled AM dose time.
+2. Verify that the LED indicator for the correct AM bin (the bin mapped to today's AM slot, labelled with the Sun symbol) is blinking green.
+3. Verify no other bin LEDs are blinking green.
+4. Without opening the bin, wait 15 minutes past the scheduled AM dose time.
+5. Verify that the AM bin LED transitions from blinking green to solid red, indicating the dose has not been taken within the alert window.
+6. Open the AM bin (simulating a late dose).
+7. Verify the AM bin LED changes from solid red to solid green immediately upon the bin opening.
+8. Observe the device at the scheduled PM dose time.
+9. Verify that only the LED for the correct PM bin (labelled with the Moon symbol) is blinking green.
+10. Open the PM bin within the first 15 minutes of the scheduled time.
+11. Verify the PM bin LED changes to solid green immediately upon opening.
+12. Cross-reference the bin indicated by the device LED against the physical day-of-week and Sun/Moon labels printed on the device lid/body.
+
+
+
+Acceptance Criteria:
+- Only the correct bin LED activates (blinking green) at the correct scheduled time.
+- If a dose is not taken within 15 minutes of the scheduled time, the bin LED changes from blinking green to solid red.
+- Opening a bin (whether on time or late) immediately changes the LED to solid green.
+- The bin indicated by the LED matches the physical Sun/Moon and day-of-week label.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-201
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-106
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-107
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-2
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/04/2026
+TITLE: Physical Pill Loading Procedure
+STATEMENT: >>>
+Prerequisites: A device with an empty organizer tray. A supply of two clearly distinguishable types of test pills (e.g., vitamin tablets of two different colors or sizes). The device is powered on.
+
+Steps:
+1. Inspect each of the 14 bins to confirm they are physically distinct, individually separated, and clearly labelled (day of week + AM/PM symbol).
+2. Load test pills of type A into the 7 AM (Sun) bins, placing 1–2 pills per bin.
+3. Load test pills of type B into the 7 PM (Moon) bins, placing 1–2 pills per bin.
+4. Re-open the device lid and verify that the pills loaded into each bin remain in that bin without having spilled into adjacent bins.
+5. Verify that pills from AM bins have not mixed with pills in PM bins.
+6. Confirm that all 14 bins are accessible and can be opened with fingers alone.
+
+Acceptance Criteria:
+- All 14 bins are distinct, individually accessible, and labelled.
+- Pills loaded into a bin do not spill into adjacent bins under normal handling.
+- AM and PM bin contents remain physically separate.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-102
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-3
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/05/2026
+TITLE: Battery Level Monitoring and Critical Power Alerts
+STATEMENT: >>>
+Prerequisites: A provisioned device with the mobile app installed and logged in. A bench power supply capable of providing stable DC voltage in the 3.2V–3.7V range, connected to the device's battery terminals via appropriate connectors.
+
+Steps — FULL state (normal operation):
+1. Set the bench power supply to 3.60 V and connect to the device battery terminals.
+2. Power on the device. Open the mobile app and navigate to the device status screen.
+3. Verify the device operates normally with no battery warning displayed in the app.
+
+Steps — LOW threshold (3.50 V):
+4. While the device is running, gradually lower the supply voltage to 3.50 V (between 3.45 V and 3.55 V).
+5. Wait for at least 10 consecutive ULP poll cycles to allow the level debounce logic to settle (approximately 30 seconds).
+6. Verify that the mobile app displays a distinct low battery status indicator.
+
+Steps — CRITICAL threshold (3.40 V):
+7. Lower the supply voltage to 3.40 V (below 3.45 V).
+8. Wait for at least 10 consecutive ULP poll cycles to allow the shutoff threshold to be confirmed.
+9. Verify that the mobile app displays a distinct battery critical low status indicator.
+
+Acceptance Criteria:
+- At supply voltage > 3.55 V: no battery warning is displayed.
+- At supply voltage between 3.45 V and 3.55 V: a distinct LOW battery warning is displayed in the mobile app and on the device.
+- At supply voltage below 3.45V: a distinct CRITICAL battery warning is displayed in the mobile app and on the device.
+- No continuous battery percentage is displayed; only discrete status levels are reported.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-205
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-206
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-4
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/05/2026
+TITLE: Power Loss State Persistence
+STATEMENT: >>>
+Prerequisites: A provisioned device with an active medication schedule configured (e.g., daily AM and PM doses). The device has been running normally and has synchronized with the backend within the last hour.
+
+Steps:
+1. Note the current device state: active schedule, state, and any pending dose indicators.
+2. Disconnect power from the device (remove batteries or unplug if applicable).
+3. Wait at least 30 seconds to simulate a meaningful power interruption.
+4. Restore power to the device.
+5. Observe the device boot sequence.
+6. Verify that after booting, the device automatically resumes displaying the active medication schedule without any user interaction.
+7. Verify that the scheduled dose indicators activate at the correct times following the restart (observe through the next scheduled dose time).
+8. Verify that no reconfiguration prompt or setup wizard is shown.
+9. Open the mobile app and confirm the device reconnects to the backend and resumes synchronization without manual intervention.
+
+Acceptance Criteria:
+- The device restores its prior operating state automatically after power is restored.
+- No user reconfiguration is required.
+- Scheduled dose alerts resume at the correct times.
+- The device reconnects and synchronizes with the backend automatically.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-505
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-1
+  ROLE: Verifies
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Medication Scheduling
+
+[TEST]
+UID: TEST-5
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/04/2026
+TITLE: Daily Medication Schedule Configuration
+STATEMENT: >>>
+Prerequisites: A provisioned device with no active schedule. User is logged into the mobile app as the Primary User (Patient).
+
+Steps — Once-daily use verification:
+1. Open the mobile app and navigate to the schedule configuration screen for the device.
+2. Configure a twice-daily schedule (the app requires both an AM and a PM time) with an AM dose time and a PM dose time for all 7 days of the week.
+3. Assign a start day (e.g., Monday) and confirm the schedule.
+4. Load pills into only the AM (Sun) bins. Leave all PM (Moon) bins empty.
+5. At the scheduled AM dose time for one day, open only the AM bin. Do not open the PM bin.
+6. Verify the AM dose is recorded as "Taken" in the adherence history.
+7. Verify the adherence record for that day reflects at least one taken dose, demonstrating the device can support a once-daily dosing pattern even within a twice-daily schedule.
+
+Steps — Twice-daily schedule and label alignment:
+8. With the twice-daily schedule active, verify that the app maps AM doses to Sun-labelled bins and PM doses to Moon-labelled bins for each day of the week.
+9. Verify that the digital schedule displayed in the app aligns with the physical Sun/Moon and day-of-week labels on the device.
+10. Attempt to assign a PM dose to the same bin slot as an existing AM dose on the same day.
+11. Verify the system enforces that AM (Sun) bins are scheduled before PM (Moon) bins and does not allow reversed assignment.
+12. Save the schedule and confirm it is applied to the device within 5 minutes (indicated by all lights on the device blinking green).
+
+Acceptance Criteria:
+- A once-daily dosing pattern is achievable on the device; opening only the AM bin each day is recorded as a taken event.
+- The digital schedule always aligns with Sun (AM) and Moon (PM) physical labels for each day.
+- The system prevents scheduling AM doses after PM doses within the same calendar day.
+- The configured schedule is successfully applied to the device.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-101
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-106
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-107
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-307
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-6
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/04/2026
+TITLE: Medication Cycle Management and Fill Confirmation
+STATEMENT: >>>
+Prerequisites: A provisioned device with a 7-day active schedule that has been completed (all doses for the current week have been taken or the cycle end date has been reached). User is logged into the mobile app as the Primary User.
+
+Steps:
+1. Allow the device to reach the end of its active schedule cycle (all 7 days elapsed, or all scheduled doses exhausted).
+2. Verify the device needs a reload by observing all lights flashing orange and the proper indication in the mobile app.
+3. Open a single bin on the device and observe the LEDs change.
+4. Load medication into every bin indicated red, opening and closing the door. Observe the LED change to green.
+5. Complete the reload/fill confirmation flow by completing this process for all bins on the device to transition the device to a new cycle.
+6. Verify that the adherence tracking is reset: all bins for the new cycle are shown as "pending" or "not yet taken."
+7. Verify that the previous cycle's adherence history remains accessible in the adherence history screen.
+8. Verify the device LED indicators and app are now aligned to the first dose of the new cycle.
+
+Acceptance Criteria:
+- At the end of a cycle, the device indicates that the bins should be reloaded.
+- A new cycle can be initiated after the previous cycle is complete.
+- Fill confirmation resets adherence tracking for the new cycle.
+- Prior cycle adherence history is preserved and viewable.
+- Device LEDs and app correctly indicate the first dose of the new cycle.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-103
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-104
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-7
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/05/2026
+TITLE: Mid-Cycle Schedule Adjustment
+STATEMENT: >>>
+Prerequisites: A provisioned device in the middle of an active 7-day cycle (e.g., 3 days completed, 4 days remaining). At least 2 doses have already been recorded as "taken" in the current cycle. User is logged into the mobile app as the Primary User.
+
+Steps:
+1. Open the mobile app and navigate to the schedule configuration screen.
+2. Note the current adherence records for the days already completed in the cycle (e.g., Day 1 AM: Taken, Day 1 PM: Taken, Day 2 AM: Taken).
+3. Modify the schedule for the remaining days of the cycle (e.g., remove the PM dose for the remaining days, or change the dose time).
+4. Save the modified schedule.
+5. Verify that the adherence records for doses already taken (Days 1–2 in this example) are unchanged.
+6. Verify that the schedule for the remaining days reflects the new configuration.
+7. Observe the device and verify that the LEDs for the next upcoming dose align with the updated schedule.
+8. Verify that no previously recorded adherence event has been altered or deleted.
+
+Acceptance Criteria:
+- Schedule changes during an active cycle apply only to upcoming doses.
+- Previously recorded adherence events are preserved without modification.
+- The device LEDs correctly reflect the updated upcoming schedule.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-105
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-307
+  ROLE: Verifies
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Daily Use & Notifications
+
+[TEST]
+UID: TEST-8
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/04/2026
+TITLE: Automated Dose Detection and Classification
+STATEMENT: >>>
+Prerequisites: A provisioned device with an active schedule. The device is loaded with pills and connected to Wi-Fi. The mobile app is installed and logged in as the Primary User.
+
+Steps:
+1. At the scheduled AM dose time for today, open the correct AM bin within the first 15 minutes of the scheduled dose time.
+2. Wait up to 10 seconds, then open the mobile app and navigate to the adherence tracking screen.
+3. Verify that the dose event for today's AM bin is automatically recorded as "Taken."
+4. At the scheduled PM dose time, wait until 15 minutes past the scheduled time without opening the bin.
+5. Verify that the PM bin LED has changed from blinking green to solid red.
+6. Open the mobile app and verify that the PM dose event is recorded as "Missed."
+6. On a different day, open the correct bin 1 minute before the dose window closes (i.e., late but within the window).
+7. Verify the dose is recorded as "Taken".
+8. On another day, open the correct bin after the dose window has closed but before the next scheduled dose.
+9. Verify the dose is recorded as "Taken."
+10. Verify that the adherence screen clearly displays the actual taken time.
+
+Acceptance Criteria:
+- Opening a bin during the correct dose window is automatically recorded as a taken event.
+- Taken and missed doses are distinctly labeled in the adherence record with the time.
+- The automated detection requires no manual user input.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-401
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-404
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-9
+RUN_RESULT: Blocked
+TITLE: Remote Dose Notifications and Preference Control
+STATEMENT: >>>
+Prerequisites: A provisioned device with an active daily schedule. The mobile app is installed on a test smartphone with push notifications enabled. User is logged in as the Primary User. A second test smartphone is available for Caregiver testing.
+
+Steps:
+1. Open the mobile app and navigate to notification settings.
+2. Enable "Upcoming Dose" notifications and disable "Missed Dose" notifications.
+3. Wait for a scheduled dose time.
+4. Verify that a push notification is received on the smartphone at or near the scheduled dose time, indicating which dose is due.
+5. Allow the dose window to close without opening the bin.
+6. Verify that no "Missed Dose" notification is received (since it was disabled).
+7. Return to notification settings and enable "Missed Dose" notifications.
+8. Allow the next dose window to close without opening the bin.
+9. Verify that a "Missed Dose" push notification is received.
+10. As the Primary User, add a Caregiver account to the device and configure the Caregiver's notification preferences.
+11. Verify that the Caregiver receives only the notifications corresponding to their configured preferences on their device.
+
+Acceptance Criteria:
+- Dose-due notifications are received at the scheduled dose time when enabled.
+- Missed dose notifications are received only when that notification type is enabled.
+- Notification preferences can be independently configured for each user (Patient and Caregiver).
+- Disabling a notification type suppresses that notification type.
+<<<
+RESULT_STRING: >>>
+CANNOT TEST NO CAREGIVER SUPPORT, NO FINE GRAINED NOTIFICATION PREFERENCES.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-202
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-203
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-204
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-12
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-10
+RUN_RESULT: Blocked
+TITLE: Manual Adherence Record Correction
+STATEMENT: >>>
+Prerequisites: A provisioned device with an active schedule. At least one dose event has been recorded (either a false positive: bin opened but pill not taken, or a false negative: pill taken without the device detecting it). User is logged into the mobile app as the Primary User.
+
+Steps:
+1. Open the mobile app and navigate to the adherence history screen.
+2. Locate a "Taken" event that was a false positive (bin was opened but the pill was not actually taken).
+3. Select the event and choose the option to mark it as "Not Taken" or correct the record.
+4. Confirm the change and verify the event is updated in the adherence history.
+5. Locate a dose slot that is recorded as "Missed" (a false negative where the pill was actually taken without device detection).
+6. Select the event and choose the option to mark it as "Taken" or add a manual taken record.
+7. Confirm the change and verify the event is updated as "Taken" in the adherence history.
+8. Verify that a correction timestamp or notation indicating the record was manually modified is visible on the corrected entry.
+
+Acceptance Criteria:
+- False positive "Taken" events can be corrected to "Not Taken."
+- False negative "Missed" events can be corrected to "Taken."
+- Corrected entries are indicated as manually modified in the record.
+<<<
+RESULT_STRING: >>>
+CANNOT TEST NO CORRECTION SUPPORT IN APP.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-402
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-11
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/04/2026
+TITLE: Adherence History Visualization
+STATEMENT: >>>
+Prerequisites: A provisioned device with at least 2 weeks of adherence data recorded (a mix of On-Time, Late, and Missed events). User is logged into the mobile app as the Primary User.
+
+Steps:
+1. Open the mobile app and navigate to device screen.
+2. Verify that the current week's adherence data is displayed, with each day's status visible as color indicators.
+3. Verify that each dose slot displays its status (Taken, Missed, Take Now, Unknown) with a distinct visual indicator (color, animation).
+4. Navigate to the adherence history for the current month verify that the adherence data is displayed correctly.
+5. Verify that all three dose statuses (Taken, Missed, Unknown) are visually differentiated throughout the history.
+
+Acceptance Criteria:
+- Adherence history is viewable in at least a weekly view.
+- Each dose event in the history displays its classification (Taken, Missed, Take Now, Unknown) using distinct visual indicators.
+- Users can navigate to prior periods to view historical adherence data.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-403
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-404
+  ROLE: Verifies
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Device Synchronization & Offline Operation
+
+[TEST]
+UID: TEST-12
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/06/2026
+TITLE: Device Synchronization and Connection Status
+STATEMENT: >>>
+Prerequisites: A provisioned device connected to Wi-Fi. The mobile app is installed and logged in as the Primary User. A bin is currently scheduled to be taken and is blinking green.
+
+Steps:
+1. Open the mobile app and confirm the device is displayed (no error indicating the device is offline).
+2. Make a configuration change in the mobile app by changing the time zone or schedule.
+3. Wait up to 15 minutes and verify the change is reflected on the device by observing the device LEDs flash green for 5 seconds.
+4. Open a bin on the device (not the one currently indicating to be taken) to trigger a state change.
+5. Observe the device display indicates the bin is opened in the app within 10 seconds.
+6. Disconnect the device from Wi-Fi (disable the Wi-Fi network or move device out of range).
+7. Observe the mobile app and verify it shows the device as "Offline" or displays a connection-lost indicator within one hour.
+8. Open and close the scheduled bin on the offline device.
+9. Reconnect the device to Wi-Fi.
+10. Verify the app displays the dose as taken.
+
+Acceptance Criteria:
+- Configuration changes made in the app are applied to the device within 15 minutes.
+- Bin-open state change events appear in the app within 10 seconds when the device is online.
+- The app shows a distinct "Offline" indicator when the device cannot communicate with the backend.
+- Events recorded while offline are synchronized to the app once connectivity is restored.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-406
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-407
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-6
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-7
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-8
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-9
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-13
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/06/2026
+TITLE: Offline Autonomous Operation
+STATEMENT: >>>
+Prerequisites: A provisioned device with an active medication schedule and loaded pills. Device is currently connected to Wi-Fi.
+
+Steps:
+1. Confirm the device is operating normally: LEDs activate at the correct scheduled dose time.
+2. Disconnect the device from Wi-Fi by physically removing it from Wi-Fi range.
+3. Verify the device is no longer able to communicate with the backend (app shows device offline).
+4. Wait for the next scheduled dose time while the device is offline.
+5. Verify that the device LED indicator activates for the correct bin at the scheduled dose time, without any internet connection.
+6. Open the correct bin and verify the LED changes to solid green.
+7. Verify that the device has locally logged the bin-open event(this can be confirmed after reconnection by checking the adherence history reflects the event).
+8. Verify that the device continues to activate LEDs for subsequent scheduled doses while still offline.
+
+Acceptance Criteria:
+- The device executes the loaded medication schedule (activates LED alerts) without any internet connection.
+- Bin-open events are logged locally while offline.
+- Local event logs are retained for synchronization upon reconnection.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-1
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-14
+RUN_RESULT: Failed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/06/2026
+TITLE: Safe State Entry and Recovery
+STATEMENT: >>>
+Prerequisites: A provisioned device with an active schedule. Backend and Wi-Fi are accessible. A method to simulate extended offline conditions. A second test is required for the audit log saturation condition.
+
+Steps - Extended Offline Lockout (SYS-REQ-3):
+1. Confirm the device is operating normally with LED alerts active.
+2. Disconnect the device from the network and wait 24 hours.
+3. After 24 hours of no synchronization, observe the device.
+4. Verify that all scheduled medication alert LEDs are OFF (no "Take Pill" indicators).
+5. Verify that the device displays the distinct "failsafe" visual pattern (all LEDs blinking Amber).
+6. Open a bin during this state and verify that no adherence event is recorded.
+7. Restore network connectivity to the device.
+8. Wait for the device to complete a successful synchronization with the backend.
+9. Verify that the device exits the Safe State and resumes normal scheduled LED operation.
+
+Acceptance Criteria:
+- After 24 hours without synchronization, the device enters the Safe State.
+- In the Safe State: all medication alert LEDs are off, the "Service Required" pattern is displayed, and adherence recording is disabled.
+- The device exits the Safe State and resumes normal operation only after a successful synchronization.
+<<<
+RESULT_STRING: >>>
+Bug. Need to implement
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: SYS-REQ-1
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-2
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-3
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-4
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-5
+  ROLE: Verifies
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Account Management & Authentication
+
+[TEST]
+UID: TEST-15
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/06/2026
+TITLE: Account Creation, Unique Identity, and Secure Login
+STATEMENT: >>>
+Prerequisites: Access to the mobile app on a test device. A valid email address for Patient account creation and a second email for Caregiver account creation. No prior accounts exist for these email addresses.
+
+Steps:
+1. Open the app and select "Create Account".
+2. Enter credentials for a new Patient account (email + password meeting complexity requirements). Submit. Enter verification code from email.
+3. Verify the account is created and the user is directed to the main app screen.
+4. Log out of the Patient account.
+5. Repeat steps 1–4 for a new Caregiver account using a different email address.
+6. Log out of the Caregiver account.
+7. Attempt to create a third account using the same email address as the Patient account.
+8. Verify the system rejects the duplicate and displays an appropriate error.
+9. Log into the Patient account using the correct credentials. Verify access is granted.
+10. Log into the Caregiver account using the correct credentials. Verify access is granted.
+11. Attempt to log in with an incorrect password for the Patient account.
+12. Verify access is denied and an appropriate error is displayed.
+13. Verify that each account has a unique user identifier assigned in the administrative dashboard.
+14. Attempt to access a protected screen (e.g., device dashboard) without being logged in (log out first, then navigate directly).
+15. Verify the system redirects to the login screen and denies access.
+
+Acceptance Criteria:
+- Patient and Caregiver accounts can be created with unique credentials.
+- Duplicate email addresses are rejected.
+- Login with correct credentials succeeds; incorrect credentials are denied.
+- Each account has a unique, permanent user identifier.
+- Unauthenticated access to protected resources is denied.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-301
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-302
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-306
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-7311
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-21
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-22
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-23
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-18
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-16
+RUN_RESULT: Blocked
+TITLE: Account Display Name
+STATEMENT: >>>
+Prerequisites: Two existing accounts - one Patient account and one Caregiver account. The Patient account is the Primary User of a provisioned device with the Caregiver account added as a Caregiver.
+
+Steps:
+1. Log into the Patient account on the mobile app.
+2. Navigate to account settings or profile.
+3. Locate the display name field and set a display name (e.g., "Jane Patient").
+4. Save the change and verify the new display name is shown in the account settings.
+5. Log out and log into the Caregiver account.
+6. Set a display name for the Caregiver account (e.g., "Dr. Smith").
+7. Save and verify.
+8. Log out and log back into the Patient account.
+9. Navigate to the device's Caregiver list or access management screen.
+10. Verify the Caregiver is listed by their display name ("Dr. Smith"), allowing the Patient to identify which real person the account belongs to.
+
+Acceptance Criteria:
+- Both Patient and Caregiver can set and view their own display name.
+- The Caregiver's display name is visible to the Patient in the Caregiver access list.
+<<<
+RESULT_STRING: >>>
+Caregiver not implemented.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7312
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-25
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-17
+RUN_RESULT: Blocked
+TITLE: Account Closure and Data Privacy
+STATEMENT: >>>
+Prerequisites: A Patient account with at least one device and several weeks of adherence history. A Caregiver account associated with that device.
+
+Steps:
+1. Log into the Patient account.
+2. Navigate to account settings and initiate account closure.
+3. Confirm the closure request.
+4. Verify the account can no longer be used to log in.
+5. Verify that the Patient's personally identifying information (name, email, contact details) has been removed or anonymized.
+6. Verify (via a researcher or admin portal, if available) that the historical adherence data associated with the now-closed account is still present but no longer linked to any personally identifying information.
+7. Attempt to log into the closed account and verify access is denied.
+8. Log into the Caregiver account and verify the Caregiver can no longer access the device previously associated with the closed Patient account.
+
+Acceptance Criteria:
+- Account closure removes or anonymizes all PII for the user.
+- Historical health/adherence data is retained in anonymized form.
+- The closed account cannot be used to log in.
+- Caregivers lose access to the device when the Primary User account is closed.
+<<<
+RESULT_STRING: >>>
+Not implemented.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-305
+  ROLE: Verifies
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Device Provisioning & Identity
+
+[TEST]
+UID: TEST-18
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/06/2026
+TITLE: Device Provisioning via Mobile App
+STATEMENT: >>>
+Prerequisites: A provisioned device assigned to a different Patient account. A Patient account on the mobile app. A Wi-Fi network with known credentials. Physical access to the device.
+
+Steps:
+1. Log into the Patient account on the mobile app.
+2. Navigate to "Add Device" or "Provision New Device" in the app.
+3. Follow the in-app provisioning wizard.
+4. When prompted, enter the Wi-Fi SSID and password for the test Wi-Fi network.
+5. Confirm that the provisioning process requires physical proximity (e.g., Bluetooth pairing) to verify physical possession.
+6. Complete the provisioning wizard.
+7. Verify the device connects to Wi-Fi and communicates with the backend (app shows device as online).
+8. Verify the Patient account that performed provisioning is automatically designated as the Primary User of the device by changing the schedule of it.
+9. Verify the device appears in the Patient's device list in the app.
+10. Attempt to provision the same device again without first deprovisioning it.
+11. Verify the system does not allow provisioning.
+12. Sign in with the original Patient account and attempt to change the schedule. Observe the schedule change is not accepted by the system.
+
+Acceptance Criteria:
+- Device can be provisioned entirely through the mobile app.
+- Provisioning requires physical interaction with the device (possession verification).
+- The provisioning user is automatically designated as the Primary User.
+- The device appears in the user's device list after provisioning.
+- Re-provisioning revokes old credentials and issues new ones.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-501
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-42
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-43
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-44
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-29
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-47
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-48
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-19
+RUN_RESULT: Blocked
+TITLE: Device Nickname, Serial Number, and Logical Identifier
+STATEMENT: >>>
+Prerequisites: A provisioned device associated with a Patient account. The mobile app is installed and logged in as the Primary User.
+
+Steps:
+1. Open the mobile app and navigate to device settings for the provisioned device.
+2. Locate the device serial number display field.
+3. Verify a serial number is displayed. Record the serial number.
+4. Verify the serial number matches the serial number physically printed or affixed on the physical device.
+5. Locate the device nickname field.
+6. Enter a nickname for the device (e.g., "Bedroom Organizer").
+7. Save the nickname.
+8. Navigate to the main device dashboard or home screen.
+9. Verify the device nickname "Bedroom Organizer" is displayed prominently (not just the serial number) wherever the device is referenced (dashboard, notifications, adherence history header).
+10. Return to device settings and verify the device also has a logical identifier (UUID or similar internal ID) separate from the serial number.
+
+Acceptance Criteria:
+- The device serial number is displayed in the app and matches the physical label.
+- The device nickname can be set and saved by the user.
+- The nickname is displayed in the app wherever the device is referenced (dashboard, notifications, records).
+- The device has a unique logical identifier separate from the serial number.
+<<<
+RESULT_STRING: >>>
+No label on device. Need to show SN + ID in app.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7313
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-7315
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-26
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-27
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-39
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-40
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-41
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-20
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/06/2026
+TITLE: Multiple Device Management - List and Switch
+STATEMENT: >>>
+Prerequisites: A Patient account that is the Primary User of two provisioned devices (Device A and Device B). Both devices have distinct nicknames. The mobile app is installed and logged in.
+
+Steps:
+1. Open the mobile app and navigate to My Devices.
+2. Verify both Device A and Device B are listed by their nicknames.
+3. Select Device A and verify that all displayed information (adherence history, schedule, status) corresponds to Device A.
+4. Switch to Device B by selecting it from the device list.
+5. Verify that all displayed information now corresponds to Device B.
+6. Verify that changes made in the context of Device B do not affect Device A's data or configuration.
+7. Set distinct medication schedules for Device A and Device B and enable push notifications for both.
+8. Observe the medication push notifications from Device A and device B and ensure the nicknames for both are included in the message.
+
+Acceptance Criteria:
+- Both devices appear in the device list, identified by nickname.
+- The user can switch between devices and the app context updates to the selected device.
+- Data from one device does not appear in the context of the other.
+- Push notifications reference the proper and distinct device nicknames
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7314
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-27
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-36
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-37
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-21
+RUN_RESULT: Blocked
+TITLE: Device Dissociation
+STATEMENT: >>>
+Prerequisites: A provisioned device (Device A) with an active schedule and adherence history. The Patient account is the Primary User. The device is connected to Wi-Fi.
+
+Steps:
+1. Log into the Patient account on the mobile app.
+2. Navigate to device settings for Device A.
+3. Select "Remove Device" or "Dissociate" (or equivalent option).
+4. Confirm the dissociation.
+5. Verify that Device A no longer appears in the Patient's device list.
+6. Verify that the adherence history previously collected for Device A is still accessible in the app (under a disabled device section).
+7. Attempt to make a schedule change for Device A from the Patient account.
+8. Verify that schedule modifications are denied (the user is no longer Primary User and cannot configure the device).
+9. Verify the device's previously issued credentials are revoked (the device can no longer communicate with the backend using its old credentials - observable if the device shows an offline/error state after dissociation).
+
+Acceptance Criteria:
+- The Patient can dissociate their account from the device.
+- After dissociation, the Patient cannot make schedule or configuration changes to the device.
+- Adherence records collected prior to dissociation remain accessible to the Patient.
+- The device's previously issued credentials are revoked upon dissociation.
+<<<
+RESULT_STRING: >>>
+Not implemented.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-502
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-48
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-22
+RUN_RESULT: Blocked
+TITLE: Device Re-Provisioning and Data Transfer
+STATEMENT: >>>
+Prerequisites: Patient account with one provisioned device (Device A) that has an active schedule, a device nickname, and several weeks of adherence data. A second unprovisioned device (Device B) is available.
+
+Steps — Re-Provisioning Existing Device (Preserve Data):
+1. Log into the Patient account. Note Device A's nickname, schedule, and a sample of adherence history.
+2. Navigate to "Add Device" and re-provision Device A (using the same physical device) through the provisioning wizard.
+3. After re-provisioning completes, navigate to Device A's settings.
+4. Verify the device nickname is preserved.
+5. Verify the active schedule is preserved.
+6. Verify the adherence history is preserved.
+
+Steps — Transfer to New Device:
+7. Navigate to "Add Device" and begin provisioning Device B.
+8. When prompted, select the option to transfer configuration and data from Device A.
+9. Complete the provisioning of Device B.
+10. Verify Device B has the same nickname, schedule, and adherence history as Device A had before the transfer.
+11. Verify Device B appears in the device list and Device A is either removed or shows as transferred.
+
+Acceptance Criteria:
+- Re-provisioning an existing device preserves its configuration, schedule, and adherence history.
+- Provisioning a new device with a data transfer copies the configuration, schedule, and adherence records from the source device.
+<<<
+RESULT_STRING: >>>
+Needs bug fix.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7316
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-7317
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-45
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-46
+  ROLE: Verifies
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Access Control & Caregiver Management
+
+[TEST]
+UID: TEST-23
+RUN_RESULT: Blocked
+TITLE: Schedule Modification Privilege Enforcement
+STATEMENT: >>>
+Prerequisites: A provisioned device with an active schedule. A Patient account (Primary User) and a Caregiver account. The Caregiver has been added to the device. Both accounts are logged into separate mobile app instances.
+
+Steps:
+1. Log into the Caregiver account.
+2. Navigate to the device in the Caregiver's device list.
+3. Attempt to access the schedule configuration screen or modify the medication schedule.
+4. Verify that the schedule modification option is either hidden from the Caregiver's view or that an attempt to modify is denied with an appropriate error.
+5. Attempt to change the device schedule from the Caregiver account.
+6. Verify that schedule changes are denied.
+7. Log into the Patient account.
+8. Modify the medication schedule (e.g., change dose time for tomorrow).
+9. Verify the change is accepted and applied.
+10. Confirm the device has only one Primary User account (the Patient account).
+
+Acceptance Criteria:
+- Caregivers cannot modify the medication schedule or device configuration.
+- Only the Primary User (Patient) can modify the schedule or configuration.
+- The device is associated with exactly one Primary User.
+<<<
+RESULT_STRING: >>>
+Caregiver not implemented.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-307
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-28
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-33
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-24
+RUN_RESULT: Blocked
+TITLE: Caregiver Access Management and Monitoring
+STATEMENT: >>>
+Prerequisites: A provisioned device with adherence data and an active schedule. A Patient account (Primary User). A Caregiver account. The mobile app is available on two separate test devices.
+
+Steps:
+1. Log into the Patient account on the mobile app.
+2. Navigate to access management for the device.
+3. Add the Caregiver account by entering their email.
+4. Confirm the Caregiver is now listed in the device's Caregiver list, displayed by the Caregiver's display name.
+5. Log into the Caregiver account on the second test device.
+6. Navigate to the device in the Caregiver's view.
+7. Verify the Caregiver can view the device state.
+8. Verify the Caregiver can view the adherence records.
+9. Verify the Caregiver can view the current device configuration (schedule, settings).
+10. Verify the Caregiver receives mobile push notifications for the device (e.g., missed dose alert) according to their notification preferences.
+11. Return to the Patient account and revoke the Caregiver's access.
+12. On the Caregiver's device, attempt to access the device dashboard.
+13. Verify access is denied and the device no longer appears in the Caregiver's device list.
+
+Acceptance Criteria:
+- The Primary User can add a Caregiver and the Caregiver appears in the list with their display name.
+- The Caregiver can view device state, adherence records, and configuration.
+- The Caregiver receives mobile notifications per their configured preferences.
+- The Primary User can revoke Caregiver access, after which the Caregiver can no longer access the device.
+<<<
+RESULT_STRING: >>>
+Caregiver not implemented.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-303
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-304
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-7312
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-31
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-32
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-34
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-35
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-25
+RUN_RESULT: Blocked
+TITLE: Caregiver Proxy Provisioning and Device Handoff to Patient
+STATEMENT: >>>
+Prerequisites: An unprovisioned device. A Caregiver account. A Patient account (separate from the Caregiver). Physical access to the device.
+
+Steps:
+1. Log into the Caregiver account on the mobile app.
+2. Provision the device using the Caregiver account (follow the provisioning wizard, provide Wi-Fi credentials).
+3. After provisioning, verify the device appears in the Caregiver's device list.
+4. As the Caregiver, attempt to modify the medication schedule.
+5. Verify the Caregiver can modify the schedule.
+6. Initiate an invite caregiver from the device settings "share" tab (as the Caregiver/provisional Primary User).
+7. Log into the Patient account.
+8. Accept the ownership transfer from the Patient account.
+9. Verify the Patient account is now designated as the Primary User of the device.
+10. Verify the Caregiver retains monitoring access (read-only) but no longer has Primary User privileges.
+11. From the Patient account, modify the medication schedule.
+12. Verify the schedule change is accepted.
+13. From the Caregiver account, attempt to modify the schedule.
+14. Verify the modification is denied.
+
+Acceptance Criteria:
+- A Caregiver can provision a device on behalf of a Patient.
+- Device ownership (Primary User status) can be transferred from the Caregiver to the Patient.
+- After transfer, the Patient is the sole authority for schedule and configuration changes.
+- The Caregiver retains read-only monitoring access after the handoff (if they are designated as a Caregiver).
+<<<
+RESULT_STRING: >>>
+Caregiver not implemented.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-503
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-504
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-30
+  ROLE: Verifies
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Backend Infrastructure & Security
+
+[TEST]
+UID: TEST-26
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/06/2026
+TITLE: Central Backend Platform and API Connectivity
+STATEMENT: >>>
+Prerequisites: A provisioned device. Bruno test client. AWS Console IoT Core MQTT test client. MQTTx CLI.
+
+Steps:
+1. With the device online, observe the device state report on the appropriate MQTT topic.
+2. Confirm API requests without a valid user JWT token to the backend are rejected using Bruno.
+4. Confirm API requests with a valid JWT token, but to a different, unauthorized device to the backend are rejected.
+5. Confirm API requests with a valid JWT token to an authorized device to the backend are accepted.
+6. Trigger a state change on the device (e.g., open a bin) and verify the payload changes in the MQTT client.
+7. Use the MQTTx CLI to connect to MQTT over WebSocket with JWT credentials. Attempt to publish to the device state topic. Ensure the connection is terminated due to unauthorized request.
+
+Acceptance Criteria:
+- The mobile app communicates with the backend via a secure API.
+- All API traffic is encrypted in transit (HTTPS/TLS).
+- Both device and user app requests are authenticated.
+- State changes on the device are reflected via MQTT.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7311
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-11
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-12
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-27
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/06/2026
+TITLE: Backend Authentication, Authorization, and Encryption
+STATEMENT: >>>
+Prerequisites: Two Patient accounts (Patient A and Patient B), each with a provisioned device and adherence data. Bruno test client.
+
+Steps:
+1. Using Bruno, make a request to a protected backend endpoint (e.g., fetch Patient A's adherence data) without any authentication token.
+2. Verify the request is rejected with a 401 Unauthorized response.
+3. Authenticate as Patient A and obtain a JWT token.
+4. Use the session token to request Patient A's own adherence data. Verify the request succeeds.
+5. Use Patient A's session token to request Patient B's adherence data.
+6. Verify the request is denied (403 Forbidden or equivalent).
+7. Using a device authentication credential for Device A, attempt to send data attributed to Device B.
+8. Verify the request is rejected (the device is not authorized for Device B).
+9. Inspect the backend data store (or query the database directly if accessible in a test environment) and verify that all stored user data is encrypted at rest.
+10. Confirm that data in transit (API communications) uses TLS by verifying HTTPS is enforced on all endpoints.
+
+Acceptance Criteria:
+- Unauthenticated requests to protected endpoints are rejected (401).
+- Authenticated users cannot access other users' data (403).
+- Device credentials are validated per device; cross-device data injection is rejected.
+- User data is encrypted at rest in the backend data store.
+- All API communications are encrypted in transit via TLS.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7311
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-13
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-18
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-19
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-28
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/06/2026
+TITLE: Data Integrity and Audit Log Preservation
+STATEMENT: >>>
+Prerequisites: A provisioned device with a history of adherence events. A means to query the backend event log (via AWS Console/Aurora DSQL).
+
+Steps:
+1. Open the mobile app and navigate to the adherence history for the device.
+2. Record a set of existing events (e.g., the 5 most recent events, with their timestamps and statuses).
+3. Attempt to delete a historical adherence event directly via the backend API through any app interface.
+4. Verify the system denies deletion or modification of historical adherence events (events should be immutable).
+5. Query the backend event log and confirm all device events are logged with a timestamp.
+
+
+Acceptance Criteria:
+- Historical adherence events cannot be deleted or silently overwritten; corrections are stored as additive records.
+- All device actions are logged with timestamps in the event log.
+- The audit log is queryable and complete.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-402
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-405
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-16
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-29
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/06/2026
+TITLE: Data Residency Verification
+STATEMENT: >>>
+Prerequisites: Access to the backend infrastructure configuration. The system is deployed to production or a production-equivalent environment.
+
+Steps:
+1. Review the cloud infrastructure configuration for the primary database, object storage, and compute services hosting the Central Backend Platform.
+2. Verify that all services storing user data are physically located in Canada.
+
+
+Acceptance Criteria:
+- All user data storage services (database, object storage, backups) are hosted in Canadian data centers.
+- No user data is stored or replicated outside of Canada.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-408
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-10
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-30
+RUN_RESULT: Blocked
+TITLE: Backend Scaling Capacity
+STATEMENT: >>>
+TBD
+<<<
+RESULT_STRING: >>>
+No mechanism to test this
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7310
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-17
+  ROLE: Verifies
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Multi-Tenant & Backend Environment Isolation
+
+[TEST]
+UID: TEST-31
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/06/2026
+TITLE: Multi-Tenant Isolation and Environment Routing
+STATEMENT: >>>
+Prerequisites: Two independent backend Tenant environments are deployed. Two devices, one in each Tenant environment, and two user accounts.
+
+Steps:
+1. Log into the user account in Tenant A and record the adherence data for Device A.
+2. Log into the user account in Tenant B and verify that no data from Device A (Tenant Production) is visible.
+3. Open a bin on device A. Verify events only appear in the Tenant A backend, not in the Tenant B.
+4. Attempt to access device A's data using Tenant B's backend using Bruno, and observe the request is denied.
+
+Acceptance Criteria:
+- Data from one tenant is not accessible from another tenant.
+- Devices and apps are automatically routed to the correct tenant.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7308
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-7309
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-14
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-15
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-38
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-32
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/06/2026
+TITLE: Global User Account — Single Sign-On Across Devices and Tenants
+STATEMENT: >>>
+Prerequisites: A single Patient account. Two devices provisioned in different tenants the Patient has authorized access to (e.g., tenant A and tenant B).
+
+Steps:
+1. Log into the Patient account on the mobile app.
+2. Navigate to the device list and verify that both devices (from different tenants) are visible and accessible.
+3. Select the device in tenant A and verify its adherence data is displayed.
+4. Switch to the device in tenant B and verify its adherence data is displayed.
+5. Verify the same account credentials are used to access both tenants without requiring a separate login per tenant.
+
+
+Acceptance Criteria:
+- A single user account can access devices and data across all tenants the user is authorized for.
+- No separate login per tenant is required.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-601
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-24
+  ROLE: Verifies
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Clinical Trials — Patient Experience
+
+[TEST]
+UID: TEST-33
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/06/2026
+TITLE: Clinical Trial Enrollment and Device Association
+STATEMENT: >>>
+Prerequisites: A tenant is configured in the system. An administrator has access to the web admin dashboard. A device with a known serial number is available. A Patient account exists on the mobile app.
+
+Steps:
+1. Log into the web admin dashboard as a global administrator.
+2. Navigate to the tenant management screen and assign the device's serial number to the tenant.
+3. Reprovision the device using a factory reset.
+4. Log into the Patient account on the mobile app.
+8. Navigate to the device in the app and verify it is listed as associated with the tenant.
+9. Open a bin on the device and verify the event is recorded in the tenant backend only.
+10. Attempt to access the event from a different tenant's backend. Verify it is not visible.
+
+Acceptance Criteria:
+- A device serial number can be assigned to a trial tenant via the web admin dashboard.
+- After reprovisioning, the device routes all data exclusively to the assigned tenant backend.
+- The Patient's device is correctly reflected as associated with the tenant in the mobile app.
+- Device data is not accessible from other tenants.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-601
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-602
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-603
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-7309
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: SYS-REQ-24
+  ROLE: Verifies
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Clinical Trials — Researcher & Administrator
+
+[TEST]
+UID: TEST-34
+RUN_RESULT: Failed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/06/2026
+TITLE: Researcher Access and Institutional Collaboration
+STATEMENT: >>>
+Prerequisites: A tenant is configured in the researcher portal. A tenant admin account has been configured (Researcher A).
+
+Steps:
+1. Log into Researcher A's account on the web dashboard.
+2. Verify Researcher A can access the settings, device list, and adherence data for the tenant.
+3. Create another tenant admin account in the AWS Cognito Console and assign it to a different tenant (Researcher B).
+3. Attempt to access a different tenant from Researcher B's account.
+
+Acceptance Criteria:
+- Researchers can access a secure environment to manage study settings and review adherence data.
+- Researchers cannot access trials they have not been authorized for.
+<<<
+RESULT_STRING: >>>
+Didn't work, need to investigate
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7101
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-7102
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-7103
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-35
+RUN_RESULT: Blocked
+TITLE: Trial Protocol Definition and Participant Management
+STATEMENT: >>>
+Prerequisites: A Researcher account with ownership of a clinical trial (Trial T001). A pool of test Patient accounts. At least two unprovisioned test devices.
+
+Steps:
+1. Log into the Researcher account on the researcher portal.
+2. Navigate to Trial T001 protocol settings.
+3. Define a default medication schedule (e.g., once daily AM dose, 7-day cycle) as the default protocol configuration.
+4. Save the protocol configuration.
+5. Navigate to the participant management screen for Trial T001.
+6. Authorize Patient Account A for enrollment in Trial T001 (issue an enrollment code or invitation).
+7. Attempt to have Patient Account B (not authorized) enroll in Trial T001. Verify the enrollment is rejected.
+8. Navigate to the device management screen for Trial T001.
+9. Designate Device X as exclusive to Trial T001 (associate the device with the trial).
+10. Navigate to the participant/device overview screen and verify that both the participant list and the device list for Trial T001 are visible, including devices not yet associated with any participant.
+11. After Patient A enrolls (using their Patient account to accept the invitation), assign Subject ID "P001" to Patient A from the researcher portal.
+12. Verify Patient A is listed under Subject ID "P001" in the Trial T001 participant list.
+
+Acceptance Criteria:
+- Researchers can define and save a default protocol configuration for a trial.
+- Only authorized participants can enroll in the trial; unauthorized enrollment is rejected.
+- Devices can be designated as exclusive to a trial by the researcher.
+- The researcher can view all participants and all devices associated with the trial.
+- Each participant can be assigned a unique Subject ID (pseudonymous identifier).
+<<<
+RESULT_STRING: >>>
+No default schedule feature yet.
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7201
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-7202
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-7203
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-7305
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-7306
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-7307
+  ROLE: Verifies
+
+[TEST]
+UID: TEST-36
+RUN_RESULT: Failed
+TITLE: Trial Monitoring, Analytics, and Data Access Integrity
+STATEMENT: >>>
+Prerequisites: Trial T001 has at least 5 enrolled participants. Adherence events include a mix of Missed and Taken, and periods where devices were offline (unknown). A Researcher account with access to Trial T001. A second Researcher account with access only to Trial T002.
+
+Steps:
+1. Log into the Researcher account (with Trial T001 access) on the researcher portal.
+2. Navigate to the Trial T001 adherence monitoring dashboard.
+3. Verify that adherence records for all enrolled Trial T001 participants are visible.
+4. Verify the dashboard differentiates between "known" dose events (device checked in and confirmed taken/missed) and "unknown" statuses (device has not checked in and no status is available).
+5. Navigate to the aggregate compliance/analytics view.
+6. Verify a high-level adherence trend summary is displayed.
+7. Log out and log into the second Researcher account (Trial T002 only).
+8. Attempt to access Trial T001's participant adherence data.
+9. Verify access is denied.
+10. Verify that the Trial T002 researcher cannot see any adherence data belonging to Trial T001 participants, even if some patients are enrolled in both trials.
+
+Acceptance Criteria:
+- Researchers can monitor adherence for all Trial Participants in their trial.
+- The dashboard distinguishes "known" events from "unknown" status (device not checked in).
+- High-level aggregate adherence trends are available.
+- Researchers can only access data from trials they are authorized for; cross-trial data access is denied.
+<<<
+RESULT_STRING: >>>
+Failed because researcher accounts don't work, need to investigate
+<<<
+RELATIONS:
+- TYPE: Parent
+  VALUE: UN-7301
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-7302
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-7303
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-7304
+  ROLE: Verifies
+- TYPE: Parent
+  VALUE: UN-7308
+  ROLE: Verifies
+
+[[/SECTION]]
