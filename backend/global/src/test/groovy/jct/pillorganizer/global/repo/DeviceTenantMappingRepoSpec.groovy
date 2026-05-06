@@ -11,7 +11,9 @@ import spock.lang.Subject
 // @relation(CTRL-REQ-16, scope=file)
 // @relation(UN-602, scope=file)
 // @relation(UN-7309, scope=file)
-// @relation(SYS-REQ-15, scope=file)extends BaseDeviceControlPlaneSpec {
+// @relation(SYS-REQ-15, scope=file)
+@MicronautTest
+class DeviceTenantMappingRepoSpec extends BaseDeviceControlPlaneSpec {
 
     @Inject
     @Shared

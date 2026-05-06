@@ -1,5 +1,7 @@
 package jct.pillorganizer.global.service
 
+import jct.pillorganizer.global.exception.DeviceAccessException
+
 // @relation(CTRL-REQ-2, scope=file)
 // @relation(CTRL-REQ-3, scope=file)
 // @relation(CTRL-REQ-27, scope=file)

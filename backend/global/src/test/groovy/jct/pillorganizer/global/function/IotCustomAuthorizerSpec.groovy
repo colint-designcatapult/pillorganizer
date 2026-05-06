@@ -1,5 +1,7 @@
 package jct.pillorganizer.global.function
 
+import io.micronaut.context.ApplicationContext
+
 // @relation(CTRL-REQ-2, scope=file)
 // @relation(CTRL-REQ-3, scope=file)
 // @relation(CTRL-REQ-27, scope=file)

@@ -1,5 +1,7 @@
 package jct.pillorganizer.tenant.service
 
+import jakarta.inject.Inject
+
 // @relation(UN-501, scope=file)
 // @relation(UN-502, scope=file)
 // @relation(UN-503, scope=file)
@@ -8,6 +10,7 @@ package jct.pillorganizer.tenant.service
 // @relation(UN-7314, scope=file)
 // @relation(SYS-REQ-37, scope=file)
 import jct.pillorganizer.core.service.TenantService
+import jct.pillorganizer.core.TenantDetails
 import jct.pillorganizer.core.uid.KsuidService
 import jct.pillorganizer.tenant.BaseIntegrationSpec
 import io.micronaut.test.annotation.MockBean
