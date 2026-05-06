@@ -1148,6 +1148,43 @@ void supervisor_operation_event(const supervisor_event_t* event)
                 supervisor_operation_reset_pending_bins();
             }
 #endif // CONFIG_FIRMWARE_ENGINEERING
+            /* Handle app-to-device commands */
+            if (event->id == EVENT_CMD_RELOAD) {
+                cmd_reload_action_t action = (cmd_reload_action_t)event->payload;
+                if (action == CMD_RELOAD_INITIATE) {
+                    if (s_device_state.reload_state.stage == RELOAD_NONE) {
+                        ESP_LOGI(TAG, "CMD: Reload initiate received");
+                        supervisor_operation_trigger_reload();
+                    } else {
+                        ESP_LOGW(TAG, "CMD: Reload initiate ignored (stage=%d)", s_device_state.reload_state.stage);
+                    }
+                } else if (action == CMD_RELOAD_COMPLETE) {
+                    if (s_device_state.reload_state.stage == RELOAD_RELOADING) {
+                        ESP_LOGI(TAG, "CMD: Reload complete received");
+                        reload_complete();
+                    } else if (s_device_state.reload_state.stage == RELOAD_NEEDS_RELOAD) {
+                        ESP_LOGI(TAG, "CMD: Reload complete received (NEEDS_RELOAD -> start + complete)");
+                        start_reload();
+                        reload_complete();
+                    } else {
+                        ESP_LOGW(TAG, "CMD: Reload complete ignored (stage=%d)", s_device_state.reload_state.stage);
+                    }
+                }
+            } else if (event->id == EVENT_CMD_BIN_TAKEN) {
+                int bin_id = (int)event->payload;
+                if (bin_id >= 0 && bin_id < DEVICE_NUM_BINS) {
+                    ESP_LOGI(TAG, "CMD: Bin taken bin=%d", bin_id);
+                    supervisor_submit_event_block(EVENT_BIN_TAKEN, (intptr_t)bin_id, 100);
+                }
+            } else if (event->id == EVENT_CMD_BIN_RESET) {
+                int bin_id = (int)event->payload;
+                if (bin_id >= 0 && bin_id < DEVICE_NUM_BINS) {
+                    ESP_LOGI(TAG, "CMD: Bin reset bin=%d", bin_id);
+                    s_device_state.bins[bin_id].status = PENDING;
+                    handle_device_event_bin(DEVEVT_BIN_RESET, bin_id);
+                    devcfg_flush_state_to_nvs();
+                }
+            }
             break;
         case STATE_OTA:
             /* OTA download is in progress in the worker task.
@@ -1294,7 +1331,6 @@ esp_err_t supervisor_operation_get_schedule(device_schedule_t* sched)
     return ESP_OK;
 }
 
-#if CONFIG_FIRMWARE_ENGINEERING
 esp_err_t supervisor_operation_trigger_reload(void)
 {
     if (!supervisor_operation_is_initialized()) {
@@ -1310,7 +1346,7 @@ esp_err_t supervisor_operation_trigger_reload(void)
             s_device_state.bins[i].scheduled_time = 0;
         }
         
-        ESP_LOGI(TAG, "Manual reload triggered via engineering interface - reset all bins to DISABLED");
+        ESP_LOGI(TAG, "Manual reload triggered - reset all bins to DISABLED");
         ESP_ERROR_CHECK(update_device_state());
         return ESP_OK;
     } else {
@@ -1319,6 +1355,7 @@ esp_err_t supervisor_operation_trigger_reload(void)
     }
 }
 
+#if CONFIG_FIRMWARE_ENGINEERING
 esp_err_t supervisor_operation_reset_pending_bins(void)
 {
     if (!supervisor_operation_is_initialized()) {

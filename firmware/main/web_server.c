@@ -8,6 +8,7 @@
 #include <freertos/task.h>
 #include <esp_system.h>
 #include "supervisor.h"
+#include "supervisor_operation.h"
 
 #define TAG "WEB_SERVER"
 
@@ -118,8 +119,6 @@ static esp_err_t reset_pending_bins_handler(httpd_req_t *req)
 static esp_err_t trigger_reload_handler(httpd_req_t *req)
 {
     ESP_LOGI(TAG, "Manual reload trigger requested via web interface");
-    
-    extern esp_err_t supervisor_operation_trigger_reload(void);
     
     esp_err_t err = supervisor_operation_trigger_reload();
     

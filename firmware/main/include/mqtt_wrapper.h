@@ -12,6 +12,7 @@ typedef struct {
     const char* client_cert_pem;        // Claim Cert OR Permanent Cert
     const char* client_key_pem;         // Claim Key OR Permanent Key
     esp_event_handler_t event_handler;  // Where to send MQTT events
+    bool disable_clean_session;         // If true, broker preserves session state (QoS 1 subs persist)
 } mqtt_wrapper_config_t;
 
 // --- Core API ---

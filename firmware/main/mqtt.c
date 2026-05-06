@@ -53,6 +53,7 @@ static const char* event_type_to_str(device_event_type_t evt)
         case DEVEVT_RELOAD_END:     return "RELOAD_END";
         case DEVEVT_ACTION_TIMEOUT: return "RELOAD_TIMEOUT";
         case DEVEVT_ERROR:          return "ERROR";
+        case DEVEVT_BIN_RESET:      return "BIN_RESET";
         default:                    return "UNKNOWN";
     }
 }
@@ -130,16 +131,90 @@ esp_err_t mqtt_publish_event(const event_outbox_entry_t* entry,
     return ESP_OK;
 }
 
+static void mqtt_subscribe_command_topics(void)
+{
+    char thing_name[128];
+    if (!devcfg_get_thing_name_str(thing_name, sizeof(thing_name))) {
+        ESP_LOGE(TAG, "Could not get thing name for command subscription");
+        return;
+    }
+
+    char topic[256];
+
+    snprintf(topic, sizeof(topic), "healthe/things/%s/cmd/reload", thing_name);
+    mqtt_subscribe(topic, 1, NULL);
+    ESP_LOGI(TAG, "Subscribed to command topic: %s", topic);
+
+    snprintf(topic, sizeof(topic), "healthe/things/%s/cmd/bin", thing_name);
+    mqtt_subscribe(topic, 1, NULL);
+    ESP_LOGI(TAG, "Subscribed to command topic: %s", topic);
+}
+
+static void mqtt_cmd_on_data(const char* topic, size_t topic_len, const char* data, size_t data_len)
+{
+    /* Check if this is a command topic */
+    const char* cmd_segment = "/cmd/";
+    const char* found = NULL;
+    for (size_t i = 0; i + 5 <= topic_len; i++) {
+        if (memcmp(topic + i, cmd_segment, 5) == 0) {
+            found = topic + i + 5;
+            break;
+        }
+    }
+    if (!found) return;
+
+    size_t remaining = topic_len - (found - topic);
+
+    /* Parse JSON payload */
+    cJSON *root = cJSON_ParseWithLength(data, data_len);
+    if (!root) {
+        ESP_LOGW(TAG, "Failed to parse command JSON");
+        return;
+    }
+
+    if (remaining >= 6 && memcmp(found, "reload", 6) == 0) {
+        /* Reload command: {"reload": "INITIATE"} or {"reload": "COMPLETE"} */
+        cJSON *reload_val = cJSON_GetObjectItem(root, "reload");
+        if (reload_val && cJSON_IsString(reload_val)) {
+            if (strcmp(reload_val->valuestring, "INITIATE") == 0) {
+                ESP_LOGI(TAG, "Command received: RELOAD INITIATE");
+                supervisor_submit_event_block(EVENT_CMD_RELOAD, (intptr_t)CMD_RELOAD_INITIATE, 0);
+            } else if (strcmp(reload_val->valuestring, "COMPLETE") == 0) {
+                ESP_LOGI(TAG, "Command received: RELOAD COMPLETE");
+                supervisor_submit_event_block(EVENT_CMD_RELOAD, (intptr_t)CMD_RELOAD_COMPLETE, 0);
+            }
+        }
+    } else if (remaining >= 3 && memcmp(found, "bin", 3) == 0) {
+        /* Bin command: {"bin": <id>, "type": "TAKEN"|"RESET"} */
+        cJSON *bin_val = cJSON_GetObjectItem(root, "bin");
+        cJSON *type_val = cJSON_GetObjectItem(root, "type");
+        if (bin_val && cJSON_IsNumber(bin_val) && type_val && cJSON_IsString(type_val)) {
+            int bin_id = bin_val->valueint;
+            if (strcmp(type_val->valuestring, "TAKEN") == 0) {
+                ESP_LOGI(TAG, "Command received: BIN TAKEN bin=%d", bin_id);
+                supervisor_submit_event_block(EVENT_CMD_BIN_TAKEN, (intptr_t)bin_id, 0);
+            } else if (strcmp(type_val->valuestring, "RESET") == 0) {
+                ESP_LOGI(TAG, "Command received: BIN RESET bin=%d", bin_id);
+                supervisor_submit_event_block(EVENT_CMD_BIN_RESET, (intptr_t)bin_id, 0);
+            }
+        }
+    }
+
+    cJSON_Delete(root);
+}
+
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
     esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)event_data;
 
     switch (event_id) {
         case MQTT_EVENT_CONNECTED:
             ESP_LOGI(TAG, "MQTT Connected");
+            mqtt_subscribe_command_topics();
             break;
         case MQTT_EVENT_DATA:
             shadow_state_on_data(event->topic, event->topic_len, event->data, event->data_len);
             ota_on_data(event->topic, event->topic_len, event->data, event->data_len);
+            mqtt_cmd_on_data(event->topic, event->topic_len, event->data, event->data_len);
             break;
         case MQTT_EVENT_SUBSCRIBED:
             ESP_LOGI(TAG, "MQTT Subscribed to msg_id %d", event->msg_id);
@@ -199,7 +274,9 @@ esp_err_t mqtt_init()
         // Use permanent certs
         .client_cert_pem = s_cert_pem,
         .client_key_pem = s_key_pem,
-        .event_handler = mqtt_event_handler
+        .event_handler = mqtt_event_handler,
+        // Persistent session: broker retains subscriptions and queues QoS 1 messages while disconnected
+        .disable_clean_session = true
     };
 
     ESP_LOGI(TAG, "Connecting to MQTT with client ID %s", thing_name);

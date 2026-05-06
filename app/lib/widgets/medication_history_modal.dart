@@ -249,6 +249,9 @@ class _MedicationHistoryModalState extends ConsumerState<MedicationHistoryModal>
               } else if (status == 'TAKE_NOW') {
                 displayStatus = 'TAKE NOW';
                 statusColor = Colors.green;
+              } else if (status == 'BIN_RESET') {
+                displayStatus = 'RESET';
+                statusColor = Colors.grey;
               } else {
                 displayStatus = status;
                 statusColor = Colors.grey;
