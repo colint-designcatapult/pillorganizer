@@ -1,6 +1,8 @@
 import 'package:app/apiv2/models/device.dart';
 import 'package:app/apiv2/models/schedule.dart';
 import 'package:app/provider/device_connection_status_provider.dart';
+import 'package:app/provider/device_provider.dart';
+import 'package:app/provider/device_state_provider.dart';
 import 'package:app/provider/schedule_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
@@ -374,8 +376,83 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
             ),
           ),
         ],
+
+        // Reload button (owners only)
+        if (isOwner) ...[
+          SizedBox(height: _sectionSpacing.h),
+          _buildReloadButton(device),
+        ],
       ],
     );
+  }
+
+  Widget _buildReloadButton(DeviceMetadata device) {
+    final deviceStateAsync = ref.watch(deviceStateProvider);
+
+    return deviceStateAsync.when(
+      data: (state) {
+        if (state == null) return const SizedBox.shrink();
+
+        final reloadState = state.reloadState;
+        // Determine if in reloading stage (has progress data)
+        final isReloading = reloadState != null && reloadState.needed && reloadState.progress != null;
+        // Determine if needs reload or no reload
+        final needsReload = reloadState != null && reloadState.needed && reloadState.progress == null;
+
+        String label;
+        VoidCallback? onPressed;
+
+        if (isReloading) {
+          label = 'Complete Reload';
+          onPressed = () => _sendReloadCommand(device.id, isComplete: true);
+        } else {
+          // RELOAD_NONE or RELOAD_NEEDS_RELOAD
+          label = needsReload ? 'Start Reload' : 'Initiate Reload';
+          onPressed = () => _sendReloadCommand(device.id, isComplete: false);
+        }
+
+        return SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: onPressed,
+            style: OutlinedButton.styleFrom(
+              padding: EdgeInsets.symmetric(vertical: 14.h),
+              side: const BorderSide(color: Color(0xFF206B8B)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r)),
+            ),
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF206B8B), fontWeight: FontWeight.w600),
+            ),
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  Future<void> _sendReloadCommand(String deviceId, {required bool isComplete}) async {
+    try {
+      if (isComplete) {
+        await ref.read(deviceListProvider.notifier).sendReloadCompleteCommand(deviceId);
+      } else {
+        await ref.read(deviceListProvider.notifier).sendReloadInitiateCommand(deviceId);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Command sent. Changes will take effect within 15 minutes.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send command: $e')),
+        );
+      }
+    }
   }
 
   Widget _buildTimezoneSelector() {

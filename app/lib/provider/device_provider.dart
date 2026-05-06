@@ -118,4 +118,54 @@ class DeviceList extends _$DeviceList {
   Future<void> removeDevice(String id) async {
     throw UnimplementedError();
   }
+
+  Future<void> sendReloadInitiateCommand(String id) async {
+    if (!state.hasValue) await future;
+    final device = state.asData!.value.firstWhere((d) => d.id == id);
+    await tenantClientForUrl(device.apiBase).sendCommand(
+      id,
+      const DeviceCommandDto(
+        type: DeviceCommandType.reload,
+        reload: DeviceCommandReloadAction.initiate,
+      ),
+    );
+  }
+
+  Future<void> sendReloadCompleteCommand(String id) async {
+    if (!state.hasValue) await future;
+    final device = state.asData!.value.firstWhere((d) => d.id == id);
+    await tenantClientForUrl(device.apiBase).sendCommand(
+      id,
+      const DeviceCommandDto(
+        type: DeviceCommandType.reload,
+        reload: DeviceCommandReloadAction.complete,
+      ),
+    );
+  }
+
+  Future<void> sendBinTakenCommand(String id, int binId) async {
+    if (!state.hasValue) await future;
+    final device = state.asData!.value.firstWhere((d) => d.id == id);
+    await tenantClientForUrl(device.apiBase).sendCommand(
+      id,
+      DeviceCommandDto(
+        type: DeviceCommandType.bin,
+        binId: binId,
+        binAction: DeviceCommandBinAction.taken,
+      ),
+    );
+  }
+
+  Future<void> sendBinResetCommand(String id, int binId) async {
+    if (!state.hasValue) await future;
+    final device = state.asData!.value.firstWhere((d) => d.id == id);
+    await tenantClientForUrl(device.apiBase).sendCommand(
+      id,
+      DeviceCommandDto(
+        type: DeviceCommandType.bin,
+        binId: binId,
+        binAction: DeviceCommandBinAction.reset,
+      ),
+    );
+  }
 }

@@ -272,3 +272,42 @@ class DoseHistoryDto with DoseHistoryDtoMappable {
     required this.deviceTimeZone,
   });
 }
+
+@MappableEnum()
+enum DeviceCommandType {
+  @MappableValue('RELOAD')
+  reload,
+  @MappableValue('BIN')
+  bin,
+}
+
+@MappableEnum()
+enum DeviceCommandReloadAction {
+  @MappableValue('INITIATE')
+  initiate,
+  @MappableValue('COMPLETE')
+  complete,
+}
+
+@MappableEnum()
+enum DeviceCommandBinAction {
+  @MappableValue('TAKEN')
+  taken,
+  @MappableValue('RESET')
+  reset,
+}
+
+@MappableClass()
+class DeviceCommandDto with DeviceCommandDtoMappable {
+  final DeviceCommandType type;
+  final DeviceCommandReloadAction? reload;
+  final int? binId;
+  final DeviceCommandBinAction? binAction;
+
+  const DeviceCommandDto({
+    required this.type,
+    this.reload,
+    this.binId,
+    this.binAction,
+  });
+}
