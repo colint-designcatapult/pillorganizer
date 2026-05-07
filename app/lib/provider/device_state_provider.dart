@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:app/apiv2/models/device.dart';
+import 'package:app/provider/pending_command_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mqtt_client/mqtt_client.dart';
@@ -52,7 +53,9 @@ Stream<DeviceState?> deviceState(Ref ref) async* {
             DeviceStateDto dto = DeviceStateDtoMapper.fromJson(jsonString);
 
             // Use the device ID from the subscription context
-            yield DeviceState.fromDTO(dto, deviceId: device.id);
+            final deviceState = DeviceState.fromDTO(dto, deviceId: device.id);
+            ref.read(pendingCommandProvider.notifier).clearCommandPending();
+            yield deviceState;
           } catch (e, st) {
             print('Failed to parse MQTT message: $e');
             // We intentionally do not throw the error here, so the 'await for' loop continues

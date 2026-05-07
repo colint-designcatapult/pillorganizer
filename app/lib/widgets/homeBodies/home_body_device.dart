@@ -37,14 +37,7 @@ class HomeBodyDevice extends ConsumerWidget {
                 alignment: Alignment.topCenter,
                 child: DeviceAlertPopup(
                   notice: deviceError,
-                  onReload: () {
-                    if (deviceError == DeviceError.phoneDisconnected) {
-                      ref.read(mqttClientProvider.notifier).reconnect();
-                    } else {
-                      ref.invalidate(deviceListProvider);
-                    }
-                  },
-                  reloadFuture: () async {
+                  onActionPressed: () {
                     if (deviceError == DeviceError.phoneDisconnected) {
                       ref.read(mqttClientProvider.notifier).reconnect();
                     } else {

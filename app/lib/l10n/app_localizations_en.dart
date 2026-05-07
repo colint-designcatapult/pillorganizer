@@ -1000,10 +1000,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorGenerateCode => 'Error generating code. Please try again.';
 
   @override
-  String get commandSent => 'Command sent. Changes will take effect within 15 minutes.';
+  String get commandSent =>
+      'Command sent. Changes will take effect within 15 minutes.';
 
   @override
-  String commandFailed(Object error) => 'Failed to send command: $error';
+  String commandFailed(Object error) {
+    return 'Failed to send command: $error';
+  }
 
   @override
   String get commandMarkTaken => 'Taken';

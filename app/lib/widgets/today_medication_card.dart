@@ -2,6 +2,7 @@ import 'package:app/apiv2/models/device.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/device_state_provider.dart';
+import 'package:app/provider/pending_command_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/today_medication_provider.dart';
 import 'package:flutter/material.dart';
@@ -367,14 +368,16 @@ class _DoseCommandButton extends ConsumerWidget {
     final activeDevice = ref.watch(activeDeviceProvider);
     if (activeDevice == null || !activeDevice.primaryUser) return const SizedBox.shrink();
 
+    final isPending = ref.watch(pendingCommandProvider);
+
     return SizedBox(
       height: 28.h,
       child: TextButton.icon(
-        onPressed: () => _sendCommand(context, ref, activeDevice.id),
-        icon: Icon(icon, size: 14.h, color: color),
+        onPressed: isPending ? null : () => _sendCommand(context, ref, activeDevice.id),
+        icon: Icon(icon, size: 14.h, color: isPending ? Colors.grey : color),
         label: Text(
           label,
-          style: TextStyle(fontSize: 11.sp, color: color, fontWeight: FontWeight.w600),
+          style: TextStyle(fontSize: 11.sp, color: isPending ? Colors.grey : color, fontWeight: FontWeight.w600),
         ),
         style: TextButton.styleFrom(
           padding: EdgeInsets.symmetric(horizontal: 8.w),

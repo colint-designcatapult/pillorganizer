@@ -1,28 +1,53 @@
-import 'package:app/widgets/button_icon.dart';
+import 'package:app/provider/device_provider.dart';
+import 'package:app/provider/device_state_provider.dart';
+import 'package:app/provider/pending_command_provider.dart';
+import 'package:app/provider/selected_device_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../apiv2/models/device.dart';
 
-class DeviceAlertPopup extends StatelessWidget {
+class DeviceAlertPopup extends ConsumerWidget {
   final DeviceError notice;
-  final Function onReload;
-  final Future<void>? Function() reloadFuture;
+
+  /// Called for non-command actions: reconnect (phoneDisconnected),
+  /// or refresh (noSchedule, noTimezone).
+  final VoidCallback? onActionPressed;
 
   const DeviceAlertPopup({
     Key? key,
     required this.notice,
-    required this.onReload,
-    required this.reloadFuture,
+    this.onActionPressed,
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (notice == DeviceError.none) return const SizedBox.shrink();
 
-    String? action = _getAction(notice, context);
+    final isPending = ref.watch(pendingCommandProvider);
+    final reloadState = ref.watch(deviceStateProvider).asData?.value?.reloadState;
+    final activeDevice = ref.watch(activeDeviceProvider);
+
+    final String? actionLabel = _getAction(notice, context, reloadState);
+
+    VoidCallback? onButtonPressed;
+    if (notice == DeviceError.needsReload && activeDevice != null && !isPending) {
+      final isInitiate = reloadState?.progress == null;
+      onButtonPressed = () async {
+        try {
+          if (isInitiate) {
+            await ref.read(deviceListProvider.notifier).sendReloadInitiateCommand(activeDevice.id);
+          } else {
+            await ref.read(deviceListProvider.notifier).sendReloadCompleteCommand(activeDevice.id);
+          }
+        } catch (_) {}
+      };
+    } else if (notice != DeviceError.needsReload) {
+      onButtonPressed = onActionPressed;
+    }
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -63,11 +88,13 @@ class DeviceAlertPopup extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 32.h),
-                if (action != null)
+                if (actionLabel != null)
                   ElevatedButton(
-                    onPressed: () => onReload(),
+                    onPressed: onButtonPressed,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF206B8B),
+                      backgroundColor: onButtonPressed != null
+                          ? const Color(0xFF206B8B)
+                          : Colors.grey,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8).r,
                       ),
@@ -75,7 +102,7 @@ class DeviceAlertPopup extends StatelessWidget {
                       EdgeInsets.symmetric(vertical: 20.h, horizontal: 18.w),
                     ),
                     child: Text(
-                      action,
+                      actionLabel,
                       style: Theme.of(context)
                           .textTheme
                           .bodyMedium
@@ -189,7 +216,7 @@ class DeviceAlertPopup extends StatelessWidget {
     }
   }
 
-  String? _getAction(DeviceError notice, BuildContext context) {
+  String? _getAction(DeviceError notice, BuildContext context, ReloadState? reloadState) {
     switch (notice) {
       case DeviceError.phoneDisconnected:
         return AppLocalizations.of(context)!.noticePhoneDisconnectedAction;
@@ -197,6 +224,10 @@ class DeviceAlertPopup extends StatelessWidget {
         return AppLocalizations.of(context)!.noticeNoScheduleAction;
       case DeviceError.noTimezone:
         return AppLocalizations.of(context)!.noticeNoTimezoneAction;
+      case DeviceError.needsReload:
+        return reloadState?.progress != null
+            ? AppLocalizations.of(context)!.commandReloadComplete
+            : AppLocalizations.of(context)!.commandReloadInitiate;
       default:
         return null;
     }
