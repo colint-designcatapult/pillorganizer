@@ -1925,7 +1925,7 @@ abstract class AppLocalizations {
   /// No description provided for @commandMarkTaken.
   ///
   /// In en, this message translates to:
-  /// **'Taken'**
+  /// **'Mark as Taken'**
   String get commandMarkTaken;
 
   /// No description provided for @commandMarkReset.

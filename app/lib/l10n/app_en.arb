@@ -303,7 +303,7 @@
 	"errorGenerateCode": "Error generating code. Please try again.",
 	"commandSent": "Command sent. Changes will take effect within 15 minutes.",
 	"commandFailed": "Failed to send command: {error}",
-	"commandMarkTaken": "Taken",
+	"commandMarkTaken": "Mark as Taken",
 	"commandMarkReset": "Reset",
 	"commandReloadComplete": "Complete Reload",
 	"commandReloadStart": "Start Reload",

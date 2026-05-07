@@ -1009,7 +1009,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get commandMarkTaken => 'Taken';
+  String get commandMarkTaken => 'Mark as Taken';
 
   @override
   String get commandMarkReset => 'Reset';
