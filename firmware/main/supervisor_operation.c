@@ -496,21 +496,21 @@ static void start_reload()
 
     time_t stored_epoch_week = future_state->epoch_week;
 
-    // Preserve a stored future epoch_week, advance only when the stored value
-    // matches the current epoch_week, and otherwise fall back to the current week.
-    if (stored_epoch_week == new_epoch_week) {
-        // Calculate the number of seconds to add (schedule_length_days * 86400)
+    if (s_device_state.reload_state.manual) {
+        // Manual reload: stay on the current epoch week, no advancement.
+        ESP_LOGI(TAG, "Manual reload: keeping current epoch week %lld", (long long)new_epoch_week);
+    } else if (stored_epoch_week == new_epoch_week) {
+        // Automatic end-of-week reload: advance by the schedule length.
         time_t schedule_length_seconds = (time_t)s_device_state.schedule_length_days * 86400;
         new_epoch_week += schedule_length_seconds;
-        ESP_LOGI(TAG, "Epoch week was current week, advancing by %d days", s_device_state.schedule_length_days);
+        ESP_LOGI(TAG, "Auto reload: advancing epoch week by %d days", s_device_state.schedule_length_days);
     } else if (stored_epoch_week > new_epoch_week) {
         new_epoch_week = stored_epoch_week;
-        ESP_LOGI(TAG, "Epoch week is already in the future, keeping stored value");
+        ESP_LOGI(TAG, "Auto reload: epoch week already in the future, keeping stored value");
     } else {
-        ESP_LOGI(TAG, "Epoch week was stale, using newly calculated week");
+        ESP_LOGI(TAG, "Auto reload: epoch week was stale, using current week");
     }
 
-    // Update future_state with the selected epoch_week for schedule calculation
     future_state->epoch_week = new_epoch_week;
     ESP_LOGI(TAG, "Reload: epoch_week set to %lld", (long long)new_epoch_week);
 
@@ -558,6 +558,7 @@ static void cleanup_reload()
 static void reload_complete()
 {
     s_device_state.reload_state.stage = RELOAD_NONE;
+    s_device_state.reload_state.manual = false;
     
     // Copy the calculated epoch_week and bin states from future_state
     s_device_state.epoch_week = s_device_state.reload_state.future_state->epoch_week;
@@ -1350,6 +1351,7 @@ esp_err_t supervisor_operation_trigger_reload(void)
             s_device_state.bins[i].scheduled_time = 0;
         }
         
+        s_device_state.reload_state.manual = true;
         ESP_LOGI(TAG, "Manual reload triggered - reset all bins to DISABLED");
         ESP_ERROR_CHECK(update_device_state());
         return ESP_OK;

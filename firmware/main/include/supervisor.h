@@ -131,6 +131,7 @@ typedef struct {
     rtc_relative_time_t start_time;
     rtc_relative_time_t end_time;
     device_state_t* future_state;
+    bool manual;                        // True when reload was manually initiated (no epoch advancement)
 } device_reload_state_t;
 
 typedef struct device_state_t {
