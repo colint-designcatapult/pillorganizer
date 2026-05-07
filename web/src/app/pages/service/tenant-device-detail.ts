@@ -86,6 +86,9 @@ interface CalendarDay {
                                                         } @else if (cell.event?.finalStatus === 'MISSED') {
                                                             <span class="text-red-500 font-bold text-base"
                                                                 pTooltip="MISSED" tooltipPosition="top">✗</span>
+                                                        } @else if (cell.event?.finalStatus === 'BIN_RESET') {
+                                                            <span class="text-muted-color font-bold text-base"
+                                                                pTooltip="RESET" tooltipPosition="top">↺</span>
                                                         } @else {
                                                             <span class="text-muted-color text-base">·</span>
                                                         }
@@ -108,6 +111,7 @@ interface CalendarDay {
                         <div class="flex gap-4 mt-4 text-xs text-muted-color">
                             <span><span class="text-green-500 font-bold">✓</span> Taken</span>
                             <span><span class="text-red-500 font-bold">✗</span> Missed</span>
+                            <span><span class="text-muted-color font-bold">↺</span> Reset</span>
                             <span><span class="text-muted-color">·</span> Pending / no data</span>
                             <span class="ml-4 italic">Middle: actual time · Bottom: scheduled time</span>
                         </div>

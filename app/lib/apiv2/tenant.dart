@@ -31,4 +31,9 @@ abstract class TenantApiClient {
       @Path("id") String deviceId,
       {@Query("year") required int year,
        @Query("month") required int month});
+
+  @POST("/api/v1/device/{id}/command")
+  Future<void> sendCommand(
+      @Path("id") String deviceId,
+      @Body() DeviceCommandDto command);
 }

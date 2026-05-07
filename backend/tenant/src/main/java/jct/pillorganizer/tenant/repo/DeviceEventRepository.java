@@ -39,7 +39,7 @@ public interface DeviceEventRepository extends CrudRepository<DeviceEvent, UUID>
             WHERE logical_device_id = :deviceId\s
               AND scheduled_time >= make_timestamptz(:year, :month, 1, 0, 0, 0, :timezone)
               AND scheduled_time < make_timestamptz(:year, :month, 1, 0, 0, 0, :timezone) + INTERVAL '1 month'
-              AND event_type IN ('TAKEN', 'MISSED', 'TAKE_NOW')
+              AND event_type IN ('TAKEN', 'MISSED', 'TAKE_NOW', 'BIN_RESET')
             ORDER BY logical_device_id, epoch_week, bin_id, timestamp DESC
         )
         SELECT\s
@@ -81,7 +81,7 @@ public interface DeviceEventRepository extends CrudRepository<DeviceEvent, UUID>
             FROM device_event
             WHERE scheduled_time >= make_timestamptz(:year, :month, 1, 0, 0, 0, 'UTC')
               AND scheduled_time < make_timestamptz(:year, :month, 1, 0, 0, 0, 'UTC') + INTERVAL '1 month'
-              AND event_type IN ('TAKEN', 'MISSED', 'TAKE_NOW')
+              AND event_type IN ('TAKEN', 'MISSED', 'TAKE_NOW', 'BIN_RESET')
             ORDER BY logical_device_id, epoch_week, bin_id, timestamp DESC
         ),
         Aggregated AS (
@@ -123,7 +123,7 @@ public interface DeviceEventRepository extends CrudRepository<DeviceEvent, UUID>
         WHERE logical_device_id = :deviceId
           AND scheduled_time >= :weekStart
           AND scheduled_time < :weekEnd
-          AND event_type IN ('TAKEN', 'MISSED', 'TAKE_NOW')
+          AND event_type IN ('TAKEN', 'MISSED', 'TAKE_NOW', 'BIN_RESET')
         ORDER BY epoch_week, bin_id, timestamp DESC
     """)
     List<WeeklyEventView> getWeeklyEvents(String deviceId, Instant weekStart, Instant weekEnd);

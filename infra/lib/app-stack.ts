@@ -156,6 +156,19 @@ export class AppStack extends cdk.Stack {
         })
       );
 
+      // Ensure app functions can publish MQTT commands to devices
+      fn.addToRolePolicy(
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            'iot:Publish'
+          ],
+          resources: [
+            `arn:aws:iot:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:topic/healthe/things/${props.environmentName}-*/cmd/*`
+          ]
+        })
+      );
+
       // Ensure app functions can manage SNS topics, subscriptions and publish notifications
       fn.addToRolePolicy(
         new iam.PolicyStatement({

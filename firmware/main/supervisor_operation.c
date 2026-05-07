@@ -496,21 +496,21 @@ static void start_reload()
 
     time_t stored_epoch_week = future_state->epoch_week;
 
-    // Preserve a stored future epoch_week, advance only when the stored value
-    // matches the current epoch_week, and otherwise fall back to the current week.
-    if (stored_epoch_week == new_epoch_week) {
-        // Calculate the number of seconds to add (schedule_length_days * 86400)
+    if (s_device_state.reload_state.manual) {
+        // Manual reload: stay on the current epoch week, no advancement.
+        ESP_LOGI(TAG, "Manual reload: keeping current epoch week %lld", (long long)new_epoch_week);
+    } else if (stored_epoch_week == new_epoch_week) {
+        // Automatic end-of-week reload: advance by the schedule length.
         time_t schedule_length_seconds = (time_t)s_device_state.schedule_length_days * 86400;
         new_epoch_week += schedule_length_seconds;
-        ESP_LOGI(TAG, "Epoch week was current week, advancing by %d days", s_device_state.schedule_length_days);
+        ESP_LOGI(TAG, "Auto reload: advancing epoch week by %d days", s_device_state.schedule_length_days);
     } else if (stored_epoch_week > new_epoch_week) {
         new_epoch_week = stored_epoch_week;
-        ESP_LOGI(TAG, "Epoch week is already in the future, keeping stored value");
+        ESP_LOGI(TAG, "Auto reload: epoch week already in the future, keeping stored value");
     } else {
-        ESP_LOGI(TAG, "Epoch week was stale, using newly calculated week");
+        ESP_LOGI(TAG, "Auto reload: epoch week was stale, using current week");
     }
 
-    // Update future_state with the selected epoch_week for schedule calculation
     future_state->epoch_week = new_epoch_week;
     ESP_LOGI(TAG, "Reload: epoch_week set to %lld", (long long)new_epoch_week);
 
@@ -558,6 +558,7 @@ static void cleanup_reload()
 static void reload_complete()
 {
     s_device_state.reload_state.stage = RELOAD_NONE;
+    s_device_state.reload_state.manual = false;
     
     // Copy the calculated epoch_week and bin states from future_state
     s_device_state.epoch_week = s_device_state.reload_state.future_state->epoch_week;
@@ -1148,6 +1149,47 @@ void supervisor_operation_event(const supervisor_event_t* event)
                 supervisor_operation_reset_pending_bins();
             }
 #endif // CONFIG_FIRMWARE_ENGINEERING
+            /* Handle app-to-device commands */
+            if (event->id == EVENT_CMD_RELOAD) {
+                cmd_reload_action_t action = (cmd_reload_action_t)event->payload;
+                if (action == CMD_RELOAD_INITIATE) {
+                    if (s_device_state.reload_state.stage == RELOAD_NONE) {
+                        ESP_LOGI(TAG, "CMD: Reload initiate received");
+                        supervisor_operation_trigger_reload();
+                    } else {
+                        ESP_LOGW(TAG, "CMD: Reload initiate ignored (stage=%d)", s_device_state.reload_state.stage);
+                    }
+                } else if (action == CMD_RELOAD_COMPLETE) {
+                    if (s_device_state.reload_state.stage == RELOAD_RELOADING) {
+                        ESP_LOGI(TAG, "CMD: Reload complete received");
+                        reload_complete();
+                    } else if (s_device_state.reload_state.stage == RELOAD_NEEDS_RELOAD) {
+                        ESP_LOGI(TAG, "CMD: Reload complete received (NEEDS_RELOAD -> start + complete)");
+                        start_reload();
+                        reload_complete();
+                    } else {
+                        ESP_LOGW(TAG, "CMD: Reload complete ignored (stage=%d)", s_device_state.reload_state.stage);
+                    }
+                }
+            } else if (event->id == EVENT_CMD_BIN_TAKEN) {
+                int bin_id = (int)event->payload;
+                if (bin_id >= 0 && bin_id < DEVICE_NUM_BINS) {
+                    ESP_LOGI(TAG, "CMD: Bin taken bin=%d", bin_id);
+                    esp_err_t err = supervisor_submit_event_block(EVENT_BIN_TAKEN, (intptr_t)bin_id, 0);
+                    if (err != ESP_OK) {
+                        ESP_LOGW(TAG, "CMD: Failed to submit EVENT_BIN_TAKEN for bin %d (queue full)", bin_id);
+                    }
+                }
+            } else if (event->id == EVENT_CMD_BIN_RESET) {
+                int bin_id = (int)event->payload;
+                if (bin_id >= 0 && bin_id < DEVICE_NUM_BINS) {
+                    ESP_LOGI(TAG, "CMD: Bin reset bin=%d", bin_id);
+                    s_device_state.bins[bin_id].status = PENDING;
+                    handle_device_event_bin(DEVEVT_BIN_RESET, bin_id);
+                    ESP_ERROR_CHECK(update_device_state());
+                    devcfg_flush_state_to_nvs();
+                }
+            }
             break;
         case STATE_OTA:
             /* OTA download is in progress in the worker task.
@@ -1294,7 +1336,6 @@ esp_err_t supervisor_operation_get_schedule(device_schedule_t* sched)
     return ESP_OK;
 }
 
-#if CONFIG_FIRMWARE_ENGINEERING
 esp_err_t supervisor_operation_trigger_reload(void)
 {
     if (!supervisor_operation_is_initialized()) {
@@ -1310,7 +1351,8 @@ esp_err_t supervisor_operation_trigger_reload(void)
             s_device_state.bins[i].scheduled_time = 0;
         }
         
-        ESP_LOGI(TAG, "Manual reload triggered via engineering interface - reset all bins to DISABLED");
+        s_device_state.reload_state.manual = true;
+        ESP_LOGI(TAG, "Manual reload triggered - reset all bins to DISABLED");
         ESP_ERROR_CHECK(update_device_state());
         return ESP_OK;
     } else {
@@ -1319,6 +1361,7 @@ esp_err_t supervisor_operation_trigger_reload(void)
     }
 }
 
+#if CONFIG_FIRMWARE_ENGINEERING
 esp_err_t supervisor_operation_reset_pending_bins(void)
 {
     if (!supervisor_operation_is_initialized()) {

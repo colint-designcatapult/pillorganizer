@@ -3,6 +3,7 @@
 import 'package:app/apiv2/models/device.dart';
 import 'package:app/apiv2/models/dto.dart';
 import 'package:app/provider/control_plane_providers.dart';
+import 'package:app/provider/pending_command_provider.dart';
 import 'package:app/provider/tenant_providers.dart';
 import 'package:app/service/notification_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -117,5 +118,91 @@ class DeviceList extends _$DeviceList {
 
   Future<void> removeDevice(String id) async {
     throw UnimplementedError();
+  }
+
+  Future<void> sendReloadInitiateCommand(String id) async {
+    if (!state.hasValue) await future;
+    final device = state.asData!.value.firstWhere(
+      (d) => d.id == id,
+      orElse: () => throw StateError('Device $id not found in list'),
+    );
+    ref.read(pendingCommandProvider.notifier).setCommandPending();
+    try {
+      await tenantClientForUrl(device.apiBase).sendCommand(
+        id,
+        const DeviceCommandDto(
+          type: DeviceCommandType.reload,
+          reload: DeviceCommandReloadAction.initiate,
+        ),
+      );
+    } catch (e) {
+      ref.read(pendingCommandProvider.notifier).clearCommandPending();
+      rethrow;
+    }
+  }
+
+  Future<void> sendReloadCompleteCommand(String id) async {
+    if (!state.hasValue) await future;
+    final device = state.asData!.value.firstWhere(
+      (d) => d.id == id,
+      orElse: () => throw StateError('Device $id not found in list'),
+    );
+    ref.read(pendingCommandProvider.notifier).setCommandPending();
+    try {
+      await tenantClientForUrl(device.apiBase).sendCommand(
+        id,
+        const DeviceCommandDto(
+          type: DeviceCommandType.reload,
+          reload: DeviceCommandReloadAction.complete,
+        ),
+      );
+    } catch (e) {
+      ref.read(pendingCommandProvider.notifier).clearCommandPending();
+      rethrow;
+    }
+  }
+
+  Future<void> sendBinTakenCommand(String id, int binId) async {
+    if (!state.hasValue) await future;
+    final device = state.asData!.value.firstWhere(
+      (d) => d.id == id,
+      orElse: () => throw StateError('Device $id not found in list'),
+    );
+    ref.read(pendingCommandProvider.notifier).setCommandPending();
+    try {
+      await tenantClientForUrl(device.apiBase).sendCommand(
+        id,
+        DeviceCommandDto(
+          type: DeviceCommandType.bin,
+          binId: binId,
+          binAction: DeviceCommandBinAction.taken,
+        ),
+      );
+    } catch (e) {
+      ref.read(pendingCommandProvider.notifier).clearCommandPending();
+      rethrow;
+    }
+  }
+
+  Future<void> sendBinResetCommand(String id, int binId) async {
+    if (!state.hasValue) await future;
+    final device = state.asData!.value.firstWhere(
+      (d) => d.id == id,
+      orElse: () => throw StateError('Device $id not found in list'),
+    );
+    ref.read(pendingCommandProvider.notifier).setCommandPending();
+    try {
+      await tenantClientForUrl(device.apiBase).sendCommand(
+        id,
+        DeviceCommandDto(
+          type: DeviceCommandType.bin,
+          binId: binId,
+          binAction: DeviceCommandBinAction.reset,
+        ),
+      );
+    } catch (e) {
+      ref.read(pendingCommandProvider.notifier).clearCommandPending();
+      rethrow;
+    }
   }
 }

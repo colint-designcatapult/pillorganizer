@@ -1,5 +1,6 @@
 package jct.pillorganizer.tenant.api.app;
 
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.*;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
@@ -9,13 +10,16 @@ import jakarta.validation.Valid;
 import jct.pillorganizer.core.auth.AppSecurityRule;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.tenant.auth.AuthService;
+import jct.pillorganizer.tenant.dto.DeviceCommandDto;
 import jct.pillorganizer.tenant.dto.UpdateDeviceNickname;
 import jct.pillorganizer.tenant.dto.DoseHistoryDto;
 import jct.pillorganizer.tenant.model.user.User;
 import jct.pillorganizer.tenant.service.AdherenceService;
+import jct.pillorganizer.tenant.service.DeviceCommandService;
 import jct.pillorganizer.tenant.service.DeviceService;
 import lombok.extern.flogger.Flogger;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -34,6 +38,9 @@ public class AppDeviceAPIController {
 
     @Inject
     AdherenceService adherenceService;
+
+    @Inject
+    DeviceCommandService deviceCommandService;
 
     @Operation(summary = "Lists devices that the user has access to")
     @Get("/list")
@@ -63,6 +70,36 @@ public class AppDeviceAPIController {
         authService.accessDevice(deviceID, false);
         log.atInfo().log("Retrieving adherence history for device: %s, year: %d, month: %d", deviceID, year, month);
         return adherenceService.getAdherenceHistory(deviceID, year, month);
+    }
+
+    @Operation(summary = "Sends a command to the device firmware via MQTT")
+    @Post("/{id}/command")
+    @Secured(SecurityRule.IS_AUTHENTICATED)
+    public HttpResponse<?> sendCommand(@PathVariable("id") String deviceID,
+                                       @Body @Valid DeviceCommandDto dto) throws IOException {
+        // Validate required fields per command type
+        switch (dto.type()) {
+            case RELOAD -> {
+                if (dto.reload() == null) {
+                    throw new io.micronaut.http.exceptions.HttpStatusException(
+                            io.micronaut.http.HttpStatus.BAD_REQUEST, "RELOAD command requires 'reload' field");
+                }
+            }
+            case BIN -> {
+                if (dto.binId() == null || dto.binAction() == null) {
+                    throw new io.micronaut.http.exceptions.HttpStatusException(
+                            io.micronaut.http.HttpStatus.BAD_REQUEST, "BIN command requires 'binId' and 'binAction' fields");
+                }
+            }
+        }
+
+        var device = authService.accessDevice(deviceID, true);
+        if (device.getPhysicalDevice() == null || device.getPhysicalDevice().getThingName() == null) {
+            throw new io.micronaut.http.exceptions.HttpStatusException(
+                    io.micronaut.http.HttpStatus.BAD_REQUEST, "Device has no associated thing name");
+        }
+        deviceCommandService.sendCommand(device.getPhysicalDevice().getThingName(), dto);
+        return HttpResponse.accepted();
     }
 
 }

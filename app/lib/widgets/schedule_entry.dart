@@ -1,6 +1,9 @@
 import 'package:app/apiv2/models/device.dart';
 import 'package:app/apiv2/models/schedule.dart';
 import 'package:app/provider/device_connection_status_provider.dart';
+import 'package:app/provider/device_provider.dart';
+import 'package:app/provider/device_state_provider.dart';
+import 'package:app/provider/pending_command_provider.dart';
 import 'package:app/provider/schedule_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/screens/ScreenUtilWrapper.dart';
@@ -374,8 +377,88 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
             ),
           ),
         ],
+
+        // Reload button (owners only)
+        if (isOwner) ...[
+          SizedBox(height: _sectionSpacing.h),
+          _buildReloadButton(device),
+        ],
       ],
     );
+  }
+
+  Widget _buildReloadButton(DeviceMetadata device) {
+    final deviceStateAsync = ref.watch(deviceStateProvider);
+    final isPending = ref.watch(pendingCommandProvider);
+
+    return deviceStateAsync.when(
+      data: (state) {
+        if (state == null) return const SizedBox.shrink();
+
+        final reloadState = state.reloadState;
+
+        final loc = AppLocalizations.of(context)!;
+        String label;
+        VoidCallback? onPressed;
+
+        if (!isPending) {
+          if (reloadState != null && (reloadState.needed || reloadState.completeMask != null)) {
+            label = loc.commandReloadComplete;
+            onPressed = () => _sendReloadCommand(device.id, isComplete: true);
+          } else {
+            label = loc.commandReloadStart;
+            onPressed = () => _sendReloadCommand(device.id, isComplete: false);
+          }
+        } else {
+          label = reloadState != null && (reloadState.needed || reloadState.completeMask != null)
+              ? loc.commandReloadComplete
+              : loc.commandReloadStart;
+          onPressed = null;
+        }
+
+        return SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: onPressed,
+            style: OutlinedButton.styleFrom(
+              padding: EdgeInsets.symmetric(vertical: 14.h),
+              side: BorderSide(color: isPending ? Colors.grey : const Color(0xFF206B8B)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r)),
+            ),
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: isPending ? Colors.grey : const Color(0xFF206B8B),
+                  fontWeight: FontWeight.w600),
+            ),
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  Future<void> _sendReloadCommand(String deviceId, {required bool isComplete}) async {
+    try {
+      if (isComplete) {
+        await ref.read(deviceListProvider.notifier).sendReloadCompleteCommand(deviceId);
+      } else {
+        await ref.read(deviceListProvider.notifier).sendReloadInitiateCommand(deviceId);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.commandSent)),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.commandFailed(e.toString()))),
+        );
+      }
+    }
   }
 
   Widget _buildTimezoneSelector() {

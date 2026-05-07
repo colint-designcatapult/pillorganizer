@@ -105,6 +105,9 @@ esp_err_t mqtt_wrapper_connect(const mqtt_wrapper_config_t* config) {
                 .key = config->client_key_pem
             }
         },
+        .session = {
+            .disable_clean_session = config->disable_clean_session
+        },
         .buffer = {
             .size = 4096,
             .out_size = 4096

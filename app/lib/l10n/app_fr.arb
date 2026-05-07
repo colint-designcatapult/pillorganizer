@@ -273,5 +273,12 @@
 	"seconds": "secondes",
 	"copyCode": "Copier le code",
 	"codeCopied": "Code copié dans le presse-papiers",
-	"errorGenerateCode": "Erreur lors de la génération du code. Veuillez réessayer."
+	"errorGenerateCode": "Erreur lors de la génération du code. Veuillez réessayer.",
+	"commandSent": "Commande envoyée. Les modifications prendront effet dans les 15 prochaines minutes.",
+	"commandFailed": "Échec de l'envoi de la commande : {error}",
+	"commandMarkTaken": "Pris",
+	"commandMarkReset": "Réinitialiser",
+	"commandReloadComplete": "Terminer le rechargement",
+	"commandReloadStart": "Démarrer le rechargement",
+	"commandReloadInitiate": "Lancer le rechargement"
 }

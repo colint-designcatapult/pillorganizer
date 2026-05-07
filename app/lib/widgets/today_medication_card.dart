@@ -1,6 +1,8 @@
 import 'package:app/apiv2/models/device.dart';
 import 'package:app/l10n/app_localizations.dart';
+import 'package:app/provider/device_provider.dart';
 import 'package:app/provider/device_state_provider.dart';
+import 'package:app/provider/pending_command_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/provider/today_medication_provider.dart';
 import 'package:flutter/material.dart';
@@ -287,8 +289,35 @@ class TodayMedicationCard extends ConsumerWidget {
               ),
             ),
           ),
+        SizedBox(width: 8.w),
+        _buildDoseCommandButton(context, dose),
       ],
     );
+  }
+
+  Widget _buildDoseCommandButton(BuildContext context, TodayDose dose) {
+    // If dose is taken, show reset button. If pending/take_now/missed, show taken button.
+    if (dose.status == BinStatus.taken) {
+      return _DoseCommandButton(
+        label: AppLocalizations.of(context)!.commandMarkReset,
+        icon: Icons.undo,
+        color: Colors.grey,
+        binId: dose.binId,
+        isTaken: false,
+      );
+    } else if (dose.status == BinStatus.pending ||
+        dose.status == BinStatus.take_now ||
+        dose.status == BinStatus.missed ||
+        dose.status == BinStatus.noRecord) {
+      return _DoseCommandButton(
+        label: AppLocalizations.of(context)!.commandMarkTaken,
+        icon: Icons.check,
+        color: Colors.green,
+        binId: dose.binId,
+        isTaken: true,
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   String _getDoseStatusText(BuildContext context, BinStatus status) {
@@ -315,6 +344,68 @@ class TodayMedicationCard extends ConsumerWidget {
         return Colors.red;
       default:
         return Colors.grey;
+    }
+  }
+}
+
+class _DoseCommandButton extends ConsumerWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final int binId;
+  final bool isTaken;
+
+  const _DoseCommandButton({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.binId,
+    required this.isTaken,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeDevice = ref.watch(activeDeviceProvider);
+    if (activeDevice == null || !activeDevice.primaryUser) return const SizedBox.shrink();
+
+    final isPending = ref.watch(pendingCommandProvider);
+
+    return SizedBox(
+      height: 28.h,
+      child: TextButton.icon(
+        onPressed: isPending ? null : () => _sendCommand(context, ref, activeDevice.id),
+        icon: Icon(icon, size: 14.h, color: isPending ? Colors.grey : color),
+        label: Text(
+          label,
+          style: TextStyle(fontSize: 11.sp, color: isPending ? Colors.grey : color, fontWeight: FontWeight.w600),
+        ),
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(horizontal: 8.w),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _sendCommand(BuildContext context, WidgetRef ref, String deviceId) async {
+    try {
+      if (isTaken) {
+        await ref.read(deviceListProvider.notifier).sendBinTakenCommand(deviceId, binId);
+      } else {
+        await ref.read(deviceListProvider.notifier).sendBinResetCommand(deviceId, binId);
+      }
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.commandSent)),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.commandFailed(e.toString()))),
+        );
+      }
     }
   }
 }

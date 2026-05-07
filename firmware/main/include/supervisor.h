@@ -57,7 +57,10 @@ typedef enum {
     EVENT_OTA_JOB_RECEIVED,
     EVENT_OTA_COMPLETE,
     EVENT_OTA_FAILED,
-    EVENT_DEEP_SLEEP_REQUESTED
+    EVENT_DEEP_SLEEP_REQUESTED,
+    EVENT_CMD_RELOAD,      /* payload = (intptr_t) cmd_reload_action_t */
+    EVENT_CMD_BIN_TAKEN,   /* payload = (intptr_t) bin_id */
+    EVENT_CMD_BIN_RESET    /* payload = (intptr_t) bin_id */
 } supervisor_event_id_t;
 
 typedef struct {
@@ -68,6 +71,12 @@ typedef struct {
 typedef int supervisor_event_door_t;
 // Pack event into payload void*, make sure it fits
 static_assert(sizeof(supervisor_event_door_t) <= sizeof(intptr_t));
+
+/* Command payload enums */
+typedef enum {
+    CMD_RELOAD_INITIATE,
+    CMD_RELOAD_COMPLETE
+} cmd_reload_action_t;
 
 
 /* ----- OPERATIONAL STATE ------ */
@@ -122,6 +131,7 @@ typedef struct {
     rtc_relative_time_t start_time;
     rtc_relative_time_t end_time;
     device_state_t* future_state;
+    bool manual;                        // True when reload was manually initiated (no epoch advancement)
 } device_reload_state_t;
 
 typedef struct device_state_t {
@@ -163,6 +173,7 @@ typedef enum {
     DEVEVT_ACTION_TIMEOUT,
     DEVEVT_DOOR_LEFT_OPEN,
     DEVEVT_ERROR,
+    DEVEVT_BIN_RESET,
 } device_event_type_t;
 
 /* Sentinel values for optional device_event_t fields. */

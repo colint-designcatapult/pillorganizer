@@ -119,9 +119,9 @@ static esp_err_t trigger_reload_handler(httpd_req_t *req)
 {
     ESP_LOGI(TAG, "Manual reload trigger requested via web interface");
     
-    extern esp_err_t supervisor_operation_trigger_reload(void);
-    
-    esp_err_t err = supervisor_operation_trigger_reload();
+    /* Route through the supervisor event queue for thread safety —
+     * s_device_state must only be mutated from the supervisor task. */
+    esp_err_t err = supervisor_submit_event_block(EVENT_CMD_RELOAD, (intptr_t)CMD_RELOAD_INITIATE, pdMS_TO_TICKS(100));
     
     if (err == ESP_OK) {
         const char resp[] = "Reload triggered successfully. Open a bin to start refilling.";
