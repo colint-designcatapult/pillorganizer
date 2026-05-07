@@ -298,7 +298,7 @@ class TodayMedicationCard extends ConsumerWidget {
     // If dose is taken, show reset button. If pending/take_now/missed, show taken button.
     if (dose.status == BinStatus.taken) {
       return _DoseCommandButton(
-        label: 'Reset',
+        label: AppLocalizations.of(context)!.commandMarkReset,
         icon: Icons.undo,
         color: Colors.grey,
         binId: dose.binId,
@@ -309,7 +309,7 @@ class TodayMedicationCard extends ConsumerWidget {
         dose.status == BinStatus.missed ||
         dose.status == BinStatus.noRecord) {
       return _DoseCommandButton(
-        label: 'Taken',
+        label: AppLocalizations.of(context)!.commandMarkTaken,
         icon: Icons.check,
         color: Colors.green,
         binId: dose.binId,
@@ -365,7 +365,7 @@ class _DoseCommandButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activeDevice = ref.watch(activeDeviceProvider);
-    if (activeDevice == null) return const SizedBox.shrink();
+    if (activeDevice == null || !activeDevice.primaryUser) return const SizedBox.shrink();
 
     return SizedBox(
       height: 28.h,
@@ -394,13 +394,13 @@ class _DoseCommandButton extends ConsumerWidget {
       }
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Command sent. Changes will take effect within 15 minutes.')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.commandSent)),
         );
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send command: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.commandFailed(e.toString()))),
         );
       }
     }

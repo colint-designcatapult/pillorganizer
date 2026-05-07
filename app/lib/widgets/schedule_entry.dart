@@ -399,15 +399,16 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
         // needed=true + progress==null → RELOAD_NEEDS_RELOAD (all bins dispensed, waiting for reload)
         final needsReload = reloadState != null && reloadState.needed && reloadState.progress == null;
 
+        final loc = AppLocalizations.of(context)!;
         String label;
         VoidCallback? onPressed;
 
         if (isReloading) {
-          label = 'Complete Reload';
+          label = loc.commandReloadComplete;
           onPressed = () => _sendReloadCommand(device.id, isComplete: true);
         } else {
           // RELOAD_NONE or RELOAD_NEEDS_RELOAD
-          label = needsReload ? 'Start Reload' : 'Initiate Reload';
+          label = needsReload ? loc.commandReloadStart : loc.commandReloadInitiate;
           onPressed = () => _sendReloadCommand(device.id, isComplete: false);
         }
 
@@ -443,13 +444,13 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Command sent. Changes will take effect within 15 minutes.')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.commandSent)),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send command: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.commandFailed(e.toString()))),
         );
       }
     }

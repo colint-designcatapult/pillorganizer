@@ -33,6 +33,7 @@ import jct.pillorganizer.tenant.repo.DeviceEventRepository
 import jct.pillorganizer.tenant.repo.DeviceScheduleRepository
 import jct.pillorganizer.tenant.service.DeviceEventService
 import jct.pillorganizer.tenant.service.DeviceService
+import jct.pillorganizer.tenant.service.DeviceCommandService
 import jct.pillorganizer.tenant.service.NotificationService
 import jct.pillorganizer.tenant.service.UserService
 
@@ -74,6 +75,9 @@ class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
 
     @Inject
     NotificationService notificationService
+
+    @Inject
+    DeviceCommandService deviceCommandService
 
     @MockBean(SecurityService)
     SecurityService securityService() {
@@ -308,5 +312,151 @@ class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
         _ * securityService.getAuthentication() >> Optional.of(auth)
         HttpClientResponseException e = thrown()
         e.status == HttpStatus.NOT_FOUND
+    }
+
+    // ── Command endpoint tests ─────────────────────────────────────────────────
+
+    void "test sendCommand succeeds for primary user with valid RELOAD command"() {
+        given:
+        String userId = ksuidService.generateKsuid()
+        String deviceId = ksuidService.generateKsuid()
+        String claimId = ksuidService.generateKsuid()
+        String thingName = "thing-cmd-" + ksuidService.generateKsuid()
+
+        User user = userService.ensureExists(userId)
+        deviceService.provision(user, deviceId, "sn-cmd-1", claimId, thingName)
+
+        def auth = Mock(Authentication)
+        auth.getAttributes() >> [userId: userId]
+
+        when:
+        def body = [type: "RELOAD", reload: "INITIATE"]
+        def request = HttpRequest.POST("/api/v1/device/" + deviceId + "/command", body)
+        def response = client.toBlocking().exchange(request)
+
+        then:
+        _ * securityService.getAuthentication() >> Optional.of(auth)
+        response.status == HttpStatus.ACCEPTED
+    }
+
+    void "test sendCommand succeeds for primary user with valid BIN command"() {
+        given:
+        String userId = ksuidService.generateKsuid()
+        String deviceId = ksuidService.generateKsuid()
+        String claimId = ksuidService.generateKsuid()
+        String thingName = "thing-cmd-" + ksuidService.generateKsuid()
+
+        User user = userService.ensureExists(userId)
+        deviceService.provision(user, deviceId, "sn-cmd-2", claimId, thingName)
+
+        def auth = Mock(Authentication)
+        auth.getAttributes() >> [userId: userId]
+
+        when:
+        def body = [type: "BIN", binId: 3, binAction: "TAKEN"]
+        def request = HttpRequest.POST("/api/v1/device/" + deviceId + "/command", body)
+        def response = client.toBlocking().exchange(request)
+
+        then:
+        _ * securityService.getAuthentication() >> Optional.of(auth)
+        response.status == HttpStatus.ACCEPTED
+    }
+
+    void "test sendCommand returns 404 for non-primary user"() {
+        given:
+        String ownerUserId = ksuidService.generateKsuid()
+        String otherUserId = ksuidService.generateKsuid()
+        String deviceId = ksuidService.generateKsuid()
+        String claimId = ksuidService.generateKsuid()
+        String thingName = "thing-cmd-" + ksuidService.generateKsuid()
+
+        User owner = userService.ensureExists(ownerUserId)
+        User other = userService.ensureExists(otherUserId)
+        deviceService.provision(owner, deviceId, "sn-cmd-3", claimId, thingName)
+
+        def auth = Mock(Authentication)
+        auth.getAttributes() >> [userId: otherUserId]
+
+        when:
+        def body = [type: "RELOAD", reload: "INITIATE"]
+        def request = HttpRequest.POST("/api/v1/device/" + deviceId + "/command", body)
+        client.toBlocking().exchange(request)
+
+        then:
+        _ * securityService.getAuthentication() >> Optional.of(auth)
+        HttpClientResponseException e = thrown()
+        e.status == HttpStatus.NOT_FOUND
+    }
+
+    void "test sendCommand returns 400 for RELOAD command without reload field"() {
+        given:
+        String userId = ksuidService.generateKsuid()
+        String deviceId = ksuidService.generateKsuid()
+        String claimId = ksuidService.generateKsuid()
+        String thingName = "thing-cmd-" + ksuidService.generateKsuid()
+
+        User user = userService.ensureExists(userId)
+        deviceService.provision(user, deviceId, "sn-cmd-4", claimId, thingName)
+
+        def auth = Mock(Authentication)
+        auth.getAttributes() >> [userId: userId]
+
+        when:
+        def body = [type: "RELOAD"]
+        def request = HttpRequest.POST("/api/v1/device/" + deviceId + "/command", body)
+        client.toBlocking().exchange(request)
+
+        then:
+        _ * securityService.getAuthentication() >> Optional.of(auth)
+        HttpClientResponseException e = thrown()
+        e.status == HttpStatus.BAD_REQUEST
+    }
+
+    void "test sendCommand returns 400 for BIN command without binId"() {
+        given:
+        String userId = ksuidService.generateKsuid()
+        String deviceId = ksuidService.generateKsuid()
+        String claimId = ksuidService.generateKsuid()
+        String thingName = "thing-cmd-" + ksuidService.generateKsuid()
+
+        User user = userService.ensureExists(userId)
+        deviceService.provision(user, deviceId, "sn-cmd-5", claimId, thingName)
+
+        def auth = Mock(Authentication)
+        auth.getAttributes() >> [userId: userId]
+
+        when:
+        def body = [type: "BIN", binAction: "TAKEN"]
+        def request = HttpRequest.POST("/api/v1/device/" + deviceId + "/command", body)
+        client.toBlocking().exchange(request)
+
+        then:
+        _ * securityService.getAuthentication() >> Optional.of(auth)
+        HttpClientResponseException e = thrown()
+        e.status == HttpStatus.BAD_REQUEST
+    }
+
+    void "test sendCommand returns 400 for BIN command without binAction"() {
+        given:
+        String userId = ksuidService.generateKsuid()
+        String deviceId = ksuidService.generateKsuid()
+        String claimId = ksuidService.generateKsuid()
+        String thingName = "thing-cmd-" + ksuidService.generateKsuid()
+
+        User user = userService.ensureExists(userId)
+        deviceService.provision(user, deviceId, "sn-cmd-6", claimId, thingName)
+
+        def auth = Mock(Authentication)
+        auth.getAttributes() >> [userId: userId]
+
+        when:
+        def body = [type: "BIN", binId: 5]
+        def request = HttpRequest.POST("/api/v1/device/" + deviceId + "/command", body)
+        client.toBlocking().exchange(request)
+
+        then:
+        _ * securityService.getAuthentication() >> Optional.of(auth)
+        HttpClientResponseException e = thrown()
+        e.status == HttpStatus.BAD_REQUEST
     }
 }

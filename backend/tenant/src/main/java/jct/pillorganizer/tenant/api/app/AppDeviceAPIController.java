@@ -77,6 +77,22 @@ public class AppDeviceAPIController {
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public HttpResponse<?> sendCommand(@PathVariable("id") String deviceID,
                                        @Body @Valid DeviceCommandDto dto) throws IOException {
+        // Validate required fields per command type
+        switch (dto.type()) {
+            case RELOAD -> {
+                if (dto.reload() == null) {
+                    throw new io.micronaut.http.exceptions.HttpStatusException(
+                            io.micronaut.http.HttpStatus.BAD_REQUEST, "RELOAD command requires 'reload' field");
+                }
+            }
+            case BIN -> {
+                if (dto.binId() == null || dto.binAction() == null) {
+                    throw new io.micronaut.http.exceptions.HttpStatusException(
+                            io.micronaut.http.HttpStatus.BAD_REQUEST, "BIN command requires 'binId' and 'binAction' fields");
+                }
+            }
+        }
+
         var device = authService.accessDevice(deviceID, true);
         if (device.getPhysicalDevice() == null || device.getPhysicalDevice().getThingName() == null) {
             throw new io.micronaut.http.exceptions.HttpStatusException(

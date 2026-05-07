@@ -300,5 +300,12 @@
 	"seconds": "seconds",
 	"copyCode": "Copy code",
 	"codeCopied": "Code copied to clipboard",
-	"errorGenerateCode": "Error generating code. Please try again."
+	"errorGenerateCode": "Error generating code. Please try again.",
+	"commandSent": "Command sent. Changes will take effect within 15 minutes.",
+	"commandFailed": "Failed to send command: {error}",
+	"commandMarkTaken": "Taken",
+	"commandMarkReset": "Reset",
+	"commandReloadComplete": "Complete Reload",
+	"commandReloadStart": "Start Reload",
+	"commandReloadInitiate": "Initiate Reload"
 }

@@ -998,4 +998,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorGenerateCode => 'Error generating code. Please try again.';
+
+  @override
+  String get commandSent => 'Command sent. Changes will take effect within 15 minutes.';
+
+  @override
+  String commandFailed(Object error) => 'Failed to send command: $error';
+
+  @override
+  String get commandMarkTaken => 'Taken';
+
+  @override
+  String get commandMarkReset => 'Reset';
+
+  @override
+  String get commandReloadComplete => 'Complete Reload';
+
+  @override
+  String get commandReloadStart => 'Start Reload';
+
+  @override
+  String get commandReloadInitiate => 'Initiate Reload';
 }

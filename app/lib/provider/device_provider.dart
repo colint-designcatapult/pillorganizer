@@ -121,7 +121,10 @@ class DeviceList extends _$DeviceList {
 
   Future<void> sendReloadInitiateCommand(String id) async {
     if (!state.hasValue) await future;
-    final device = state.asData!.value.firstWhere((d) => d.id == id);
+    final device = state.asData!.value.firstWhere(
+      (d) => d.id == id,
+      orElse: () => throw StateError('Device $id not found in list'),
+    );
     await tenantClientForUrl(device.apiBase).sendCommand(
       id,
       const DeviceCommandDto(
@@ -133,7 +136,10 @@ class DeviceList extends _$DeviceList {
 
   Future<void> sendReloadCompleteCommand(String id) async {
     if (!state.hasValue) await future;
-    final device = state.asData!.value.firstWhere((d) => d.id == id);
+    final device = state.asData!.value.firstWhere(
+      (d) => d.id == id,
+      orElse: () => throw StateError('Device $id not found in list'),
+    );
     await tenantClientForUrl(device.apiBase).sendCommand(
       id,
       const DeviceCommandDto(
@@ -145,7 +151,10 @@ class DeviceList extends _$DeviceList {
 
   Future<void> sendBinTakenCommand(String id, int binId) async {
     if (!state.hasValue) await future;
-    final device = state.asData!.value.firstWhere((d) => d.id == id);
+    final device = state.asData!.value.firstWhere(
+      (d) => d.id == id,
+      orElse: () => throw StateError('Device $id not found in list'),
+    );
     await tenantClientForUrl(device.apiBase).sendCommand(
       id,
       DeviceCommandDto(
@@ -158,7 +167,10 @@ class DeviceList extends _$DeviceList {
 
   Future<void> sendBinResetCommand(String id, int binId) async {
     if (!state.hasValue) await future;
-    final device = state.asData!.value.firstWhere((d) => d.id == id);
+    final device = state.asData!.value.firstWhere(
+      (d) => d.id == id,
+      orElse: () => throw StateError('Device $id not found in list'),
+    );
     await tenantClientForUrl(device.apiBase).sendCommand(
       id,
       DeviceCommandDto(

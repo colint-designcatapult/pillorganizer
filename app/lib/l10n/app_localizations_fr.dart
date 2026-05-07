@@ -1004,4 +1004,25 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get errorGenerateCode =>
       'Erreur lors de la génération du code. Veuillez réessayer.';
+
+  @override
+  String get commandSent => 'Commande envoyée. Les modifications prendront effet dans les 15 prochaines minutes.';
+
+  @override
+  String commandFailed(Object error) => 'Échec de l\'envoi de la commande : $error';
+
+  @override
+  String get commandMarkTaken => 'Pris';
+
+  @override
+  String get commandMarkReset => 'Réinitialiser';
+
+  @override
+  String get commandReloadComplete => 'Terminer le rechargement';
+
+  @override
+  String get commandReloadStart => 'Démarrer le rechargement';
+
+  @override
+  String get commandReloadInitiate => 'Lancer le rechargement';
 }

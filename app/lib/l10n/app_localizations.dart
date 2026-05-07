@@ -1909,6 +1909,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Error generating code. Please try again.'**
   String get errorGenerateCode;
+
+  /// No description provided for @commandSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Command sent. Changes will take effect within 15 minutes.'**
+  String get commandSent;
+
+  /// No description provided for @commandFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send command: {error}'**
+  String commandFailed(Object error);
+
+  /// No description provided for @commandMarkTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken'**
+  String get commandMarkTaken;
+
+  /// No description provided for @commandMarkReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get commandMarkReset;
+
+  /// No description provided for @commandReloadComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete Reload'**
+  String get commandReloadComplete;
+
+  /// No description provided for @commandReloadStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Reload'**
+  String get commandReloadStart;
+
+  /// No description provided for @commandReloadInitiate.
+  ///
+  /// In en, this message translates to:
+  /// **'Initiate Reload'**
+  String get commandReloadInitiate;
 }
 
 class _AppLocalizationsDelegate

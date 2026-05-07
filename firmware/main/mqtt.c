@@ -140,14 +140,23 @@ static void mqtt_subscribe_command_topics(void)
     }
 
     char topic[256];
+    esp_err_t err;
 
     snprintf(topic, sizeof(topic), "healthe/things/%s/cmd/reload", thing_name);
-    mqtt_subscribe(topic, 1, NULL);
-    ESP_LOGI(TAG, "Subscribed to command topic: %s", topic);
+    err = mqtt_subscribe(topic, 1, NULL);
+    if (err != ESP_OK) {
+        ESP_LOGW(TAG, "Failed to subscribe to command topic %s: %s", topic, esp_err_to_name(err));
+    } else {
+        ESP_LOGI(TAG, "Subscribed to command topic: %s", topic);
+    }
 
     snprintf(topic, sizeof(topic), "healthe/things/%s/cmd/bin", thing_name);
-    mqtt_subscribe(topic, 1, NULL);
-    ESP_LOGI(TAG, "Subscribed to command topic: %s", topic);
+    err = mqtt_subscribe(topic, 1, NULL);
+    if (err != ESP_OK) {
+        ESP_LOGW(TAG, "Failed to subscribe to command topic %s: %s", topic, esp_err_to_name(err));
+    } else {
+        ESP_LOGI(TAG, "Subscribed to command topic: %s", topic);
+    }
 }
 
 static void mqtt_cmd_on_data(const char* topic, size_t topic_len, const char* data, size_t data_len)
@@ -176,12 +185,19 @@ static void mqtt_cmd_on_data(const char* topic, size_t topic_len, const char* da
         /* Reload command: {"reload": "INITIATE"} or {"reload": "COMPLETE"} */
         cJSON *reload_val = cJSON_GetObjectItem(root, "reload");
         if (reload_val && cJSON_IsString(reload_val)) {
+            esp_err_t err;
             if (strcmp(reload_val->valuestring, "INITIATE") == 0) {
                 ESP_LOGI(TAG, "Command received: RELOAD INITIATE");
-                supervisor_submit_event_block(EVENT_CMD_RELOAD, (intptr_t)CMD_RELOAD_INITIATE, 0);
+                err = supervisor_submit_event_block(EVENT_CMD_RELOAD, (intptr_t)CMD_RELOAD_INITIATE, 0);
+                if (err != ESP_OK) {
+                    ESP_LOGW(TAG, "Failed to submit RELOAD INITIATE command (queue full)");
+                }
             } else if (strcmp(reload_val->valuestring, "COMPLETE") == 0) {
                 ESP_LOGI(TAG, "Command received: RELOAD COMPLETE");
-                supervisor_submit_event_block(EVENT_CMD_RELOAD, (intptr_t)CMD_RELOAD_COMPLETE, 0);
+                err = supervisor_submit_event_block(EVENT_CMD_RELOAD, (intptr_t)CMD_RELOAD_COMPLETE, 0);
+                if (err != ESP_OK) {
+                    ESP_LOGW(TAG, "Failed to submit RELOAD COMPLETE command (queue full)");
+                }
             }
         }
     } else if (remaining >= 3 && memcmp(found, "bin", 3) == 0) {
@@ -190,12 +206,19 @@ static void mqtt_cmd_on_data(const char* topic, size_t topic_len, const char* da
         cJSON *type_val = cJSON_GetObjectItem(root, "type");
         if (bin_val && cJSON_IsNumber(bin_val) && type_val && cJSON_IsString(type_val)) {
             int bin_id = bin_val->valueint;
+            esp_err_t err;
             if (strcmp(type_val->valuestring, "TAKEN") == 0) {
                 ESP_LOGI(TAG, "Command received: BIN TAKEN bin=%d", bin_id);
-                supervisor_submit_event_block(EVENT_CMD_BIN_TAKEN, (intptr_t)bin_id, 0);
+                err = supervisor_submit_event_block(EVENT_CMD_BIN_TAKEN, (intptr_t)bin_id, 0);
+                if (err != ESP_OK) {
+                    ESP_LOGW(TAG, "Failed to submit BIN TAKEN command for bin %d (queue full)", bin_id);
+                }
             } else if (strcmp(type_val->valuestring, "RESET") == 0) {
                 ESP_LOGI(TAG, "Command received: BIN RESET bin=%d", bin_id);
-                supervisor_submit_event_block(EVENT_CMD_BIN_RESET, (intptr_t)bin_id, 0);
+                err = supervisor_submit_event_block(EVENT_CMD_BIN_RESET, (intptr_t)bin_id, 0);
+                if (err != ESP_OK) {
+                    ESP_LOGW(TAG, "Failed to submit BIN RESET command for bin %d (queue full)", bin_id);
+                }
             }
         }
     }

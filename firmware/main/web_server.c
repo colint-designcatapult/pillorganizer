@@ -8,7 +8,6 @@
 #include <freertos/task.h>
 #include <esp_system.h>
 #include "supervisor.h"
-#include "supervisor_operation.h"
 
 #define TAG "WEB_SERVER"
 
@@ -120,7 +119,9 @@ static esp_err_t trigger_reload_handler(httpd_req_t *req)
 {
     ESP_LOGI(TAG, "Manual reload trigger requested via web interface");
     
-    esp_err_t err = supervisor_operation_trigger_reload();
+    /* Route through the supervisor event queue for thread safety —
+     * s_device_state must only be mutated from the supervisor task. */
+    esp_err_t err = supervisor_submit_event_block(EVENT_CMD_RELOAD, (intptr_t)CMD_RELOAD_INITIATE, pdMS_TO_TICKS(100));
     
     if (err == ESP_OK) {
         const char resp[] = "Reload triggered successfully. Open a bin to start refilling.";

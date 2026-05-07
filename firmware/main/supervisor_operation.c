@@ -1174,7 +1174,10 @@ void supervisor_operation_event(const supervisor_event_t* event)
                 int bin_id = (int)event->payload;
                 if (bin_id >= 0 && bin_id < DEVICE_NUM_BINS) {
                     ESP_LOGI(TAG, "CMD: Bin taken bin=%d", bin_id);
-                    supervisor_submit_event_block(EVENT_BIN_TAKEN, (intptr_t)bin_id, 100);
+                    esp_err_t err = supervisor_submit_event_block(EVENT_BIN_TAKEN, (intptr_t)bin_id, 0);
+                    if (err != ESP_OK) {
+                        ESP_LOGW(TAG, "CMD: Failed to submit EVENT_BIN_TAKEN for bin %d (queue full)", bin_id);
+                    }
                 }
             } else if (event->id == EVENT_CMD_BIN_RESET) {
                 int bin_id = (int)event->payload;
@@ -1182,6 +1185,7 @@ void supervisor_operation_event(const supervisor_event_t* event)
                     ESP_LOGI(TAG, "CMD: Bin reset bin=%d", bin_id);
                     s_device_state.bins[bin_id].status = PENDING;
                     handle_device_event_bin(DEVEVT_BIN_RESET, bin_id);
+                    ESP_ERROR_CHECK(update_device_state());
                     devcfg_flush_state_to_nvs();
                 }
             }
