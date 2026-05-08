@@ -47,11 +47,15 @@ public interface NotificationService {
     void publish(String topicArn, String title, String body, long ttlSeconds, String eventType);
 
     /**
-     * Sets the SNS filter policy on a subscription so only messages with matching
-     * {@code event_type} attributes are delivered.
+     * Updates the SNS filter policy on a subscription to block specific event types.
+     * Messages whose {@code event_type} attribute matches any entry in
+     * {@code blockedEventTypes} will <em>not</em> be delivered. Messages with no
+     * {@code event_type} attribute are always delivered regardless of this list.
+     * Pass an empty list to clear the filter and deliver all event types.
      *
-     * @param subscriptionArn the subscription to configure
-     * @param eventTypes      list of event types to allow (e.g. ["TAKE_NOW", "TAKEN", "MISSED"])
+     * @param subscriptionArn  the subscription to configure
+     * @param blockedEventTypes event types to suppress (e.g. ["TAKE_NOW", "MISSED"]);
+     *                          empty list clears the filter entirely
      */
-    void setFilterPolicy(String subscriptionArn, java.util.List<String> eventTypes);
+    void setFilterPolicy(String subscriptionArn, java.util.List<String> blockedEventTypes);
 }

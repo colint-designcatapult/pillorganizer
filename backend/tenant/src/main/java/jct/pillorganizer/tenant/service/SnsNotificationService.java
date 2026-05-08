@@ -123,24 +123,35 @@ public class SnsNotificationService implements NotificationService {
     }
 
     @Override
-    public void setFilterPolicy(String subscriptionArn, java.util.List<String> excludedEventTypes) {
+    public void setFilterPolicy(String subscriptionArn, java.util.List<String> blockedEventTypes) {
         String filterPolicy;
-        if (excludedEventTypes.isEmpty()) {
+        if (blockedEventTypes.isEmpty()) {
             // No exclusions — clear the filter policy so all event types are delivered (including future ones).
             filterPolicy = "";
         } else {
-            String excluded = excludedEventTypes.stream()
+            String blocked = blockedEventTypes.stream()
                     .map(t -> "\"" + t + "\"")
                     .collect(java.util.stream.Collectors.joining(", ", "[", "]"));
-            filterPolicy = "{\"event_type\": [{\"anything-but\": " + excluded + "}, {\"exists\": false}]}";
+            filterPolicy = "{\"event_type\": [{\"anything-but\": " + blocked + "}, {\"exists\": false}]}";
         }
+
+        // Always pin FilterPolicyScope to MessageAttributes so the filter
+        // applies to message attributes (where event_type is published), not
+        // the message body. Without this, a scope of MessageBody would let
+        // every message through because event_type is absent from the body
+        // and the {"exists": false} condition would always match.
+        snsClient.setSubscriptionAttributes(SetSubscriptionAttributesRequest.builder()
+                .subscriptionArn(subscriptionArn)
+                .attributeName("FilterPolicyScope")
+                .attributeValue("MessageAttributes")
+                .build());
         snsClient.setSubscriptionAttributes(SetSubscriptionAttributesRequest.builder()
                 .subscriptionArn(subscriptionArn)
                 .attributeName("FilterPolicy")
                 .attributeValue(filterPolicy)
                 .build());
         log.atInfo().log("Set filter policy on %s: %s",
-                subscriptionArn, excludedEventTypes.isEmpty() ? "(cleared)" : filterPolicy);
+                subscriptionArn, blockedEventTypes.isEmpty() ? "(cleared)" : filterPolicy);
     }
 
     // 1. The top-level SNS Message Object

@@ -80,7 +80,7 @@ public class InternalUserController {
         LogicalDevice device = authService.accessDevice(deviceId, false);
         if (dto.subscribe()) {
             return deviceNotificationService.subscribe(user, device, dto.endpointArn(),
-                    dto.effectiveNotifyTakeNow(), dto.effectiveNotifyTaken(), dto.effectiveNotifyMissed());
+                    dto.notifyTakeNow(), dto.notifyTaken(), dto.notifyMissed());
         } else {
             return deviceNotificationService.unsubscribe(user, device);
         }

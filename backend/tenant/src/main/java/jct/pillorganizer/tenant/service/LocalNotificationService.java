@@ -50,7 +50,7 @@ public class LocalNotificationService implements NotificationService {
     }
 
     @Override
-    public void setFilterPolicy(String subscriptionArn, java.util.List<String> eventTypes) {
-        log.atInfo().log("Local: setFilterPolicy on %s — eventTypes: %s", subscriptionArn, eventTypes);
+    public void setFilterPolicy(String subscriptionArn, java.util.List<String> blockedEventTypes) {
+        log.atInfo().log("Local: setFilterPolicy on %s — blocked eventTypes: %s", subscriptionArn, blockedEventTypes);
     }
 }

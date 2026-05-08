@@ -1,5 +1,6 @@
 package jct.pillorganizer.tenant.service;
 
+import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
@@ -42,18 +43,29 @@ public class DeviceNotificationService {
 
     /**
      * Subscribes {@code user} to push notifications for {@code device}.
+     * If the user is already subscribed the existing SNS subscription is kept
+     * and only the preferences / filter policy are refreshed.
+     *
+     * <p>Null preference flags mean "keep whatever is currently stored" (or
+     * default to {@code true} for a brand-new subscription).  Pass an explicit
+     * {@code false} to disable a specific event type.</p>
      *
      * @param user            the user who wants notifications
      * @param device          the target device
      * @param endpointArn     the user's SNS platform-application endpoint ARN
-     * @param notifyTakeNow   whether to receive TAKE_NOW notifications
-     * @param notifyTaken     whether to receive TAKEN notifications
-     * @param notifyMissed    whether to receive MISSED notifications
+     * @param notifyTakeNow   {@code false} to suppress TAKE_NOW notifications;
+     *                        {@code null} preserves the stored preference
+     * @param notifyTaken     {@code false} to suppress TAKEN notifications;
+     *                        {@code null} preserves the stored preference
+     * @param notifyMissed    {@code false} to suppress MISSED notifications;
+     *                        {@code null} preserves the stored preference
      * @return updated {@link DeviceAccessDto} reflecting the new subscription state
      */
     @Transactional
     public DeviceAccessDto subscribe(User user, LogicalDevice device, String endpointArn,
-                                     boolean notifyTakeNow, boolean notifyTaken, boolean notifyMissed) {
+                                     @Nullable Boolean notifyTakeNow,
+                                     @Nullable Boolean notifyTaken,
+                                     @Nullable Boolean notifyMissed) {
         // 1. Ensure the device has a topic
         String topicArn = device.getTopicArn();
         if (topicArn == null) {
@@ -68,28 +80,38 @@ public class DeviceNotificationService {
                 .orElseThrow(() -> new IllegalStateException(
                         "User " + user.getId() + " has no access to device " + device.getId()));
 
-        // 3. If already subscribed, return early (idempotent)
+        // 3. Resolve effective preferences: null means "keep whatever is stored"
+        //    (which itself defaults to true for rows that pre-date this feature).
+        boolean effectiveTakeNow = notifyTakeNow != null ? notifyTakeNow : deviceUser.effectiveNotifyTakeNow();
+        boolean effectiveTaken   = notifyTaken   != null ? notifyTaken   : deviceUser.effectiveNotifyTaken();
+        boolean effectiveMissed  = notifyMissed  != null ? notifyMissed  : deviceUser.effectiveNotifyMissed();
+
+        // 4. If already subscribed, sync preferences + filter policy and return.
+        //    We must NOT skip this: a prior unsubscribe→re-subscribe cycle would
+        //    have reset the SNS filter policy to "allow everything", so we always
+        //    ensure the policy matches the stored preferences.
         if (deviceUser.getSubscriptionArn() != null) {
-            log.atInfo().log("User %s already subscribed to device %s", user.getId(), device.getId());
+            log.atInfo().log("User %s already subscribed to device %s — syncing preferences", user.getId(), device.getId());
+            savePreferencesAndFilterPolicy(deviceUser, effectiveTakeNow, effectiveTaken, effectiveMissed);
             return deviceMapper.toAccessDTO(deviceUser, tenantService.getCurrentTenant().orElse(null));
         }
 
-        // 4. Create subscription
+        // 5. Create subscription
         String subscriptionArn = notificationService.subscribe(topicArn, endpointArn);
         deviceUserRepository.updateSubscriptionArn(deviceUser.getId(), subscriptionArn);
         deviceUser.setSubscriptionArn(subscriptionArn);
 
-        // 5. Save notification preferences and set filter policy
-        savePreferencesAndFilterPolicy(deviceUser, notifyTakeNow, notifyTaken, notifyMissed);
+        // 6. Save notification preferences and set filter policy
+        savePreferencesAndFilterPolicy(deviceUser, effectiveTakeNow, effectiveTaken, effectiveMissed);
 
         log.atInfo().log("Subscribed user %s to device %s topic", user.getId(), device.getId());
         return deviceMapper.toAccessDTO(deviceUser, tenantService.getCurrentTenant().orElse(null));
     }
 
-    /** Backwards-compatible overload — defaults all preferences to true. */
+    /** Backwards-compatible overload — preserves stored preferences (or defaults all to true for new subscriptions). */
     @Transactional
     public DeviceAccessDto subscribe(User user, LogicalDevice device, String endpointArn) {
-        return subscribe(user, device, endpointArn, true, true, true);
+        return subscribe(user, device, endpointArn, null, null, null);
     }
 
     /**
@@ -148,15 +170,24 @@ public class DeviceNotificationService {
         deviceUser.setNotifyTaken(notifyTaken);
         deviceUser.setNotifyMissed(notifyMissed);
 
-        List<String> excluded = buildExcludeList(notifyTakeNow, notifyTaken, notifyMissed);
-        notificationService.setFilterPolicy(deviceUser.getSubscriptionArn(), excluded);
+        // Build the list of event types to BLOCK (inverted from the preference flags).
+        // Passing this to setFilterPolicy produces an SNS "anything-but" policy that
+        // suppresses exactly those event types.
+        List<String> blocked = buildBlockedList(notifyTakeNow, notifyTaken, notifyMissed);
+        notificationService.setFilterPolicy(deviceUser.getSubscriptionArn(), blocked);
     }
 
-    static List<String> buildExcludeList(boolean notifyTakeNow, boolean notifyTaken, boolean notifyMissed) {
-        List<String> excluded = new ArrayList<>();
-        if (!notifyTakeNow) excluded.add("TAKE_NOW");
-        if (!notifyTaken)   excluded.add("TAKEN");
-        if (!notifyMissed)  excluded.add("MISSED");
-        return excluded;
+    /**
+     * Builds the list of event type strings that should be <em>blocked</em> by the SNS
+     * filter policy — i.e. the inverse of the "notify" preference flags.
+     * A {@code false} flag means the user does not want that event type delivered,
+     * so it is added to the blocked list.
+     */
+    static List<String> buildBlockedList(boolean notifyTakeNow, boolean notifyTaken, boolean notifyMissed) {
+        List<String> blocked = new ArrayList<>();
+        if (!notifyTakeNow) blocked.add("TAKE_NOW");
+        if (!notifyTaken)   blocked.add("TAKEN");
+        if (!notifyMissed)  blocked.add("MISSED");
+        return blocked;
     }
 }
