@@ -106,6 +106,12 @@ class _SingleDeviceState extends State<SingleDevice> {
     bool isOwner = widget.device?.primaryUser ?? false;
     List<ButtonSegment> segments = _getSegments(isOwner);
 
+    // Clamp selected index to valid range when role/device changes
+    int maxIndex = isOwner ? 2 : 1;
+    if (_selectedButtonIndex > maxIndex) {
+      _selectedButtonIndex = 0;
+    }
+
     return Container(
       margin: widget.isModal
           ? EdgeInsets.only(top: 60.h)

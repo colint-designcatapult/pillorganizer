@@ -1,11 +1,8 @@
-import 'dart:async';
-
 import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/caregiver_provider.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:app/widgets/manage_caregivers_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -21,59 +18,12 @@ class ShareDevice extends ConsumerStatefulWidget {
 }
 
 class _ShareDeviceState extends ConsumerState<ShareDevice> {
-  Timer? _countdownTimer;
-  final ValueNotifier<int> _countdownNotifier = ValueNotifier<int>(0);
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchShareCodes();
-  }
-
-  @override
-  void dispose() {
-    _countdownTimer?.cancel();
-    _countdownNotifier.dispose();
-    super.dispose();
-  }
-
-  void _fetchShareCodes() {
-    if (widget.device != null) {
-      ref.read(caregiverProvider.notifier).fetchShareCodesForDevices([widget.device!.id]);
-    }
-  }
-
-  void _startCountdownTimer() {
-    _countdownTimer?.cancel();
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        final caregiver = ref.read(caregiverProvider.notifier);
-        final targetDevice = widget.device ?? ref.read(activeDeviceProvider);
-
-        if (targetDevice != null) {
-          final shareCode =
-              caregiver.getShareCodeForDevice(targetDevice.id);
-          if (shareCode == null || !shareCode.isValid) {
-            timer.cancel();
-            _countdownNotifier.value = 0;
-            caregiver.clearExpiredCodes();
-            return;
-          }
-
-          _countdownNotifier.value = shareCode.remainingSeconds;
-        } else {
-          timer.cancel();
-          _countdownNotifier.value = 0;
-        }
-      }
-    });
-  }
-
-  void _showGenerateCodeSheet() {
+  void _showInviteSheet() {
     final targetDevice = widget.device ?? ref.read(activeDeviceProvider);
     if (targetDevice == null) return;
 
-    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final nicknameController = TextEditingController();
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -98,16 +48,27 @@ class _ShareDeviceState extends ConsumerState<ShareDevice> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  AppLocalizations.of(context)!.caregiverName,
+                  AppLocalizations.of(context)!.inviteByEmail,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 SizedBox(height: 16.h),
                 TextField(
-                  controller: nameController,
+                  controller: emailController,
                   autofocus: true,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    hintText: AppLocalizations.of(context)!.enterCaregiverEmail,
+                    labelText: AppLocalizations.of(context)!.email,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                TextField(
+                  controller: nicknameController,
                   maxLength: 100,
                   decoration: InputDecoration(
                     hintText: AppLocalizations.of(context)!.enterCaregiverName,
+                    labelText: AppLocalizations.of(context)!.caregiverName,
                     border: const OutlineInputBorder(),
                   ),
                 ),
@@ -128,34 +89,35 @@ class _ShareDeviceState extends ConsumerState<ShareDevice> {
                     onPressed: isLoading
                         ? null
                         : () async {
-                            final name = nameController.text.trim();
-                            if (name.isEmpty) return;
+                            final email = emailController.text.trim();
+                            final nickname = nicknameController.text.trim();
+                            if (email.isEmpty || nickname.isEmpty) return;
                             setSheetState(() {
                               isLoading = true;
                               sheetError = null;
                             });
                             try {
                               await ref
-                                  .read(caregiverProvider.notifier)
-                                  .generateCaregiverCodeForDevice(
-                                      targetDevice.id, name);
+                                  .read(caregiverInviteProvider.notifier)
+                                  .inviteCaregiver(
+                                    email: email,
+                                    nickname: nickname,
+                                    deviceId: targetDevice.id,
+                                    tenantId: targetDevice.tenantId,
+                                  );
                               if (context.mounted) {
                                 Navigator.of(context).pop();
-                                final shareCode = ref
-                                    .read(caregiverProvider.notifier)
-                                    .getShareCodeForDevice(targetDevice.id);
-                                if (shareCode != null && shareCode.isValid) {
-                                  setState(() {});
-                                  _countdownNotifier.value =
-                                      shareCode.remainingSeconds;
-                                  _startCountdownTimer();
-                                }
+                                ref.invalidate(caregiverListProvider(targetDevice.id));
+                                ScaffoldMessenger.of(this.context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(AppLocalizations.of(this.context)!.caregiverInvited),
+                                  ),
+                                );
                               }
-                            } catch (_) {
+                            } catch (e) {
                               setSheetState(() {
                                 isLoading = false;
-                                sheetError = AppLocalizations.of(context)!
-                                    .errorGenerateCode;
+                                sheetError = AppLocalizations.of(context)!.errorInvitingCaregiver;
                               });
                             }
                           },
@@ -177,7 +139,7 @@ class _ShareDeviceState extends ConsumerState<ShareDevice> {
                             ),
                           )
                         : Text(
-                            AppLocalizations.of(context)!.generateCode,
+                            AppLocalizations.of(context)!.sendInvite,
                             style: const TextStyle(color: Colors.white),
                           ),
                   ),
@@ -190,240 +152,62 @@ class _ShareDeviceState extends ConsumerState<ShareDevice> {
     );
   }
 
-  void _copyCode() {
-    final caregiver = ref.read(caregiverProvider.notifier);
-    final targetDevice = widget.device ?? ref.read(activeDeviceProvider);
-
-    if (targetDevice != null) {
-      final shareCode =
-          caregiver.getShareCodeForDevice(targetDevice.id);
-      if (shareCode != null) {
-        Clipboard.setData(ClipboardData(text: shareCode.codeString));
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final targetDevice = widget.device ?? ref.watch(activeDeviceProvider);
-    final caregiver = ref.watch(caregiverProvider);
 
     if (targetDevice == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
-        final shareCode =
-            ref.read(caregiverProvider.notifier).getShareCodeForDevice(targetDevice.id);
-        final code = shareCode?.codeString;
-        final isCodeValid = shareCode != null && shareCode.isValid;
-
-        if (shareCode != null && shareCode.isValid && _countdownTimer == null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _countdownNotifier.value = shareCode.remainingSeconds;
-            _startCountdownTimer();
-          });
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              AppLocalizations.of(context)!.inviteCollaborators,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AppLocalizations.of(context)!.inviteCollaborators,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        SizedBox(height: 8.h),
+        Text(
+          AppLocalizations.of(context)!.inviteCollaboratorsDescription,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        SizedBox(height: 24.h),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _showInviteSheet,
+            icon: Icon(PhosphorIconsRegular.envelopeSimple, size: 20.h),
+            label: Text(
+              AppLocalizations.of(context)!.inviteByEmail,
+              style: TextStyle(
+                fontSize: 16.h,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF206B8B),
+              ),
             ),
-            SizedBox(height: 8.h),
-            if (!isCodeValid) ...[
-            if (caregiver.isLoading) ...[
-                SizedBox(height: 40.h),
-                Center(
-                  child: SizedBox(
-                    height: 40.h,
-                    width: 40.w,
-                    child: const CircularProgressIndicator(
-                      strokeWidth: 3.0,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Color(0xFF206B8B),
-                      ),
-                    ),
-                  ),
+            style: ButtonStyle(
+              shape: WidgetStateProperty.all<OutlinedBorder>(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
                 ),
-                SizedBox(height: 40.h),
-              ] else ...[
-                Text(
-                  AppLocalizations.of(context)!.inviteCollaboratorsDescription,
-                  style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              side: WidgetStateProperty.all<BorderSide>(
+                const BorderSide(
+                  color: Color(0xFF8BCAE5),
+                  width: 1.0,
                 ),
-                SizedBox(height: 24.h),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: caregiver.isLoading
-                        ? null
-                        : _showGenerateCodeSheet,
-                    style: ButtonStyle(
-                      shape: WidgetStateProperty.all<OutlinedBorder>(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                      ),
-                      side: WidgetStateProperty.all<BorderSide>(
-                        const BorderSide(
-                          color: Color(0xFF8BCAE5),
-                          width: 1.0,
-                        ),
-                      ),
-                      padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
-                        EdgeInsets.symmetric(vertical: 16.h, horizontal: 12.w),
-                      ),
-                    ),
-                    child: caregiver.isLoading
-                        ? SizedBox(
-                            height: 24.h,
-                            width: 24.w,
-                            child: const CircularProgressIndicator(
-                              strokeWidth: 2.0,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Color(0xFF206B8B),
-                              ),
-                            ),
-                          )
-                        : Text(
-                            AppLocalizations.of(context)!.generateCode,
-                            style: TextStyle(
-                              fontSize: 16.h,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF206B8B),
-                            ),
-                          ),
-                  ),
-                ),
-              ],
-            ] else ...[
-              ValueListenableBuilder<int>(
-                valueListenable: _countdownNotifier,
-                builder: (context, remainingSeconds, child) {
-                  return RichText(
-                    text: TextSpan(
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      children: [
-                        TextSpan(
-                          text:
-                              "${AppLocalizations.of(context)!.codeExpiresIn} ",
-                          style: const TextStyle(
-                            fontSize: 14,
-                          ),
-                        ),
-                        TextSpan(
-                          text:
-                              "${remainingSeconds ~/ 60} ${AppLocalizations.of(context)!.minutes} ${remainingSeconds % 60} ${AppLocalizations.of(context)!.seconds}",
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
               ),
-              SizedBox(height: 16.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: code!.split('').map((digit) {
-                  return Expanded(
-                    child: Container(
-                      margin: EdgeInsets.symmetric(horizontal: 4.w),
-                      height: 50.h,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: const Color(0xFFBED4D8),
-                          width: 2.0,
-                        ),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Center(
-                        child: SelectableText(
-                          digit,
-                          style: TextStyle(
-                            fontSize: 24.h,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF31454D),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
+              padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
+                EdgeInsets.symmetric(vertical: 16.h, horizontal: 12.w),
               ),
-              OverflowBar(
-                alignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton.icon(
-                    onPressed: caregiver.isLoading
-                        ? null
-                        : _showGenerateCodeSheet,
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w),
-                    ),
-                    icon: caregiver.isLoading
-                        ? SizedBox(
-                            height: 16.h,
-                            width: 16.w,
-                            child: const CircularProgressIndicator(
-                              strokeWidth: 2.0,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Color(0xFF206B8B),
-                              ),
-                            ),
-                          )
-                        : Icon(
-                            PhosphorIconsRegular.arrowClockwise,
-                            size: 20.h,
-                            color: const Color(0xFF206B8B),
-                          ),
-                    label: Text(
-                      AppLocalizations.of(context)!.generateCode,
-                      style: TextStyle(
-                        fontSize: 14.h,
-                        fontWeight: FontWeight.w600,
-                        color: caregiver.isLoading
-                            ? const Color(0xFFCCCCCC)
-                            : const Color(0xFF206B8B),
-                        decoration: caregiver.isLoading
-                            ? TextDecoration.none
-                            : TextDecoration.underline,
-                        decorationColor: const Color(0xFF206B8B),
-                      ),
-                    ),
-                  ),
-                  TextButton.icon(
-                    onPressed: _copyCode,
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w),
-                    ),
-                    icon: Icon(
-                      PhosphorIconsRegular.copy,
-                      size: 20.h,
-                      color: const Color(0xFF206B8B),
-                    ),
-                    label: Text(
-                      AppLocalizations.of(context)!.copyCode,
-                      style: TextStyle(
-                        fontSize: 14.h,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF206B8B),
-                        decoration: TextDecoration.underline,
-                        decorationColor: const Color(0xFF206B8B),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            ManageCaregiversWidget(deviceId: targetDevice.id),
-          ],
-        );
+            ),
+          ),
+        ),
+        ManageCaregiversWidget(deviceId: targetDevice.id),
+      ],
+    );
   }
 }

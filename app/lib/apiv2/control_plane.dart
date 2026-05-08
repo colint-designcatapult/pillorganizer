@@ -44,4 +44,13 @@ abstract class ControlPlaneApiClient {
   @POST("/user/device/notifications")
   Future<DeviceAccessDto> updateDeviceNotifications(
       @Body() DeviceNotificationRequestDto dto);
+
+  /// Invites a caregiver to a device by email.
+  /// The control plane verifies the user exists and forwards to the tenant.
+  @POST("/user/device/invite-caregiver")
+  Future<void> inviteCaregiver(@Body() InviteCaregiverRequestDto dto);
+
+  /// Returns the authenticated user's details.
+  @GET("/user/me")
+  Future<UserDetailsDto> getUserDetails();
 }

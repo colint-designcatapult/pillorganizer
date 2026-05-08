@@ -379,29 +379,17 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get inviteCollaboratorsDescription =>
-      'Pour inviter des membres avec accès en lecture seule à votre pilulier, appuyez ci-dessous pour générer un code. Le code sera valide pendant 10 minutes seulement.';
+      'Pour inviter des membres avec accès en lecture seule à votre pilulier, saisissez leur adresse courriel ci-dessous.';
 
   @override
   String get joinExistingDevice => 'Rejoindre un appareil existant';
 
   @override
-  String get joinDeviceTitle => 'Entrer le code';
+  String get joinDeviceTitle => 'Comment rejoindre un appareil';
 
   @override
   String get joinDeviceSubtext =>
       'L\'administrateur du pilulier vous a probablement envoyé un code de sécurité pour accéder à votre compte. Saisissez-le ci-dessous :';
-
-  @override
-  String get joinDeviceErrorExpired =>
-      'Ce code est expiré. Veuillez contacter l’administrateur•ice du pilulier en question';
-
-  @override
-  String get joinDeviceConfirmationTitle => 'Tout est prêt';
-
-  @override
-  String joinDeviceConfirmationSubtext(Object deviceName) {
-    return 'Vous êtes invité à rejoindre ‘$deviceName’ avec un accès en lecture seule.';
-  }
 
   @override
   String get loadingState => 'Chargement ...';
@@ -993,28 +981,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get wirelessDisconnected => 'Déconnecté sans fil';
 
   @override
-  String get generateCode => 'Générer un nouveau code';
-
-  @override
-  String get codeExpiresIn => 'Ce code expirera dans';
-
-  @override
-  String get minutes => 'minutes';
-
-  @override
-  String get seconds => 'secondes';
-
-  @override
-  String get copyCode => 'Copier le code';
-
-  @override
-  String get codeCopied => 'Code copié dans le presse-papiers';
-
-  @override
-  String get errorGenerateCode =>
-      'Erreur lors de la génération du code. Veuillez réessayer.';
-
-  @override
   String get commandSent =>
       'Commande envoyée. Les modifications prendront effet dans les 15 prochaines minutes.';
 
@@ -1079,4 +1045,23 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get enterCaregiverName => 'Saisissez un nom pour cet aidant';
+
+  @override
+  String get inviteByEmail => 'Inviter par courriel';
+
+  @override
+  String get sendInvite => 'Envoyer l\'invitation';
+
+  @override
+  String get caregiverInvited => 'Aidant invité avec succès.';
+
+  @override
+  String get errorInvitingCaregiver =>
+      'Échec de l\'invitation. Veuillez vérifier que le courriel est enregistré.';
+
+  @override
+  String get enterCaregiverEmail => 'Saisissez l\'adresse courriel de l\'aidant';
+
+  @override
+  String get yourEmail => 'Votre courriel';
 }

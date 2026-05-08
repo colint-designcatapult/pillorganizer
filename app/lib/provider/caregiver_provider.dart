@@ -1,5 +1,7 @@
+import 'package:app/apiv2/control_plane.dart';
 import 'package:app/apiv2/models/dto.dart';
 import 'package:app/apiv2/tenant.dart';
+import 'package:app/provider/control_plane_providers.dart';
 import 'package:app/provider/tenant_providers.dart';
 import 'package:app/provider/selected_device_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -7,64 +9,27 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'caregiver_provider.g.dart';
 
 @riverpod
-class Caregiver extends _$Caregiver {
+class CaregiverInvite extends _$CaregiverInvite {
   @override
-  FutureOr<List<DeviceCaregiverCodeDto>> build() async {
-    return [];
-  }
+  FutureOr<void> build() async {}
 
-  TenantApiClient _clientForDevice(String deviceId) {
-    final devices = ref.read(activeDeviceProvider);
-    if (devices != null) {
-      return tenantClientForUrl(devices.apiBase);
-    }
-    throw Exception('No active device to determine API base URL');
-  }
-
-  Future<void> fetchShareCodesForDevices(List<String> deviceIDs) async {
+  /// Invites a caregiver by email via the control plane.
+  Future<void> inviteCaregiver({
+    required String email,
+    required String nickname,
+    required String deviceId,
+    required String tenantId,
+  }) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final client = _clientForDevice(deviceIDs.first);
-      return await client.getShareCodes(deviceIDs);
+      final client = ref.read(controlPlaneClientProvider);
+      await client.inviteCaregiver(InviteCaregiverRequestDto(
+        email: email,
+        nickname: nickname,
+        deviceId: deviceId,
+        tenantId: tenantId,
+      ));
     });
-  }
-
-  DeviceCaregiverCodeDto? getShareCodeForDevice(String deviceID) {
-    final list = state.asData?.value;
-    if (list == null) return null;
-    for (var c in list) {
-      if (c.deviceID == deviceID) return c;
-    }
-    return null;
-  }
-
-  void clearExpiredCodes() {
-    if (state.hasValue) {
-      state = AsyncValue.data(
-        state.value!.where((c) => c.isValid).toList()
-      );
-    }
-  }
-
-  Future<void> generateCaregiverCodeForDevice(String deviceID, String nickname) async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final client = _clientForDevice(deviceID);
-      final newCode = await client.generateCaregiverCode(
-          deviceID, GenerateCaregiverCodeDto(nickname: nickname));
-      final currentList = state.asData?.value ?? [];
-      return [
-        for (final c in currentList) if (c.deviceID != deviceID) c,
-        newCode,
-      ];
-    });
-  }
-
-  Future<CaregiverCodeValidationDto> validateCaregiverCode({required String code}) async {
-    final client = _clientForDevice('');
-    final res = await client.validateCaregiverCode(code);
-    ref.invalidateSelf();
-    return res;
   }
 }
 

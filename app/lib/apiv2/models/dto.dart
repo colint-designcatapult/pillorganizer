@@ -342,50 +342,33 @@ class CaregiverListItemDto with CaregiverListItemDtoMappable {
 }
 
 @MappableClass()
-class DeviceCaregiverCodeDto with DeviceCaregiverCodeDtoMappable {
-  final String id;
-  final String deviceID;
-  final int code;
-  final int expiresAt;
-  final bool deleted;
+class InviteCaregiverRequestDto with InviteCaregiverRequestDtoMappable {
+  final String email;
   final String nickname;
+  final String deviceId;
+  final String tenantId;
 
-  const DeviceCaregiverCodeDto({
-    required this.id,
-    required this.deviceID,
-    required this.code,
-    required this.expiresAt,
-    required this.deleted,
+  const InviteCaregiverRequestDto({
+    required this.email,
     required this.nickname,
+    required this.deviceId,
+    required this.tenantId,
   });
-
-  bool get isValid =>
-      !deleted &&
-      DateTime.now().isBefore(
-          DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000, isUtc: true));
-
-  int get remainingSeconds {
-    final expiry =
-        DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000, isUtc: true);
-    final diff = expiry.difference(DateTime.now()).inSeconds;
-    return diff > 0 ? diff : 0;
-  }
-
-  String get codeString => code.toString().padLeft(6, '0');
 }
 
 @MappableClass()
-class GenerateCaregiverCodeDto with GenerateCaregiverCodeDtoMappable {
-  final String nickname;
+class UserDetailsDto with UserDetailsDtoMappable {
+  final String? sub;
+  final String? userId;
+  final String? email;
+  final String? displayName;
 
-  const GenerateCaregiverCodeDto({required this.nickname});
-}
-
-@MappableClass()
-class CaregiverCodeValidationDto with CaregiverCodeValidationDtoMappable {
-  final String name;
-
-  const CaregiverCodeValidationDto({required this.name});
+  const UserDetailsDto({
+    this.sub,
+    this.userId,
+    this.email,
+    this.displayName,
+  });
 }
 
 @MappableClass()

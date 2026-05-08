@@ -37,19 +37,6 @@ abstract class TenantApiClient {
       @Path("id") String deviceId,
       @Body() DeviceCommandDto command);
 
-  @POST("/api/v1/caregiver/generate/{deviceId}")
-  Future<DeviceCaregiverCodeDto> generateCaregiverCode(
-      @Path("deviceId") String deviceId,
-      @Body() GenerateCaregiverCodeDto dto);
-
-  @GET("/api/v1/caregiver/codes")
-  Future<List<DeviceCaregiverCodeDto>> getShareCodes(
-      @Query("deviceIds") List<String> deviceIds);
-
-  @POST("/api/v1/caregiver/validate/{code}")
-  Future<CaregiverCodeValidationDto> validateCaregiverCode(
-      @Path("code") String code);
-
   @POST("/api/v1/caregiver/revoke/{caregiverId}")
   Future<void> revokeCaregiverAccess(
       @Path("caregiverId") String caregiverId);
