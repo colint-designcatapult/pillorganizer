@@ -10,8 +10,10 @@ import jakarta.transaction.Transactional;
 import jct.pillorganizer.core.dto.ShadowStateDto;
 import jct.pillorganizer.core.message.*;
 import jct.pillorganizer.tenant.dto.DeviceScheduleDTO;
+import jct.pillorganizer.tenant.model.device.DeviceUser;
 import jct.pillorganizer.tenant.model.device.ProvisionRecord;
 import jct.pillorganizer.tenant.model.user.User;
+import jct.pillorganizer.tenant.repo.UserRepository;
 import lombok.extern.flogger.Flogger;
 
 @Singleton
@@ -32,6 +34,9 @@ public class QueueProcessorService {
 
     @Inject
     JsonMapper jsonMapper;
+
+    @Inject
+    UserRepository userRepository;
 
     private void deviceProvision(DeviceProvisionMessage message) {
         // Ensure the user exists
@@ -85,6 +90,29 @@ public class QueueProcessorService {
         deviceEventService.processEvent(message);
     }
 
+    @Transactional
+    private void deleteUser(DeleteUserMessage message) {
+        log.atInfo().log("Processing deleteUser for user %s", message.userId());
+
+        User user = userService.get(message.userId()).orElse(null);
+        if (user == null) {
+            log.atWarning().log("User %s not found, skipping deleteUser", message.userId());
+            return;
+        }
+
+        // Iterate through user's devices and perform removal
+        java.util.List<DeviceUser> deviceUsers = user.getDevices();
+        if (deviceUsers != null) {
+            for (DeviceUser du : deviceUsers) {
+                deviceService.removeDevice(user, du.getDevice());
+            }
+        }
+
+        // Clear name/email and set disabledAt
+        userRepository.disableUser(user.getId());
+        log.atInfo().log("Disabled user %s", user.getId());
+    }
+
     @Retryable(
             includes = DataAccessException.class,
             delay = "100ms",
@@ -102,6 +130,8 @@ public class QueueProcessorService {
         } else if(message instanceof NoOpMessage) {
             // do nothing
             log.atInfo().log("Processing noop queue message");
+        } else if(message instanceof DeleteUserMessage) {
+            deleteUser((DeleteUserMessage) message);
         } else {
             throw new IllegalStateException("Invalid message: " + message.getType());
         }

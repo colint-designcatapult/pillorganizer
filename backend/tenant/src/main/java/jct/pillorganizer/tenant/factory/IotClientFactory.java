@@ -5,6 +5,7 @@ import io.micronaut.context.annotation.Property;
 import jakarta.inject.Singleton;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
 import software.amazon.awssdk.regions.providers.AwsRegionProviderChain;
+import software.amazon.awssdk.services.iot.IotClient;
 import software.amazon.awssdk.services.iotdataplane.IotDataPlaneClient;
 
 import java.net.URI;
@@ -27,5 +28,16 @@ public class IotClientFactory {
         endpointOverride.ifPresent(url -> builder.endpointOverride(URI.create(url)));
 
         return builder.build();
+    }
+
+    @Singleton
+    public IotClient iotClient(
+            AwsCredentialsProviderChain credentialsProvider,
+            AwsRegionProviderChain regionProvider) {
+
+        return IotClient.builder()
+                .credentialsProvider(credentialsProvider)
+                .region(regionProvider.getRegion())
+                .build();
     }
 }

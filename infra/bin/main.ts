@@ -51,6 +51,7 @@ const controlPlaneStack = new ControlPlaneStack(app, 'HealtheControlPlaneStack',
   env: globalEnv,
   domainName: platformStack.controlPlaneDomainName,
   controlPlaneTable: controlPlaneDataStack.controlPlaneTable,
+  userPool: authStack.userPool,
 });
 
 const iotStack = new IotStack(app, `HealtheIotStack`, {

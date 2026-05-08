@@ -12,6 +12,7 @@ interface AuthStackProps extends cdk.StackProps {
 
 export class AuthStack extends cdk.Stack {
   public readonly adminUserPool: cognito.IUserPool;
+  public readonly userPool: cognito.IUserPool;
 
   constructor(scope: Construct, id: string, props: AuthStackProps) {
     super(scope, id, props);
@@ -150,5 +151,6 @@ export class AuthStack extends cdk.Stack {
     });
 
     this.adminUserPool = adminUserPool;
+    this.userPool = userPool;
   }
 }

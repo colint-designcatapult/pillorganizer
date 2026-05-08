@@ -104,5 +104,12 @@ public class UserRepo extends BaseControlPlaneRepo<UserEntity> {
                 .build();
         this.table.putItem(updated);
     }
+
+    public void delete(UserEntity user) {
+        this.table.deleteItem(Key.builder()
+                .partitionValue(UserEntity.pk(user.getUserId()))
+                .sortValue(UserEntity.sk(user.getUserSub()))
+                .build());
+    }
 }
 

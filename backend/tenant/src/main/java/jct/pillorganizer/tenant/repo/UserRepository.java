@@ -21,4 +21,7 @@ public interface UserRepository extends CrudRepository<User, String> {
             "DO UPDATE SET id = EXCLUDED.id RETURNING *")
     User saveIdempotent(String id);
 
+    @Query(value = "UPDATE users SET name = NULL, email = NULL, disabled_at = CURRENT_TIMESTAMP WHERE id = :id")
+    void disableUser(String id);
+
 }

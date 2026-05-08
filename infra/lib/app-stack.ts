@@ -196,6 +196,19 @@ export class AppStack extends cdk.Stack {
         })
       );
 
+      // Grant permission to delete IoT Things scoped to this tenant's prefix
+      fn.addToRolePolicy(
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            'iot:DeleteThing',
+          ],
+          resources: [
+            `arn:aws:iot:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:thing/${props.environmentName}-*`
+          ]
+        })
+      );
+
       return fn;
     };
 

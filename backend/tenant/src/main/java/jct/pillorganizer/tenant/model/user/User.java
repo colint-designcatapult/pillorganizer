@@ -46,4 +46,8 @@ public class User {
     @Nullable
     private String email;
 
+    @Nullable
+    @JsonIgnore
+    private Timestamp disabledAt;
+
 }
