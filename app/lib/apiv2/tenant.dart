@@ -36,4 +36,7 @@ abstract class TenantApiClient {
   Future<void> sendCommand(
       @Path("id") String deviceId,
       @Body() DeviceCommandDto command);
+
+  @GET("/api/v1/device/default-schedule")
+  Future<BaseScheduleDto> getDefaultSchedule();
 }
