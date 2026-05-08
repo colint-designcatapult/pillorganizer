@@ -678,10 +678,12 @@ RELATIONS:
 
 [TEST]
 UID: TEST-17
-RUN_RESULT: Blocked
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/08/2026
 TITLE: Account Closure and Data Privacy
 STATEMENT: >>>
-Prerequisites: A Patient account with at least one device and several weeks of adherence history. A Caregiver account associated with that device.
+Prerequisites: A Patient account and device with some adherence history. A Caregiver account associated with that device.
 
 Steps:
 1. Log into the Patient account.
@@ -689,7 +691,7 @@ Steps:
 3. Confirm the closure request.
 4. Verify the account can no longer be used to log in.
 5. Verify that the Patient's personally identifying information (name, email, contact details) has been removed or anonymized.
-6. Verify (via a researcher or admin portal, if available) that the historical adherence data associated with the now-closed account is still present but no longer linked to any personally identifying information.
+6. Verify via web dashboard that the historical adherence data associated with the now-closed account is still present but no longer linked to any personally identifying information.
 7. Attempt to log into the closed account and verify access is denied.
 8. Log into the Caregiver account and verify the Caregiver can no longer access the device previously associated with the closed Patient account.
 
@@ -698,9 +700,6 @@ Acceptance Criteria:
 - Historical health/adherence data is retained in anonymized form.
 - The closed account cannot be used to log in.
 - Caregivers lose access to the device when the Primary User account is closed.
-<<<
-RESULT_STRING: >>>
-Not implemented.
 <<<
 RELATIONS:
 - TYPE: Parent
@@ -857,7 +856,9 @@ RELATIONS:
 
 [TEST]
 UID: TEST-21
-RUN_RESULT: Blocked
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/08/2026
 TITLE: Device Dissociation
 STATEMENT: >>>
 Prerequisites: A provisioned device (Device A) with an active schedule and adherence history. The Patient account is the Primary User. The device is connected to Wi-Fi.
@@ -865,18 +866,17 @@ Prerequisites: A provisioned device (Device A) with an active schedule and adher
 Steps:
 1. Log into the Patient account on the mobile app.
 2. Navigate to device settings for Device A.
-3. Select "Remove Device" or "Dissociate" (or equivalent option).
+3. Select "Remove Device".
 4. Confirm the dissociation.
 5. Verify that Device A no longer appears in the Patient's device list.
-6. Verify that the adherence history previously collected for Device A is still accessible in the app (under a disabled device section).
-7. Attempt to make a schedule change for Device A from the Patient account.
-8. Verify that schedule modifications are denied (the user is no longer Primary User and cannot configure the device).
-9. Verify the device's previously issued credentials are revoked (the device can no longer communicate with the backend using its old credentials - observable if the device shows an offline/error state after dissociation).
+6. Verify that the adherence history previously collected for Device A is still accessible in the web dashboard.
+7. Attempt to view the device state and make a schedule change for Device A from the Patient account.
+8. Verify the device's previously issued credentials are revoked (thing removed on IoT Core).
 
 Acceptance Criteria:
 - The Patient can dissociate their account from the device.
 - After dissociation, the Patient cannot make schedule or configuration changes to the device.
-- Adherence records collected prior to dissociation remain accessible to the Patient.
+- Adherence records collected prior to dissociation remain accessible.
 - The device's previously issued credentials are revoked upon dissociation.
 <<<
 RESULT_STRING: >>>

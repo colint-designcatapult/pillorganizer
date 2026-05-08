@@ -270,15 +270,11 @@ public class DeviceService {
         logicalDeviceRepository.updateDisabledAt(device.getId(), now);
         log.atInfo().log("Disabled LogicalDevice %s", device.getId());
 
-        // Delete the IoT Thing if a physical device is associated
+        // Revoke certificates and delete the IoT Thing if a physical device is associated
         ProvisionRecord physicalDevice = device.getPhysicalDevice();
         if (physicalDevice != null && physicalDevice.getThingName() != null) {
-            try {
-                iotThingService.deleteThing(physicalDevice.getThingName());
-            } catch (Exception e) {
-                log.atWarning().withCause(e).log("Failed to delete IoT Thing %s for device %s",
-                        physicalDevice.getThingName(), device.getId());
-            }
+            iotThingService.revokeAllCerts(physicalDevice.getThingName());
+            iotThingService.deleteThing(physicalDevice.getThingName());
         }
     }
 }
