@@ -670,9 +670,6 @@ Steps:
 Acceptance Criteria:
 - The Caregiver's display name is visible to the Patient in the Caregiver access list.
 <<<
-RESULT_STRING: >>>
-Caregiver not implemented.
-<<<
 RELATIONS:
 - TYPE: Parent
   VALUE: UN-7312
@@ -967,8 +964,6 @@ Acceptance Criteria:
 - Only the Primary User (Patient) can modify the schedule or configuration.
 - The device is associated with exactly one Primary User.
 <<<
-RESULT_STRING: >>>
-<<<
 RELATIONS:
 - TYPE: Parent
   VALUE: UN-307
@@ -1009,8 +1004,6 @@ Acceptance Criteria:
 - The Caregiver can view device state, adherence records, and configuration.
 - The Caregiver receives mobile notifications per their configured preferences.
 - The Primary User can revoke Caregiver access, after which the Caregiver can no longer access the device.
-<<<
-RESULT_STRING: >>>
 <<<
 RELATIONS:
 - TYPE: Parent
@@ -1064,8 +1057,6 @@ Acceptance Criteria:
 - Device ownership (Primary User status) can be transferred from the Caregiver to the Patient.
 - After transfer, the Patient is the sole authority for schedule and configuration changes.
 - The Caregiver retains read-only monitoring access after the handoff (if they are designated as a Caregiver).
-<<<
-RESULT_STRING: >>>
 <<<
 RELATIONS:
 - TYPE: Parent
