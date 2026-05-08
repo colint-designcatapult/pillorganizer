@@ -169,6 +169,7 @@ class _SingleDeviceState extends State<SingleDevice> {
                       },
                     ),
                 ]),
+
               ],
             ),
           ),

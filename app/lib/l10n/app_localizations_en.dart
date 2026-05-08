@@ -1082,4 +1082,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yourEmail => 'Your email';
+
+  @override
+  String get reconfigureWifi => 'Reconfigure Wi-Fi';
+
+  @override
+  String get reconfigureWifiSubtitle =>
+      'Change the Wi-Fi network without losing your data';
+
+  @override
+  String get transferDeviceButton => 'Transfer data to new device';
+
+  @override
+  String get transferDeviceSubtitle =>
+      'Move your schedule and history to a different device';
+
+  @override
+  String get wifiReconfigureSuccess =>
+      'Wi-Fi credentials updated successfully.';
+
+  @override
+  String get transferDeviceSuccess => 'Device transferred successfully.';
 }

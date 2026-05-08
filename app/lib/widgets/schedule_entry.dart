@@ -1,4 +1,6 @@
 import 'package:app/apiv2/models/device.dart';
+import 'package:app/provider/provision_provider.dart';
+import 'package:app/screens/provisioning/provision_flow_screen.dart';
 import 'package:app/apiv2/models/schedule.dart';
 import 'package:app/provider/device_connection_status_provider.dart';
 import 'package:app/provider/device_provider.dart';
@@ -256,6 +258,10 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           scheduleSection,
+          if (targetDevice.primaryUser) ...[
+            SizedBox(height: _sectionSpacing.h),
+            _buildWifiTransferButtons(targetDevice),
+          ],
           if (widget.showRemovalSection) ...[
             SizedBox(height: _sectionSpacing.h),
             RemovalSection(device: targetDevice),
@@ -383,6 +389,50 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
           SizedBox(height: _sectionSpacing.h),
           _buildReloadButton(device),
         ],
+      ],
+    );
+  }
+
+  Widget _buildWifiTransferButtons(DeviceMetadata device) {
+    final loc = AppLocalizations.of(context)!;
+    final buttonStyle = OutlinedButton.styleFrom(
+      padding: EdgeInsets.symmetric(vertical: 14.h),
+      side: const BorderSide(color: Color(0xFF206B8B)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+    );
+    final textStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: const Color(0xFF206B8B),
+          fontWeight: FontWeight.w600,
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        OutlinedButton(
+          onPressed: () {
+            Navigator.of(context, rootNavigator: true).push(
+              ProvisionFlowPage.route(
+                mode: ProvisionMode.wifiReconfigure,
+                targetDeviceName: 'cabiNET-${device.serialNo}',
+              ),
+            );
+          },
+          style: buttonStyle,
+          child: Text(loc.reconfigureWifi, style: textStyle),
+        ),
+        SizedBox(height: 12.h),
+        OutlinedButton(
+          onPressed: () {
+            Navigator.of(context, rootNavigator: true).push(
+              ProvisionFlowPage.route(
+                mode: ProvisionMode.transferDevice,
+                existingDeviceId: device.id,
+              ),
+            );
+          },
+          style: buttonStyle,
+          child: Text(loc.transferDeviceButton, style: textStyle),
+        ),
       ],
     );
   }

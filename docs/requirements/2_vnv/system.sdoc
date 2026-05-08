@@ -879,9 +879,6 @@ Acceptance Criteria:
 - Adherence records collected prior to dissociation remain accessible.
 - The device's previously issued credentials are revoked upon dissociation.
 <<<
-RESULT_STRING: >>>
-Not implemented.
-<<<
 RELATIONS:
 - TYPE: Parent
   VALUE: UN-502
@@ -892,7 +889,9 @@ RELATIONS:
 
 [TEST]
 UID: TEST-22
-RUN_RESULT: Blocked
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/08/2026
 TITLE: Device Re-Provisioning and Data Transfer
 STATEMENT: >>>
 Prerequisites: Patient account with one provisioned device (Device A) that has an active schedule, a device nickname, and several weeks of adherence data. A second unprovisioned device (Device B) is available.
@@ -915,9 +914,6 @@ Steps — Transfer to New Device:
 Acceptance Criteria:
 - Re-provisioning an existing device preserves its configuration, schedule, and adherence history.
 - Provisioning a new device with a data transfer copies the configuration, schedule, and adherence records from the source device.
-<<<
-RESULT_STRING: >>>
-Needs bug fix.
 <<<
 RELATIONS:
 - TYPE: Parent

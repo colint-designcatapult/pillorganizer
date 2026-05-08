@@ -316,5 +316,11 @@
 	"caregiverInvited": "Aidant invité avec succès.",
 	"errorInvitingCaregiver": "Échec de l'invitation. Veuillez vérifier que le courriel est enregistré.",
 	"enterCaregiverEmail": "Saisissez l'adresse courriel de l'aidant",
-	"yourEmail": "Votre courriel"
+	"yourEmail": "Votre courriel",
+	"reconfigureWifi": "Reconfigurer le Wi-Fi",
+	"reconfigureWifiSubtitle": "Changer le réseau Wi-Fi sans perdre vos données",
+	"transferDeviceButton": "Transférer les données vers un nouvel appareil",
+	"transferDeviceSubtitle": "Déplacer votre horaire et votre historique vers un autre appareil",
+	"wifiReconfigureSuccess": "Identifiants Wi-Fi mis à jour avec succès.",
+	"transferDeviceSuccess": "Appareil transféré avec succès."
 }
