@@ -1028,4 +1028,46 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get commandReloadInitiate => 'Lancer le rechargement';
+
+  @override
+  String get peopleWithAccess => 'People with access';
+
+  @override
+  String get primaryUser => 'Primary User';
+
+  @override
+  String get revokeAccess => 'Revoke Access';
+
+  @override
+  String revokeAccessConfirmation(String name) {
+    return 'Are you sure you want to revoke access for $name? They will no longer be able to view this device\'s data.';
+  }
+
+  @override
+  String get revoke => 'Revoke';
+
+  @override
+  String get transferPrimaryUser => 'Transfer Primary User';
+
+  @override
+  String get transferPrimaryUserDescription =>
+      'Select the person you want to transfer primary user status to. This will give them full control over the device schedule.';
+
+  @override
+  String transferPrimaryUserConfirmation(String name) {
+    return 'Are you sure you want to transfer primary user status to $name? You will lose the ability to modify the device schedule.';
+  }
+
+  @override
+  String get transfer => 'Transfer';
+
+  @override
+  String get errorLoadingCaregivers =>
+      'Unable to load access list. Please try again.';
+
+  @override
+  String get caregiverName => 'Caregiver Name';
+
+  @override
+  String get enterCaregiverName => 'Enter a name for this caregiver';
 }

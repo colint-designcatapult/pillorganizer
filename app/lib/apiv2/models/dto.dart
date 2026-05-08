@@ -311,3 +311,74 @@ class DeviceCommandDto with DeviceCommandDtoMappable {
     this.binAction,
   });
 }
+
+@MappableClass()
+class CaregiverListItemDto with CaregiverListItemDtoMappable {
+  final String id;
+  final String? userName;
+  final String? nickname;
+  final bool primaryUser;
+
+  const CaregiverListItemDto({
+    required this.id,
+    this.userName,
+    this.nickname,
+    required this.primaryUser,
+  });
+
+  String get displayName => nickname ?? userName ?? 'Unknown';
+}
+
+@MappableClass()
+class DeviceCaregiverCodeDto with DeviceCaregiverCodeDtoMappable {
+  final String id;
+  final String deviceID;
+  final int code;
+  final int expiresAt;
+  final bool deleted;
+  final String nickname;
+
+  const DeviceCaregiverCodeDto({
+    required this.id,
+    required this.deviceID,
+    required this.code,
+    required this.expiresAt,
+    required this.deleted,
+    required this.nickname,
+  });
+
+  bool get isValid =>
+      !deleted &&
+      DateTime.now().isBefore(
+          DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000, isUtc: true));
+
+  int get remainingSeconds {
+    final expiry =
+        DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000, isUtc: true);
+    final diff = expiry.difference(DateTime.now()).inSeconds;
+    return diff > 0 ? diff : 0;
+  }
+
+  String get codeString => code.toString().padLeft(6, '0');
+}
+
+@MappableClass()
+class GenerateCaregiverCodeDto with GenerateCaregiverCodeDtoMappable {
+  final String nickname;
+
+  const GenerateCaregiverCodeDto({required this.nickname});
+}
+
+@MappableClass()
+class CaregiverCodeValidationDto with CaregiverCodeValidationDtoMappable {
+  final String name;
+
+  const CaregiverCodeValidationDto({required this.name});
+}
+
+@MappableClass()
+class TransferPrimaryUserDto with TransferPrimaryUserDtoMappable {
+  final String targetCaregiverId;
+
+  const TransferPrimaryUserDto({required this.targetCaregiverId});
+}

@@ -34,4 +34,6 @@ public interface DeviceUserRepository extends CrudRepository<DeviceUser, UUID> {
     List<DeviceUser> findByDeviceId(String deviceId);
 
     void updateSubscriptionArn(@Id UUID id, @Nullable String subscriptionArn);
+
+    void updateNickname(@Id UUID id, @Nullable String nickname);
 }

@@ -2,7 +2,6 @@ package jct.pillorganizer.tenant.model.device;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.*;
 import jct.pillorganizer.tenant.model.user.User;
 import lombok.Getter;
@@ -11,11 +10,12 @@ import lombok.Setter;
 import java.sql.Timestamp;
 import java.util.UUID;
 
-@MappedEntity("device_user")
+@MappedEntity("caregiver_code")
 @Getter
 @Setter
 @Introspected
-public class DeviceUser {
+public class CaregiverCode {
+
     @Id
     private UUID id;
 
@@ -23,23 +23,18 @@ public class DeviceUser {
     private LogicalDevice device;
 
     @Relation(value = Relation.Kind.MANY_TO_ONE)
-    private User user;
+    @MappedProperty("patient_id")
+    private User patient;
 
-    private boolean primaryUser;
-
-    @Nullable
     private String nickname;
 
-    /** ARN of the SNS subscription linking this user to the device's SNS topic. Null when not subscribed. */
-    @Nullable
-    private String subscriptionArn;
+    private int code;
+
+    private Timestamp expiresAt;
+
+    private boolean deleted;
 
     @DateCreated
     @JsonIgnore
     private Timestamp createdAt;
-
-    @DateUpdated
-    @JsonIgnore
-    private Timestamp updatedAt;
-
 }

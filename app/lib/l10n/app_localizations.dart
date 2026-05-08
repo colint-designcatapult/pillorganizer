@@ -1951,6 +1951,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Initiate Reload'**
   String get commandReloadInitiate;
+
+  /// No description provided for @peopleWithAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'People with access'**
+  String get peopleWithAccess;
+
+  /// No description provided for @primaryUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary User'**
+  String get primaryUser;
+
+  /// No description provided for @revokeAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke Access'**
+  String get revokeAccess;
+
+  /// No description provided for @revokeAccessConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to revoke access for {name}? They will no longer be able to view this device\'s data.'**
+  String revokeAccessConfirmation(String name);
+
+  /// No description provided for @revoke.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke'**
+  String get revoke;
+
+  /// No description provided for @transferPrimaryUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer Primary User'**
+  String get transferPrimaryUser;
+
+  /// No description provided for @transferPrimaryUserDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the person you want to transfer primary user status to. This will give them full control over the device schedule.'**
+  String get transferPrimaryUserDescription;
+
+  /// No description provided for @transferPrimaryUserConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to transfer primary user status to {name}? You will lose the ability to modify the device schedule.'**
+  String transferPrimaryUserConfirmation(String name);
+
+  /// No description provided for @transfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get transfer;
+
+  /// No description provided for @errorLoadingCaregivers.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load access list. Please try again.'**
+  String get errorLoadingCaregivers;
+
+  /// No description provided for @caregiverName.
+  ///
+  /// In en, this message translates to:
+  /// **'Caregiver Name'**
+  String get caregiverName;
+
+  /// No description provided for @enterCaregiverName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name for this caregiver'**
+  String get enterCaregiverName;
 }
 
 class _AppLocalizationsDelegate

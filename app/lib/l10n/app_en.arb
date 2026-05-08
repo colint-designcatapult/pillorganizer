@@ -307,5 +307,32 @@
 	"commandMarkReset": "Reset",
 	"commandReloadComplete": "Complete Reload",
 	"commandReloadStart": "Start Reload",
-	"commandReloadInitiate": "Initiate Reload"
+	"commandReloadInitiate": "Initiate Reload",
+
+	"peopleWithAccess": "People with access",
+	"primaryUser": "Primary User",
+	"revokeAccess": "Revoke Access",
+	"revokeAccessConfirmation": "Are you sure you want to revoke access for {name}? They will no longer be able to view this device's data.",
+	"@revokeAccessConfirmation": {
+		"placeholders": {
+			"name": {
+				"type": "String"
+			}
+		}
+	},
+	"revoke": "Revoke",
+	"transferPrimaryUser": "Transfer Primary User",
+	"transferPrimaryUserDescription": "Select the person you want to transfer primary user status to. This will give them full control over the device schedule.",
+	"transferPrimaryUserConfirmation": "Are you sure you want to transfer primary user status to {name}? You will lose the ability to modify the device schedule.",
+	"@transferPrimaryUserConfirmation": {
+		"placeholders": {
+			"name": {
+				"type": "String"
+			}
+		}
+	},
+	"transfer": "Transfer",
+	"errorLoadingCaregivers": "Unable to load access list. Please try again.",
+	"caregiverName": "Caregiver Name",
+	"enterCaregiverName": "Enter a name for this caregiver"
 }
