@@ -106,6 +106,10 @@ public class QueueProcessorService {
         // Iterate through user's devices and perform removal
         java.util.List<DeviceUser> deviceUsers = deviceUserRepository.findByUserId(user.getId());
         for (DeviceUser du : deviceUsers) {
+            if (du.getDevice() == null) {
+                log.atWarning().log("Skipping device removal for user %s because a DeviceUser row has no device", user.getId());
+                continue;
+            }
             deviceService.removeDevice(user, du.getDevice());
         }
 
