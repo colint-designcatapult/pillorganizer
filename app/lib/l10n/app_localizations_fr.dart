@@ -1039,44 +1039,44 @@ class AppLocalizationsFr extends AppLocalizations {
   String get commandReloadInitiate => 'Lancer le rechargement';
 
   @override
-  String get peopleWithAccess => 'People with access';
+  String get peopleWithAccess => 'Personnes ayant accès';
 
   @override
-  String get primaryUser => 'Primary User';
+  String get primaryUser => 'Utilisateur principal';
 
   @override
-  String get revokeAccess => 'Revoke Access';
+  String get revokeAccess => 'Révoquer l’accès';
 
   @override
   String revokeAccessConfirmation(String name) {
-    return 'Are you sure you want to revoke access for $name? They will no longer be able to view this device\'s data.';
+    return 'Êtes-vous sûr de vouloir révoquer l’accès de $name ? Cette personne ne pourra plus consulter les données de cet appareil.';
   }
 
   @override
-  String get revoke => 'Revoke';
+  String get revoke => 'Révoquer';
 
   @override
-  String get transferPrimaryUser => 'Transfer Primary User';
+  String get transferPrimaryUser => 'Transférer l’utilisateur principal';
 
   @override
   String get transferPrimaryUserDescription =>
-      'Select the person you want to transfer primary user status to. This will give them full control over the device schedule.';
+      'Sélectionnez la personne à qui vous souhaitez transférer le statut d’utilisateur principal. Cela lui donnera un contrôle total sur le programme de l’appareil.';
 
   @override
   String transferPrimaryUserConfirmation(String name) {
-    return 'Are you sure you want to transfer primary user status to $name? You will lose the ability to modify the device schedule.';
+    return 'Êtes-vous sûr de vouloir transférer le statut d’utilisateur principal à $name ? Vous perdrez la possibilité de modifier le programme de l’appareil.';
   }
 
   @override
-  String get transfer => 'Transfer';
+  String get transfer => 'Transférer';
 
   @override
   String get errorLoadingCaregivers =>
-      'Unable to load access list. Please try again.';
+      'Impossible de charger la liste des accès. Veuillez réessayer.';
 
   @override
-  String get caregiverName => 'Caregiver Name';
+  String get caregiverName => 'Nom de l’aidant';
 
   @override
-  String get enterCaregiverName => 'Enter a name for this caregiver';
+  String get enterCaregiverName => 'Saisissez un nom pour cet aidant';
 }
