@@ -85,7 +85,7 @@ class DeviceInfoHeader extends ConsumerWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         GestureDetector(
-            onTap: () => _showConnectionStatus(context),
+            onTap: () => _showConnectionStatus(context, activeDevice),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -230,6 +230,7 @@ class DeviceInfoHeader extends ConsumerWidget {
 
   void _showConnectionStatus(
     BuildContext context,
+    DeviceMetadata? activeDevice,
   ) {
     showDialog(
         context: context,
@@ -345,6 +346,27 @@ class DeviceInfoHeader extends ConsumerWidget {
                                     )
                                   ],
                                 ))),
+                        SizedBox(height: 16.h),
+                        if (activeDevice != null) ...[
+                          if (activeDevice.id.isNotEmpty)
+                            Text(
+                              'Device ID: ${activeDevice.id}',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: const Color(0xFF6B7280),
+                                fontSize: 11.h,
+                              ),
+                            ),
+                          if (activeDevice.serialNo != null && activeDevice.serialNo!.isNotEmpty) ...[
+                            SizedBox(height: 4.h),
+                            Text(
+                              'Serial: ${activeDevice.serialNo}',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: const Color(0xFF6B7280),
+                                fontSize: 11.h,
+                              ),
+                            ),
+                          ],
+                        ],
                         if (false)
                           SizedBox(
                               height: 125.w,

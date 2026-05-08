@@ -655,6 +655,27 @@ class RemovalSection extends ConsumerWidget {
             ),
           ),
         ),
+        if (device != null) ...[
+          SizedBox(height: 16.h),
+          if (device!.id.isNotEmpty)
+            Text(
+              'Device ID: ${device!.id}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF6B7280),
+                fontSize: 11.h,
+              ),
+            ),
+          if (device!.serialNo != null && device!.serialNo!.isNotEmpty) ...[
+            SizedBox(height: 4.h),
+            Text(
+              'Serial: ${device!.serialNo}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: const Color(0xFF6B7280),
+                fontSize: 11.h,
+              ),
+            ),
+          ],
+        ],
       ],
     );
   }

@@ -80,6 +80,7 @@ app:
         active: true
         hostname: "localhost:8080"
         api-base: "http://localhost:8080"
+        default-schedule: "eyJ0eXBlIjoiU0lNUExFIiwiYmlucyI6W3siZGF5T2ZXZWVrIjoiTU9OREFZIiwidGltZSI6IjA4OjAwIn0seyJkYXlPZldlZWsiOiJNT05EQVkiLCJ0aW1lIjoiMjA6MDAifV19"
       staging:
         id: "staging"
         name: "Staging Environment"

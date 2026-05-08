@@ -54,4 +54,7 @@ abstract class TenantApiClient {
   Future<DeviceAccessDto> updateNotificationPreferences(
       @Path("id") String deviceId,
       @Body() NotificationPreferencesRequestDto dto);
+
+  @GET("/api/v1/device/default-schedule")
+  Future<BaseScheduleDto> getDefaultSchedule();
 }

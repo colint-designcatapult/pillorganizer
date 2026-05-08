@@ -41,18 +41,30 @@ class DeviceScheduleState {
   final DeviceSchedule? currentSchedule;
   final DeviceSchedule? requestedSchedule;
   final ScheduleStatus? requestedStatus;
+  /// Tenant-configured default schedule, used as fallback during initial setup.
+  final BaseSchedule? defaultSchedule;
 
   const DeviceScheduleState({
     this.currentSchedule,
     this.requestedSchedule,
     this.requestedStatus,
+    this.defaultSchedule,
   });
 
   BaseSchedule? get effectiveSchedule =>
-      requestedSchedule?.schedule ?? currentSchedule?.schedule;
+      requestedSchedule?.schedule ?? currentSchedule?.schedule ?? defaultSchedule;
 
   String? get effectiveTimezoneIana =>
       requestedSchedule?.timezoneIana ?? currentSchedule?.timezoneIana;
+
+  /// Returns a copy with the given default schedule applied as fallback.
+  DeviceScheduleState copyWithDefault(BaseSchedule defaultSched) =>
+      DeviceScheduleState(
+        currentSchedule: currentSchedule,
+        requestedSchedule: requestedSchedule,
+        requestedStatus: requestedStatus,
+        defaultSchedule: defaultSched,
+      );
 }
 
 class DeviceSchedule {

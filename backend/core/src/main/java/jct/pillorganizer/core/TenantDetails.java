@@ -18,11 +18,12 @@ public class TenantDetails {
     private String hostname;
     private String apiBase;
     @Nullable private String name;
+    @Nullable private String defaultSchedule;
 
     public TenantDetails(@Parameter String name) {
         this.id = name;
     }
 
     public static final TenantDetails TEST_TENANT = new TenantDetails("test", true,
-            "test-does-not-exist.domain", "https://test-does-not-exist.domain", "Test Tenant");
+            "test-does-not-exist.domain", "https://test-does-not-exist.domain", "Test Tenant", null);
 }

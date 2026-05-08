@@ -389,7 +389,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get joinDeviceSubtext =>
-      'L\'administrateur du pilulier vous a probablement envoyé un code de sécurité pour accéder à votre compte. Saisissez-le ci-dessous :';
+      'Pour rejoindre un appareil existant, demandez à l\'utilisateur principal de vous inviter en utilisant votre adresse courriel affichée ci-dessous.';
 
   @override
   String get loadingState => 'Chargement ...';
@@ -585,13 +585,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get notificationReminder => 'Envoyer des rappels sur votre téléphone';
 
   @override
-  String get takeNowNotifications => 'Rappels de prise immédiate';
+  String get takeNowNotifications => 'Take now reminders';
 
   @override
-  String get takenNotifications => 'Confirmations de prise';
+  String get takenNotifications => 'Taken confirmations';
 
   @override
-  String get missedNotifications => 'Alertes de dose manquée';
+  String get missedNotifications => 'Missed dose alerts';
 
   @override
   String get notSignedIn => 'Pas connecté';
@@ -1011,26 +1011,26 @@ class AppLocalizationsFr extends AppLocalizations {
   String get primaryUser => 'Utilisateur principal';
 
   @override
-  String get revokeAccess => 'Révoquer l’accès';
+  String get revokeAccess => 'Révoquer l\'accès';
 
   @override
   String revokeAccessConfirmation(String name) {
-    return 'Êtes-vous sûr de vouloir révoquer l’accès de $name ? Cette personne ne pourra plus consulter les données de cet appareil.';
+    return 'Êtes-vous sûr de vouloir révoquer l\'accès de $name? Cette personne ne pourra plus consulter les données de cet appareil.';
   }
 
   @override
   String get revoke => 'Révoquer';
 
   @override
-  String get transferPrimaryUser => 'Transférer l’utilisateur principal';
+  String get transferPrimaryUser => 'Transférer l\'utilisateur principal';
 
   @override
   String get transferPrimaryUserDescription =>
-      'Sélectionnez la personne à qui vous souhaitez transférer le statut d’utilisateur principal. Cela lui donnera un contrôle total sur le programme de l’appareil.';
+      'Sélectionnez la personne à qui vous souhaitez transférer le statut d\'utilisateur principal. Elle aura alors le contrôle total de l\'horaire de l\'appareil.';
 
   @override
   String transferPrimaryUserConfirmation(String name) {
-    return 'Êtes-vous sûr de vouloir transférer le statut d’utilisateur principal à $name ? Vous perdrez la possibilité de modifier le programme de l’appareil.';
+    return 'Êtes-vous sûr de vouloir transférer le statut d\'utilisateur principal à $name? Vous perdrez la possibilité de modifier l\'horaire de l\'appareil.';
   }
 
   @override
@@ -1038,10 +1038,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get errorLoadingCaregivers =>
-      'Impossible de charger la liste des accès. Veuillez réessayer.';
+      'Impossible de charger la liste d\'accès. Veuillez réessayer.';
 
   @override
-  String get caregiverName => 'Nom de l’aidant';
+  String get caregiverName => 'Nom de l\'aidant';
 
   @override
   String get enterCaregiverName => 'Saisissez un nom pour cet aidant';
@@ -1060,7 +1060,8 @@ class AppLocalizationsFr extends AppLocalizations {
       'Échec de l\'invitation. Veuillez vérifier que le courriel est enregistré.';
 
   @override
-  String get enterCaregiverEmail => 'Saisissez l\'adresse courriel de l\'aidant';
+  String get enterCaregiverEmail =>
+      'Saisissez l\'adresse courriel de l\'aidant';
 
   @override
   String get yourEmail => 'Votre courriel';

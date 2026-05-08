@@ -16,6 +16,7 @@ final controlPlaneDioProvider = Provider<Dio>((ref) {
   );
 
   dio.interceptors.add(JwtAuthInterceptor(dio: dio));
+  dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true, error: true));
 
   return dio;
 });
