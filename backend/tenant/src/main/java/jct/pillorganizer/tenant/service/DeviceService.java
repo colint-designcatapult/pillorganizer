@@ -167,7 +167,7 @@ public class DeviceService {
         TenantDetails tenantDetails = tenantService.getCurrentTenant().orElse(null);
         return deviceUserRepository.findByUserId(user.getId())
                 .stream()
-                .filter(du -> du.getDevice().getDisabledAt() == null)
+                .filter(du -> du.getDevice() != null && du.getDevice().getDisabledAt() == null)
                 .map(du -> deviceMapper.toAccessDTO(du, tenantDetails))
                 .collect(Collectors.toList());
     }

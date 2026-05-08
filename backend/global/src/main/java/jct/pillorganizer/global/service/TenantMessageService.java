@@ -88,7 +88,7 @@ public class TenantMessageService {
                 client.sendMessage(b -> b.messageBody(body).queueUrl(queueUrl));
                 log.atInfo().log("Sent deleteUser message to tenant %s", tenant.getId());
             } catch (Exception e) {
-                log.atInfo().log("Could not send deleteUser to tenant %s (queue may not exist): %s",
+                log.atWarning().log("Could not send deleteUser to tenant %s: %s",
                         tenant.getId(), e.getMessage());
             }
         }
