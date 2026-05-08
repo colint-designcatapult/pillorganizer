@@ -15,24 +15,26 @@ class CaregiverInvite extends _$CaregiverInvite {
 
   /// Invites a caregiver by email via the control plane.
   /// On success, adds the returned [CaregiverListItemDto] to the caregiver list.
+  /// Throws on failure so callers can handle errors directly.
   Future<void> inviteCaregiver({
     required String email,
     required String nickname,
     required String deviceId,
     required String tenantId,
   }) async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final client = ref.read(controlPlaneClientProvider);
-      final newCaregiver = await client.inviteCaregiver(InviteCaregiverRequestDto(
-        email: email,
-        nickname: nickname,
-        deviceId: deviceId,
-        tenantId: tenantId,
-      ));
-      // Add the new caregiver to the list so the UI updates immediately
-      ref.read(caregiverListProvider(deviceId).notifier).addCaregiver(newCaregiver);
-    });
+    // Capture both objects synchronously before any async gap.
+    // caregiverInviteProvider is auto-disposed (no watchers), so ref becomes
+    // invalid after an await — reading it then throws UnmountedRefException.
+    final client = ref.read(controlPlaneClientProvider);
+    final listNotifier = ref.read(caregiverListProvider(deviceId).notifier);
+    final newCaregiver = await client.inviteCaregiver(InviteCaregiverRequestDto(
+      email: email,
+      nickname: nickname,
+      deviceId: deviceId,
+      tenantId: tenantId,
+    ));
+    // Add the new caregiver to the list so the UI updates immediately
+    listNotifier.addCaregiver(newCaregiver);
   }
 }
 
@@ -63,7 +65,7 @@ class CaregiverList extends _$CaregiverList {
 
   /// Adds a caregiver to the current list without re-fetching from the server.
   void addCaregiver(CaregiverListItemDto caregiver) {
-    final current = state.valueOrNull ?? [];
+    final current = state.value ?? [];
     state = AsyncValue.data([...current, caregiver]);
   }
 

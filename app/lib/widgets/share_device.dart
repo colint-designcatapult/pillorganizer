@@ -107,6 +107,8 @@ class _ShareDeviceState extends ConsumerState<ShareDevice> {
                                   );
                               if (context.mounted) {
                                 Navigator.of(context).pop();
+                              }
+                              if (mounted) {
                                 ScaffoldMessenger.of(this.context).showSnackBar(
                                   SnackBar(
                                     content: Text(AppLocalizations.of(this.context)!.caregiverInvited),
@@ -114,10 +116,12 @@ class _ShareDeviceState extends ConsumerState<ShareDevice> {
                                 );
                               }
                             } catch (e) {
-                              setSheetState(() {
-                                isLoading = false;
-                                sheetError = AppLocalizations.of(context)!.errorInvitingCaregiver;
-                              });
+                              if (context.mounted) {
+                                setSheetState(() {
+                                  isLoading = false;
+                                  sheetError = AppLocalizations.of(context)!.errorInvitingCaregiver;
+                                });
+                              }
                             }
                           },
                     style: ElevatedButton.styleFrom(
