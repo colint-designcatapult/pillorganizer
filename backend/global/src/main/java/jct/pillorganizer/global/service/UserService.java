@@ -72,6 +72,10 @@ public class UserService {
         return userRepo.findAllByUserId(userId).stream().findFirst();
     }
 
+    public Optional<UserEntity> findByEmail(String email) {
+        return userRepo.findByEmail(email);
+    }
+
     public Optional<UserEntity> getBySubject(String sub) {
         return userRepo.findBySub(sub).stream().findFirst();
     }

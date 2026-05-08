@@ -7,6 +7,7 @@ import jakarta.inject.Singleton;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.global.client.TenantClient;
 import jct.pillorganizer.global.dto.DeviceSubscribeDto;
+import jct.pillorganizer.global.dto.InviteCaregiverTenantDto;
 import jct.pillorganizer.global.model.UserEntity;
 import lombok.extern.flogger.Flogger;
 import reactor.core.publisher.Flux;
@@ -91,6 +92,20 @@ public class UserDeviceAccessService {
         DeviceSubscribeDto dto = new DeviceSubscribeDto(subscribe, endpointArn,
                 notifyTakeNow, notifyTaken, notifyMissed);
         return client.updateDeviceNotifications(deviceId, dto);
+    }
+
+    /**
+     * Invites a caregiver to a device by forwarding the request to the appropriate tenant,
+     * passing the requester's JWT so the tenant can verify the caller is the primary user.
+     */
+    public Mono<Void> inviteCaregiver(String tenantId, String deviceId, String jwt,
+                                       InviteCaregiverTenantDto dto) {
+        TenantClient client = tenants.stream()
+                .filter(c -> tenantId.equals(c.getTenantDetails().getId()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Tenant not found: " + tenantId));
+
+        return client.inviteCaregiver(jwt, deviceId, dto);
     }
 
 }

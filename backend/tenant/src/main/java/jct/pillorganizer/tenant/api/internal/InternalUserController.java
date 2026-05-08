@@ -16,6 +16,8 @@ import jct.pillorganizer.tenant.dto.DeviceNotificationSubscribeDto;
 import jct.pillorganizer.tenant.model.device.DeviceUser;
 import jct.pillorganizer.tenant.model.device.LogicalDevice;
 import jct.pillorganizer.tenant.model.user.User;
+import jct.pillorganizer.tenant.dto.InviteCaregiverDto;
+import jct.pillorganizer.tenant.service.CaregiverService;
 import jct.pillorganizer.tenant.service.DeviceIotService;
 import jct.pillorganizer.tenant.service.DeviceNotificationService;
 import jct.pillorganizer.tenant.service.DeviceProvisionService;
@@ -39,6 +41,9 @@ public class InternalUserController {
 
     @Inject
     AuthService authService;
+
+    @Inject
+    CaregiverService caregiverService;
 
 
     @Get("/devices")
@@ -84,5 +89,23 @@ public class InternalUserController {
         } else {
             return deviceNotificationService.unsubscribe(user, device);
         }
+    }
+
+    /**
+     * Invites a caregiver to a device. The caller (authenticated via forwarded JWT)
+     * must be the primary user of the device. The caregiver user record will be
+     * created in the tenant if it doesn't exist.
+     *
+     * @param deviceId the logical device ID
+     * @param dto      caregiver details (userId, email, userName, nickname)
+     */
+    @Post("/device/{deviceId}/invite-caregiver")
+    @Secured(SecurityRule.IS_AUTHENTICATED)
+    public void inviteCaregiver(@PathVariable String deviceId,
+                                @Body @Valid InviteCaregiverDto dto,
+                                User user) {
+        LogicalDevice device = authService.accessDevice(deviceId, true);
+        caregiverService.inviteCaregiver(user, device, dto.caregiverUserId(),
+                dto.caregiverEmail(), dto.caregiverUserName(), dto.nickname());
     }
 }

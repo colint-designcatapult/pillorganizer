@@ -25,193 +25,70 @@ class CaregiverServiceSpec extends BaseIntegrationSpec {
     UserService userService
 
     // -------------------------------------------------------------------------
-    // generateCode
+    // inviteCaregiver
     // -------------------------------------------------------------------------
 
-    def "generateCode should create a valid 6-digit code for the device"() {
+    def "inviteCaregiver should grant caregiver access with nickname"() {
         given:
-        def patient = userService.ensureExists("cg-gen-1")
-        def record = deviceService.provision(patient, "cg-dev-gen-1", "sn-gen-1", "cl-gen-1", "th-gen-1")
+        def patient = userService.ensureExists("cg-inv-1a")
+        def record = deviceService.provision(patient, "cg-dev-inv-1", "sn-inv-1", "cl-inv-1", "th-inv-1")
         def device = record.logicalDevice
 
         when:
-        def dto = caregiverService.generateCode(patient, device, "Test Caregiver")
+        caregiverService.inviteCaregiver(patient, device, "cg-inv-1b", "cg@example.com", "CG Name", "Grandma")
 
-        then:
-        dto != null
-        dto.id() != null
-        dto.deviceID() == device.id
-        dto.patientID() == patient.id
-        dto.nickname() == "Test Caregiver"
-        dto.code() >= 100_000
-        dto.code() <= 999_999
-        dto.deleted() == false
-        dto.expiresAt() > (System.currentTimeMillis() / 1000)
-    }
-
-    def "generateCode should invalidate any previous active code for the same device"() {
-        given:
-        def patient = userService.ensureExists("cg-gen-2")
-        def record = deviceService.provision(patient, "cg-dev-gen-2", "sn-gen-2", "cl-gen-2", "th-gen-2")
-        def device = record.logicalDevice
-
-        when: "generating first code"
-        def first = caregiverService.generateCode(patient, device, "Test Caregiver")
-
-        and: "generating a second code"
-        def second = caregiverService.generateCode(patient, device, "Test Caregiver")
-
-        and: "fetching active codes"
-        def activeCodes = caregiverService.getActiveCodesForDevices([device.id], patient)
-
-        then: "only the second code is active"
-        activeCodes.size() == 1
-        activeCodes[0].id() == second.id()
-    }
-
-    // -------------------------------------------------------------------------
-    // getActiveCodesForDevices
-    // -------------------------------------------------------------------------
-
-    def "getActiveCodesForDevices should return active codes for devices owned by the patient"() {
-        given:
-        def patient = userService.ensureExists("cg-list-1")
-        def record = deviceService.provision(patient, "cg-dev-list-1", "sn-list-1", "cl-list-1", "th-list-1")
-        def device = record.logicalDevice
-        caregiverService.generateCode(patient, device, "Test Caregiver")
-
-        when:
-        def codes = caregiverService.getActiveCodesForDevices([device.id], patient)
-
-        then:
-        codes.size() == 1
-        codes[0].deviceID() == device.id
-        codes[0].nickname() == "Test Caregiver"
-    }
-
-    def "getActiveCodesForDevices should not return codes for devices the patient does not own"() {
-        given:
-        def patient1 = userService.ensureExists("cg-list-2a")
-        def patient2 = userService.ensureExists("cg-list-2b")
-        def record = deviceService.provision(patient1, "cg-dev-list-2", "sn-list-2", "cl-list-2", "th-list-2")
-        def device = record.logicalDevice
-        caregiverService.generateCode(patient1, device, "Test Caregiver")
-
-        when: "patient2 requests codes for patient1's device"
-        def codes = caregiverService.getActiveCodesForDevices([device.id], patient2)
-
-        then: "no codes returned because patient2 is not the code owner"
-        codes.isEmpty()
-    }
-
-    def "getActiveCodesForDevices should return empty list for unknown device"() {
-        given:
-        def patient = userService.ensureExists("cg-list-3")
-
-        when:
-        def codes = caregiverService.getActiveCodesForDevices(["no-such-device-xyz"], patient)
-
-        then:
-        codes.isEmpty()
-    }
-
-    // -------------------------------------------------------------------------
-    // validateAndJoin
-    // -------------------------------------------------------------------------
-
-    def "validateAndJoin should grant caregiver access and return device name"() {
-        given:
-        def patient = userService.ensureExists("cg-val-1a")
-        def caregiver = userService.ensureExists("cg-val-1b")
-        def record = deviceService.provision(patient, "cg-dev-val-1", "sn-val-1", "cl-val-1", "th-val-1")
-        def device = record.logicalDevice
-        deviceService.updateNickname(device, "My Test Organizer")
-        def codeDto = caregiverService.generateCode(patient, device, "Test Caregiver")
-
-        when:
-        def result = caregiverService.validateAndJoin(codeDto.code() as int, caregiver)
-
-        then: "returns the device name"
-        result.name() == "My Test Organizer"
-
-        and: "caregiver now has access"
+        then: "a new user was created and has access"
+        def caregiver = userService.get("cg-inv-1b").get()
         deviceService.getUserAccess(caregiver, device).isPresent()
         !deviceService.getUserAccess(caregiver, device).get().primaryUser
+        deviceService.getUserAccess(caregiver, device).get().nickname == "Grandma"
     }
 
-    def "validateAndJoin should mark the code as deleted after use"() {
+    def "inviteCaregiver should fail if requester is not primary user"() {
         given:
-        def patient = userService.ensureExists("cg-val-2a")
-        def caregiver = userService.ensureExists("cg-val-2b")
-        def record = deviceService.provision(patient, "cg-dev-val-2", "sn-val-2", "cl-val-2", "th-val-2")
+        def patient = userService.ensureExists("cg-inv-2a")
+        def caregiver1 = userService.ensureExists("cg-inv-2b")
+        def record = deviceService.provision(patient, "cg-dev-inv-2", "sn-inv-2", "cl-inv-2", "th-inv-2")
         def device = record.logicalDevice
-        def codeDto = caregiverService.generateCode(patient, device, "Test Caregiver")
+        deviceService.addUserAccess(caregiver1, device)
 
-        when:
-        caregiverService.validateAndJoin(codeDto.code() as int, caregiver)
-
-        then: "code is no longer active"
-        caregiverService.getActiveCodesForDevices([device.id], patient).isEmpty()
-    }
-
-    def "validateAndJoin should fail for an invalid code"() {
-        given:
-        def caregiver = userService.ensureExists("cg-val-3")
-
-        when:
-        caregiverService.validateAndJoin(999999, caregiver)
+        when: "non-primary user tries to invite"
+        caregiverService.inviteCaregiver(caregiver1, device, "cg-inv-2c", "cg2@example.com", null, "Nurse")
 
         then:
         def e = thrown(DeviceAccessException)
-        e.message == "Invalid or expired code"
+        e.message == "Only the primary user can invite caregivers"
     }
 
-    def "validateAndJoin should fail if caregiver already has access"() {
+    def "inviteCaregiver should fail if caregiver already has access"() {
         given:
-        def patient = userService.ensureExists("cg-val-4a")
-        def caregiver = userService.ensureExists("cg-val-4b")
-        def record = deviceService.provision(patient, "cg-dev-val-4", "sn-val-4", "cl-val-4", "th-val-4")
+        def patient = userService.ensureExists("cg-inv-3a")
+        def caregiver = userService.ensureExists("cg-inv-3b")
+        def record = deviceService.provision(patient, "cg-dev-inv-3", "sn-inv-3", "cl-inv-3", "th-inv-3")
         def device = record.logicalDevice
         deviceService.addUserAccess(caregiver, device)
-        def codeDto = caregiverService.generateCode(patient, device, "Test Caregiver")
 
-        when:
-        caregiverService.validateAndJoin(codeDto.code() as int, caregiver)
+        when: "try to invite existing caregiver"
+        caregiverService.inviteCaregiver(patient, device, "cg-inv-3b", "cg@example.com", null, "Nurse")
 
         then:
         def e = thrown(DeviceAccessException)
-        e.message == "You already have access to this device"
+        e.message == "User already has access to this device"
     }
 
-    def "validateAndJoin should use device id as name when nickname is not set"() {
+    def "inviteCaregiver should fail if requester has no access to device"() {
         given:
-        def patient = userService.ensureExists("cg-val-5a")
-        def caregiver = userService.ensureExists("cg-val-5b")
-        def record = deviceService.provision(patient, "cg-dev-val-5", "sn-val-5", "cl-val-5", "th-val-5")
+        def patient = userService.ensureExists("cg-inv-4a")
+        def stranger = userService.ensureExists("cg-inv-4b")
+        def record = deviceService.provision(patient, "cg-dev-inv-4", "sn-inv-4", "cl-inv-4", "th-inv-4")
         def device = record.logicalDevice
-        def codeDto = caregiverService.generateCode(patient, device, "Test Caregiver")
 
         when:
-        def result = caregiverService.validateAndJoin(codeDto.code() as int, caregiver)
+        caregiverService.inviteCaregiver(stranger, device, "cg-inv-4c", "cg@example.com", null, "Nurse")
 
         then:
-        result.name() == "Device #${device.id}"
-    }
-
-
-    def "validateAndJoin should apply the invite code nickname to the DeviceUser"() {
-        given:
-        def patient = userService.ensureExists("cg-val-6a")
-        def caregiver = userService.ensureExists("cg-val-6b")
-        def record = deviceService.provision(patient, "cg-dev-val-6", "sn-val-6", "cl-val-6", "th-val-6")
-        def device = record.logicalDevice
-        def codeDto = caregiverService.generateCode(patient, device, "Grandma")
-
-        when:
-        caregiverService.validateAndJoin(codeDto.code() as int, caregiver)
-
-        then: "the caregiver DeviceUser has the nickname from the invite code"
-        deviceService.getUserAccess(caregiver, device).get().nickname == "Grandma"
+        def e = thrown(DeviceAccessException)
+        e.message == "No access to device"
     }
 
     // -------------------------------------------------------------------------

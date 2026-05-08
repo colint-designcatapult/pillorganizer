@@ -13,6 +13,7 @@ import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.core.dto.DeviceClaimEligibilityDto;
 import jct.pillorganizer.core.dto.DeviceEligibilityCheckDto;
 import jct.pillorganizer.global.dto.DeviceSubscribeDto;
+import jct.pillorganizer.global.dto.InviteCaregiverTenantDto;
 import lombok.Getter;
 import reactor.core.publisher.Mono;
 
@@ -68,6 +69,14 @@ public class TenantClient {
         return Mono.from(httpClient.retrieve(
                 HttpRequest.POST(makeUri("/internal/user/device/" + deviceId + "/notifications"), dto),
                 Argument.of(DeviceAccessDto.class)));
+    }
+
+    public Mono<Void> inviteCaregiver(String authorization, String deviceId,
+                                       InviteCaregiverTenantDto dto) {
+        return Mono.from(httpClient.exchange(
+                HttpRequest.POST(makeUri("/internal/user/device/" + deviceId + "/invite-caregiver"), dto)
+                        .bearerAuth(authorization),
+                Argument.VOID)).then();
     }
 
     public static boolean isConnectionInitializationFailure(Throwable ex) {
