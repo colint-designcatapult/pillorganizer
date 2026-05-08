@@ -597,13 +597,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get notificationReminder => 'Envoyer des rappels sur votre téléphone';
 
   @override
-  String get takeNowNotifications => 'Take now reminders';
+  String get takeNowNotifications => 'Rappels de prise immédiate';
 
   @override
-  String get takenNotifications => 'Taken confirmations';
+  String get takenNotifications => 'Confirmations de prise';
 
   @override
-  String get missedNotifications => 'Missed dose alerts';
+  String get missedNotifications => 'Alertes de dose manquée';
 
   @override
   String get notSignedIn => 'Pas connecté';
