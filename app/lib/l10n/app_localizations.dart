@@ -1706,6 +1706,30 @@ abstract class AppLocalizations {
   /// **'Sign Out'**
   String get signOut;
 
+  /// No description provided for @deleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to permanently delete your account? This action cannot be undone. Your personal information will be removed, but anonymized health data will be retained for research purposes.'**
+  String get deleteAccountSubtitle;
+
+  /// No description provided for @deleteAccountConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get deleteAccountConfirm;
+
   /// No description provided for @signUp.
   ///
   /// In en, this message translates to:

@@ -22,9 +22,11 @@ class UserServiceSpec extends Specification {
     KsuidService ksuidService = new KsuidService()
     TokenValidator<?> tokenValidator = Mock()
     NotificationEndpointService notificationEndpointService = Mock()
+    UserAccountService userAccountService = Mock()
+    TenantMessageService tenantMessageService = Mock()
 
     @Subject
-    UserService userService = new UserService(userRepo, ksuidService, tokenValidator, notificationEndpointService)
+    UserService userService = new UserService(userRepo, ksuidService, tokenValidator, notificationEndpointService, userAccountService, tenantMessageService)
 
     def "should create a new user when one does not exist"() {
         given:
@@ -151,5 +153,23 @@ class UserServiceSpec extends Specification {
         then:
         0 * userRepo.updateFcmEndpointArn(_, _)
         result.fcmEndpointArn == existingArn
+    }
+
+    def "deleteAccount should delete Cognito user, UserEntity and broadcast to tenants"() {
+        given:
+        def id = "user-delete-1"
+        def sub = "sub-delete-1"
+        def user = UserEntity.builder()
+                .base(UserEntity.buildBase(id, sub))
+                .userId(id).userSub(sub).email("delete@example.com")
+                .build()
+
+        when:
+        userService.deleteAccount(user)
+
+        then:
+        1 * userAccountService.deleteUser(sub)
+        1 * userRepo.delete(user)
+        1 * tenantMessageService.broadcastDeleteUser({ it.userId() == id })
     }
 }

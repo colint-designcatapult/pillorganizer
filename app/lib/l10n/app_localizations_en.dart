@@ -895,6 +895,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signOut => 'Sign Out';
 
   @override
+  String get deleteAccount => 'Delete Account';
+
+  @override
+  String get deleteAccountTitle => 'Delete Account';
+
+  @override
+  String get deleteAccountSubtitle => 'Are you sure you want to permanently delete your account? This action cannot be undone. Your personal information will be removed, but anonymized health data will be retained for research purposes.';
+
+  @override
+  String get deleteAccountConfirm => 'Delete Account';
+
+  @override
   String get signUp => 'Sign Up';
 
   @override

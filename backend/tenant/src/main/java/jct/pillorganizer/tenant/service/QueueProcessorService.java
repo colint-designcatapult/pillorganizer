@@ -38,6 +38,9 @@ public class QueueProcessorService {
     @Inject
     UserRepository userRepository;
 
+    @Inject
+    jct.pillorganizer.tenant.repo.DeviceUserRepository deviceUserRepository;
+
     private void deviceProvision(DeviceProvisionMessage message) {
         // Ensure the user exists
         User user = userService.ensureExists(message.userId());
@@ -91,7 +94,7 @@ public class QueueProcessorService {
     }
 
     @Transactional
-    private void deleteUser(DeleteUserMessage message) {
+    void deleteUser(DeleteUserMessage message) {
         log.atInfo().log("Processing deleteUser for user %s", message.userId());
 
         User user = userService.get(message.userId()).orElse(null);
@@ -101,11 +104,9 @@ public class QueueProcessorService {
         }
 
         // Iterate through user's devices and perform removal
-        java.util.List<DeviceUser> deviceUsers = user.getDevices();
-        if (deviceUsers != null) {
-            for (DeviceUser du : deviceUsers) {
-                deviceService.removeDevice(user, du.getDevice());
-            }
+        java.util.List<DeviceUser> deviceUsers = deviceUserRepository.findByUserId(user.getId());
+        for (DeviceUser du : deviceUsers) {
+            deviceService.removeDevice(user, du.getDevice());
         }
 
         // Clear name/email and set disabledAt

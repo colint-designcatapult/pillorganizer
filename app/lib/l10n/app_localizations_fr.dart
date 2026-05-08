@@ -900,6 +900,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get signOut => 'Se déconnecter';
 
   @override
+  String get deleteAccount => 'Supprimer le compte';
+
+  @override
+  String get deleteAccountTitle => 'Supprimer le compte';
+
+  @override
+  String get deleteAccountSubtitle => 'Êtes-vous sûr de vouloir supprimer définitivement votre compte? Cette action est irréversible. Vos informations personnelles seront supprimées, mais les données de santé anonymisées seront conservées à des fins de recherche.';
+
+  @override
+  String get deleteAccountConfirm => 'Supprimer le compte';
+
+  @override
   String get signUp => 'S\'inscrire';
 
   @override

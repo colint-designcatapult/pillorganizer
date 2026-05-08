@@ -8,6 +8,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../../provider/authentication_provider.dart';
+import '../../provider/control_plane_providers.dart';
 import '../../provider/device_provider.dart';
 import '../../provider/language_provider.dart';
 
@@ -20,6 +21,7 @@ class AccountScreen extends ConsumerStatefulWidget {
 
 class _AccountScreenState extends ConsumerState<AccountScreen> {
   bool _isSigningOut = false;
+  bool _isDeletingAccount = false;
 
   Future<void> _performSignOut() async {
     setState(() => _isSigningOut = true);
@@ -28,6 +30,22 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     } catch (_) {
       // signOut() swallows all errors internally; this is a safety net only
       if (mounted) setState(() => _isSigningOut = false);
+    }
+  }
+
+  Future<void> _performDeleteAccount() async {
+    setState(() => _isDeletingAccount = true);
+    try {
+      final client = ref.read(controlPlaneClientProvider);
+      await client.deleteAccount();
+      await ref.read(authenticationProvider.notifier).signOut();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isDeletingAccount = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
     }
   }
 
@@ -44,6 +62,21 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                 saveWidgetAction: () {
                   Navigator.of(context).pop(); // close the confirmation dialog
                   _performSignOut();
+                },
+              ));
+    }
+
+    void deleteAccount(BuildContext context) {
+      showDialog(
+          context: context,
+          builder: (_) => GenericYesNoModal(
+                icon: PhosphorIconsFill.trashSimple,
+                title: AppLocalizations.of(context)!.deleteAccountTitle,
+                subtitle: AppLocalizations.of(context)!.deleteAccountSubtitle,
+                saveWidgetText: AppLocalizations.of(context)!.deleteAccountConfirm,
+                saveWidgetAction: () {
+                  Navigator.of(context).pop(); // close the confirmation dialog
+                  _performDeleteAccount();
                 },
               ));
     }
@@ -204,13 +237,23 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                                             signout(context);
                                           },
                                   ),
+                                  SquareButton(
+                                    color: const Color(0xFF7A2C2C),
+                                    icon: PhosphorIconsFill.trashSimple,
+                                    label: AppLocalizations.of(context)!.deleteAccount,
+                                    onPressed: _isDeletingAccount
+                                        ? () {}
+                                        : () {
+                                            deleteAccount(context);
+                                          },
+                                  ),
                                 ],
                               ))
                         ]),
                   ))),
         ),
-        // Full-screen loading overlay shown while sign-out is in progress
-        if (_isSigningOut)
+        // Full-screen loading overlay shown while sign-out or account deletion is in progress
+        if (_isSigningOut || _isDeletingAccount)
           Positioned.fill(
             child: ColoredBox(
               color: const Color(0x80000000),

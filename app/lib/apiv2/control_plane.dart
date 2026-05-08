@@ -44,4 +44,8 @@ abstract class ControlPlaneApiClient {
   @POST("/user/device/notifications")
   Future<DeviceAccessDto> updateDeviceNotifications(
       @Body() DeviceNotificationRequestDto dto);
+
+  /// Permanently deletes the current user's account.
+  @DELETE("/user/me")
+  Future<void> deleteAccount();
 }
