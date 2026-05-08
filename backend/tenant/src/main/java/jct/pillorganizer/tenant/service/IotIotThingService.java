@@ -13,11 +13,11 @@ import software.amazon.awssdk.services.iot.IotClient;
 @Flogger
 @Singleton
 @Requires(env = "tenant")
-public class IotIotThingService implements IotThingService {
+public class AwsIotThingService implements IotThingService {
 
     private final IotClient iotClient;
 
-    public IotIotThingService(IotClient iotClient) {
+    public AwsIotThingService(IotClient iotClient) {
         this.iotClient = iotClient;
     }
 
