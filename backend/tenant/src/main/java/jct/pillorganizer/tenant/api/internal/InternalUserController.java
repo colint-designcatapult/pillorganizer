@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import jct.pillorganizer.core.TenantDetails;
 import jct.pillorganizer.core.auth.AppSecurityRule;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
+import jct.pillorganizer.core.dto.CaregiverListItemDto;
 import jct.pillorganizer.core.dto.DeviceClaimEligibilityDto;
 import jct.pillorganizer.core.dto.DeviceEligibilityCheckDto;
 import jct.pillorganizer.tenant.auth.AuthService;
@@ -101,11 +102,11 @@ public class InternalUserController {
      */
     @Post("/device/{deviceId}/invite-caregiver")
     @Secured(SecurityRule.IS_AUTHENTICATED)
-    public void inviteCaregiver(@PathVariable String deviceId,
+    public CaregiverListItemDto inviteCaregiver(@PathVariable String deviceId,
                                 @Body @Valid InviteCaregiverDto dto,
                                 User user) {
         LogicalDevice device = authService.accessDevice(deviceId, true);
-        caregiverService.inviteCaregiver(user, device, dto.caregiverUserId(),
+        return caregiverService.inviteCaregiver(user, device, dto.caregiverUserId(),
                 dto.caregiverEmail(), dto.caregiverUserName(), dto.nickname());
     }
 }

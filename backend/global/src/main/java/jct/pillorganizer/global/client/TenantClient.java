@@ -9,6 +9,7 @@ import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.uri.UriBuilder;
 import jct.pillorganizer.core.TenantDetails;
+import jct.pillorganizer.core.dto.CaregiverListItemDto;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.core.dto.DeviceClaimEligibilityDto;
 import jct.pillorganizer.core.dto.DeviceEligibilityCheckDto;
@@ -71,10 +72,10 @@ public class TenantClient {
                 Argument.of(DeviceAccessDto.class)));
     }
 
-    public Mono<Void> inviteCaregiver(String deviceId, InviteCaregiverTenantDto dto) {
-        return Mono.from(httpClient.exchange(
+    public Mono<CaregiverListItemDto> inviteCaregiver(String deviceId, InviteCaregiverTenantDto dto) {
+        return Mono.from(httpClient.retrieve(
                 HttpRequest.POST(makeUri("/internal/user/device/" + deviceId + "/invite-caregiver"), dto),
-                Argument.VOID)).then();
+                Argument.of(CaregiverListItemDto.class)));
     }
 
     public static boolean isConnectionInitializationFailure(Throwable ex) {

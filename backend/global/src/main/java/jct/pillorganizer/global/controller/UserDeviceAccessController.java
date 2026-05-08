@@ -8,6 +8,7 @@ import io.micronaut.security.rules.SecurityRule;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jct.pillorganizer.core.auth.AppSecurityRule;
+import jct.pillorganizer.core.dto.CaregiverListItemDto;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.core.service.GlobalAuthService;
 import jct.pillorganizer.global.dto.DeviceNotificationRequestDto;
@@ -85,7 +86,7 @@ public class UserDeviceAccessController {
      */
     @Post("/device/invite-caregiver")
     @Secured(SecurityRule.IS_AUTHENTICATED)
-    public Mono<Void> inviteCaregiver(@Body @Valid InviteCaregiverRequestDto dto) {
+    public Mono<CaregiverListItemDto> inviteCaregiver(@Body @Valid InviteCaregiverRequestDto dto) {
         return Mono.fromCallable(() -> {
             // Verify the target user exists by email
             var targetUser = userService.findByEmail(dto.email())

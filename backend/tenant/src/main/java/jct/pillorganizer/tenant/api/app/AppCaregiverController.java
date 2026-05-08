@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jct.pillorganizer.core.auth.AppSecurityRule;
-import jct.pillorganizer.tenant.dto.CaregiverListItemDTO;
+import jct.pillorganizer.core.dto.CaregiverListItemDto;
 import jct.pillorganizer.tenant.dto.TransferPrimaryUserDto;
 import jct.pillorganizer.tenant.model.user.User;
 import jct.pillorganizer.tenant.service.CaregiverService;
@@ -43,7 +43,7 @@ public class AppCaregiverController {
     @Operation(summary = "List all users with access to a device")
     @Get("/list/{deviceId}")
     @Secured(SecurityRule.IS_AUTHENTICATED)
-    public List<CaregiverListItemDTO> listCaregivers(@PathVariable String deviceId, User user) {
+    public List<CaregiverListItemDto> listCaregivers(@PathVariable String deviceId, User user) {
         return caregiverService.listCaregivers(deviceId, user);
     }
 

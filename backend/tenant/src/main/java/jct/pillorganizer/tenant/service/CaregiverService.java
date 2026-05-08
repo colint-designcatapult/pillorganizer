@@ -4,7 +4,7 @@ import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
-import jct.pillorganizer.tenant.dto.CaregiverListItemDTO;
+import jct.pillorganizer.core.dto.CaregiverListItemDto;
 import jct.pillorganizer.tenant.exceptions.DeviceAccessException;
 import jct.pillorganizer.tenant.model.device.DeviceUser;
 import jct.pillorganizer.tenant.model.device.LogicalDevice;
@@ -45,7 +45,7 @@ public class CaregiverService {
      * @param nickname          the nickname for this caregiver on the device
      */
     @Transactional
-    public void inviteCaregiver(User requester, LogicalDevice device, String caregiverUserId,
+    public CaregiverListItemDto inviteCaregiver(User requester, LogicalDevice device, String caregiverUserId,
                                 String caregiverEmail, @Nullable String caregiverUserName,
                                 String nickname) {
         // Verify requester is primary user
@@ -74,6 +74,11 @@ public class CaregiverService {
 
         log.atInfo().log("Caregiver %s invited to device %s by primary user %s",
                 caregiverUserId, device.getId(), requester.getId());
+
+        String userName = caregiver.getName();
+        if (userName == null) userName = caregiver.getEmail();
+        if (userName == null) userName = caregiver.getId();
+        return new CaregiverListItemDto(newAccess.getId(), userName, nickname, false);
     }
 
     @Transactional
@@ -97,7 +102,7 @@ public class CaregiverService {
                 requester.getId(), targetUser.getUser().getId(), targetUser.getDevice().getId());
     }
 
-    public List<CaregiverListItemDTO> listCaregivers(String deviceId, User requester) {
+    public List<CaregiverListItemDto> listCaregivers(String deviceId, User requester) {
         // Verify requester has access to this device
         deviceUserRepository.findByUserAndDeviceId(requester, deviceId)
                 .orElseThrow(() -> new DeviceAccessException("No access to device"));
@@ -107,7 +112,7 @@ public class CaregiverService {
                     String userName = du.getUser().getName();
                     if (userName == null) userName = du.getUser().getEmail();
                     if (userName == null) userName = du.getUser().getId();
-                    return new CaregiverListItemDTO(
+                    return new CaregiverListItemDto(
                             du.getId(),
                             userName,
                             du.getNickname(),
