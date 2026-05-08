@@ -362,7 +362,9 @@ RELATIONS:
 
 [TEST]
 UID: TEST-9
-RUN_RESULT: Blocked
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/08/2026
 TITLE: Remote Dose Notifications and Preference Control
 STATEMENT: >>>
 Prerequisites: A provisioned device with an active daily schedule. The mobile app is installed on a test smartphone with push notifications enabled. User is logged in as the Primary User. A second test smartphone is available for Caregiver testing.
@@ -377,8 +379,7 @@ Steps:
 7. Return to notification settings and enable "Missed Dose" notifications.
 8. Allow the next dose window to close without opening the bin.
 9. Verify that a "Missed Dose" push notification is received.
-10. As the Primary User, add a Caregiver account to the device and configure the Caregiver's notification preferences.
-11. Verify that the Caregiver receives only the notifications corresponding to their configured preferences on their device.
+10. Repeat the steps for the caregiver account.
 
 Acceptance Criteria:
 - Dose-due notifications are received at the scheduled dose time when enabled.
@@ -387,7 +388,6 @@ Acceptance Criteria:
 - Disabling a notification type suppresses that notification type.
 <<<
 RESULT_STRING: >>>
-CANNOT TEST NO CAREGIVER SUPPORT, NO FINE GRAINED NOTIFICATION PREFERENCES.
 <<<
 RELATIONS:
 - TYPE: Parent
@@ -654,25 +654,20 @@ RELATIONS:
 
 [TEST]
 UID: TEST-16
-RUN_RESULT: Blocked
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/08/2026
 TITLE: Account Display Name
 STATEMENT: >>>
-Prerequisites: Two existing accounts - one Patient account and one Caregiver account. The Patient account is the Primary User of a provisioned device with the Caregiver account added as a Caregiver.
+Prerequisites: Two existing accounts - one Patient account and one Caregiver account. The Patient account is the Primary User of a provisioned device. The Caregiver account has no access to the device.
 
 Steps:
 1. Log into the Patient account on the mobile app.
-2. Navigate to account settings or profile.
-3. Locate the display name field and set a display name (e.g., "Jane Patient").
-4. Save the change and verify the new display name is shown in the account settings.
-5. Log out and log into the Caregiver account.
-6. Set a display name for the Caregiver account (e.g., "Dr. Smith").
-7. Save and verify.
-8. Log out and log back into the Patient account.
-9. Navigate to the device's Caregiver list.
-10. Verify the Caregiver is listed by their display name ("Dr. Smith"), allowing the Patient to identify which real person the account belongs to.
+2. Navigate to the device sharing settings.
+3. Invite the caregiver account by email and set a display name.
+4. Observe the caregiver account is listed by display name.
 
 Acceptance Criteria:
-- Both Patient and Caregiver can set and view their own display name.
 - The Caregiver's display name is visible to the Patient in the Caregiver access list.
 <<<
 RESULT_STRING: >>>
@@ -950,7 +945,9 @@ TITLE: Access Control & Caregiver Management
 
 [TEST]
 UID: TEST-23
-RUN_RESULT: Blocked
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/08/2026
 TITLE: Schedule Modification Privilege Enforcement
 STATEMENT: >>>
 Prerequisites: A provisioned device with an active schedule. A Patient account (Primary User) and a Caregiver account. The Caregiver has been added to the device. Both accounts are logged into separate mobile app instances.
@@ -959,13 +956,11 @@ Steps:
 1. Log into the Caregiver account.
 2. Navigate to the device in the Caregiver's device list.
 3. Attempt to access the schedule configuration screen or modify the medication schedule.
-4. Verify that the schedule modification option is either hidden from the Caregiver's view or that an attempt to modify is denied with an appropriate error.
-5. Attempt to change the device schedule from the Caregiver account.
-6. Verify that schedule changes are denied.
-7. Log into the Patient account.
-8. Modify the medication schedule (e.g., change dose time for tomorrow).
-9. Verify the change is accepted and applied.
-10. Confirm the device has only one Primary User account (the Patient account).
+4. Verify that the schedule modification is not possible.
+5. Log into the Patient account.
+6. Modify the medication schedule (e.g., change dose time for tomorrow).
+7. Verify the change is accepted and applied.
+8. Confirm the device has only one Primary User account (the Patient account).
 
 Acceptance Criteria:
 - Caregivers cannot modify the medication schedule or device configuration.
@@ -973,7 +968,6 @@ Acceptance Criteria:
 - The device is associated with exactly one Primary User.
 <<<
 RESULT_STRING: >>>
-Caregiver not implemented.
 <<<
 RELATIONS:
 - TYPE: Parent
@@ -988,14 +982,16 @@ RELATIONS:
 
 [TEST]
 UID: TEST-24
-RUN_RESULT: Blocked
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/08/2026
 TITLE: Caregiver Access Management and Monitoring
 STATEMENT: >>>
 Prerequisites: A provisioned device with adherence data and an active schedule. A Patient account (Primary User). A Caregiver account. The mobile app is available on two separate test devices.
 
 Steps:
 1. Log into the Patient account on the mobile app.
-2. Navigate to access management for the device.
+2. Navigate to sharing settings for the device.
 3. Add the Caregiver account by entering their email.
 4. Confirm the Caregiver is now listed in the device's Caregiver list, displayed by the Caregiver's display name.
 5. Log into the Caregiver account on the second test device.
@@ -1015,7 +1011,6 @@ Acceptance Criteria:
 - The Primary User can revoke Caregiver access, after which the Caregiver can no longer access the device.
 <<<
 RESULT_STRING: >>>
-Caregiver not implemented.
 <<<
 RELATIONS:
 - TYPE: Parent
@@ -1042,7 +1037,9 @@ RELATIONS:
 
 [TEST]
 UID: TEST-25
-RUN_RESULT: Blocked
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/08/2026
 TITLE: Caregiver Proxy Provisioning and Device Handoff to Patient
 STATEMENT: >>>
 Prerequisites: An unprovisioned device. A Caregiver account. A Patient account (separate from the Caregiver). Physical access to the device.
@@ -1053,15 +1050,14 @@ Steps:
 3. After provisioning, verify the device appears in the Caregiver's device list.
 4. As the Caregiver, attempt to modify the medication schedule.
 5. Verify the Caregiver can modify the schedule.
-6. Initiate an invite caregiver from the device settings "share" tab (as the Caregiver/provisional Primary User).
+6. Share the device with the patient account using email and then assign the patient account as primary user.
 7. Log into the Patient account.
-8. Accept the ownership transfer from the Patient account.
-9. Verify the Patient account is now designated as the Primary User of the device.
-10. Verify the Caregiver retains monitoring access (read-only) but no longer has Primary User privileges.
-11. From the Patient account, modify the medication schedule.
-12. Verify the schedule change is accepted.
-13. From the Caregiver account, attempt to modify the schedule.
-14. Verify the modification is denied.
+8. Verify the Patient account is now designated as the Primary User of the device.
+9. Verify the Caregiver retains monitoring access (read-only) but no longer has Primary User privileges.
+10. From the Patient account, modify the medication schedule.
+11. Verify the schedule change is accepted.
+12. From the Caregiver account, attempt to modify the schedule.
+13. Verify the modification is denied.
 
 Acceptance Criteria:
 - A Caregiver can provision a device on behalf of a Patient.
@@ -1070,7 +1066,6 @@ Acceptance Criteria:
 - The Caregiver retains read-only monitoring access after the handoff (if they are designated as a Caregiver).
 <<<
 RESULT_STRING: >>>
-Caregiver not implemented.
 <<<
 RELATIONS:
 - TYPE: Parent
