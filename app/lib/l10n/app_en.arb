@@ -269,7 +269,7 @@
 	"signOut": "Sign Out",
 	"deleteAccount": "Delete Account",
 	"deleteAccountTitle": "Delete Account",
-	"deleteAccountSubtitle": "Are you sure you want to permanently delete your account? This action cannot be undone. Your personal information will be removed, but anonymized health data will be retained for research purposes.",
+	"deleteAccountSubtitle": "Are you sure you want to permanently delete your account? This action cannot be undone.",
 	"deleteAccountConfirm": "Delete Account",
 	"signUp": "Sign Up",
 	"skip": "Skip",

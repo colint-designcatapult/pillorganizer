@@ -55,4 +55,7 @@ abstract class ControlPlaneApiClient {
   /// Returns the authenticated user's details.
   @GET("/user/me")
   Future<UserDetailsDto> getUserDetails();
+
+  @DELETE("/user/me")
+  Future<void> deleteAccount();
 }

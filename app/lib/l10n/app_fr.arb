@@ -240,7 +240,7 @@
 	"signOut": "Se déconnecter",
 	"deleteAccount": "Supprimer le compte",
 	"deleteAccountTitle": "Supprimer le compte",
-	"deleteAccountSubtitle": "Êtes-vous sûr de vouloir supprimer définitivement votre compte? Cette action est irréversible. Vos informations personnelles seront supprimées, mais les données de santé anonymisées seront conservées à des fins de recherche.",
+	"deleteAccountSubtitle": "Êtes-vous sûr de vouloir supprimer définitivement votre compte? Cette action est irréversible.",
 	"deleteAccountConfirm": "Supprimer le compte",
 	"signUp": "S'inscrire",
 	"skip": "Sauter",
