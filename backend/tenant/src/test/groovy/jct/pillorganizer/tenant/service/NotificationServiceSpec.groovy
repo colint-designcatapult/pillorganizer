@@ -85,7 +85,7 @@ class NotificationServiceSpec extends BaseIntegrationSpec {
         def topicArn = notificationService.createOrGetTopic("dev-pub-1")
 
         when:
-        notificationService.publish(topicArn, "Medication Reminder", "It's time to take your medication", 840L)
+        notificationService.publish(topicArn, "Medication Reminder", "It's time to take your medication", 840L, "TAKEN")
 
         then:
         noExceptionThrown()

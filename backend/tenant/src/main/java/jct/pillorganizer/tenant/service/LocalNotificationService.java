@@ -45,7 +45,12 @@ public class LocalNotificationService implements NotificationService {
     }
 
     @Override
-    public void publish(String topicArn, String title, String body, long ttlSeconds) {
-        log.atInfo().log("Local: publish to %s — title: %s, body: %s, ttlSeconds: %d", topicArn, title, body, ttlSeconds);
+    public void publish(String topicArn, String title, String body, long ttlSeconds, String eventType) {
+        log.atInfo().log("Local: publish to %s — title: %s, body: %s, ttlSeconds: %d, eventType: %s", topicArn, title, body, ttlSeconds, eventType);
+    }
+
+    @Override
+    public void setFilterPolicy(String subscriptionArn, java.util.List<String> blockedEventTypes) {
+        log.atInfo().log("Local: setFilterPolicy on %s — blocked eventTypes: %s", subscriptionArn, blockedEventTypes);
     }
 }

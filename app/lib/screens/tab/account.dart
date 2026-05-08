@@ -1,6 +1,5 @@
 import 'package:app/screens/auth/change_email.dart';
 import 'package:app/screens/auth/change_password.dart';
-import 'package:app/widgets/generic_yes_no_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +9,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../provider/authentication_provider.dart';
 import '../../provider/device_provider.dart';
 import '../../provider/language_provider.dart';
+import '../../widgets/generic_yes_no_modal.dart';
 
 class AccountScreen extends ConsumerStatefulWidget {
   const AccountScreen({super.key});
@@ -26,7 +26,6 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     try {
       await ref.read(authenticationProvider.notifier).signOut();
     } catch (_) {
-      // signOut() swallows all errors internally; this is a safety net only
       if (mounted) setState(() => _isSigningOut = false);
     }
   }

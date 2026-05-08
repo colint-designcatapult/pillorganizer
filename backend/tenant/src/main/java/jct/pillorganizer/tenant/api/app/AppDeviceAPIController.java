@@ -11,11 +11,13 @@ import jct.pillorganizer.core.auth.AppSecurityRule;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.tenant.auth.AuthService;
 import jct.pillorganizer.tenant.dto.DeviceCommandDto;
+import jct.pillorganizer.tenant.dto.NotificationPreferencesDto;
 import jct.pillorganizer.tenant.dto.UpdateDeviceNickname;
 import jct.pillorganizer.tenant.dto.DoseHistoryDto;
 import jct.pillorganizer.tenant.model.user.User;
 import jct.pillorganizer.tenant.service.AdherenceService;
 import jct.pillorganizer.tenant.service.DeviceCommandService;
+import jct.pillorganizer.tenant.service.DeviceNotificationService;
 import jct.pillorganizer.tenant.service.DeviceService;
 import lombok.extern.flogger.Flogger;
 
@@ -41,6 +43,9 @@ public class AppDeviceAPIController {
 
     @Inject
     DeviceCommandService deviceCommandService;
+
+    @Inject
+    DeviceNotificationService deviceNotificationService;
 
     @Operation(summary = "Lists devices that the user has access to")
     @Get("/list")
@@ -100,6 +105,17 @@ public class AppDeviceAPIController {
         }
         deviceCommandService.sendCommand(device.getPhysicalDevice().getThingName(), dto);
         return HttpResponse.accepted();
+    }
+
+    @Operation(summary = "Updates push notification preferences for this device")
+    @Put("/{id}/notification-preferences")
+    @Secured(SecurityRule.IS_AUTHENTICATED)
+    public DeviceAccessDto updateNotificationPreferences(@PathVariable("id") String deviceId,
+                                                         @Body @Valid NotificationPreferencesDto dto,
+                                                         User user) {
+        var device = authService.accessDevice(deviceId, false);
+        return deviceNotificationService.updatePreferences(user, device,
+                dto.notifyTakeNow(), dto.notifyTaken(), dto.notifyMissed());
     }
 
 }

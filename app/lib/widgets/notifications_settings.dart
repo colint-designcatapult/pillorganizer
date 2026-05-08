@@ -24,6 +24,12 @@ class _NotificationsSettingsState extends ConsumerState<NotificationsSettings>
     with WidgetsBindingObserver {
   late Future<bool> _notificationPreference;
 
+  // Sub-preference state (local, synced on toggle)
+  late bool _notifyTakeNow;
+  late bool _notifyTaken;
+  late bool _notifyMissed;
+  bool _updatingPrefs = false;
+
   @override
   Widget build(BuildContext context) {
     final targetDevice = widget.device ?? ref.read(activeDeviceProvider);
@@ -53,11 +59,12 @@ class _NotificationsSettingsState extends ConsumerState<NotificationsSettings>
         builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const CircularProgressIndicator(
-              color: Color(0xff708F72), // Changed to green, a white spinner on white bg would be invisible
+              color: Color(0xff708F72),
             );
           } else if (snapshot.hasData ||
               snapshot.hasError ||
               snapshot.connectionState == ConnectionState.done) {
+            final isSubscribed = snapshot.data ?? false;
             return Column(
                 mainAxisSize: MainAxisSize.max,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,6 +75,7 @@ class _NotificationsSettingsState extends ConsumerState<NotificationsSettings>
                           .titleSmall
                           ?.copyWith(fontWeight: FontWeight.w700)),
                   SizedBox(height: 26.h),
+                  // Master toggle
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -77,7 +85,7 @@ class _NotificationsSettingsState extends ConsumerState<NotificationsSettings>
                           child: FittedBox(
                               fit: BoxFit.fill,
                               child: Switch(
-                                value: snapshot.data ?? false,
+                                value: isSubscribed,
                                 onChanged: (bool value) {
                                   toggleNotifications(value);
                                 },
@@ -106,6 +114,46 @@ class _NotificationsSettingsState extends ConsumerState<NotificationsSettings>
                       ),
                     ],
                   ),
+                  // Sub-preference toggles (visible only when subscribed)
+                  AnimatedCrossFade(
+                    firstChild: const SizedBox.shrink(),
+                    secondChild: Padding(
+                      padding: EdgeInsets.only(left: 16.w, top: 12.h),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildPreferenceSwitch(
+                            label: AppLocalizations.of(context)!.takeNowNotifications,
+                            value: _notifyTakeNow,
+                            onChanged: _updatingPrefs ? null : (val) {
+                              setState(() => _notifyTakeNow = val);
+                              _savePreferences(targetDevice);
+                            },
+                          ),
+                          _buildPreferenceSwitch(
+                            label: AppLocalizations.of(context)!.takenNotifications,
+                            value: _notifyTaken,
+                            onChanged: _updatingPrefs ? null : (val) {
+                              setState(() => _notifyTaken = val);
+                              _savePreferences(targetDevice);
+                            },
+                          ),
+                          _buildPreferenceSwitch(
+                            label: AppLocalizations.of(context)!.missedNotifications,
+                            value: _notifyMissed,
+                            onChanged: _updatingPrefs ? null : (val) {
+                              setState(() => _notifyMissed = val);
+                              _savePreferences(targetDevice);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    crossFadeState: isSubscribed
+                        ? CrossFadeState.showSecond
+                        : CrossFadeState.showFirst,
+                    duration: const Duration(milliseconds: 200),
+                  ),
                 ]);
           } else {
             return const CircularProgressIndicator(
@@ -115,8 +163,76 @@ class _NotificationsSettingsState extends ConsumerState<NotificationsSettings>
         });
   }
 
+  Widget _buildPreferenceSwitch({
+    required String label,
+    required bool value,
+    required ValueChanged<bool>? onChanged,
+  }) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 50.h,
+          height: 40.h,
+          child: FittedBox(
+            fit: BoxFit.fill,
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeTrackColor: const Color(0xff708F72),
+              thumbIcon: WidgetStateProperty.resolveWith<Icon?>(
+                (Set<WidgetState> states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return Icon(Icons.check,
+                        color: const Color(0xff708F72), size: 18.h);
+                  }
+                  return null;
+                },
+              ),
+            ),
+          ),
+        ),
+        SizedBox(width: 16.h),
+        Flexible(
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _savePreferences(DeviceMetadata targetDevice) async {
+    setState(() => _updatingPrefs = true);
+    try {
+      await ref.read(deviceListProvider.notifier).updateNotificationPreferences(
+        targetDevice.id,
+        notifyTakeNow: _notifyTakeNow,
+        notifyTaken: _notifyTaken,
+        notifyMissed: _notifyMissed,
+      );
+    } catch (e) {
+      if (mounted) {
+        showErrorDialog(context, AppLocalizations.of(context)!.genericError);
+        // Revert to device state
+        setState(() {
+          _notifyTakeNow = targetDevice.notifyTakeNow;
+          _notifyTaken = targetDevice.notifyTaken;
+          _notifyMissed = targetDevice.notifyMissed;
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _updatingPrefs = false);
+    }
+  }
+
   Future<void> updateNotification(bool value, DeviceMetadata targetDevice) async {
-    final future = ref.read(deviceListProvider.notifier).updateDeviceNotifications(targetDevice.id, value);
+    final future = ref.read(deviceListProvider.notifier).updateDeviceNotifications(
+      targetDevice.id, value,
+      notifyTakeNow: _notifyTakeNow,
+      notifyTaken: _notifyTaken,
+      notifyMissed: _notifyMissed,
+    );
 
     setState(() {
       _notificationPreference = future.then((device) => device.notifications);
@@ -152,6 +268,11 @@ class _NotificationsSettingsState extends ConsumerState<NotificationsSettings>
 
     if (targetDevice == null) return;
 
+    // Initialise sub-preferences from the device state
+    _notifyTakeNow = targetDevice.notifyTakeNow;
+    _notifyTaken = targetDevice.notifyTaken;
+    _notifyMissed = targetDevice.notifyMissed;
+
     // Initialise from the persisted backend value so the toggle reflects the
     // real subscription state on first load.
     _notificationPreference = Future.value(targetDevice.notifications);
@@ -167,6 +288,10 @@ class _NotificationsSettingsState extends ConsumerState<NotificationsSettings>
   @override
   void initState() {
     super.initState();
+    final targetDevice = widget.device ?? ref.read(activeDeviceProvider);
+    _notifyTakeNow = targetDevice?.notifyTakeNow ?? true;
+    _notifyTaken = targetDevice?.notifyTaken ?? true;
+    _notifyMissed = targetDevice?.notifyMissed ?? true;
     initPermission();
     WidgetsBinding.instance.addObserver(this);
   }

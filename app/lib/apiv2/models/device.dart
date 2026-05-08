@@ -317,6 +317,9 @@ class DeviceMetadata with DeviceMetadataMappable {
   final String? thingName;
   final bool showTenant;
   final bool notifications;
+  final bool notifyTakeNow;
+  final bool notifyTaken;
+  final bool notifyMissed;
 
   const DeviceMetadata({
     required this.id,
@@ -330,6 +333,9 @@ class DeviceMetadata with DeviceMetadataMappable {
     required this.thingName,
     required this.showTenant,
     this.notifications = false,
+    this.notifyTakeNow = true,
+    this.notifyTaken = true,
+    this.notifyMissed = true,
   });
 
   String get name => nickname ?? 'Device #$id';
@@ -356,6 +362,9 @@ extension DeviceDtoMapper on DeviceAccessDto {
       thingName: thingName,
       showTenant: tenantName != null,
       notifications: notifications ?? false,
+      notifyTakeNow: notifyTakeNow ?? true,
+      notifyTaken: notifyTaken ?? true,
+      notifyMissed: notifyMissed ?? true,
     );
   }
 }

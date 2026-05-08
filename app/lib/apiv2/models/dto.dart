@@ -15,6 +15,9 @@ class DeviceAccessDto with DeviceAccessDtoMappable {
   final String? thingName;
   final String? tenantName;
   final bool? notifications;
+  final bool? notifyTakeNow;
+  final bool? notifyTaken;
+  final bool? notifyMissed;
 
   DeviceAccessDto({
     required this.deviceId,
@@ -28,6 +31,9 @@ class DeviceAccessDto with DeviceAccessDtoMappable {
     this.thingName,
     this.tenantName,
     this.notifications,
+    this.notifyTakeNow,
+    this.notifyTaken,
+    this.notifyMissed,
   });
 }
 
@@ -244,11 +250,17 @@ class DeviceNotificationRequestDto with DeviceNotificationRequestDtoMappable {
   final String deviceId;
   final String tenantId;
   final bool subscribe;
+  final bool? notifyTakeNow;
+  final bool? notifyTaken;
+  final bool? notifyMissed;
 
   const DeviceNotificationRequestDto({
     required this.deviceId,
     required this.tenantId,
     required this.subscribe,
+    this.notifyTakeNow,
+    this.notifyTaken,
+    this.notifyMissed,
   });
 }
 
@@ -309,5 +321,76 @@ class DeviceCommandDto with DeviceCommandDtoMappable {
     this.reload,
     this.binId,
     this.binAction,
+  });
+}
+
+@MappableClass()
+class CaregiverListItemDto with CaregiverListItemDtoMappable {
+  final String id;
+  final String? userName;
+  final String? nickname;
+  final bool primaryUser;
+
+  const CaregiverListItemDto({
+    required this.id,
+    this.userName,
+    this.nickname,
+    required this.primaryUser,
+  });
+
+  String get displayName => nickname ?? userName ?? 'Unknown';
+}
+
+@MappableClass()
+class InviteCaregiverRequestDto with InviteCaregiverRequestDtoMappable {
+  final String email;
+  final String nickname;
+  final String deviceId;
+  final String tenantId;
+
+  const InviteCaregiverRequestDto({
+    required this.email,
+    required this.nickname,
+    required this.deviceId,
+    required this.tenantId,
+  });
+}
+
+@MappableClass()
+class UserDetailsDto with UserDetailsDtoMappable {
+  final String? sub;
+  final String? userId;
+  final String? email;
+  final String? displayName;
+
+  const UserDetailsDto({
+    this.sub,
+    this.userId,
+    this.email,
+    this.displayName,
+  });
+}
+
+@MappableClass()
+class TransferPrimaryUserDto with TransferPrimaryUserDtoMappable {
+  final String targetCaregiverId;
+
+  const TransferPrimaryUserDto({required this.targetCaregiverId});
+}
+
+@MappableClass()
+class NotificationPreferencesRequestDto with NotificationPreferencesRequestDtoMappable {
+  final String deviceId;
+  final String tenantId;
+  final bool notifyTakeNow;
+  final bool notifyTaken;
+  final bool notifyMissed;
+
+  const NotificationPreferencesRequestDto({
+    required this.deviceId,
+    required this.tenantId,
+    required this.notifyTakeNow,
+    required this.notifyTaken,
+    required this.notifyMissed,
   });
 }

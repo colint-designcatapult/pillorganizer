@@ -779,7 +779,7 @@ abstract class AppLocalizations {
   /// No description provided for @inviteCollaboratorsDescription.
   ///
   /// In en, this message translates to:
-  /// **'To invite members with view-only access to your pill organiser, tap below to generate a code. The code will be valid for 10 minutes only.'**
+  /// **'To invite members with view-only access to your pill organiser, enter their email address below.'**
   String get inviteCollaboratorsDescription;
 
   /// No description provided for @joinExistingDevice.
@@ -791,32 +791,14 @@ abstract class AppLocalizations {
   /// No description provided for @joinDeviceTitle.
   ///
   /// In en, this message translates to:
-  /// **'Enter code'**
+  /// **'How to join a device'**
   String get joinDeviceTitle;
 
   /// No description provided for @joinDeviceSubtext.
   ///
   /// In en, this message translates to:
-  /// **'The administrator of a pill organiser should have sent you a security code number to join access. Enter below:'**
+  /// **'To join an existing device, ask the primary user to invite you using your email address shown below.'**
   String get joinDeviceSubtext;
-
-  /// No description provided for @joinDeviceErrorExpired.
-  ///
-  /// In en, this message translates to:
-  /// **'This code has expired. Please contact the administrator of the pillbox in question.'**
-  String get joinDeviceErrorExpired;
-
-  /// No description provided for @joinDeviceConfirmationTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'All set'**
-  String get joinDeviceConfirmationTitle;
-
-  /// No description provided for @joinDeviceConfirmationSubtext.
-  ///
-  /// In en, this message translates to:
-  /// **'You are invited to join ‘{deviceName}’ with a view-only access.'**
-  String joinDeviceConfirmationSubtext(Object deviceName);
 
   /// No description provided for @loadingState.
   ///
@@ -1165,6 +1147,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send reminder notifications to your phone'**
   String get notificationReminder;
+
+  /// No description provided for @takeNowNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Take now reminders'**
+  String get takeNowNotifications;
+
+  /// No description provided for @takenNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken confirmations'**
+  String get takenNotifications;
+
+  /// No description provided for @missedNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Missed dose alerts'**
+  String get missedNotifications;
 
   /// No description provided for @notSignedIn.
   ///
@@ -1868,48 +1868,6 @@ abstract class AppLocalizations {
   /// **'Wireless disconnected'**
   String get wirelessDisconnected;
 
-  /// No description provided for @generateCode.
-  ///
-  /// In en, this message translates to:
-  /// **'Generate a new code'**
-  String get generateCode;
-
-  /// No description provided for @codeExpiresIn.
-  ///
-  /// In en, this message translates to:
-  /// **'This code will expire in'**
-  String get codeExpiresIn;
-
-  /// No description provided for @minutes.
-  ///
-  /// In en, this message translates to:
-  /// **'minutes'**
-  String get minutes;
-
-  /// No description provided for @seconds.
-  ///
-  /// In en, this message translates to:
-  /// **'seconds'**
-  String get seconds;
-
-  /// No description provided for @copyCode.
-  ///
-  /// In en, this message translates to:
-  /// **'Copy code'**
-  String get copyCode;
-
-  /// No description provided for @codeCopied.
-  ///
-  /// In en, this message translates to:
-  /// **'Code copied to clipboard'**
-  String get codeCopied;
-
-  /// No description provided for @errorGenerateCode.
-  ///
-  /// In en, this message translates to:
-  /// **'Error generating code. Please try again.'**
-  String get errorGenerateCode;
-
   /// No description provided for @commandSent.
   ///
   /// In en, this message translates to:
@@ -1951,6 +1909,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Initiate Reload'**
   String get commandReloadInitiate;
+
+  /// No description provided for @peopleWithAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'People with access'**
+  String get peopleWithAccess;
+
+  /// No description provided for @primaryUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary User'**
+  String get primaryUser;
+
+  /// No description provided for @revokeAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke Access'**
+  String get revokeAccess;
+
+  /// No description provided for @revokeAccessConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to revoke access for {name}? They will no longer be able to view this device\'s data.'**
+  String revokeAccessConfirmation(String name);
+
+  /// No description provided for @revoke.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke'**
+  String get revoke;
+
+  /// No description provided for @transferPrimaryUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer Primary User'**
+  String get transferPrimaryUser;
+
+  /// No description provided for @transferPrimaryUserDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the person you want to transfer primary user status to. This will give them full control over the device schedule.'**
+  String get transferPrimaryUserDescription;
+
+  /// No description provided for @transferPrimaryUserConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to transfer primary user status to {name}? You will lose the ability to modify the device schedule.'**
+  String transferPrimaryUserConfirmation(String name);
+
+  /// No description provided for @transfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get transfer;
+
+  /// No description provided for @errorLoadingCaregivers.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load access list. Please try again.'**
+  String get errorLoadingCaregivers;
+
+  /// No description provided for @caregiverName.
+  ///
+  /// In en, this message translates to:
+  /// **'Caregiver Name'**
+  String get caregiverName;
+
+  /// No description provided for @enterCaregiverName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name for this caregiver'**
+  String get enterCaregiverName;
+
+  /// No description provided for @inviteByEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite by email'**
+  String get inviteByEmail;
+
+  /// No description provided for @sendInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Invite'**
+  String get sendInvite;
+
+  /// No description provided for @caregiverInvited.
+  ///
+  /// In en, this message translates to:
+  /// **'Caregiver invited successfully.'**
+  String get caregiverInvited;
+
+  /// No description provided for @errorInvitingCaregiver.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to invite caregiver. Please ensure the email is registered.'**
+  String get errorInvitingCaregiver;
+
+  /// No description provided for @enterCaregiverEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter caregiver\'s email address'**
+  String get enterCaregiverEmail;
+
+  /// No description provided for @yourEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Your email'**
+  String get yourEmail;
 }
 
 class _AppLocalizationsDelegate

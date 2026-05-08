@@ -5,13 +5,9 @@ import io.micronaut.security.annotation.Secured;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 import jct.pillorganizer.core.auth.AppSecurityRule;
-import jct.pillorganizer.tenant.auth.AuthService;
-import jct.pillorganizer.tenant.dto.*;
 import jct.pillorganizer.tenant.model.user.User;
 import jct.pillorganizer.tenant.projection.UserProfileView;
-import jct.pillorganizer.tenant.repo.UserRepository;
 import jct.pillorganizer.tenant.service.UserService;
-import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 

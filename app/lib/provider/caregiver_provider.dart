@@ -1,64 +1,84 @@
-import 'package:app/api/api.dart';
+import 'package:app/apiv2/control_plane.dart';
+import 'package:app/apiv2/models/dto.dart';
+import 'package:app/apiv2/tenant.dart';
+import 'package:app/provider/control_plane_providers.dart';
+import 'package:app/provider/tenant_providers.dart';
+import 'package:app/provider/selected_device_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'caregiver_provider.g.dart';
 
 @riverpod
-class Caregiver extends _$Caregiver {
+class CaregiverInvite extends _$CaregiverInvite {
   @override
-  FutureOr<List<DeviceCaregiverCodeDTO>> build() async {
-    return [];
+  FutureOr<void> build() async {}
+
+  /// Invites a caregiver by email via the control plane.
+  /// On success, adds the returned [CaregiverListItemDto] to the caregiver list.
+  /// Throws on failure so callers can handle errors directly.
+  Future<void> inviteCaregiver({
+    required String email,
+    required String nickname,
+    required String deviceId,
+    required String tenantId,
+  }) async {
+    // Capture both objects synchronously before any async gap.
+    // caregiverInviteProvider is auto-disposed (no watchers), so ref becomes
+    // invalid after an await — reading it then throws UnmountedRefException.
+    final client = ref.read(controlPlaneClientProvider);
+    final listNotifier = ref.read(caregiverListProvider(deviceId).notifier);
+    final newCaregiver = await client.inviteCaregiver(InviteCaregiverRequestDto(
+      email: email,
+      nickname: nickname,
+      deviceId: deviceId,
+      tenantId: tenantId,
+    ));
+    // Add the new caregiver to the list so the UI updates immediately
+    listNotifier.addCaregiver(newCaregiver);
+  }
+}
+
+@riverpod
+class CaregiverList extends _$CaregiverList {
+  @override
+  FutureOr<List<CaregiverListItemDto>> build(String deviceId) async {
+    return _fetch(deviceId);
   }
 
-  Future<void> fetchShareCodesForDevices(List<String> deviceIDs) async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      final List<DeviceCaregiverCodeDTO> codes = [];
-      for (var id in deviceIDs) {
-        // Mocking getCaregiverCode as requested
-        final code = id == "30" 
-            ? DeviceCaregiverCodeDTO(id: 1, deviceID: "30", code: 123456, expiresAt: DateTime.now().add(const Duration(hours: 1)).millisecondsSinceEpoch, deleted: false)
-            : null;
-        if (code != null) codes.add(code);
-      }
-      return codes;
-    });
-  }
-
-  DeviceCaregiverCodeDTO? getShareCodeForDevice(String deviceID) {
-    final list = state.asData?.value;
-    if (list == null) return null;
-    for (var c in list) {
-      if (c.deviceID == deviceID) return c;
+  TenantApiClient _clientForDevice() {
+    final device = ref.read(activeDeviceProvider);
+    if (device != null) {
+      return tenantClientForUrl(device.apiBase);
     }
-    return null;
+    throw Exception('No active device to determine API base URL');
   }
 
-  void clearExpiredCodes() {
-    if (state.hasValue) {
-      state = AsyncValue.data(
-        state.value!.where((c) => c.isValid).toList()
-      );
-    }
+  Future<List<CaregiverListItemDto>> _fetch(String deviceId) async {
+    final client = _clientForDevice();
+    return await client.listCaregivers(deviceId);
   }
 
-  Future<void> generateCaregiverCodeForDevice(String deviceID) async {
+  Future<void> refresh() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      await client.generateCaregiverCode(deviceID);
-       // Mocking the follow-up fetch
-      final newCode = DeviceCaregiverCodeDTO(id: 1, deviceID: deviceID, code: 123456, expiresAt: DateTime.now().add(const Duration(hours: 1)).millisecondsSinceEpoch, deleted: false);
-      final currentList = state.asData?.value ?? [];
-      return [
-        for (final c in currentList) if (c.deviceID != deviceID) c,
-        newCode,
-      ];
-    });
+    state = await AsyncValue.guard(() => _fetch(deviceId));
   }
 
-  Future<CaregiverCodeValidationDTO> validateCaregiverCode({required String code}) async {
-    final res = await client.validateCaregiverCode(code);
+  /// Adds a caregiver to the current list without re-fetching from the server.
+  void addCaregiver(CaregiverListItemDto caregiver) {
+    final current = state.value ?? [];
+    state = AsyncValue.data([...current, caregiver]);
+  }
+
+  Future<void> revokeCaregiver(String caregiverId) async {
+    final client = _clientForDevice();
+    await client.revokeCaregiverAccess(caregiverId);
+    await refresh();
+  }
+
+  Future<void> transferPrimaryUser(String targetCaregiverId) async {
+    final client = _clientForDevice();
+    await client.transferPrimaryUser(
+        deviceId, TransferPrimaryUserDto(targetCaregiverId: targetCaregiverId));
     ref.invalidateSelf();
-    return res;
   }
 }

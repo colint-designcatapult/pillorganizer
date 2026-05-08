@@ -4,9 +4,11 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jct.pillorganizer.core.dto.CaregiverListItemDto;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.global.client.TenantClient;
 import jct.pillorganizer.global.dto.DeviceSubscribeDto;
+import jct.pillorganizer.global.dto.InviteCaregiverTenantDto;
 import jct.pillorganizer.global.model.UserEntity;
 import lombok.extern.flogger.Flogger;
 import reactor.core.publisher.Flux;
@@ -75,7 +77,8 @@ public class UserDeviceAccessService {
      */
     public Mono<DeviceAccessDto> updateDeviceNotifications(String tenantId,
                                                            String deviceId, UserEntity user,
-                                                           boolean subscribe) {
+                                                           boolean subscribe,
+                                                           Boolean notifyTakeNow, Boolean notifyTaken, Boolean notifyMissed) {
         TenantClient client = tenants.stream()
                 .filter(c -> tenantId.equals(c.getTenantDetails().getId()))
                 .findFirst()
@@ -87,8 +90,23 @@ public class UserDeviceAccessService {
                     "User has no FCM endpoint ARN — register an FCM token first"));
         }
 
-        DeviceSubscribeDto dto = new DeviceSubscribeDto(subscribe, endpointArn);
+        DeviceSubscribeDto dto = new DeviceSubscribeDto(subscribe, endpointArn,
+                notifyTakeNow, notifyTaken, notifyMissed);
         return client.updateDeviceNotifications(deviceId, dto);
+    }
+
+    /**
+     * Invites a caregiver to a device by forwarding the request to the appropriate tenant.
+     * The caller's JWT is automatically propagated by Micronaut's token propagation.
+     */
+    public Mono<CaregiverListItemDto> inviteCaregiver(String tenantId, String deviceId,
+                                       InviteCaregiverTenantDto dto) {
+        TenantClient client = tenants.stream()
+                .filter(c -> tenantId.equals(c.getTenantDetails().getId()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Tenant not found: " + tenantId));
+
+        return client.inviteCaregiver(deviceId, dto);
     }
 
 }

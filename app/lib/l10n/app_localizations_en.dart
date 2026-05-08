@@ -377,29 +377,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inviteCollaboratorsDescription =>
-      'To invite members with view-only access to your pill organiser, tap below to generate a code. The code will be valid for 10 minutes only.';
+      'To invite members with view-only access to your pill organiser, enter their email address below.';
 
   @override
   String get joinExistingDevice => 'Join an existing device';
 
   @override
-  String get joinDeviceTitle => 'Enter code';
+  String get joinDeviceTitle => 'How to join a device';
 
   @override
   String get joinDeviceSubtext =>
-      'The administrator of a pill organiser should have sent you a security code number to join access. Enter below:';
-
-  @override
-  String get joinDeviceErrorExpired =>
-      'This code has expired. Please contact the administrator of the pillbox in question.';
-
-  @override
-  String get joinDeviceConfirmationTitle => 'All set';
-
-  @override
-  String joinDeviceConfirmationSubtext(Object deviceName) {
-    return 'You are invited to join ‘$deviceName’ with a view-only access.';
-  }
+      'To join an existing device, ask the primary user to invite you using your email address shown below.';
 
   @override
   String get loadingState => 'Loading ...';
@@ -594,6 +582,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notificationReminder =>
       'Send reminder notifications to your phone';
+
+  @override
+  String get takeNowNotifications => 'Take now reminders';
+
+  @override
+  String get takenNotifications => 'Taken confirmations';
+
+  @override
+  String get missedNotifications => 'Missed dose alerts';
 
   @override
   String get notSignedIn => 'Not signed in';
@@ -979,27 +976,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wirelessDisconnected => 'Wireless disconnected';
 
   @override
-  String get generateCode => 'Generate a new code';
-
-  @override
-  String get codeExpiresIn => 'This code will expire in';
-
-  @override
-  String get minutes => 'minutes';
-
-  @override
-  String get seconds => 'seconds';
-
-  @override
-  String get copyCode => 'Copy code';
-
-  @override
-  String get codeCopied => 'Code copied to clipboard';
-
-  @override
-  String get errorGenerateCode => 'Error generating code. Please try again.';
-
-  @override
   String get commandSent =>
       'Command sent. Changes will take effect within 15 minutes.';
 
@@ -1022,4 +998,65 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commandReloadInitiate => 'Initiate Reload';
+
+  @override
+  String get peopleWithAccess => 'People with access';
+
+  @override
+  String get primaryUser => 'Primary User';
+
+  @override
+  String get revokeAccess => 'Revoke Access';
+
+  @override
+  String revokeAccessConfirmation(String name) {
+    return 'Are you sure you want to revoke access for $name? They will no longer be able to view this device\'s data.';
+  }
+
+  @override
+  String get revoke => 'Revoke';
+
+  @override
+  String get transferPrimaryUser => 'Transfer Primary User';
+
+  @override
+  String get transferPrimaryUserDescription =>
+      'Select the person you want to transfer primary user status to. This will give them full control over the device schedule.';
+
+  @override
+  String transferPrimaryUserConfirmation(String name) {
+    return 'Are you sure you want to transfer primary user status to $name? You will lose the ability to modify the device schedule.';
+  }
+
+  @override
+  String get transfer => 'Transfer';
+
+  @override
+  String get errorLoadingCaregivers =>
+      'Unable to load access list. Please try again.';
+
+  @override
+  String get caregiverName => 'Caregiver Name';
+
+  @override
+  String get enterCaregiverName => 'Enter a name for this caregiver';
+
+  @override
+  String get inviteByEmail => 'Invite by email';
+
+  @override
+  String get sendInvite => 'Send Invite';
+
+  @override
+  String get caregiverInvited => 'Caregiver invited successfully.';
+
+  @override
+  String get errorInvitingCaregiver =>
+      'Failed to invite caregiver. Please ensure the email is registered.';
+
+  @override
+  String get enterCaregiverEmail => 'Enter caregiver\'s email address';
+
+  @override
+  String get yourEmail => 'Your email';
 }

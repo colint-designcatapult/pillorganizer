@@ -55,8 +55,11 @@ class _SingleDeviceState extends State<SingleDevice> {
     }
   }
 
-  List<ButtonSegment> _getSegments() {
-    return [
+  /// Builds the tab segments based on user role.
+  /// Owners see: Settings, Notifications, Share
+  /// Caretakers see: Settings, Notifications
+  List<ButtonSegment> _getSegments(bool isOwner) {
+    final segments = <ButtonSegment>[
       ButtonSegment(
         value: 0,
         label: Text(
@@ -79,7 +82,10 @@ class _SingleDeviceState extends State<SingleDevice> {
               ),
         ),
       ),
-      ButtonSegment(
+    ];
+
+    if (isOwner) {
+      segments.add(ButtonSegment(
         value: 2,
         label: Text(
           AppLocalizations.of(context)!.share,
@@ -89,14 +95,22 @@ class _SingleDeviceState extends State<SingleDevice> {
                 color: const Color(0xFF31454D),
               ),
         ),
-      )
-    ];
+      ));
+    }
+
+    return segments;
   }
 
   @override
   Widget build(BuildContext context) {
     bool isOwner = widget.device?.primaryUser ?? false;
-    List<ButtonSegment> segments = _getSegments();
+    List<ButtonSegment> segments = _getSegments(isOwner);
+
+    // Clamp selected index to valid range when role/device changes
+    int maxIndex = isOwner ? 2 : 1;
+    if (_selectedButtonIndex > maxIndex) {
+      _selectedButtonIndex = 0;
+    }
 
     return Container(
       margin: widget.isModal
@@ -158,8 +172,7 @@ class _SingleDeviceState extends State<SingleDevice> {
               ],
             ),
           ),
-          if (isOwner)
-            Container(
+          Container(
               padding: EdgeInsets.only(
                 top: 12.h,
                 bottom: 12.h,

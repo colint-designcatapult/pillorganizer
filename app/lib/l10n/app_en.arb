@@ -112,13 +112,10 @@
 	"haveAccountAlready": "Already have an account?",
 	"invalidEmailFormat": "Invalid email format",
 	"inviteCollaborators": "Invite collaborators",
-	"inviteCollaboratorsDescription": "To invite members with view-only access to your pill organiser, tap below to generate a code. The code will be valid for 10 minutes only.",
+	"inviteCollaboratorsDescription": "To invite members with view-only access to your pill organiser, enter their email address below.",
 	"joinExistingDevice": "Join an existing device",
-	"joinDeviceTitle": "Enter code",
-	"joinDeviceSubtext": "The administrator of a pill organiser should have sent you a security code number to join access. Enter below:",
-	"joinDeviceErrorExpired": "This code has expired. Please contact the administrator of the pillbox in question.",
-	"joinDeviceConfirmationTitle": "All set",
-	"joinDeviceConfirmationSubtext": "You are invited to join ‘{deviceName}’ with a view-only access.",
+	"joinDeviceTitle": "How to join a device",
+	"joinDeviceSubtext": "To join an existing device, ask the primary user to invite you using your email address shown below.",
 	"loadingState": "Loading ...",
 	"manageDevices": "Manage devices",
 	"manual": "Manual",
@@ -177,6 +174,9 @@
 	"notifications": "Notifications",
 	"notificationPreferences": "Notification preferences",
 	"notificationReminder": "Send reminder notifications to your phone",
+	"takeNowNotifications": "Take now reminders",
+	"takenNotifications": "Taken confirmations",
+	"missedNotifications": "Missed dose alerts",
 	"notSignedIn": "Not signed in",
 	"openSettings": "Open settings",
 	"or": "or",
@@ -294,18 +294,44 @@
 	"welcomeCabinetLong": "Welcome to CabiNET!",
 	"wirelessConnected": "Wireless connected",
 	"wirelessDisconnected": "Wireless disconnected",
-	"generateCode": "Generate a new code",
-	"codeExpiresIn": "This code will expire in",
-	"minutes": "minutes",
-	"seconds": "seconds",
-	"copyCode": "Copy code",
-	"codeCopied": "Code copied to clipboard",
-	"errorGenerateCode": "Error generating code. Please try again.",
 	"commandSent": "Command sent. Changes will take effect within 15 minutes.",
 	"commandFailed": "Failed to send command: {error}",
 	"commandMarkTaken": "Mark as Taken",
 	"commandMarkReset": "Reset",
 	"commandReloadComplete": "Complete Reload",
 	"commandReloadStart": "Start Reload",
-	"commandReloadInitiate": "Initiate Reload"
+	"commandReloadInitiate": "Initiate Reload",
+
+	"peopleWithAccess": "People with access",
+	"primaryUser": "Primary User",
+	"revokeAccess": "Revoke Access",
+	"revokeAccessConfirmation": "Are you sure you want to revoke access for {name}? They will no longer be able to view this device's data.",
+	"@revokeAccessConfirmation": {
+		"placeholders": {
+			"name": {
+				"type": "String"
+			}
+		}
+	},
+	"revoke": "Revoke",
+	"transferPrimaryUser": "Transfer Primary User",
+	"transferPrimaryUserDescription": "Select the person you want to transfer primary user status to. This will give them full control over the device schedule.",
+	"transferPrimaryUserConfirmation": "Are you sure you want to transfer primary user status to {name}? You will lose the ability to modify the device schedule.",
+	"@transferPrimaryUserConfirmation": {
+		"placeholders": {
+			"name": {
+				"type": "String"
+			}
+		}
+	},
+	"transfer": "Transfer",
+	"errorLoadingCaregivers": "Unable to load access list. Please try again.",
+	"caregiverName": "Caregiver Name",
+	"enterCaregiverName": "Enter a name for this caregiver",
+	"inviteByEmail": "Invite by email",
+	"sendInvite": "Send Invite",
+	"caregiverInvited": "Caregiver invited successfully.",
+	"errorInvitingCaregiver": "Failed to invite caregiver. Please ensure the email is registered.",
+	"enterCaregiverEmail": "Enter caregiver's email address",
+	"yourEmail": "Your email"
 }

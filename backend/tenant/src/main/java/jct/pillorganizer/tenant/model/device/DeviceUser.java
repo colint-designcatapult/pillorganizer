@@ -27,9 +27,30 @@ public class DeviceUser {
 
     private boolean primaryUser;
 
+    @Nullable
+    private String nickname;
+
     /** ARN of the SNS subscription linking this user to the device's SNS topic. Null when not subscribed. */
     @Nullable
     private String subscriptionArn;
+
+    @Nullable
+    private Boolean notifyTakeNow;
+
+    @Nullable
+    private Boolean notifyTaken;
+
+    @Nullable
+    private Boolean notifyMissed;
+
+    /** Returns {@code true} when {@code notifyTakeNow} is null (pre-migration rows default to enabled). */
+    public boolean effectiveNotifyTakeNow() { return notifyTakeNow == null || notifyTakeNow; }
+
+    /** Returns {@code true} when {@code notifyTaken} is null (pre-migration rows default to enabled). */
+    public boolean effectiveNotifyTaken()   { return notifyTaken == null || notifyTaken; }
+
+    /** Returns {@code true} when {@code notifyMissed} is null (pre-migration rows default to enabled). */
+    public boolean effectiveNotifyMissed()  { return notifyMissed == null || notifyMissed; }
 
     @DateCreated
     @JsonIgnore
