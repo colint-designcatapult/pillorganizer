@@ -14,6 +14,7 @@ class CaregiverInvite extends _$CaregiverInvite {
   FutureOr<void> build() async {}
 
   /// Invites a caregiver by email via the control plane.
+  /// On success, adds the returned [CaregiverListItemDto] to the caregiver list.
   Future<void> inviteCaregiver({
     required String email,
     required String nickname,
@@ -23,12 +24,14 @@ class CaregiverInvite extends _$CaregiverInvite {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final client = ref.read(controlPlaneClientProvider);
-      await client.inviteCaregiver(InviteCaregiverRequestDto(
+      final newCaregiver = await client.inviteCaregiver(InviteCaregiverRequestDto(
         email: email,
         nickname: nickname,
         deviceId: deviceId,
         tenantId: tenantId,
       ));
+      // Add the new caregiver to the list so the UI updates immediately
+      ref.read(caregiverListProvider(deviceId).notifier).addCaregiver(newCaregiver);
     });
   }
 }
@@ -56,6 +59,12 @@ class CaregiverList extends _$CaregiverList {
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() => _fetch(deviceId));
+  }
+
+  /// Adds a caregiver to the current list without re-fetching from the server.
+  void addCaregiver(CaregiverListItemDto caregiver) {
+    final current = state.valueOrNull ?? [];
+    state = AsyncValue.data([...current, caregiver]);
   }
 
   Future<void> revokeCaregiver(String caregiverId) async {

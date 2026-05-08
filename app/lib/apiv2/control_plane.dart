@@ -48,8 +48,9 @@ abstract class ControlPlaneApiClient {
 
   /// Invites a caregiver to a device by email.
   /// The control plane verifies the user exists and forwards to the tenant.
+  /// Returns the newly created [CaregiverListItemDto].
   @POST("/user/device/invite-caregiver")
-  Future<void> inviteCaregiver(@Body() InviteCaregiverRequestDto dto);
+  Future<CaregiverListItemDto> inviteCaregiver(@Body() InviteCaregiverRequestDto dto);
 
   /// Returns the authenticated user's details.
   @GET("/user/me")

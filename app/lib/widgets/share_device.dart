@@ -107,7 +107,6 @@ class _ShareDeviceState extends ConsumerState<ShareDevice> {
                                   );
                               if (context.mounted) {
                                 Navigator.of(context).pop();
-                                ref.invalidate(caregiverListProvider(targetDevice.id));
                                 ScaffoldMessenger.of(this.context).showSnackBar(
                                   SnackBar(
                                     content: Text(AppLocalizations.of(this.context)!.caregiverInvited),
