@@ -202,6 +202,14 @@ public class ScheduleService {
         }
     }
 
+    /**
+     * Parse a schedule JSON string into a BaseSchedule object.
+     * Returns null if the JSON is null or cannot be parsed.
+     */
+    public BaseSchedule parseScheduleJson(String json) {
+        return parseSchedule(json);
+    }
+
     private String serializeSchedule(BaseSchedule schedule) {
         try {
             return objectMapper.writeValueAsString(schedule);
