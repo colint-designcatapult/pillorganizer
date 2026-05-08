@@ -387,8 +387,6 @@ Acceptance Criteria:
 - Notification preferences can be independently configured for each user (Patient and Caregiver).
 - Disabling a notification type suppresses that notification type.
 <<<
-RESULT_STRING: >>>
-<<<
 RELATIONS:
 - TYPE: Parent
   VALUE: UN-202
