@@ -914,7 +914,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get deleteAccountSubtitle =>
-      'Êtes-vous sûr de vouloir supprimer définitivement votre compte? Cette action est irréversible. Vos informations personnelles seront supprimées, mais les données de santé anonymisées seront conservées à des fins de recherche.';
+      'Êtes-vous sûr de vouloir supprimer définitivement votre compte? Cette action est irréversible.';
 
   @override
   String get deleteAccountConfirm => 'Supprimer le compte';

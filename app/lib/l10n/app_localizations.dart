@@ -1739,7 +1739,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteAccountSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Are you sure you want to permanently delete your account? This action cannot be undone. Your personal information will be removed, but anonymized health data will be retained for research purposes.'**
+  /// **'Are you sure you want to permanently delete your account? This action cannot be undone.'**
   String get deleteAccountSubtitle;
 
   /// No description provided for @deleteAccountConfirm.

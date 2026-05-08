@@ -909,7 +909,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteAccountSubtitle =>
-      'Are you sure you want to permanently delete your account? This action cannot be undone. Your personal information will be removed, but anonymized health data will be retained for research purposes.';
+      'Are you sure you want to permanently delete your account? This action cannot be undone.';
 
   @override
   String get deleteAccountConfirm => 'Delete Account';
