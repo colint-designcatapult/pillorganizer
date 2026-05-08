@@ -113,4 +113,91 @@ class DeviceNotificationServiceSpec extends BaseIntegrationSpec {
         noExceptionThrown()
         result.notifications() == false
     }
+
+    def "subscribe with custom preferences stores preference values"() {
+        given:
+        def user = userService.upsert(ksuidService.generateKsuid(), "Pref User 1", "pref1@example.com")
+        def deviceId = ksuidService.generateKsuid()
+        deviceService.provision(user, deviceId, "sn-pref-1", ksuidService.generateKsuid(), "thing-pref-1")
+        def device = deviceService.get(deviceId).get()
+        def endpointArn = "arn:local:endpoint:pref-1"
+
+        when:
+        def result = deviceNotificationService.subscribe(user, device, endpointArn, true, false, true)
+
+        then:
+        result.notifications() == true
+        result.notifyTakeNow() == true
+        result.notifyTaken() == false
+        result.notifyMissed() == true
+    }
+
+    def "subscribe with all preferences disabled stores all as false"() {
+        given:
+        def user = userService.upsert(ksuidService.generateKsuid(), "Pref User 2", "pref2@example.com")
+        def deviceId = ksuidService.generateKsuid()
+        deviceService.provision(user, deviceId, "sn-pref-2", ksuidService.generateKsuid(), "thing-pref-2")
+        def device = deviceService.get(deviceId).get()
+        def endpointArn = "arn:local:endpoint:pref-2"
+
+        when:
+        def result = deviceNotificationService.subscribe(user, device, endpointArn, false, false, false)
+
+        then:
+        result.notifications() == true
+        result.notifyTakeNow() == false
+        result.notifyTaken() == false
+        result.notifyMissed() == false
+    }
+
+    def "subscribe without preferences defaults all to true"() {
+        given:
+        def user = userService.upsert(ksuidService.generateKsuid(), "Pref User 3", "pref3@example.com")
+        def deviceId = ksuidService.generateKsuid()
+        deviceService.provision(user, deviceId, "sn-pref-3", ksuidService.generateKsuid(), "thing-pref-3")
+        def device = deviceService.get(deviceId).get()
+        def endpointArn = "arn:local:endpoint:pref-3"
+
+        when:
+        def result = deviceNotificationService.subscribe(user, device, endpointArn)
+
+        then:
+        result.notifications() == true
+        result.notifyTakeNow() == true
+        result.notifyTaken() == true
+        result.notifyMissed() == true
+    }
+
+    def "updatePreferences changes preferences for a subscribed user"() {
+        given:
+        def user = userService.upsert(ksuidService.generateKsuid(), "Pref User 4", "pref4@example.com")
+        def deviceId = ksuidService.generateKsuid()
+        deviceService.provision(user, deviceId, "sn-pref-4", ksuidService.generateKsuid(), "thing-pref-4")
+        def device = deviceService.get(deviceId).get()
+        def endpointArn = "arn:local:endpoint:pref-4"
+
+        deviceNotificationService.subscribe(user, device, endpointArn, true, true, true)
+
+        when:
+        def result = deviceNotificationService.updatePreferences(user, device, false, true, false)
+
+        then:
+        result.notifyTakeNow() == false
+        result.notifyTaken() == true
+        result.notifyMissed() == false
+    }
+
+    def "updatePreferences throws when user is not subscribed"() {
+        given:
+        def user = userService.upsert(ksuidService.generateKsuid(), "Pref User 5", "pref5@example.com")
+        def deviceId = ksuidService.generateKsuid()
+        deviceService.provision(user, deviceId, "sn-pref-5", ksuidService.generateKsuid(), "thing-pref-5")
+        def device = deviceService.get(deviceId).get()
+
+        when:
+        deviceNotificationService.updatePreferences(user, device, true, true, true)
+
+        then:
+        thrown(IllegalStateException)
+    }
 }

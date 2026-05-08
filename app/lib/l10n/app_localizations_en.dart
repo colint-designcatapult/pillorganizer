@@ -596,6 +596,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Send reminder notifications to your phone';
 
   @override
+  String get takeNowNotifications => 'Take now reminders';
+
+  @override
+  String get takenNotifications => 'Taken confirmations';
+
+  @override
+  String get missedNotifications => 'Missed dose alerts';
+
+  @override
   String get notSignedIn => 'Not signed in';
 
   @override

@@ -72,7 +72,7 @@ public class UserDeviceAccessController {
         return Mono.fromCallable(() -> userService.get(userId)
                         .orElseThrow(() -> new IllegalStateException("User not found: " + userId)))
                 .flatMap(user -> userDeviceAccessService.updateDeviceNotifications(dto.tenantId(),
-                        dto.deviceId(), user, dto.subscribe()));
+                        dto.deviceId(), user, dto.subscribe(),
+                        dto.notifyTakeNow(), dto.notifyTaken(), dto.notifyMissed()));
     }
 }
-

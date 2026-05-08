@@ -15,6 +15,9 @@ class DeviceAccessDto with DeviceAccessDtoMappable {
   final String? thingName;
   final String? tenantName;
   final bool? notifications;
+  final bool? notifyTakeNow;
+  final bool? notifyTaken;
+  final bool? notifyMissed;
 
   DeviceAccessDto({
     required this.deviceId,
@@ -28,6 +31,9 @@ class DeviceAccessDto with DeviceAccessDtoMappable {
     this.thingName,
     this.tenantName,
     this.notifications,
+    this.notifyTakeNow,
+    this.notifyTaken,
+    this.notifyMissed,
   });
 }
 
@@ -244,11 +250,17 @@ class DeviceNotificationRequestDto with DeviceNotificationRequestDtoMappable {
   final String deviceId;
   final String tenantId;
   final bool subscribe;
+  final bool? notifyTakeNow;
+  final bool? notifyTaken;
+  final bool? notifyMissed;
 
   const DeviceNotificationRequestDto({
     required this.deviceId,
     required this.tenantId,
     required this.subscribe,
+    this.notifyTakeNow,
+    this.notifyTaken,
+    this.notifyMissed,
   });
 }
 
@@ -381,4 +393,21 @@ class TransferPrimaryUserDto with TransferPrimaryUserDtoMappable {
   final String targetCaregiverId;
 
   const TransferPrimaryUserDto({required this.targetCaregiverId});
+}
+
+@MappableClass()
+class NotificationPreferencesRequestDto with NotificationPreferencesRequestDtoMappable {
+  final String deviceId;
+  final String tenantId;
+  final bool notifyTakeNow;
+  final bool notifyTaken;
+  final bool notifyMissed;
+
+  const NotificationPreferencesRequestDto({
+    required this.deviceId,
+    required this.tenantId,
+    required this.notifyTakeNow,
+    required this.notifyTaken,
+    required this.notifyMissed,
+  });
 }

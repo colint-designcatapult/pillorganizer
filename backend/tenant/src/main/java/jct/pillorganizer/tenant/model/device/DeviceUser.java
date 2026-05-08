@@ -34,6 +34,24 @@ public class DeviceUser {
     @Nullable
     private String subscriptionArn;
 
+    @Nullable
+    private Boolean notifyTakeNow;
+
+    @Nullable
+    private Boolean notifyTaken;
+
+    @Nullable
+    private Boolean notifyMissed;
+
+    /** Returns {@code true} when {@code notifyTakeNow} is null (pre-migration rows default to enabled). */
+    public boolean effectiveNotifyTakeNow() { return notifyTakeNow == null || notifyTakeNow; }
+
+    /** Returns {@code true} when {@code notifyTaken} is null (pre-migration rows default to enabled). */
+    public boolean effectiveNotifyTaken()   { return notifyTaken == null || notifyTaken; }
+
+    /** Returns {@code true} when {@code notifyMissed} is null (pre-migration rows default to enabled). */
+    public boolean effectiveNotifyMissed()  { return notifyMissed == null || notifyMissed; }
+
     @DateCreated
     @JsonIgnore
     private Timestamp createdAt;

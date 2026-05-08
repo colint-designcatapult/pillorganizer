@@ -75,7 +75,8 @@ public class UserDeviceAccessService {
      */
     public Mono<DeviceAccessDto> updateDeviceNotifications(String tenantId,
                                                            String deviceId, UserEntity user,
-                                                           boolean subscribe) {
+                                                           boolean subscribe,
+                                                           Boolean notifyTakeNow, Boolean notifyTaken, Boolean notifyMissed) {
         TenantClient client = tenants.stream()
                 .filter(c -> tenantId.equals(c.getTenantDetails().getId()))
                 .findFirst()
@@ -87,7 +88,8 @@ public class UserDeviceAccessService {
                     "User has no FCM endpoint ARN — register an FCM token first"));
         }
 
-        DeviceSubscribeDto dto = new DeviceSubscribeDto(subscribe, endpointArn);
+        DeviceSubscribeDto dto = new DeviceSubscribeDto(subscribe, endpointArn,
+                notifyTakeNow, notifyTaken, notifyMissed);
         return client.updateDeviceNotifications(deviceId, dto);
     }
 

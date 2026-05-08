@@ -64,11 +64,12 @@ public class InternalUserController {
 
     /**
      * Subscribes or unsubscribes the authenticated user from push notifications for a device.
-     * The caller must have (non-primary) access to the device.
+     * The caller must have access to the device.
      *
      * @param deviceId the logical device ID
      * @param dto      {@code subscribe=true} to opt in, {@code false} to opt out;
-     *                 {@code endpointArn} is the user's SNS platform-endpoint ARN
+     *                 {@code endpointArn} is the user's SNS platform-endpoint ARN;
+     *                 optional preference flags control which event types are received
      * @return updated {@link DeviceAccessDto} with the refreshed {@code notifications} flag
      */
     @Post("/device/{deviceId}/notifications")
@@ -78,7 +79,8 @@ public class InternalUserController {
                                                User user) {
         LogicalDevice device = authService.accessDevice(deviceId, false);
         if (dto.subscribe()) {
-            return deviceNotificationService.subscribe(user, device, dto.endpointArn());
+            return deviceNotificationService.subscribe(user, device, dto.endpointArn(),
+                    dto.effectiveNotifyTakeNow(), dto.effectiveNotifyTaken(), dto.effectiveNotifyMissed());
         } else {
             return deviceNotificationService.unsubscribe(user, device);
         }

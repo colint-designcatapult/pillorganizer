@@ -668,7 +668,7 @@ Steps:
 6. Set a display name for the Caregiver account (e.g., "Dr. Smith").
 7. Save and verify.
 8. Log out and log back into the Patient account.
-9. Navigate to the device's Caregiver list or access management screen.
+9. Navigate to the device's Caregiver list.
 10. Verify the Caregiver is listed by their display name ("Dr. Smith"), allowing the Patient to identify which real person the account belongs to.
 
 Acceptance Criteria:

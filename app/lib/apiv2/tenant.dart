@@ -62,4 +62,9 @@ abstract class TenantApiClient {
   Future<void> transferPrimaryUser(
       @Path("deviceId") String deviceId,
       @Body() TransferPrimaryUserDto dto);
+
+  @PUT("/api/v1/device/{id}/notification-preferences")
+  Future<DeviceAccessDto> updateNotificationPreferences(
+      @Path("id") String deviceId,
+      @Body() NotificationPreferencesRequestDto dto);
 }

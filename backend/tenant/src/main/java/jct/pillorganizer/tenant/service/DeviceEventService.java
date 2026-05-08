@@ -136,7 +136,7 @@ public class DeviceEventService {
         }
 
         try {
-            notificationService.publish(device.getTopicArn(), "CabiNET" + (device.getNickname() != null ? (": " + device.getNickname()) : ""), notificationMessage, ttlSeconds);
+            notificationService.publish(device.getTopicArn(), "CabiNET" + (device.getNickname() != null ? (": " + device.getNickname()) : ""), notificationMessage, ttlSeconds, eventType);
             log.atInfo().log("Published %s notification for device %s (ttl=%ds)", eventType, device.getId(), ttlSeconds);
         } catch (Exception e) {
             log.atWarning().withCause(e).log("Failed to publish notification for device %s (event=%s)",

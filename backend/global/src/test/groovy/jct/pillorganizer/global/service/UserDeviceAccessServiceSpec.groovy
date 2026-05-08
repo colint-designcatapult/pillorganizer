@@ -15,8 +15,8 @@ class UserDeviceAccessServiceSpec extends BaseIntegrationSpec {
         def tenant2 = Mock(TenantClient)
         def service = new UserDeviceAccessService(tenants: [tenant1, tenant2])
         
-        def device1 = new DeviceAccessDto("d1", "dev1", "nickname1", "sn1", "model1", "tenant1", "apiBase1", true, "tenant1-sn1", "tenant-name", null)
-        def device2 = new DeviceAccessDto("d2", "dev2", "nickname2", "sn2", "model2", "tenant2", "apiBase2", false, "tenant2-sn2", "tenant-name", null)
+        def device1 = new DeviceAccessDto("d1", "dev1", "nickname1", "sn1", "model1", "tenant1", "apiBase1", true, "tenant1-sn1", "tenant-name", null, null, null, null)
+        def device2 = new DeviceAccessDto("d2", "dev2", "nickname2", "sn2", "model2", "tenant2", "apiBase2", false, "tenant2-sn2", "tenant-name", null, null, null, null)
 
         when:
         def result = service.getUserDeviceAccess().collectList().block()
@@ -35,7 +35,7 @@ class UserDeviceAccessServiceSpec extends BaseIntegrationSpec {
         def tenant2 = Mock(TenantClient)
         def service = new UserDeviceAccessService(tenants: [tenant1, tenant2])
         
-        def device1 = new DeviceAccessDto("d1", "dev1", "nickname1", "sn1", "model1", "tenant1", "apiBase1", true, "tenant1-sn1", "tenant-name", null)
+        def device1 = new DeviceAccessDto("d1", "dev1", "nickname1", "sn1", "model1", "tenant1", "apiBase1", true, "tenant1-sn1", "tenant-name", null, null, null, null)
 
         when:
         def result = service.getUserDeviceAccess().collectList().block()

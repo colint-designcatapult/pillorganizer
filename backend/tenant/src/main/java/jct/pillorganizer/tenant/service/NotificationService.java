@@ -42,6 +42,16 @@ public interface NotificationService {
      * @param ttlSeconds Number of seconds the message should remain deliverable. The FCM
      *                   {@code android.ttl} field and the SNS {@code AWS.SNS.MOBILE.GCM.TTL}
      *                   message attribute are both set to this value. Must be &gt; 0.
+     * @param eventType  The event type for SNS filter policy matching (e.g. "TAKE_NOW", "TAKEN", "MISSED")
      */
-    void publish(String topicArn, String title, String body, long ttlSeconds);
+    void publish(String topicArn, String title, String body, long ttlSeconds, String eventType);
+
+    /**
+     * Sets the SNS filter policy on a subscription so only messages with matching
+     * {@code event_type} attributes are delivered.
+     *
+     * @param subscriptionArn the subscription to configure
+     * @param eventTypes      list of event types to allow (e.g. ["TAKE_NOW", "TAKEN", "MISSED"])
+     */
+    void setFilterPolicy(String subscriptionArn, java.util.List<String> eventTypes);
 }

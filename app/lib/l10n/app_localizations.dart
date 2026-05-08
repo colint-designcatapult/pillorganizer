@@ -1166,6 +1166,24 @@ abstract class AppLocalizations {
   /// **'Send reminder notifications to your phone'**
   String get notificationReminder;
 
+  /// No description provided for @takeNowNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Take now reminders'**
+  String get takeNowNotifications;
+
+  /// No description provided for @takenNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken confirmations'**
+  String get takenNotifications;
+
+  /// No description provided for @missedNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Missed dose alerts'**
+  String get missedNotifications;
+
   /// No description provided for @notSignedIn.
   ///
   /// In en, this message translates to:
