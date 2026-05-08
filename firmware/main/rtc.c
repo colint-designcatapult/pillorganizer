@@ -12,6 +12,8 @@
 
 #define TAG "RTC"
 
+#define SYNC_STALE_THRESHOLD_US (24ULL * 60ULL * 60ULL * 1000000ULL)
+
 RTC_DATA_ATTR static time_t last_sntp_sync_time = 0;
 RTC_DATA_ATTR static uint64_t last_sync_rtc_time = 0;
 
@@ -75,6 +77,10 @@ esp_err_t app_rtc_get_utc_timestamp_ms(rtc_utc_timestamp_ms* timestamp)
 {
     if (last_sntp_sync_time == 0) {
         // We don't have a valid time yet
+        return ESP_ERR_INVALID_STATE;
+    }
+    if (esp_rtc_get_time_us() - last_sync_rtc_time > SYNC_STALE_THRESHOLD_US) {
+        ESP_LOGW(TAG, "Last SNTP sync was over 24 hours ago");
         return ESP_ERR_INVALID_STATE;
     }
     struct timeval tv;
@@ -148,5 +154,6 @@ esp_err_t app_rtc_get_current_epoch_week(time_t* epoch_week)
 
 bool app_rtc_time_synced()
 {
-    return last_sntp_sync_time != 0;
+    if (last_sntp_sync_time == 0) return false;
+    return (esp_rtc_get_time_us() - last_sync_rtc_time) <= SYNC_STALE_THRESHOLD_US;
 }
