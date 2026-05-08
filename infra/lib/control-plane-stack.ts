@@ -5,12 +5,14 @@ import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
 import { Construct } from 'constructs';
 import { createGlobalLambda } from './lambda-utils';
 
 interface ControlPlaneStackProps extends cdk.StackProps {
   domainName: apigwv2.IDomainName,
-  controlPlaneTable: dynamodb.ITableV2
+  controlPlaneTable: dynamodb.ITableV2,
+  userPool: cognito.IUserPool,
 }
 
 /* This stack configures the "control plane" backend. */
@@ -67,6 +69,17 @@ export class ControlPlaneStack extends cdk.Stack {
       ],
       resources: [
         `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/*`,
+      ],
+    }));
+
+    // Grant permission to delete users from the normal (public) user pool
+    appFunction.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'cognito-idp:AdminDeleteUser',
+      ],
+      resources: [
+        props.userPool.userPoolArn,
       ],
     }));
 

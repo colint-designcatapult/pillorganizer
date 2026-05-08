@@ -1538,6 +1538,12 @@ abstract class AppLocalizations {
   /// **'Remove device'**
   String get removeDevice;
 
+  /// No description provided for @removeFromAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from account'**
+  String get removeFromAccount;
+
   /// No description provided for @removingDevice.
   ///
   /// In en, this message translates to:
@@ -1547,8 +1553,20 @@ abstract class AppLocalizations {
   /// No description provided for @removingDeviceConfirmation.
   ///
   /// In en, this message translates to:
-  /// **'Are you sure ? To access it again, you\'ll need to set it up again.'**
+  /// **'Are you sure? To access it again, you\'ll need to set it up again.'**
   String get removingDeviceConfirmation;
+
+  /// No description provided for @removingFromAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Removing Access'**
+  String get removingFromAccount;
+
+  /// No description provided for @removingFromAccountConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to remove your access to this device? You will need to be re-invited to access it again.'**
+  String get removingFromAccountConfirmation;
 
   /// No description provided for @saturday.
   ///
@@ -1705,6 +1723,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign Out'**
   String get signOut;
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to permanently delete your account? This action cannot be undone.'**
+  String get deleteAccountSubtitle;
+
+  /// No description provided for @deleteAccountConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get deleteAccountConfirm;
 
   /// No description provided for @signUp.
   ///

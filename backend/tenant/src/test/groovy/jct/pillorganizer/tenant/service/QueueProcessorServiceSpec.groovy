@@ -12,12 +12,15 @@ package jct.pillorganizer.tenant.service
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import jct.pillorganizer.core.message.BaseMessage
+import jct.pillorganizer.core.message.DeleteUserMessage
 import jct.pillorganizer.core.message.DeviceProvisionMessage
 import jct.pillorganizer.core.message.GrantUserMessage
 import jct.pillorganizer.core.message.IotDeviceEventMessage
 import jct.pillorganizer.tenant.BaseIntegrationSpec
 import jct.pillorganizer.tenant.repo.DeviceEventRepository
 import jct.pillorganizer.tenant.repo.ProvisionRecordRepository
+import jct.pillorganizer.tenant.repo.LogicalDeviceRepository
+import jct.pillorganizer.tenant.repo.UserRepository
 import spock.lang.Subject
 
 @MicronautTest
@@ -38,6 +41,12 @@ class QueueProcessorServiceSpec extends BaseIntegrationSpec {
 
     @Inject
     DeviceEventRepository deviceEventRepository
+
+    @Inject
+    LogicalDeviceRepository logicalDeviceRepository
+
+    @Inject
+    UserRepository userRepository
 
     def "should grant a new user"() {
         given:
@@ -140,5 +149,43 @@ class QueueProcessorServiceSpec extends BaseIntegrationSpec {
             it.logicalDevice.id == "qps-dup-device" && it.eventType == "TAKEN"
         }
         events.size() == 1
+    }
+
+    def "should delete user and disable their devices"() {
+        given:
+        def user = userService.upsert("qps-delete-user", "Delete User", "delete@example.com")
+        deviceService.provision(user, "qps-delete-device", "qps-delete-serial", "qps-delete-claim", "qps-delete-thing")
+
+        def message = DeleteUserMessage.builder()
+                .userId("qps-delete-user")
+                .build()
+
+        when:
+        queueProcessorService.processQueueMessage(message)
+
+        then: "user is disabled with cleared name and email"
+        def updatedUser = userService.get("qps-delete-user")
+        updatedUser.isPresent()
+        updatedUser.get().name == null
+        updatedUser.get().email == null
+        updatedUser.get().disabledAt != null
+
+        and: "device is disabled"
+        def device = logicalDeviceRepository.findById("qps-delete-device")
+        device.isPresent()
+        device.get().disabledAt != null
+    }
+
+    def "should skip deleteUser for non-existent user"() {
+        given:
+        def message = DeleteUserMessage.builder()
+                .userId("non-existent-user")
+                .build()
+
+        when:
+        queueProcessorService.processQueueMessage(message)
+
+        then:
+        noExceptionThrown()
     }
 }

@@ -459,4 +459,87 @@ class AppDeviceAPIControllerSpec extends BaseIntegrationSpec {
         HttpClientResponseException e = thrown()
         e.status == HttpStatus.BAD_REQUEST
     }
+
+    // ── Remove device endpoint tests ───────────────────────────────────────────
+
+    void "test removeDevice returns 204 for primary user and disables device"() {
+        given:
+        String userId = ksuidService.generateKsuid()
+        String deviceId = ksuidService.generateKsuid()
+        String claimId = ksuidService.generateKsuid()
+        String thingName = "thing-rm-" + ksuidService.generateKsuid()
+
+        User user = userService.ensureExists(userId)
+        deviceService.provision(user, deviceId, "sn-rm-1", claimId, thingName)
+
+        def auth = Mock(Authentication)
+        auth.getAttributes() >> [userId: userId]
+
+        when:
+        def request = HttpRequest.DELETE("/api/v1/device/" + deviceId)
+        def response = client.toBlocking().exchange(request)
+
+        then:
+        _ * securityService.getAuthentication() >> Optional.of(auth)
+        response.status == HttpStatus.NO_CONTENT
+
+        and: "device should be disabled (not listed)"
+        deviceService.getUserDevices(user).findAll { it.deviceId() == deviceId }.isEmpty()
+    }
+
+    void "test removeDevice returns 204 for non-primary user and removes access"() {
+        given:
+        String primaryUserId = ksuidService.generateKsuid()
+        String secondaryUserId = ksuidService.generateKsuid()
+        String deviceId = ksuidService.generateKsuid()
+        String claimId = ksuidService.generateKsuid()
+        String thingName = "thing-rm-" + ksuidService.generateKsuid()
+
+        User primaryUser = userService.ensureExists(primaryUserId)
+        User secondaryUser = userService.ensureExists(secondaryUserId)
+        def record = deviceService.provision(primaryUser, deviceId, "sn-rm-2", claimId, thingName)
+        deviceService.addUserAccess(secondaryUser, record.logicalDevice)
+
+        def auth = Mock(Authentication)
+        auth.getAttributes() >> [userId: secondaryUserId]
+
+        when:
+        def request = HttpRequest.DELETE("/api/v1/device/" + deviceId)
+        def response = client.toBlocking().exchange(request)
+
+        then:
+        _ * securityService.getAuthentication() >> Optional.of(auth)
+        response.status == HttpStatus.NO_CONTENT
+
+        and: "secondary user should no longer have access"
+        deviceService.getUserAccess(secondaryUser, record.logicalDevice).isEmpty()
+
+        and: "device should NOT be disabled (primary user still has it)"
+        !deviceService.getUserDevices(primaryUser).findAll { it.deviceId() == deviceId }.isEmpty()
+    }
+
+    void "test removeDevice returns 404 for user without access"() {
+        given:
+        String ownerUserId = ksuidService.generateKsuid()
+        String otherUserId = ksuidService.generateKsuid()
+        String deviceId = ksuidService.generateKsuid()
+        String claimId = ksuidService.generateKsuid()
+        String thingName = "thing-rm-" + ksuidService.generateKsuid()
+
+        User owner = userService.ensureExists(ownerUserId)
+        User other = userService.ensureExists(otherUserId)
+        deviceService.provision(owner, deviceId, "sn-rm-3", claimId, thingName)
+
+        def auth = Mock(Authentication)
+        auth.getAttributes() >> [userId: otherUserId]
+
+        when:
+        def request = HttpRequest.DELETE("/api/v1/device/" + deviceId)
+        client.toBlocking().exchange(request)
+
+        then:
+        _ * securityService.getAuthentication() >> Optional.of(auth)
+        HttpClientResponseException e = thrown()
+        e.status == HttpStatus.NOT_FOUND
+    }
 }

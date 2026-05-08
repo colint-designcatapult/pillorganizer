@@ -20,6 +20,8 @@ import jct.pillorganizer.tenant.repo.LogicalDeviceRepository;
 import jct.pillorganizer.tenant.repo.ProvisionRecordRepository;
 import lombok.extern.flogger.Flogger;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -43,6 +45,8 @@ public class DeviceService {
     DeviceUserRepository deviceUserRepository;
     @Inject
     TenantService tenantService;
+    @Inject
+    IotThingService iotThingService;
 
     @Transactional
     public ProvisionRecord provision(User user, String deviceId, String serialNo, String claimId, String thingName) {
@@ -163,6 +167,7 @@ public class DeviceService {
         TenantDetails tenantDetails = tenantService.getCurrentTenant().orElse(null);
         return deviceUserRepository.findByUserId(user.getId())
                 .stream()
+                .filter(du -> du.getDevice() != null && du.getDevice().getDisabledAt() == null)
                 .map(du -> deviceMapper.toAccessDTO(du, tenantDetails))
                 .collect(Collectors.toList());
     }
@@ -236,4 +241,40 @@ public class DeviceService {
         return device;
     }
 
+    /**
+     * Removes a user's access to a device. If the user is the primary user, the device is disabled
+     * and its IoT Thing is deleted. If not, only the DeviceUser record is removed.
+     */
+    @Transactional
+    public void removeDevice(User user, LogicalDevice device) {
+        Optional<DeviceUser> access = getUserAccess(user, device);
+        if (access.isEmpty()) {
+            log.atWarning().log("User %s has no access to device %s", user.getId(), device.getId());
+            return;
+        }
+
+        DeviceUser deviceUser = access.get();
+        if (deviceUser.isPrimaryUser()) {
+            disableDevice(device);
+        } else {
+            removeUserAccess(user, device);
+        }
+    }
+
+    /**
+     * Disables a logical device by setting disabledAt and deleting the IoT Thing.
+     */
+    @Transactional
+    public void disableDevice(LogicalDevice device) {
+        Timestamp now = Timestamp.from(Instant.now());
+        logicalDeviceRepository.updateDisabledAt(device.getId(), now);
+        log.atInfo().log("Disabled LogicalDevice %s", device.getId());
+
+        // Revoke certificates and delete the IoT Thing if a physical device is associated
+        ProvisionRecord physicalDevice = device.getPhysicalDevice();
+        if (physicalDevice != null && physicalDevice.getThingName() != null) {
+            iotThingService.revokeAllCerts(physicalDevice.getThingName());
+            iotThingService.deleteThing(physicalDevice.getThingName());
+        }
+    }
 }

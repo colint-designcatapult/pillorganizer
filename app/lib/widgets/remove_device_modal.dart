@@ -20,6 +20,14 @@ class RemoveDeviceDialog extends ConsumerStatefulWidget {
 class _RemoveDeviceDialog extends ConsumerState<RemoveDeviceDialog> {
   @override
   Widget build(BuildContext context) {
+    final bool isPrimary = widget.device?.primaryUser ?? true;
+    final String title = isPrimary
+        ? AppLocalizations.of(context)!.removingDevice
+        : AppLocalizations.of(context)!.removingFromAccount;
+    final String subtitle = isPrimary
+        ? AppLocalizations.of(context)!.removingDeviceConfirmation
+        : AppLocalizations.of(context)!.removingFromAccountConfirmation;
+
     return Dialog(
       insetPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
       child: Container(
@@ -54,7 +62,7 @@ class _RemoveDeviceDialog extends ConsumerState<RemoveDeviceDialog> {
               ),
               SizedBox(height: 4.h),
               Text(
-                AppLocalizations.of(context)!.removingDevice,
+                title,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: const Color(
                       0XFF7A2C2C,
@@ -65,7 +73,7 @@ class _RemoveDeviceDialog extends ConsumerState<RemoveDeviceDialog> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0).w,
                 child: Text(
-                  AppLocalizations.of(context)!.removingDeviceConfirmation,
+                  subtitle,
                   style: Theme.of(context)
                       .textTheme
                       .bodySmall

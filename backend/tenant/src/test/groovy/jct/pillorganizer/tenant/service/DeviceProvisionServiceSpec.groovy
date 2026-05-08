@@ -32,6 +32,9 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
     @Inject
     KsuidService ksuidService;
 
+    @Inject
+    jct.pillorganizer.tenant.repo.LogicalDeviceRepository logicalDeviceRepository
+
     def "should provision a device"() {
         given:
         def user = userService.ensureExists("user-1")
@@ -125,5 +128,55 @@ class DeviceProvisionServiceSpec extends BaseIntegrationSpec {
         def records = deviceService.getProvisionRecords(logicalDevice)
         def r1 = records.find { it.claimId == "claim-6-1" }
         r1.disabledAt != null
+    }
+
+    def "should disable device when primary user removes it"() {
+        given:
+        def user = userService.ensureExists("user-remove-1")
+        def record = deviceService.provision(user, "device-remove-1", "serial-remove-1", "claim-remove-1", "thing-remove-1")
+        def logicalDevice = record.logicalDevice
+
+        when:
+        deviceService.removeDevice(user, logicalDevice)
+
+        then:
+        def updatedDevice = logicalDeviceRepository.findById("device-remove-1")
+        updatedDevice.isPresent()
+        updatedDevice.get().disabledAt != null
+    }
+
+    def "should remove DeviceUser when non-primary user removes device"() {
+        given:
+        def primaryUser = userService.ensureExists("user-remove-primary")
+        def secondaryUser = userService.ensureExists("user-remove-secondary")
+        def record = deviceService.provision(primaryUser, "device-remove-2", "serial-remove-2", "claim-remove-2", "thing-remove-2")
+        def logicalDevice = record.logicalDevice
+        deviceService.addUserAccess(secondaryUser, logicalDevice)
+
+        when:
+        deviceService.removeDevice(secondaryUser, logicalDevice)
+
+        then: "secondary user no longer has access"
+        def access = deviceService.getUserAccess(secondaryUser, logicalDevice)
+        access.isEmpty()
+
+        and: "device is NOT disabled"
+        def device = logicalDeviceRepository.findById("device-remove-2")
+        device.isPresent()
+        device.get().disabledAt == null
+    }
+
+    def "getUserDevices should filter out disabled devices"() {
+        given:
+        def user = userService.ensureExists("user-filter-1")
+        def record = deviceService.provision(user, "device-filter-1", "serial-filter-1", "claim-filter-1", "thing-filter-1")
+        def logicalDevice = record.logicalDevice
+
+        when: "device is disabled"
+        deviceService.disableDevice(logicalDevice)
+
+        then: "getUserDevices should not return it"
+        def devices = deviceService.getUserDevices(user)
+        devices.findAll { it.deviceId() == "device-filter-1" }.isEmpty()
     }
 }

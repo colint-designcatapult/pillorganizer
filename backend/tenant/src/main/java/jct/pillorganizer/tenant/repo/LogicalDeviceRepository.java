@@ -30,4 +30,5 @@ public interface LogicalDeviceRepository extends CrudRepository<LogicalDevice, S
     void updateCurrentSchedule(@Id String logicalDeviceId, @Nullable DeviceSchedule currentSchedule);
     void updateRequestedSchedule(@Id String logicalDeviceId, @Nullable DeviceSchedule requestedSchedule);
     void updateTopicArn(@Id String logicalDeviceId, @Nullable String topicArn);
+    void updateDisabledAt(@Id String logicalDeviceId, @Nullable java.sql.Timestamp disabledAt);
 }

@@ -184,16 +184,29 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
     }
 
     if (targetDevice == null) {
-      return const SizedBox.shrink();
+      if (!widget.showAddDeviceSection) return const SizedBox.shrink();
+      return ScreenUtilWrapper(
+        child: Column(
+          mainAxisSize: MainAxisSize.max,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const AddDevice(titleSize: 30.0),
+            SizedBox(height: 8.h),
+          ],
+        ),
+      );
     }
 
     final scheduleAsync = ref.watch(scheduleProvider);
+    final isOnline = widget.ignoreOffline ||
+        connectionStatus == DeviceConnectionStatus.online;
 
-    return scheduleAsync.when(
+    // Build the schedule section independently so loading/error states don't
+    // hide unrelated sections (e.g. the delete-device button).
+    final scheduleSection = scheduleAsync.when(
       data: (scheduleData) {
-        // Initialize form fields only once when schedule first loads for this device.
-        // Defer the initialization because it calls setState(), which must not run
-        // synchronously during build.
+        // Initialize form fields only once when schedule first loads for this
+        // device. Deferred because setState() must not run during build.
         if (_seededDeviceId != targetDevice.id) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
@@ -203,70 +216,57 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
           });
         }
 
-        final isOnline = widget.ignoreOffline ||
-            connectionStatus == DeviceConnectionStatus.online;
-
-        return ScreenUtilWrapper(
+        if (!isOnline) return _buildOfflineCard();
+        return _buildScheduleForm(targetDevice);
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, s) {
+        print('[ScheduleEntry] Schedule load error: $e');
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Column(
-            mainAxisSize: MainAxisSize.max,
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (isOnline)
-                _buildScheduleForm(targetDevice)
-              else
-                _buildOfflineCard(),
-              if (widget.showRemovalSection) ...[
-                SizedBox(height: _sectionSpacing.h),
-                RemovalSection(device: targetDevice),
-              ],
-              if (widget.showAddDeviceSection) ...[
-                SizedBox(height: _sectionSpacing.h),
-                const AddDevice(titleSize: 30.0),
-              ],
-              SizedBox(height: 8.h),
+              if (!isOnline) _buildOfflineCard(),
+              Text(
+                'Error loading schedule',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'An unexpected error occurred. Please try again.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () =>
+                    ref.read(scheduleProvider.notifier).load(targetDevice.id),
+                child: const Text('Retry'),
+              ),
             ],
           ),
         );
       },
-      loading: () {
-        return const Center(child: CircularProgressIndicator());
-      },
-      error: (e, s) {
-        // Errors from scheduleProvider surface here as AsyncError and are shown
-        // with a fallback message plus a retry action.
-        print('[ScheduleEntry] Schedule load error: $e');
-        
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Error loading schedule',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'An unexpected error occurred. Please try again.',
-                  style: Theme.of(context).textTheme.bodySmall,
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    // Trigger a refresh of the schedule
-                    if (targetDevice != null) {
-                      ref.read(scheduleProvider.notifier).load(targetDevice.id);
-                    }
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+    );
+
+    return ScreenUtilWrapper(
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          scheduleSection,
+          if (widget.showRemovalSection) ...[
+            SizedBox(height: _sectionSpacing.h),
+            RemovalSection(device: targetDevice),
+          ],
+          if (widget.showAddDeviceSection) ...[
+            SizedBox(height: _sectionSpacing.h),
+            const AddDevice(titleSize: 30.0),
+          ],
+          SizedBox(height: 8.h),
+        ],
+      ),
     );
   }
 
@@ -600,7 +600,7 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
   }
 }
 
-// ── Removal section (unchanged) ────────────────────────────────────────────────
+// ── Removal section ─────────────────────────────────────────────────────────
 
 class RemovalSection extends ConsumerWidget {
   final DeviceMetadata? device;
@@ -608,6 +608,11 @@ class RemovalSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final bool isPrimary = device?.primaryUser ?? true;
+    final String buttonLabel = isPrimary
+        ? AppLocalizations.of(context)!.removeDevice
+        : AppLocalizations.of(context)!.removeFromAccount;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -647,7 +652,7 @@ class RemovalSection extends ConsumerWidget {
               ),
             ),
             child: Text(
-              AppLocalizations.of(context)!.removeDevice,
+              buttonLabel,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.error,
                     fontWeight: FontWeight.w600,

@@ -37,9 +37,17 @@ class DeviceServiceSpec extends BaseIntegrationSpec {
     @Inject
     TenantService tenantService
 
+    @Inject
+    IotThingService iotThingService
+
     @MockBean(TenantService)
     TenantService tenantService() {
         Mock(TenantService)
+    }
+
+    @MockBean(IotThingService)
+    IotThingService iotThingService() {
+        Mock(IotThingService)
     }
 
     def "should create a logical device from a provision record"() {
@@ -342,5 +350,32 @@ class DeviceServiceSpec extends BaseIntegrationSpec {
         !eligibility.isEligible()
         eligibility.device().isPresent()
         eligibility.device().get().id == record.logicalDevice.id
+    }
+
+    def "should revoke all certs then delete thing when disabling a device"() {
+        given:
+        def user = userService.ensureExists("user-disable-1")
+        def record = deviceService.provision(user, "device-disable-1", "serial-disable-1", "claim-disable-1", "thing-disable-1")
+        def logicalDevice = record.logicalDevice
+
+        when:
+        deviceService.disableDevice(logicalDevice)
+
+        then: "revokeAllCerts is called before deleteThing"
+        1 * iotThingService.revokeAllCerts("thing-disable-1")
+        1 * iotThingService.deleteThing("thing-disable-1")
+    }
+
+    def "should not call IoT operations when disabling a device with no physical device"() {
+        given:
+        def user = userService.ensureExists("user-disable-2")
+        def logicalDevice = deviceService.create(user, "device-disable-2")
+
+        when:
+        deviceService.disableDevice(logicalDevice)
+
+        then:
+        0 * iotThingService.revokeAllCerts(_)
+        0 * iotThingService.deleteThing(_)
     }
 }

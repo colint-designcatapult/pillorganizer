@@ -5,6 +5,7 @@ import io.micronaut.security.token.validator.TokenValidator;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jct.pillorganizer.core.uid.KsuidService;
+import jct.pillorganizer.core.message.DeleteUserMessage;
 import jct.pillorganizer.global.exception.UserEntityNotFoundException;
 import jct.pillorganizer.global.model.UserEntity;
 import jct.pillorganizer.global.repo.UserRepo;
@@ -12,6 +13,7 @@ import lombok.extern.flogger.Flogger;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 
+import java.io.IOException;
 import java.util.Optional;
 
 @Singleton
@@ -21,14 +23,20 @@ public class UserService {
     private final UserRepo userRepo;
     private final TokenValidator<?> tokenValidator;
     private final NotificationEndpointService notificationEndpointService;
+    private final UserAccountService userAccountService;
+    private final TenantMessageService tenantMessageService;
 
     @Inject
     public UserService(UserRepo userRepo, KsuidService ksuidService, TokenValidator<?> tokenValidator,
-                       NotificationEndpointService notificationEndpointService) {
+                       NotificationEndpointService notificationEndpointService,
+                       UserAccountService userAccountService,
+                       TenantMessageService tenantMessageService) {
         this.userRepo = userRepo;
         this.ksuidService = ksuidService;
         this.tokenValidator = tokenValidator;
         this.notificationEndpointService = notificationEndpointService;
+        this.userAccountService = userAccountService;
+        this.tenantMessageService = tenantMessageService;
     }
 
     public UserEntity createUser(String sub, String email) {
@@ -114,5 +122,29 @@ public class UserService {
         userRepo.updateFcmEndpointArn(user, endpointArn);
         log.atInfo().log("Persisted FCM endpoint ARN for user %s", user.getUserId());
         return user.toBuilder().fcmEndpointArn(endpointArn).build();
+    }
+
+    /**
+     * Permanently deletes a user account:
+     * 1. Deletes the Cognito user from the normal user pool
+     * 2. Deletes the UserEntity from the control plane
+     * 3. Broadcasts a deleteUser message to every tenant's queue
+     */
+    public void deleteAccount(UserEntity user) throws IOException {
+        log.atInfo().log("Deleting account for user %s (sub: %s)", user.getUserId(), user.getUserSub());
+
+        // Delete from Cognito
+        userAccountService.deleteUser(user.getUserSub());
+
+        // Delete from control plane
+        userRepo.delete(user);
+
+        // Broadcast to all tenants
+        DeleteUserMessage message = DeleteUserMessage.builder()
+                .userId(user.getUserId())
+                .build();
+        tenantMessageService.broadcastDeleteUser(message);
+
+        log.atInfo().log("Account deletion completed for user %s", user.getUserId());
     }
 }

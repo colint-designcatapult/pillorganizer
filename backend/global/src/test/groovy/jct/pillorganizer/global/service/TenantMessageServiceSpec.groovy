@@ -10,6 +10,7 @@ package jct.pillorganizer.global.service
 // @relation(SYS-REQ-43, scope=file)
 import io.micronaut.serde.ObjectMapper
 import jakarta.inject.Inject
+import jct.pillorganizer.core.message.DeleteUserMessage
 import jct.pillorganizer.core.message.DeviceProvisionMessage
 import jct.pillorganizer.core.message.GrantUserMessage
 import software.amazon.awssdk.services.sqs.SqsClient
@@ -97,6 +98,26 @@ class TenantMessageServiceSpec extends BaseIntegrationSpec {
             def finalReq = builder.build()
             assert finalReq.messageBody().contains("test-tenant")
             assert finalReq.messageBody().contains("John Doe")
+            return SendMessageResponse.builder().messageId("mocked-msg").build()
+        }
+    }
+
+    def "should broadcast deleteUser to all tenants"() {
+        given:
+        def message = DeleteUserMessage.builder()
+                .userId("user-to-delete")
+                .build()
+
+        when:
+        tenantMessageService.broadcastDeleteUser(message)
+
+        then:
+        _ * client.sendMessage(_ as Consumer) >> { Consumer req ->
+            def builder = SendMessageRequest.builder()
+            req.accept(builder)
+            def finalReq = builder.build()
+            assert finalReq.messageBody().contains("user-to-delete")
+            assert finalReq.messageBody().contains("deleteUser")
             return SendMessageResponse.builder().messageId("mocked-msg").build()
         }
     }
