@@ -16,6 +16,12 @@ import '../apiv2/models/dto.dart';
 part 'provision_provider.mapper.dart';
 part 'provision_provider.g.dart';
 
+enum ProvisionMode {
+  newDevice,
+  wifiReconfigure,
+  transferDevice,
+}
+
 @MappableClass()
 class ProvisioningClaim with ProvisioningClaimMappable {
   final String claimId;
@@ -91,10 +97,10 @@ class ProvisioningRepository {
     }
   }
 
-  Future<ProvisioningClaim> claimDevice(String serial) async {
+  Future<ProvisioningClaim> claimDevice(String serial, {String? deviceId}) async {
     developer.log('Claiming device $serial via Backend API...');
     final result = await apiClient.getProvisioningClaim(
-        ProvisioningClaimRequestDto(serialNumber: serial, deviceId: null));
+        ProvisioningClaimRequestDto(serialNumber: serial, deviceId: deviceId));
     if (result == null) {
       throw Exception('Backend refused claim for device $serial');
     }
@@ -158,6 +164,9 @@ sealed class ProvisionState with ProvisionStateMappable {
   final String? serialNumber;
   final ProvisioningClaim? claim;
   final Object? errorMessage;
+  final ProvisionMode mode;
+  final String? existingDeviceId;
+  final String? targetDeviceName;
 
   const ProvisionState({
     this.progress = 0.0,
@@ -170,6 +179,9 @@ sealed class ProvisionState with ProvisionStateMappable {
     this.serialNumber,
     this.claim,
     this.errorMessage,
+    this.mode = ProvisionMode.newDevice,
+    this.existingDeviceId,
+    this.targetDeviceName,
   });
 
   // Helper to check for error without needing to cast specifically in all places
@@ -178,52 +190,52 @@ sealed class ProvisionState with ProvisionStateMappable {
 
 @MappableClass()
 class ProvisionStateScanningBle extends ProvisionState with ProvisionStateScanningBleMappable {
-  const ProvisionStateScanningBle({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage});
+  const ProvisionStateScanningBle({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage, super.mode, super.existingDeviceId, super.targetDeviceName});
 }
 
 @MappableClass()
 class ProvisionStateSelectBle extends ProvisionState with ProvisionStateSelectBleMappable {
-  const ProvisionStateSelectBle({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage});
+  const ProvisionStateSelectBle({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage, super.mode, super.existingDeviceId, super.targetDeviceName});
 }
 
 @MappableClass()
 class ProvisionStateFetchingSerial extends ProvisionState with ProvisionStateFetchingSerialMappable {
-  const ProvisionStateFetchingSerial({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage});
+  const ProvisionStateFetchingSerial({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage, super.mode, super.existingDeviceId, super.targetDeviceName});
 }
 
 @MappableClass()
 class ProvisionStateScanningWifi extends ProvisionState with ProvisionStateScanningWifiMappable {
-  const ProvisionStateScanningWifi({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage});
+  const ProvisionStateScanningWifi({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage, super.mode, super.existingDeviceId, super.targetDeviceName});
 }
 
 @MappableClass()
 class ProvisionStateSelectWifi extends ProvisionState with ProvisionStateSelectWifiMappable {
-  const ProvisionStateSelectWifi({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage});
+  const ProvisionStateSelectWifi({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage, super.mode, super.existingDeviceId, super.targetDeviceName});
 }
 
 @MappableClass()
 class ProvisionStateProvisioningWifi extends ProvisionState with ProvisionStateProvisioningWifiMappable {
-  const ProvisionStateProvisioningWifi({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage});
+  const ProvisionStateProvisioningWifi({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage, super.mode, super.existingDeviceId, super.targetDeviceName});
 }
 
 @MappableClass()
 class ProvisionStateComplete extends ProvisionState with ProvisionStateCompleteMappable {
-  const ProvisionStateComplete({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage});
+  const ProvisionStateComplete({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage, super.mode, super.existingDeviceId, super.targetDeviceName});
 }
 
 @MappableClass()
 class ProvisionStateFailed extends ProvisionState with ProvisionStateFailedMappable {
-  const ProvisionStateFailed({required super.errorMessage, super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim});
+  const ProvisionStateFailed({required super.errorMessage, super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.mode, super.existingDeviceId, super.targetDeviceName});
 }
 
 @MappableClass()
 class ProvisionStateMissingPermissions extends ProvisionState with ProvisionStateMissingPermissionsMappable {
-  const ProvisionStateMissingPermissions({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage});
+  const ProvisionStateMissingPermissions({super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.errorMessage, super.mode, super.existingDeviceId, super.targetDeviceName});
 }
 
 @MappableClass()
 class ProvisionStateTimeout extends ProvisionState with ProvisionStateTimeoutMappable {
-  const ProvisionStateTimeout({required super.errorMessage, super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim});
+  const ProvisionStateTimeout({required super.errorMessage, super.progress, super.deviceName, super.bluetoothList, super.wifiNetworks, super.ssid, super.completionETA, super.wifiPassword, super.serialNumber, super.claim, super.mode, super.existingDeviceId, super.targetDeviceName});
 }
 
 @riverpod
@@ -233,27 +245,71 @@ class Provision extends _$Provision {
     return const ProvisionStateScanningBle();
   }
 
+  void initWithMode({
+    required ProvisionMode mode,
+    String? existingDeviceId,
+    String? targetDeviceName,
+  }) {
+    state = ProvisionStateScanningBle(
+      mode: mode,
+      existingDeviceId: existingDeviceId,
+      targetDeviceName: targetDeviceName,
+    );
+  }
+
   Future<void> scanBluetooth() async {
     final repo = ref.read(provisioningRepositoryProvider);
+    final mode = state.mode;
+    final existingDeviceId = state.existingDeviceId;
+    final targetDeviceName = state.targetDeviceName;
 
     // Set initial state
     state = ProvisionStateScanningBle(
       progress: 0.1,
+      mode: mode,
+      existingDeviceId: existingDeviceId,
+      targetDeviceName: targetDeviceName,
     );
     try {
       final devices = await repo.scanBleDevices()
           .timeout(const Duration(seconds: 25));
       developer.log('BLE scan completed. Found ${devices.length} devices.', name: 'ProvisionNotifier');
+
+      // In wifiReconfigure mode, auto-select the known device
+      if (mode == ProvisionMode.wifiReconfigure && targetDeviceName != null) {
+        final match = devices.where((d) => d == targetDeviceName).firstOrNull;
+        if (match != null) {
+          developer.log('Auto-selecting known device: $targetDeviceName', name: 'ProvisionNotifier');
+          await selectBluetooth(match);
+          return;
+        }
+        // Device not found in scan, show list so user can retry
+        developer.log('Target device $targetDeviceName not found in scan', name: 'ProvisionNotifier');
+      }
+
       state = ProvisionStateSelectBle(
         bluetoothList: devices,
         progress: 1.0,
+        mode: mode,
+        existingDeviceId: existingDeviceId,
+        targetDeviceName: targetDeviceName,
       );
     } on TimeoutException catch (e, stack) {
       developer.log('BLE scan timed out', name: 'ProvisionNotifier', error: e, stackTrace: stack);
-      state = ProvisionStateTimeout(errorMessage: 'BLE Scan Timeout: Device not found.');
+      state = ProvisionStateTimeout(
+        errorMessage: 'BLE Scan Timeout: Device not found.',
+        mode: mode,
+        existingDeviceId: existingDeviceId,
+        targetDeviceName: targetDeviceName,
+      );
     } catch (e, stack) {
       developer.log('BLE scan failed: $e', name: 'ProvisionNotifier', error: e, stackTrace: stack);
-      state = ProvisionStateFailed(errorMessage: 'BLE Scan Error: ${e.toString()}');
+      state = ProvisionStateFailed(
+        errorMessage: 'BLE Scan Error: ${e.toString()}',
+        mode: mode,
+        existingDeviceId: existingDeviceId,
+        targetDeviceName: targetDeviceName,
+      );
     }
   }
 
@@ -261,10 +317,16 @@ class Provision extends _$Provision {
 
   Future<void> selectBluetooth(String name) async {
     final repo = ref.read(provisioningRepositoryProvider);
+    final mode = state.mode;
+    final existingDeviceId = state.existingDeviceId;
+    final targetDeviceName = state.targetDeviceName;
 
     state = ProvisionStateScanningWifi(
       deviceName: name,
       progress: 0.1,
+      mode: mode,
+      existingDeviceId: existingDeviceId,
+      targetDeviceName: targetDeviceName,
     );
 
     try {
@@ -276,11 +338,28 @@ class Provision extends _$Provision {
       final wifiEntries = networks.map((n) => WifiEntry(name: n)).toList();
       developer.log('Session established. Found ${networks.length} networks', name: 'ProvisionNotifier');
 
+      if (mode == ProvisionMode.wifiReconfigure) {
+        // Wi-Fi reconfigure: skip serial fetch, claim, and claim token — go straight to Wi-Fi selection
+        developer.log('Wi-Fi reconfigure mode: skipping serial/claim steps', name: 'ProvisionNotifier');
+        state = ProvisionStateSelectWifi(
+          deviceName: name,
+          wifiNetworks: wifiEntries,
+          progress: 1.0,
+          mode: mode,
+          existingDeviceId: existingDeviceId,
+          targetDeviceName: targetDeviceName,
+        );
+        return;
+      }
+
       // Step 2: Fetch hardware serial number from device
       state = ProvisionStateFetchingSerial(
         deviceName: name,
         wifiNetworks: wifiEntries,
         progress: 0.4,
+        mode: mode,
+        existingDeviceId: existingDeviceId,
+        targetDeviceName: targetDeviceName,
       );
       developer.log('Fetching serial number from hardware...', name: 'ProvisionNotifier');
 
@@ -293,12 +372,18 @@ class Provision extends _$Provision {
         serialNumber: serial,
         wifiNetworks: wifiEntries,
         progress: 0.55,
+        mode: mode,
+        existingDeviceId: existingDeviceId,
+        targetDeviceName: targetDeviceName,
       );
 
       // Step 3: Claim device from backend using real hardware serial
       developer.log('Claiming device from backend for $serial...', name: 'ProvisionNotifier');
 
-      final claimResult = await repo.claimDevice(serial);
+      final claimResult = await repo.claimDevice(
+        serial,
+        deviceId: mode == ProvisionMode.transferDevice ? existingDeviceId : null,
+      );
 
       developer.log('Claim successful. DeviceID: ${claimResult.deviceId}', name: 'ProvisionNotifier');
 
@@ -308,6 +393,9 @@ class Provision extends _$Provision {
         claim: claimResult,
         wifiNetworks: wifiEntries,
         progress: 0.75,
+        mode: mode,
+        existingDeviceId: existingDeviceId,
+        targetDeviceName: targetDeviceName,
       );
 
       // Step 4: Send Claim ID and Token to device
@@ -324,6 +412,9 @@ class Provision extends _$Provision {
         claim: claimResult,
         wifiNetworks: wifiEntries,
         progress: 1.0,
+        mode: mode,
+        existingDeviceId: existingDeviceId,
+        targetDeviceName: targetDeviceName,
       );
     } on TimeoutException catch (e, stack) {
       try { await repo.disconnectDevice(name); } catch (_) {}
@@ -333,6 +424,9 @@ class Provision extends _$Provision {
         deviceName: name,
         serialNumber: state.serialNumber,
         claim: state.claim,
+        mode: mode,
+        existingDeviceId: existingDeviceId,
+        targetDeviceName: targetDeviceName,
       );
     } catch (e, stack) {
       try { await repo.disconnectDevice(name); } catch (_) {}
@@ -342,6 +436,9 @@ class Provision extends _$Provision {
         deviceName: name,
         serialNumber: state.serialNumber,
         claim: state.claim,
+        mode: mode,
+        existingDeviceId: existingDeviceId,
+        targetDeviceName: targetDeviceName,
       );
     }
   }
@@ -364,6 +461,9 @@ class Provision extends _$Provision {
     final currentDeviceName = state.deviceName;
     if (currentDeviceName == null) return;
     final repo = ref.read(provisioningRepositoryProvider);
+    final mode = state.mode;
+    final existingDeviceId = state.existingDeviceId;
+    final targetDeviceName = state.targetDeviceName;
 
     state = ProvisionStateProvisioningWifi(
       deviceName: currentDeviceName,
@@ -373,6 +473,9 @@ class Provision extends _$Provision {
       ssid: ssid,
       wifiPassword: password,
       progress: 0.0,
+      mode: mode,
+      existingDeviceId: existingDeviceId,
+      targetDeviceName: targetDeviceName,
     );
 
     developer.log('Initiating Wi-Fi provisioning for $currentDeviceName with SSID: $ssid', name: 'ProvisionNotifier');
@@ -387,6 +490,23 @@ class Provision extends _$Provision {
       if (success == true) {
         print('[ProvisionNotifier] WiFi credentials sent and provisioned successfully.');
         await repo.disconnectDevice(currentDeviceName);
+
+        if (mode == ProvisionMode.wifiReconfigure) {
+          // Wi-Fi reconfigure: device already exists in backend, no need to wait
+          print('[ProvisionNotifier] Wi-Fi reconfigure complete — skipping backend wait.');
+          state = ProvisionStateComplete(
+            deviceName: currentDeviceName,
+            serialNumber: state.serialNumber,
+            claim: state.claim,
+            wifiNetworks: state.wifiNetworks,
+            ssid: ssid,
+            progress: 1.0,
+            mode: mode,
+            existingDeviceId: existingDeviceId,
+            targetDeviceName: targetDeviceName,
+          );
+          return;
+        }
         
         // Keep showing provisioning state while waiting for device to appear in backend
         // This reuses the existing "Finishing Setup" progress screen
@@ -400,6 +520,9 @@ class Provision extends _$Provision {
             claim: state.claim,
             wifiNetworks: state.wifiNetworks,
             ssid: ssid,
+            mode: mode,
+            existingDeviceId: existingDeviceId,
+            targetDeviceName: targetDeviceName,
           );
         } else {
           print('[ProvisionNotifier] Waiting for device $claimId to complete fleet provisioning and appear in backend...');
@@ -414,6 +537,9 @@ class Provision extends _$Provision {
               wifiNetworks: state.wifiNetworks,
               ssid: ssid,
               progress: 1.0,
+              mode: mode,
+              existingDeviceId: existingDeviceId,
+              targetDeviceName: targetDeviceName,
             );
           } else {
             // Device did not appear in backend within timeout period — provisioning failed
@@ -424,6 +550,9 @@ class Provision extends _$Provision {
               claim: state.claim,
               wifiNetworks: state.wifiNetworks,
               ssid: ssid,
+              mode: mode,
+              existingDeviceId: existingDeviceId,
+              targetDeviceName: targetDeviceName,
             );
           }
         }
@@ -439,6 +568,9 @@ class Provision extends _$Provision {
           wifiNetworks: state.wifiNetworks,
           ssid: ssid,
           progress: 1.0,
+          mode: mode,
+          existingDeviceId: existingDeviceId,
+          targetDeviceName: targetDeviceName,
         );
       } else {
         // success is null — device likely wiped credentials and restarted.

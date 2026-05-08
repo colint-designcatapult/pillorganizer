@@ -1088,4 +1088,26 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get yourEmail => 'Votre courriel';
+
+  @override
+  String get reconfigureWifi => 'Reconfigurer le Wi-Fi';
+
+  @override
+  String get reconfigureWifiSubtitle =>
+      'Changer le réseau Wi-Fi sans perdre vos données';
+
+  @override
+  String get transferDeviceButton =>
+      'Transférer les données vers un nouvel appareil';
+
+  @override
+  String get transferDeviceSubtitle =>
+      'Déplacer votre horaire et votre historique vers un autre appareil';
+
+  @override
+  String get wifiReconfigureSuccess =>
+      'Identifiants Wi-Fi mis à jour avec succès.';
+
+  @override
+  String get transferDeviceSuccess => 'Appareil transféré avec succès.';
 }

@@ -2059,6 +2059,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your email'**
   String get yourEmail;
+
+  /// No description provided for @reconfigureWifi.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconfigure Wi-Fi'**
+  String get reconfigureWifi;
+
+  /// No description provided for @reconfigureWifiSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change the Wi-Fi network without losing your data'**
+  String get reconfigureWifiSubtitle;
+
+  /// No description provided for @transferDeviceButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer data to new device'**
+  String get transferDeviceButton;
+
+  /// No description provided for @transferDeviceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move your schedule and history to a different device'**
+  String get transferDeviceSubtitle;
+
+  /// No description provided for @wifiReconfigureSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Wi-Fi credentials updated successfully.'**
+  String get wifiReconfigureSuccess;
+
+  /// No description provided for @transferDeviceSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Device transferred successfully.'**
+  String get transferDeviceSuccess;
 }
 
 class _AppLocalizationsDelegate

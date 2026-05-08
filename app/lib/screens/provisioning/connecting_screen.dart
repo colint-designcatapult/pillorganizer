@@ -47,6 +47,12 @@ class _ProvisionConnectingPageState
 
       // Handle setup complete
       if (next is ProvisionStateComplete && previous is! ProvisionStateComplete) {
+        if (next.mode == ProvisionMode.wifiReconfigure || next.mode == ProvisionMode.transferDevice) {
+          // Navigate back to main screen, skip name/post-setup wizard
+          Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+              '/index', (route) => false);
+          return;
+        }
         Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
             '/name_new_device?id=${next.claim?.deviceId}', (route) => false);
         return;
@@ -107,6 +113,14 @@ class _ProvisionConnectingPageState
               ?.copyWith(color: Colors.white),
         ),
         onPressed: () {
+          if (state.mode == ProvisionMode.wifiReconfigure || state.mode == ProvisionMode.transferDevice) {
+            final message = state.mode == ProvisionMode.wifiReconfigure
+                ? AppLocalizations.of(context)!.wifiReconfigureSuccess
+                : AppLocalizations.of(context)!.transferDeviceSuccess;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(message)),
+            );
+          }
           Navigator.of(context, rootNavigator: true).pop();
         },
       );

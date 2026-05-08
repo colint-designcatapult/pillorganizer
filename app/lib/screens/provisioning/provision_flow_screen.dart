@@ -6,10 +6,29 @@ import 'wifi_select_screen.dart';
 import 'connecting_screen.dart';
 
 class ProvisionFlowPage extends ConsumerStatefulWidget {
-  const ProvisionFlowPage({super.key});
+  final ProvisionMode mode;
+  final String? existingDeviceId;
+  final String? targetDeviceName;
 
-  static Route<ProvisionFlowPage> route() =>
-      MaterialPageRoute(builder: (_) => const ProvisionFlowPage());
+  const ProvisionFlowPage({
+    super.key,
+    this.mode = ProvisionMode.newDevice,
+    this.existingDeviceId,
+    this.targetDeviceName,
+  });
+
+  static Route<ProvisionFlowPage> route({
+    ProvisionMode mode = ProvisionMode.newDevice,
+    String? existingDeviceId,
+    String? targetDeviceName,
+  }) =>
+      MaterialPageRoute(
+        builder: (_) => ProvisionFlowPage(
+          mode: mode,
+          existingDeviceId: existingDeviceId,
+          targetDeviceName: targetDeviceName,
+        ),
+      );
 
   @override
   ConsumerState<ProvisionFlowPage> createState() => _ProvisionFlowPageState();
@@ -21,6 +40,11 @@ class _ProvisionFlowPageState extends ConsumerState<ProvisionFlowPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.invalidate(provisionProvider);
+      ref.read(provisionProvider.notifier).initWithMode(
+        mode: widget.mode,
+        existingDeviceId: widget.existingDeviceId,
+        targetDeviceName: widget.targetDeviceName,
+      );
     });
   }
 

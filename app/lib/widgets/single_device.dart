@@ -1,5 +1,7 @@
 import 'package:app/apiv2/models/device.dart';
 import 'package:app/provider/mqtt_provider.dart';
+import 'package:app/provider/provision_provider.dart';
+import 'package:app/screens/provisioning/provision_flow_screen.dart';
 import 'package:app/widgets/device_rename_modal.dart';
 import 'package:app/widgets/notifications_settings.dart';
 import 'package:app/widgets/schedule_entry.dart';
@@ -169,6 +171,64 @@ class _SingleDeviceState extends State<SingleDevice> {
                       },
                     ),
                 ]),
+                if (isOwner && widget.device != null) ...[
+                  SizedBox(height: 12.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: Icon(PhosphorIconsRegular.wifiHigh, size: 18.h),
+                          label: Text(
+                            AppLocalizations.of(context)!.reconfigureWifi,
+                            style: TextStyle(fontSize: 12.h),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 8.w),
+                            side: BorderSide(color: const Color(0xFFBFD2DB), width: 1.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context, rootNavigator: true).push(
+                              ProvisionFlowPage.route(
+                                mode: ProvisionMode.wifiReconfigure,
+                                targetDeviceName: 'cabiNET-${widget.device!.serialNo}',
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: Icon(PhosphorIconsRegular.arrowsLeftRight, size: 18.h),
+                          label: Text(
+                            AppLocalizations.of(context)!.transferDeviceButton,
+                            style: TextStyle(fontSize: 12.h),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 8.w),
+                            side: BorderSide(color: const Color(0xFFBFD2DB), width: 1.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context, rootNavigator: true).push(
+                              ProvisionFlowPage.route(
+                                mode: ProvisionMode.transferDevice,
+                                existingDeviceId: widget.device!.id,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

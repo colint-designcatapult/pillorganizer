@@ -340,5 +340,11 @@
 	"caregiverInvited": "Caregiver invited successfully.",
 	"errorInvitingCaregiver": "Failed to invite caregiver. Please ensure the email is registered.",
 	"enterCaregiverEmail": "Enter caregiver's email address",
-	"yourEmail": "Your email"
+	"yourEmail": "Your email",
+	"reconfigureWifi": "Reconfigure Wi-Fi",
+	"reconfigureWifiSubtitle": "Change the Wi-Fi network without losing your data",
+	"transferDeviceButton": "Transfer data to new device",
+	"transferDeviceSubtitle": "Move your schedule and history to a different device",
+	"wifiReconfigureSuccess": "Wi-Fi credentials updated successfully.",
+	"transferDeviceSuccess": "Device transferred successfully."
 }
