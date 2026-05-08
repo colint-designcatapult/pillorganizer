@@ -1,6 +1,5 @@
 package jct.pillorganizer.global.controller;
 
-import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
@@ -86,12 +85,7 @@ public class UserDeviceAccessController {
      */
     @Post("/device/invite-caregiver")
     @Secured(SecurityRule.IS_AUTHENTICATED)
-    public Mono<Void> inviteCaregiver(@Body @Valid InviteCaregiverRequestDto dto,
-                                       @Header(HttpHeaders.AUTHORIZATION) String authorization) {
-        // Strip "Bearer " prefix if present
-        String jwt = authorization.startsWith("Bearer ")
-                ? authorization.substring(7) : authorization;
-
+    public Mono<Void> inviteCaregiver(@Body @Valid InviteCaregiverRequestDto dto) {
         return Mono.fromCallable(() -> {
             // Verify the target user exists by email
             var targetUser = userService.findByEmail(dto.email())
@@ -105,7 +99,7 @@ public class UserDeviceAccessController {
                     dto.nickname()
             );
         }).flatMap(tenantDto ->
-                userDeviceAccessService.inviteCaregiver(dto.tenantId(), dto.deviceId(), jwt, tenantDto)
+                userDeviceAccessService.inviteCaregiver(dto.tenantId(), dto.deviceId(), tenantDto)
         );
     }
 }

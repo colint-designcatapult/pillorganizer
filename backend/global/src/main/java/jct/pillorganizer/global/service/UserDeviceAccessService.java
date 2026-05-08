@@ -95,17 +95,17 @@ public class UserDeviceAccessService {
     }
 
     /**
-     * Invites a caregiver to a device by forwarding the request to the appropriate tenant,
-     * passing the requester's JWT so the tenant can verify the caller is the primary user.
+     * Invites a caregiver to a device by forwarding the request to the appropriate tenant.
+     * The caller's JWT is automatically propagated by Micronaut's token propagation.
      */
-    public Mono<Void> inviteCaregiver(String tenantId, String deviceId, String jwt,
+    public Mono<Void> inviteCaregiver(String tenantId, String deviceId,
                                        InviteCaregiverTenantDto dto) {
         TenantClient client = tenants.stream()
                 .filter(c -> tenantId.equals(c.getTenantDetails().getId()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Tenant not found: " + tenantId));
 
-        return client.inviteCaregiver(jwt, deviceId, dto);
+        return client.inviteCaregiver(deviceId, dto);
     }
 
 }

@@ -71,11 +71,9 @@ public class TenantClient {
                 Argument.of(DeviceAccessDto.class)));
     }
 
-    public Mono<Void> inviteCaregiver(String authorization, String deviceId,
-                                       InviteCaregiverTenantDto dto) {
+    public Mono<Void> inviteCaregiver(String deviceId, InviteCaregiverTenantDto dto) {
         return Mono.from(httpClient.exchange(
-                HttpRequest.POST(makeUri("/internal/user/device/" + deviceId + "/invite-caregiver"), dto)
-                        .bearerAuth(authorization),
+                HttpRequest.POST(makeUri("/internal/user/device/" + deviceId + "/invite-caregiver"), dto),
                 Argument.VOID)).then();
     }
 
