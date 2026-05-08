@@ -113,18 +113,6 @@ abstract class RestClient {
   Future<DeviceStateDTO> stateDate(
       @Path("id") String id, @Field() String date);
 
-  @POST("/caregiver/validate/{code}")
-  Future<CaregiverCodeValidationDTO> validateCaregiverCode(
-      @Path("code") String code);
-
-  @POST("/caregiver/generate/{deviceId}")
-  Future<DeviceCaregiverCodeDTO> generateCaregiverCode(
-      @Path("deviceId") String id);
-
-  @GET("/caregiver/codes")
-  Future<List<DeviceCaregiverCodeDTO>> getShareCodes(
-      @Query("deviceIds") List<String> deviceIds);
-
   @POST("/takecare/validate/{patientID}")
   Future<void> validateAndLinkTakecarePatient(
       @Path("patientID") String patientID,
@@ -801,54 +789,6 @@ class DeviceStateDTO {
 
   factory DeviceStateDTO.fromJson(Map<String, dynamic> json) =>
       _$DeviceStateDTOFromJson(json);
-}
-
-@JsonSerializable()
-class DeviceCaregiverCodeDTO {
-  final int id;
-  final String deviceID;
-  final int code;
-  final int expiresAt;
-  final bool deleted;
-
-  DeviceCaregiverCodeDTO({
-    required this.id,
-    required this.deviceID,
-    required this.code,
-    required this.expiresAt,
-    required this.deleted,
-  });
-
-  bool get isValid =>
-      !deleted &&
-      DateTime.now().isBefore(
-          DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000, isUtc: true));
-
-  int get remainingSeconds {
-    final expiry =
-        DateTime.fromMillisecondsSinceEpoch(expiresAt * 1000, isUtc: true);
-    final diff = expiry.difference(DateTime.now()).inSeconds;
-    return diff > 0 ? diff : 0;
-  }
-
-  String get codeString => code.toString().padLeft(6, '0');
-
-  factory DeviceCaregiverCodeDTO.fromJson(Map<String, dynamic> json) =>
-      _$DeviceCaregiverCodeDTOFromJson(json);
-
-  Map<String, dynamic> toJson() => _$DeviceCaregiverCodeDTOToJson(this);
-}
-
-@JsonSerializable()
-class CaregiverCodeValidationDTO {
-  final String name;
-
-  CaregiverCodeValidationDTO({required this.name});
-
-  factory CaregiverCodeValidationDTO.fromJson(Map<String, dynamic> json) =>
-      _$CaregiverCodeValidationDTOFromJson(json);
-
-  Map<String, dynamic> toJson() => _$CaregiverCodeValidationDTOToJson(this);
 }
 
 class LoadingValueNotifier<T> extends ValueNotifier<T?> {
