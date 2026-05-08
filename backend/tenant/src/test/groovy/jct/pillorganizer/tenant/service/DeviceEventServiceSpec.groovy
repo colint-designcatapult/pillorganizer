@@ -190,7 +190,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         deviceEventService.processEvent(message)
 
         then:
-        1 * notificationService.publish(topicArn, "CabiNET", "Your dose was recorded as taken.", { it > 0 && it <= 900 })
+        1 * notificationService.publish(topicArn, "CabiNET", "Your dose was recorded as taken.", { it > 0 && it <= 900 }, "TAKEN")
         deviceEventRepository.findAll().findAll {
             it.logicalDevice.id == "des-notif-device-1" && it.eventType == "TAKEN"
         }.size() == 1
@@ -218,7 +218,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         deviceEventService.processEvent(message)
 
         then:
-        1 * notificationService.publish(topicArn, "CabiNET", "Reminder: no activity detected for the Friday PM dose.", { it > 0 && it <= 900 })
+        1 * notificationService.publish(topicArn, "CabiNET", "Reminder: no activity detected for the Friday PM dose.", { it > 0 && it <= 900 }, "MISSED")
         deviceEventRepository.findAll().findAll {
             it.logicalDevice.id == "des-notif-device-2" && it.eventType == "MISSED"
         }.size() == 1
@@ -241,7 +241,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         deviceEventService.processEvent(message)
 
         then:
-        0 * notificationService.publish(_, _, _, _)
+        0 * notificationService.publish(_, _, _, _, _)
         noExceptionThrown()
     }
 
@@ -267,7 +267,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         deviceEventService.processEvent(message)
 
         then:
-        0 * notificationService.publish(_, _, _, _)
+        0 * notificationService.publish(_, _, _, _, _)
         noExceptionThrown()
         // Event is still persisted even if notification is skipped
         deviceEventRepository.findAll().findAll {
@@ -297,7 +297,7 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
         deviceEventService.processEvent(message)
 
         then:
-        0 * notificationService.publish(_, _, _, _)
+        0 * notificationService.publish(_, _, _, _, _)
         noExceptionThrown()
     }
 
@@ -324,6 +324,6 @@ class DeviceEventServiceSpec extends BaseIntegrationSpec {
 
         then:
         1 * notificationService.publish(topicArn, "CabiNET", "Your Saturday PM dose was recorded as taken.",
-                { long ttl -> ttl >= 595 && ttl <= 605 })
+                { long ttl -> ttl >= 595 && ttl <= 605 }, "TAKEN")
     }
 }

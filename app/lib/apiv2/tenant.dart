@@ -36,4 +36,25 @@ abstract class TenantApiClient {
   Future<void> sendCommand(
       @Path("id") String deviceId,
       @Body() DeviceCommandDto command);
+
+  @POST("/api/v1/caregiver/revoke/{caregiverId}")
+  Future<void> revokeCaregiverAccess(
+      @Path("caregiverId") String caregiverId);
+
+  @GET("/api/v1/caregiver/list/{deviceId}")
+  Future<List<CaregiverListItemDto>> listCaregivers(
+      @Path("deviceId") String deviceId);
+
+  @POST("/api/v1/caregiver/transfer/{deviceId}")
+  Future<void> transferPrimaryUser(
+      @Path("deviceId") String deviceId,
+      @Body() TransferPrimaryUserDto dto);
+
+  @PUT("/api/v1/device/{id}/notification-preferences")
+  Future<DeviceAccessDto> updateNotificationPreferences(
+      @Path("id") String deviceId,
+      @Body() NotificationPreferencesRequestDto dto);
+
+  @GET("/api/v1/device/default-schedule")
+  Future<BaseScheduleDto> getDefaultSchedule();
 }

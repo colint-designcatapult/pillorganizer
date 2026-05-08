@@ -176,6 +176,7 @@ export class AppStack extends cdk.Stack {
           actions: [
             'sns:CreateTopic',
             'sns:Publish',
+            'sns:SetSubscriptionAttributes'
           ],
           resources: [
             `arn:aws:sns:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:device-*`,

@@ -102,13 +102,10 @@
 	"haveAccountAlready": "Vous avez déjà un compte?",
 	"invalidEmailFormat": "Format d'adresse courriel invalide",
 	"inviteCollaborators": "Inviter des collaborateurs",
-	"inviteCollaboratorsDescription": "Pour inviter des membres avec accès en lecture seule à votre pilulier, appuyez ci-dessous pour générer un code. Le code sera valide pendant 10 minutes seulement.",
+	"inviteCollaboratorsDescription": "Pour inviter des membres avec accès en lecture seule à votre pilulier, saisissez leur adresse courriel ci-dessous.",
 	"joinExistingDevice": "Rejoindre un appareil existant",
-	"joinDeviceTitle": "Entrer le code",
-	"joinDeviceSubtext": "L'administrateur du pilulier vous a probablement envoyé un code de sécurité pour accéder à votre compte. Saisissez-le ci-dessous :",
-	"joinDeviceErrorExpired": "Ce code est expiré. Veuillez contacter l’administrateur•ice du pilulier en question",
-	"joinDeviceConfirmationTitle": "Tout est prêt",
-	"joinDeviceConfirmationSubtext": "Vous êtes invité à rejoindre ‘{deviceName}’ avec un accès en lecture seule.",
+	"joinDeviceTitle": "Comment rejoindre un appareil",
+	"joinDeviceSubtext": "Pour rejoindre un appareil existant, demandez à l'utilisateur principal de vous inviter en utilisant votre adresse courriel affichée ci-dessous.",
 	"loadingState": "Chargement ...",
 	"manageDevices": "Gérer les appareils",
 	"manual": "Manuel",
@@ -284,5 +281,37 @@
 	"commandMarkReset": "Réinitialiser",
 	"commandReloadComplete": "Terminer le rechargement",
 	"commandReloadStart": "Démarrer le rechargement",
-	"commandReloadInitiate": "Lancer le rechargement"
+	"commandReloadInitiate": "Lancer le rechargement",
+	"peopleWithAccess": "Personnes ayant accès",
+	"primaryUser": "Utilisateur principal",
+	"revokeAccess": "Révoquer l'accès",
+	"revokeAccessConfirmation": "Êtes-vous sûr de vouloir révoquer l'accès de {name}? Cette personne ne pourra plus consulter les données de cet appareil.",
+	"@revokeAccessConfirmation": {
+		"placeholders": {
+			"name": {
+				"type": "String"
+			}
+		}
+	},
+	"revoke": "Révoquer",
+	"transferPrimaryUser": "Transférer l'utilisateur principal",
+	"transferPrimaryUserDescription": "Sélectionnez la personne à qui vous souhaitez transférer le statut d'utilisateur principal. Elle aura alors le contrôle total de l'horaire de l'appareil.",
+	"transferPrimaryUserConfirmation": "Êtes-vous sûr de vouloir transférer le statut d'utilisateur principal à {name}? Vous perdrez la possibilité de modifier l'horaire de l'appareil.",
+	"@transferPrimaryUserConfirmation": {
+		"placeholders": {
+			"name": {
+				"type": "String"
+			}
+		}
+	},
+	"transfer": "Transférer",
+	"errorLoadingCaregivers": "Impossible de charger la liste d'accès. Veuillez réessayer.",
+	"caregiverName": "Nom de l'aidant",
+	"enterCaregiverName": "Saisissez un nom pour cet aidant",
+	"inviteByEmail": "Inviter par courriel",
+	"sendInvite": "Envoyer l'invitation",
+	"caregiverInvited": "Aidant invité avec succès.",
+	"errorInvitingCaregiver": "Échec de l'invitation. Veuillez vérifier que le courriel est enregistré.",
+	"enterCaregiverEmail": "Saisissez l'adresse courriel de l'aidant",
+	"yourEmail": "Votre courriel"
 }

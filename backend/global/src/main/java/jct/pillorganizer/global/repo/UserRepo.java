@@ -98,6 +98,29 @@ public class UserRepo extends BaseControlPlaneRepo<UserEntity> {
         return findAllPaginated(size, cursor, null);
     }
 
+    public Optional<UserEntity> findByEmail(String email) {
+        QueryConditional queryConditional = QueryConditional.sortBeginsWith(
+                Key.builder()
+                        .partitionValue(UserEntity.gsi1Pk())
+                        .sortValue(UserEntity.gsi1Sk(""))
+                        .build());
+
+        Expression filterExpression = Expression.builder()
+                .expression("Email = :email")
+                .expressionValues(Map.of(":email", AttributeValue.builder().s(email.toLowerCase()).build()))
+                .build();
+
+        QueryEnhancedRequest request = QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
+                .filterExpression(filterExpression)
+                .build();
+
+        return this.gsi1.query(request)
+                .stream()
+                .flatMap(page -> page.items().stream())
+                .findFirst();
+    }
+
     public void updateFcmEndpointArn(UserEntity user, String fcmEndpointArn) {
         UserEntity updated = user.toBuilder()
                 .fcmEndpointArn(fcmEndpointArn)

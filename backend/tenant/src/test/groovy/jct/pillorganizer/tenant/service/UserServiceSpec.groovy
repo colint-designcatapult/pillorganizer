@@ -140,4 +140,5 @@ class UserServiceSpec extends BaseIntegrationSpec {
         retryable.delay() == "100ms"
         retryable.multiplier() == "2.0"
     }
+
 }

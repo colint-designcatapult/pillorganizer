@@ -1,15 +1,19 @@
 package jct.pillorganizer.global.controller;
 
-import io.micronaut.http.HttpHeaders;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jct.pillorganizer.core.auth.AppSecurityRule;
+import jct.pillorganizer.core.dto.CaregiverListItemDto;
 import jct.pillorganizer.core.dto.DeviceAccessDto;
 import jct.pillorganizer.core.service.GlobalAuthService;
 import jct.pillorganizer.global.dto.DeviceNotificationRequestDto;
+import jct.pillorganizer.global.dto.InviteCaregiverRequestDto;
+import jct.pillorganizer.global.dto.InviteCaregiverTenantDto;
 import jct.pillorganizer.global.dto.RegisterFcmTokenDto;
 import jct.pillorganizer.global.dto.UserAndDeviceAccessDto;
 import jct.pillorganizer.global.model.UserEntity;
@@ -72,7 +76,31 @@ public class UserDeviceAccessController {
         return Mono.fromCallable(() -> userService.get(userId)
                         .orElseThrow(() -> new IllegalStateException("User not found: " + userId)))
                 .flatMap(user -> userDeviceAccessService.updateDeviceNotifications(dto.tenantId(),
-                        dto.deviceId(), user, dto.subscribe()));
+                        dto.deviceId(), user, dto.subscribe(),
+                        dto.notifyTakeNow(), dto.notifyTaken(), dto.notifyMissed()));
+    }
+
+    /**
+     * Invites a caregiver to a device by email. The control plane verifies
+     * the target user exists, then forwards the request to the tenant.
+     */
+    @Post("/device/invite-caregiver")
+    @Secured(SecurityRule.IS_AUTHENTICATED)
+    public Mono<CaregiverListItemDto> inviteCaregiver(@Body @Valid InviteCaregiverRequestDto dto) {
+        return Mono.fromCallable(() -> {
+            // Verify the target user exists by email
+            var targetUser = userService.findByEmail(dto.email())
+                    .orElseThrow(() -> new HttpStatusException(HttpStatus.NOT_FOUND,
+                            "No user found with email: " + dto.email()));
+
+            return new InviteCaregiverTenantDto(
+                    targetUser.getUserId(),
+                    targetUser.getEmail(),
+                    targetUser.getUserName(),
+                    dto.nickname()
+            );
+        }).flatMap(tenantDto ->
+                userDeviceAccessService.inviteCaregiver(dto.tenantId(), dto.deviceId(), tenantDto)
+        );
     }
 }
-

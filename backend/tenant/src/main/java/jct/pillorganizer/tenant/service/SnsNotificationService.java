@@ -97,7 +97,7 @@ public class SnsNotificationService implements NotificationService {
     }
 
     @Override
-    public void publish(String topicArn, String title, String body, long ttlSeconds) {
+    public void publish(String topicArn, String title, String body, long ttlSeconds, String eventType) {
         try {
             String snsMessage = buildFinalSnsPayload(title, body, "medication_reminders", ttlSeconds);
             snsClient.publish(PublishRequest.builder()
@@ -108,14 +108,50 @@ public class SnsNotificationService implements NotificationService {
                             "AWS.SNS.MOBILE.GCM.TTL", MessageAttributeValue.builder()
                                     .dataType("Number")
                                     .stringValue(String.valueOf(ttlSeconds))
+                                    .build(),
+                            "event_type", MessageAttributeValue.builder()
+                                    .dataType("String")
+                                    .stringValue(eventType)
                                     .build()
                     ))
                     .build());
-            log.atInfo().log("SNS message published to topic %s (ttl=%ds)", topicArn, ttlSeconds);
+            log.atInfo().log("SNS message published to topic %s (ttl=%ds, eventType=%s)", topicArn, ttlSeconds, eventType);
         } catch (IOException e) {
             log.atWarning().withCause(e).log("Failed to serialize SNS message for topic %s", topicArn);
             throw new RuntimeException("Failed to serialize SNS message", e);
         }
+    }
+
+    @Override
+    public void setFilterPolicy(String subscriptionArn, java.util.List<String> blockedEventTypes) {
+        String filterPolicy;
+        if (blockedEventTypes.isEmpty()) {
+            // No exclusions — clear the filter policy so all event types are delivered (including future ones).
+            filterPolicy = "";
+        } else {
+            String blocked = blockedEventTypes.stream()
+                    .map(t -> "\"" + t + "\"")
+                    .collect(java.util.stream.Collectors.joining(", ", "[", "]"));
+            filterPolicy = "{\"event_type\": [{\"anything-but\": " + blocked + "}, {\"exists\": false}]}";
+        }
+
+        // Always pin FilterPolicyScope to MessageAttributes so the filter
+        // applies to message attributes (where event_type is published), not
+        // the message body. Without this, a scope of MessageBody would let
+        // every message through because event_type is absent from the body
+        // and the {"exists": false} condition would always match.
+        snsClient.setSubscriptionAttributes(SetSubscriptionAttributesRequest.builder()
+                .subscriptionArn(subscriptionArn)
+                .attributeName("FilterPolicyScope")
+                .attributeValue("MessageAttributes")
+                .build());
+        snsClient.setSubscriptionAttributes(SetSubscriptionAttributesRequest.builder()
+                .subscriptionArn(subscriptionArn)
+                .attributeName("FilterPolicy")
+                .attributeValue(filterPolicy)
+                .build());
+        log.atInfo().log("Set filter policy on %s: %s",
+                subscriptionArn, blockedEventTypes.isEmpty() ? "(cleared)" : filterPolicy);
     }
 
     // 1. The top-level SNS Message Object

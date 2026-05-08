@@ -67,7 +67,8 @@ class DeviceList extends _$DeviceList {
   /// Subscribes or unsubscribes the current user from push notifications for
   /// [id]. Registers the FCM token with the control plane first so the
   /// backend always has a fresh endpoint ARN before toggling the subscription.
-  Future<DeviceMetadata> updateDeviceNotifications(String id, bool subscribe) async {
+  Future<DeviceMetadata> updateDeviceNotifications(String id, bool subscribe,
+      {bool? notifyTakeNow, bool? notifyTaken, bool? notifyMissed}) async {
     if (!state.hasValue) {
       await future;
     }
@@ -100,6 +101,44 @@ class DeviceList extends _$DeviceList {
         deviceId: id,
         tenantId: device.tenantId,
         subscribe: subscribe,
+        notifyTakeNow: notifyTakeNow,
+        notifyTaken: notifyTaken,
+        notifyMissed: notifyMissed,
+      ),
+    );
+
+    final updatedDomain = updated.toDomain();
+    final newList = previous
+        .map((d) => d.id == id ? updatedDomain : d)
+        .toList();
+    state = AsyncValue.data(newList);
+
+    return updatedDomain;
+  }
+
+  /// Updates notification preferences (filter types) for an already-subscribed device.
+  Future<DeviceMetadata> updateNotificationPreferences(String id,
+      {required bool notifyTakeNow, required bool notifyTaken, required bool notifyMissed}) async {
+    if (!state.hasValue) {
+      await future;
+    }
+
+    final previous = state.asData!.value;
+    final device = previous.firstWhere(
+      (d) => d.id == id,
+      orElse: () => throw StateError('Device $id not found in list'),
+    );
+
+    final tenant = tenantClientForUrl(device.apiBase);
+
+    final updated = await tenant.updateNotificationPreferences(
+      id,
+      NotificationPreferencesRequestDto(
+        deviceId: id,
+        tenantId: device.tenantId,
+        notifyTakeNow: notifyTakeNow,
+        notifyTaken: notifyTaken,
+        notifyMissed: notifyMissed,
       ),
     );
 

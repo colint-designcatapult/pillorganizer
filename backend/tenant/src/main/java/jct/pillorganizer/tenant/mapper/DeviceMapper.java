@@ -30,6 +30,9 @@ public interface DeviceMapper {
     @Mapper.Mapping(to = "thingName", from = "#{deviceUser.device.physicalDevice?.thingName}")
     @Mapper.Mapping(to = "tenantName", from = "#{tenantDetails.name}")
     @Mapper.Mapping(to = "notifications", from = "#{deviceUser.subscriptionArn != null}")
+    @Mapper.Mapping(to = "notifyTakeNow", from = "#{deviceUser.effectiveNotifyTakeNow()}")
+    @Mapper.Mapping(to = "notifyTaken", from = "#{deviceUser.effectiveNotifyTaken()}")
+    @Mapper.Mapping(to = "notifyMissed", from = "#{deviceUser.effectiveNotifyMissed()}")
     DeviceAccessDto toAccessDTO(DeviceUser deviceUser, TenantDetails tenantDetails);
 
 }

@@ -12,6 +12,9 @@ import jakarta.validation.constraints.NotNull;
 @Serdeable
 public record DeviceSubscribeDto(
         @NotNull Boolean subscribe,
-        @Nullable String endpointArn
+        @Nullable String endpointArn,
+        @Nullable Boolean notifyTakeNow,
+        @Nullable Boolean notifyTaken,
+        @Nullable Boolean notifyMissed
 ) {
 }

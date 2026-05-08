@@ -194,7 +194,7 @@ class InternalUserControllerSpec extends BaseIntegrationSpec {
         def auth = Mock(Authentication)
         auth.getAttributes() >> [userId: userId]
 
-        def body = new DeviceNotificationSubscribeDto(true, "arn:local:endpoint:test-1")
+        def body = new DeviceNotificationSubscribeDto(true, "arn:local:endpoint:test-1", null, null, null)
 
         when:
         def response = client.toBlocking().retrieve(
@@ -223,14 +223,14 @@ class InternalUserControllerSpec extends BaseIntegrationSpec {
         // Subscribe first so there is a subscription to clear
         client.toBlocking().retrieve(
                 HttpRequest.POST("/internal/user/device/${deviceId}/notifications",
-                        new DeviceNotificationSubscribeDto(true, "arn:local:endpoint:test-2")),
+                        new DeviceNotificationSubscribeDto(true, "arn:local:endpoint:test-2", null, null, null)),
                 DeviceAccessDto
         )
 
         when: "then unsubscribe"
         def response = client.toBlocking().retrieve(
                 HttpRequest.POST("/internal/user/device/${deviceId}/notifications",
-                        new DeviceNotificationSubscribeDto(false, "arn:local:endpoint:test-2")),
+                        new DeviceNotificationSubscribeDto(false, "arn:local:endpoint:test-2", null, null, null)),
                 DeviceAccessDto
         )
 

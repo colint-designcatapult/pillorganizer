@@ -15,6 +15,9 @@ public record DeviceAccessDto(
         boolean primaryUser,
         @Nullable String thingName,
         String tenantName,
-        @Nullable Boolean notifications
+        @Nullable Boolean notifications,
+        @Nullable Boolean notifyTakeNow,
+        @Nullable Boolean notifyTaken,
+        @Nullable Boolean notifyMissed
 ) {
 }

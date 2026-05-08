@@ -16,6 +16,7 @@ final controlPlaneDioProvider = Provider<Dio>((ref) {
   );
 
   dio.interceptors.add(JwtAuthInterceptor(dio: dio));
+  dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true, error: true));
 
   return dio;
 });
@@ -45,7 +46,13 @@ abstract class ControlPlaneApiClient {
   Future<DeviceAccessDto> updateDeviceNotifications(
       @Body() DeviceNotificationRequestDto dto);
 
-  /// Permanently deletes the current user's account.
-  @DELETE("/user/me")
-  Future<void> deleteAccount();
+  /// Invites a caregiver to a device by email.
+  /// The control plane verifies the user exists and forwards to the tenant.
+  /// Returns the newly created [CaregiverListItemDto].
+  @POST("/user/device/invite-caregiver")
+  Future<CaregiverListItemDto> inviteCaregiver(@Body() InviteCaregiverRequestDto dto);
+
+  /// Returns the authenticated user's details.
+  @GET("/user/me")
+  Future<UserDetailsDto> getUserDetails();
 }

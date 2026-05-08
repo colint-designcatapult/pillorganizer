@@ -2,11 +2,12 @@ package jct.pillorganizer.tenant.dto;
 
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.serde.annotation.Serdeable;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.UUID;
 
 @Introspected
 @Serdeable.Serializable
 @Serdeable.Deserializable
-public record DeviceCaregiverCodeDTO(UUID id, String patientID, String deviceID, long code, long expiresAt, boolean deleted, String nickname) {
+public record TransferPrimaryUserDto(@NotNull UUID targetCaregiverId) {
 }
