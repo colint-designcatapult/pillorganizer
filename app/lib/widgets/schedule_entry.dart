@@ -600,7 +600,7 @@ class _ScheduleEntryState extends ConsumerState<ScheduleEntry> {
   }
 }
 
-// ── Removal section (unchanged) ────────────────────────────────────────────────
+// ── Removal section ─────────────────────────────────────────────────────────
 
 class RemovalSection extends ConsumerWidget {
   final DeviceMetadata? device;
@@ -608,6 +608,11 @@ class RemovalSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final bool isPrimary = device?.primaryUser ?? true;
+    final String buttonLabel = isPrimary
+        ? AppLocalizations.of(context)!.removeDevice
+        : AppLocalizations.of(context)!.removeFromAccount;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -647,7 +652,7 @@ class RemovalSection extends ConsumerWidget {
               ),
             ),
             child: Text(
-              AppLocalizations.of(context)!.removeDevice,
+              buttonLabel,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.error,
                     fontWeight: FontWeight.w600,

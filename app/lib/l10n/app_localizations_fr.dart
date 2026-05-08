@@ -803,11 +803,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get removeDevice => 'Supprimer l\'appareil';
 
   @override
+  String get removeFromAccount => 'Retirer du compte';
+
+  @override
   String get removingDevice => 'Retirer l\'appareil';
 
   @override
   String get removingDeviceConfirmation =>
-      'Êtes-vous certains ? Pour y accéder à nouveau, vous devrez le configurer à nouveau.';
+      'Êtes-vous certain? Pour y accéder à nouveau, vous devrez le configurer à nouveau.';
+
+  @override
+  String get removingFromAccount => 'Retrait de l\'accès';
+
+  @override
+  String get removingFromAccountConfirmation =>
+      'Êtes-vous certain de vouloir retirer votre accès à cet appareil? Vous devrez être réinvité pour y accéder à nouveau.';
 
   @override
   String get saturday => 'Samedi';

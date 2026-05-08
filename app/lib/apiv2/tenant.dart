@@ -57,4 +57,7 @@ abstract class TenantApiClient {
 
   @GET("/api/v1/device/default-schedule")
   Future<BaseScheduleDto> getDefaultSchedule();
+
+  @DELETE("/api/v1/device/{id}")
+  Future<void> removeDevice(@Path("id") String deviceId);
 }

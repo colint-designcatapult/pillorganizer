@@ -156,7 +156,19 @@ class DeviceList extends _$DeviceList {
   }
 
   Future<void> removeDevice(String id) async {
-    throw UnimplementedError();
+    if (!state.hasValue) await future;
+
+    final previous = state.asData!.value;
+    final device = previous.firstWhere(
+      (d) => d.id == id,
+      orElse: () => throw StateError('Device $id not found in list'),
+    );
+
+    await tenantClientForUrl(device.apiBase).removeDevice(id);
+
+    // Remove the device from the local list
+    final updated = previous.where((d) => d.id != id).toList();
+    state = AsyncValue.data(updated);
   }
 
   Future<void> sendReloadInitiateCommand(String id) async {

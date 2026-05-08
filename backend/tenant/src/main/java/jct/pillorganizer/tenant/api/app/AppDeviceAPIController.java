@@ -107,6 +107,15 @@ public class AppDeviceAPIController {
         return HttpResponse.accepted();
     }
 
+    @Operation(summary = "Removes the user's access to a device. Primary users disable the device; non-primary users revoke their own access.")
+    @Delete("/{id}")
+    @Secured(SecurityRule.IS_AUTHENTICATED)
+    public HttpResponse<?> removeDevice(@PathVariable("id") String deviceID, User user) {
+        var device = authService.accessDevice(deviceID, false);
+        deviceService.removeDevice(user, device);
+        return HttpResponse.noContent();
+    }
+
     @Operation(summary = "Updates push notification preferences for this device")
     @Put("/{id}/notification-preferences")
     @Secured(SecurityRule.IS_AUTHENTICATED)

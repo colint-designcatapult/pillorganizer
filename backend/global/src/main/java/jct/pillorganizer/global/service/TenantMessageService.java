@@ -16,6 +16,7 @@ import lombok.extern.flogger.Flogger;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
+import software.amazon.awssdk.services.sqs.model.QueueDoesNotExistException;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -78,7 +79,8 @@ public class TenantMessageService {
 
     /**
      * Sends a deleteUser message to every tenant's queue.
-     * Silently swallows errors for tenants whose queue does not exist.
+     * Silently swallows errors for tenants whose queue does not exist;
+     * rethrows unexpected failures.
      */
     public void broadcastDeleteUser(DeleteUserMessage message) throws IOException {
         String body = mapper.writeValueAsString(message);
@@ -87,9 +89,8 @@ public class TenantMessageService {
                 String queueUrl = getQueueUrl(tenant.getId());
                 client.sendMessage(b -> b.messageBody(body).queueUrl(queueUrl));
                 log.atInfo().log("Sent deleteUser message to tenant %s", tenant.getId());
-            } catch (Exception e) {
-                log.atWarning().log("Could not send deleteUser to tenant %s: %s",
-                        tenant.getId(), e.getMessage());
+            } catch (QueueDoesNotExistException e) {
+                log.atInfo().log("Queue does not exist for tenant %s, skipping", tenant.getId());
             }
         }
     }

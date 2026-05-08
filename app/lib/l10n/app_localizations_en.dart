@@ -800,11 +800,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get removeDevice => 'Remove device';
 
   @override
+  String get removeFromAccount => 'Remove from account';
+
+  @override
   String get removingDevice => 'Removing Device';
 
   @override
   String get removingDeviceConfirmation =>
-      'Are you sure ? To access it again, you\'ll need to set it up again.';
+      'Are you sure? To access it again, you\'ll need to set it up again.';
+
+  @override
+  String get removingFromAccount => 'Removing Access';
+
+  @override
+  String get removingFromAccountConfirmation =>
+      'Are you sure you want to remove your access to this device? You will need to be re-invited to access it again.';
 
   @override
   String get saturday => 'Saturday';
