@@ -22,6 +22,7 @@ import jct.pillorganizer.tenant.model.user.User;
 import jct.pillorganizer.tenant.service.ScheduleService;
 import lombok.extern.flogger.Flogger;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 @Controller("/api/v1/device")
@@ -67,12 +68,17 @@ public class AppScheduleController {
                 .map(TenantDetails::getDefaultSchedule)
                 .filter(encoded -> encoded != null && !encoded.isBlank())
                 .map(encoded -> {
-                    String json = new String(Base64.getDecoder().decode(encoded));
-                    BaseSchedule schedule = scheduleService.parseScheduleJson(json);
-                    if (schedule == null) {
+                    try {
+                        String json = new String(Base64.getDecoder().decode(encoded), StandardCharsets.UTF_8);
+                        BaseSchedule schedule = scheduleService.parseScheduleJson(json);
+                        if (schedule == null) {
+                            return HttpResponse.<BaseSchedule>notFound();
+                        }
+                        return HttpResponse.ok(schedule);
+                    } catch (IllegalArgumentException e) {
+                        log.atWarning().withCause(e).log("Invalid base64 in tenant default-schedule");
                         return HttpResponse.<BaseSchedule>notFound();
                     }
-                    return HttpResponse.ok(schedule);
                 })
                 .orElse(HttpResponse.notFound());
     }
