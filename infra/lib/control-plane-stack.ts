@@ -96,6 +96,13 @@ export class ControlPlaneStack extends cdk.Stack {
       defaultDomainMapping: {
         domainName: props.domainName,
       },
+      corsPreflight: {
+        allowHeaders: ['*'],
+        allowMethods: [apigwv2.CorsHttpMethod.ANY],
+        allowCredentials: true,
+        exposeHeaders: ['*'],
+        allowOrigins: ['https://admin.app.healthesolutions.ca', 'http://localhost:4200'],
+      },
     });
   }
 }
