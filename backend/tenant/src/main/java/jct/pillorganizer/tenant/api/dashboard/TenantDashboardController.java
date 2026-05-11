@@ -59,7 +59,7 @@ public class TenantDashboardController {
                         v.deviceId(),
                         v.serialNumber(),
                         v.userId(),
-                        v.userId().hashCode(),
+                        v.subjectId(),
                         v.dosesTaken(),
                         v.dosesScheduled()))
                 .toList();

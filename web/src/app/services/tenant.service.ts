@@ -6,7 +6,7 @@ export interface TenantDeviceSummary {
     deviceId: string;
     serialNumber: string | null;
     userId: string;
-    subjectId: number;
+    subjectId: string | null;
     dosesTaken: number;
     dosesScheduled: number;
 }

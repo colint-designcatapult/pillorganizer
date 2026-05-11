@@ -47,7 +47,8 @@ export class AppMenu {
                 sections.push({
                     label: tenant.id,
                     items: [
-                        { label: 'Adherence', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/tenant', tenant.id, 'devices'] }
+                        { label: 'Adherence', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/tenant', tenant.id, 'devices'] },
+                        { label: 'Subject Management', icon: 'pi pi-fw pi-id-card', routerLink: ['/tenant', tenant.id, 'subjects'] }
                     ]
                 });
             }

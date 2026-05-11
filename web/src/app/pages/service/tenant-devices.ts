@@ -51,7 +51,7 @@ import { UserService } from '@/app/services/user.service';
                 <ng-template #body let-device>
                     <tr class="cursor-pointer" (click)="openDevice(device)">
                         <td><code class="text-sm">{{ device.serialNumber ?? '—' }}</code></td>
-                        <td><code class="text-sm">{{ device.subjectId }}</code></td>
+                        <td><code class="text-sm">{{ device.subjectId ?? '—' }}</code></td>
                         <td>{{ device.dosesTaken }} / {{ device.dosesScheduled }}</td>
                         <td>
                             <p-button icon="pi pi-arrow-right" [rounded]="true" [text]="true" severity="secondary"

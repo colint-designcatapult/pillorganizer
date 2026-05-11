@@ -97,9 +97,11 @@ public interface DeviceEventRepository extends CrudRepository<DeviceEvent, UUID>
             du.user_id,
             du.device_id,
             COALESCE(a.doses_taken, 0) AS doses_taken,
-            COALESCE(a.doses_scheduled, 0) AS doses_scheduled
+            COALESCE(a.doses_scheduled, 0) AS doses_scheduled,
+            sa.subject_id
         FROM DeviceUsers du
         JOIN Aggregated a ON a.logical_device_id = du.device_id
+        LEFT JOIN subject_assignment sa ON sa.serial_no = du.serial_no
         WHERE (CAST(:snFilter AS TEXT) IS NULL OR du.serial_no ILIKE '%' || :snFilter || '%')
           AND (CAST(:cursorSn AS TEXT) IS NULL OR (du.serial_no, du.user_id) > (:cursorSn, :cursorUid))
         ORDER BY du.serial_no, du.user_id

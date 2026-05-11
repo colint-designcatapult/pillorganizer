@@ -14,6 +14,7 @@ import { AdminTenantDetail } from './app/pages/admin/admin-tenant-detail';
 import { AdminAdministrators } from './app/pages/admin/admin-administrators';
 import { TenantDevices } from './app/pages/service/tenant-devices';
 import { TenantDeviceDetail } from './app/pages/service/tenant-device-detail';
+import { TenantSubjectManagement } from './app/pages/service/tenant-subject-management';
 import { authGuard } from './app/guards/auth.guard';
 
 export const appRoutes: Routes = [
@@ -34,7 +35,8 @@ export const appRoutes: Routes = [
             { path: 'admin/tenants/:tenantId', component: AdminTenantDetail },
             { path: 'admin/administrators', component: AdminAdministrators },
             { path: 'tenant/:tenantId/devices', component: TenantDevices },
-            { path: 'tenant/:tenantId/devices/:deviceId', component: TenantDeviceDetail }
+            { path: 'tenant/:tenantId/devices/:deviceId', component: TenantDeviceDetail },
+            { path: 'tenant/:tenantId/subjects', component: TenantSubjectManagement }
         ]
     },
     { path: 'landing', component: Landing },

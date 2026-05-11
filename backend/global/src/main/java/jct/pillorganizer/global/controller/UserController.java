@@ -37,27 +37,28 @@ public class UserController {
     @Get("/me")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public Optional<UserDetailsDto> getUserDetails() {
-        Collection<TenantDetails> adminTenants;
-        if (securityService.hasRole(AppSecurityRule.IS_GLOBAL_ADMIN)) {
-            adminTenants = tenantService.getTenantList();
-        } else if (securityService.hasRole(AppSecurityRule.IS_ADMIN)) {
-            adminTenants = tenantService.getTenantList()
-                    .stream()
-                    .filter(c -> securityService.hasRole(AppSecurityRule.isTenantAdmin(c.getId())))
-                    .toList();
-        } else {
-            adminTenants = null;
-        }
+        return securityService.getAuthentication().map(auth -> {
+            Collection<TenantDetails> adminTenants;
+            if (securityService.hasRole(AppSecurityRule.IS_GLOBAL_ADMIN)) {
+                adminTenants = tenantService.getTenantList();
+            } else if (securityService.hasRole(AppSecurityRule.IS_ADMIN)) {
+                adminTenants = tenantService.getTenantList()
+                        .stream()
+                        .filter(c -> securityService.hasRole(AppSecurityRule.isTenantAdmin(c.getId())))
+                        .toList();
+            } else {
+                adminTenants = null;
+            }
 
-        return securityService.getAuthentication().map(c ->
-                new UserDetailsDto(
-                        c.getName(),
-                        c.getRoles(),
-                        (String) c.getAttributes().get("userId"),
-                        (String) c.getAttributes().get("email"),
-                        (String) c.getAttributes().get("userDisplayName"),
-                        adminTenants
-                ));
+            return new UserDetailsDto(
+                    auth.getName(),
+                    auth.getRoles(),
+                    (String) auth.getAttributes().get("userId"),
+                    (String) auth.getAttributes().get("email"),
+                    (String) auth.getAttributes().get("userDisplayName"),
+                    adminTenants
+            );
+        });
     }
 
     @Delete("/me")
