@@ -10,24 +10,6 @@ micronaut:
   multitenancy:
     filter:
       enabled: true
-  server:
-    cors:
-      enabled: true
-      configurations:
-        angular:
-          allowed-origins:
-            - "http://localhost:4200"
-            - "https://admin.app.healthesolutions.ca"
-          allowed-methods:
-            - GET
-            - POST
-            - PUT
-            - DELETE
-            - OPTIONS
-          allowed-headers:
-            - Content-Type
-            - Authorization
-          allow-credentials: true
   security:
     enabled: true
     authentication: idtoken
@@ -52,6 +34,22 @@ micronaut:
               url: https://cognito-idp.${aws.region}.amazonaws.com/${app.auth.public.pool}/.well-known/jwks.json
             admin:
               url: https://cognito-idp.${aws.region}.amazonaws.com/${app.auth.admin.pool}/.well-known/jwks.json
+  server:
+    cors:
+      enabled: true
+      configurations:
+        allowed-origins:
+          - 'https://admin.app.healthesolutions.ca'
+          - 'http://localhost:4200'
+        allowed-methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        allowed-headers:
+          - '*'
+
 endpoints:
   health:
     enabled: true
@@ -81,9 +79,15 @@ app:
         hostname: "localhost:8080"
         api-base: "http://localhost:8080"
         default-schedule: "eyJ0eXBlIjoiU0lNUExFIiwiYmlucyI6W3siZGF5T2ZXZWVrIjoiTU9OREFZIiwidGltZSI6IjA4OjAwIn0seyJkYXlPZldlZWsiOiJNT05EQVkiLCJ0aW1lIjoiMjA6MDAifV19"
-      staging:
-        id: "staging"
-        name: "Staging Environment"
+      staging1:
+        id: "staging1"
+        name: "Staging1 Environment"
         active: true
-        hostname: "staging.app.healthesolutions.ca"
-        api-base: "https://staging.app.healthesolutions.ca"
+        hostname: "staging1.app.healthesolutions.ca"
+        api-base: "https://staging1.app.healthesolutions.ca"
+      staging2:
+        id: "staging2"
+        name: "Staging2 Environment"
+        active: true
+        hostname: "staging2.app.healthesolutions.ca"
+        api-base: "https://staging2.app.healthesolutions.ca"

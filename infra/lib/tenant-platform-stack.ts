@@ -4,6 +4,7 @@ import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import * as targets from 'aws-cdk-lib/aws-route53-targets';
 import * as iot from 'aws-cdk-lib/aws-iot';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
 import { Construct } from 'constructs';
 
 export interface TenantPlatformStackProps extends cdk.StackProps {
@@ -51,5 +52,18 @@ export class TenantPlatformStack extends cdk.Stack {
     tenantThingGroup.applyRemovalPolicy(props.removalPolicy);
 
     this.tenantThingGroupName = props.environmentName;
+
+    // Tenant admin Cognito group
+    const adminUserPoolId = this.node.tryGetContext('globals')?.adminUserPoolId;
+    if (!adminUserPoolId) {
+      throw new Error('Context "globals.adminUserPoolId" not found in cdk.context.json');
+    }
+
+    const tenantAdminGroup = `admin-tenant-${props.environmentName}`;
+    new cognito.CfnUserPoolGroup(this, 'TenantAdminGroup', {
+      groupName: tenantAdminGroup,
+      userPoolId: adminUserPoolId,
+      description: `Tenant admin role for ${props.environmentName}`,
+    });
   }
 }

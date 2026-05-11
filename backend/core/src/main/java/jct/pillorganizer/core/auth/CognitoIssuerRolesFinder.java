@@ -8,10 +8,13 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.multitenancy.exceptions.TenantNotFoundException;
 import io.micronaut.multitenancy.tenantresolver.TenantResolver;
 import io.micronaut.security.rules.SecurityRuleResult;
+import io.micronaut.security.token.Claims;
 import io.micronaut.security.token.DefaultRolesFinder;
 import io.micronaut.security.token.RolesFinder;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jct.pillorganizer.core.TenantDetails;
+import jct.pillorganizer.core.service.TenantService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +31,7 @@ public class CognitoIssuerRolesFinder implements RolesFinder {
     @Value("${app.auth.public.issuer}") String publicIssuer;
 
     @Inject TenantResolver tenantResolver;
+    @Inject TenantService tenantService;
 
     @Override
     public @NonNull List<String> resolveRoles(@Nullable Map<String, Object> attributes) {
@@ -65,6 +69,14 @@ public class CognitoIssuerRolesFinder implements RolesFinder {
                 // it is in their role list
                 if (presented.contains(AppSecurityRule.IS_GLOBAL_ADMIN)) {
                     list.add(AppSecurityRule.IS_GLOBAL_ADMIN);
+                }
+
+                // Add all tenant
+                for (TenantDetails details : tenantService.getTenantList()) {
+                    String tenantAdminRole = AppSecurityRule.isTenantAdmin(details.getId());
+                    if (presented.contains(tenantAdminRole)) {
+                        list.add(tenantAdminRole);
+                    }
                 }
 
                 try {
