@@ -1377,7 +1377,9 @@ RELATIONS:
 
 [TEST]
 UID: TEST-35
-RUN_RESULT: Blocked
+RUN_RESULT: Passed
+RUN_BY: Colin Tran
+RUN_DATE: 05/11/2026
 TITLE: Trial Protocol Definition and Participant Management
 STATEMENT: >>>
 Prerequisites: A Researcher account with ownership of a clinical trial (Trial T001). A pool of test Patient accounts. At least two unprovisioned test devices.
@@ -1402,9 +1404,6 @@ Acceptance Criteria:
 - Devices can be designated as exclusive to a trial by the researcher.
 - The researcher can view all participants and all devices associated with the trial.
 - Each participant can be assigned a unique Subject ID (pseudonymous identifier).
-<<<
-RESULT_STRING: >>>
-No default schedule feature yet.
 <<<
 RELATIONS:
 - TYPE: Parent

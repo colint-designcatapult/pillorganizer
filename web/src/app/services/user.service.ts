@@ -43,6 +43,6 @@ export class UserService {
     }
 
     isGlobalAdmin(user: UserProfile): boolean {
-        return user.roles.includes('admin-global');
+        return user?.roles?.includes('admin-global') ?? false;
     }
 }

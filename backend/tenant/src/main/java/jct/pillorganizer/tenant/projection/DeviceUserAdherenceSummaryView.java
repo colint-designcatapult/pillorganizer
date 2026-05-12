@@ -9,5 +9,6 @@ public record DeviceUserAdherenceSummaryView(
         String userId,
         String deviceId,
         long dosesTaken,
-        long dosesScheduled
+        long dosesScheduled,
+        @Nullable String subjectId
 ) {}

@@ -4,13 +4,11 @@ import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.serde.annotation.Serdeable;
 
+import java.util.List;
+
 @Introspected
 @Serdeable
-public record TenantDeviceSummaryDto(
-        String deviceId,
-        @Nullable String serialNumber,
-        String userId,
-        @Nullable String subjectId,
-        long dosesTaken,
-        long dosesScheduled
+public record SubjectAssignmentPageDto(
+        List<SubjectAssignmentDto> items,
+        @Nullable String nextCursor
 ) {}
