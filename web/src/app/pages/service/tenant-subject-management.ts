@@ -221,6 +221,7 @@ export class TenantSubjectManagement implements OnInit {
                 });
                 this.dialogVisible = false;
                 this.saving.set(false);
+                this.cursorStack.set([]);
                 this.load(null);
             },
             error: (err) => {
@@ -243,6 +244,7 @@ export class TenantSubjectManagement implements OnInit {
                     .subscribe({
                         next: () => {
                             this.messageService.add({ severity: 'success', summary: 'Deleted', detail: `Assignment for ${item.serialNo} removed` });
+                            this.cursorStack.set([]);
                             this.load(null);
                         },
                         error: () => {

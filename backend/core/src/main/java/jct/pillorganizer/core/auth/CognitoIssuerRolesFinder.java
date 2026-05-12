@@ -84,7 +84,8 @@ public class CognitoIssuerRolesFinder implements RolesFinder {
                         // Do not add any additional roles.
                     }
                 } else if (list.contains(AppSecurityRule.IS_GLOBAL_ADMIN)) {
-                    // In global context without TenantResolver, global admins are still admins
+                    // In global context without TenantResolver, global admins are still
+                    // granted the tenant admin role
                     list.add(AppSecurityRule.IS_TENANT_ADMIN);
                 }
             }

@@ -62,6 +62,10 @@ public class TenantSubjectController {
     public HttpResponse<SubjectAssignmentDto> updateAssignment(
             @PathVariable String serialNo,
             @Body SubjectAssignmentDto body) {
+        if (!serialNo.equals(body.serialNo())) {
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST,
+                    "Path serialNo " + serialNo + " does not match body serialNo " + body.serialNo());
+        }
         SubjectAssignment existing = subjectAssignmentService.getBySerialNo(serialNo)
                 .orElseThrow(() -> new HttpStatusException(HttpStatus.NOT_FOUND,
                         "No assignment found for serial: " + serialNo));
