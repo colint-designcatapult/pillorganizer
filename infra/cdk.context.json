@@ -2,7 +2,8 @@
   "globals": {
     "account": "114829892869",
     "region": "ca-central-1",
-    "baseDomain": "app.healthesolutions.ca"
+    "baseDomain": "app.healthesolutions.ca",
+    "adminUserPoolId": "ca-central-1_liR9FZX79"
   },
   "public": {
     "removalPolicy": "RETAIN",
@@ -11,6 +12,22 @@
       "Environment": "Public"
     },
     "subdomain": "public"
+  },
+  "staging1": {
+    "removalPolicy": "DESTROY",
+    "autoDeleteObjects": true,
+    "tags": {
+      "Environment": "Staging1"
+    },
+    "subdomain": "staging1"
+  },
+  "staging2": {
+    "removalPolicy": "DESTROY",
+    "autoDeleteObjects": true,
+    "tags": {
+      "Environment": "Staging2"
+    },
+    "subdomain": "staging2"
   },
   "acknowledged-issue-numbers": [
     34892

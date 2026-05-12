@@ -7,10 +7,13 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.multitenancy.exceptions.TenantNotFoundException;
 import io.micronaut.multitenancy.tenantresolver.TenantResolver;
 import io.micronaut.security.rules.SecurityRuleResult;
+import io.micronaut.security.token.Claims;
 import io.micronaut.security.token.DefaultRolesFinder;
 import io.micronaut.security.token.RolesFinder;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jct.pillorganizer.core.TenantDetails;
+import jct.pillorganizer.core.service.TenantService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +30,7 @@ public class CognitoIssuerRolesFinder implements RolesFinder {
     @Value("${app.auth.public.issuer}") String publicIssuer;
 
     @Inject Optional<TenantResolver> tenantResolver;
+    @Inject TenantService tenantService;
 
     @Override
     public @NonNull List<String> resolveRoles(@Nullable Map<String, Object> attributes) {
@@ -65,27 +69,27 @@ public class CognitoIssuerRolesFinder implements RolesFinder {
                 if (presented.contains(AppSecurityRule.IS_GLOBAL_ADMIN)) {
                     list.add(AppSecurityRule.IS_GLOBAL_ADMIN);
                 }
+                for (TenantDetails details : tenantService.getTenantList()) {
+                    String tenantAdminRole = AppSecurityRule.isTenantAdmin(details.getId());
+                    if (presented.contains(tenantAdminRole)) {
+                        list.add(tenantAdminRole);
+                    }
+                }
 
-                // Only attempt tenant-scoped role extraction if TenantResolver is available
                 if (tenantResolver.isPresent()) {
                     try {
                         String tenantId = tenantResolver.get().resolveTenantId();
                         if (presented.contains(AppSecurityRule.isTenantAdmin(tenantId))) {
-                            // Add tenant admin role so it can be picked up by @Secured
                             list.add(AppSecurityRule.IS_TENANT_ADMIN);
                         }
 
                         if (list.contains(AppSecurityRule.IS_GLOBAL_ADMIN)) {
-                            // If the user is a global admin. they are a tenant admin, too
                             list.add(AppSecurityRule.IS_TENANT_ADMIN);
                         }
                     } catch (TenantNotFoundException ex) {
                         // No tenant detected.
-                        // Do not add any additional roles.
                     }
                 } else if (list.contains(AppSecurityRule.IS_GLOBAL_ADMIN)) {
-                    // In global context without TenantResolver, global admins are still
-                    // granted the tenant admin role
                     list.add(AppSecurityRule.IS_TENANT_ADMIN);
                 }
             }

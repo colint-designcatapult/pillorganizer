@@ -116,7 +116,6 @@ if (envKey) {
     removalPolicy: removalPolicy,
     environmentName: envKey,
     domainName: tenantPlatformStack.domainName,
-    adminUserPool: authStack.adminUserPool
   });
 
   // Apply config tags to environment stacks
