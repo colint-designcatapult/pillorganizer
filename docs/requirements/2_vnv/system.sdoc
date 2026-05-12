@@ -1209,13 +1209,24 @@ RELATIONS:
 
 [TEST]
 UID: TEST-30
-RUN_RESULT: Blocked
+RUN_RESULT: Passed
+RUN_BY: Brendan Heinonen
+RUN_DATE: 05/12/2026
 TITLE: Backend Scaling Capacity
 STATEMENT: >>>
-TBD
-<<<
-RESULT_STRING: >>>
-No mechanism to test this
+Prerequisites: Bulk provisioning script (test/bulk_provision.py) OR pre-provisioned bulk device certificates. Load test script (test/load_test.py). Access to the backend infrastructure. A fully configured physical pill organizer device and user account.
+
+Steps:
+1. Open the app.
+2. Run the load test script.
+3. While the load test script is running, open a bin on the physical device and observe the app display the door open condition. Close the door. Observe the app displays the door as closed.
+4. Monitor the QueueProcessor Lambda function via the AWS console (CloudWatch) and observe for errors.
+5. Access the backend database to confirm the door open and close events are recorded.
+
+Acceptance Criteria:
+- All 2,000 load test simulation devices return an OK status in the script output.
+- The app continues to show the physical device state while the load test is running.
+- No elevation in the QueueProcessor Lambda function error rate in CloudWatch.
 <<<
 RELATIONS:
 - TYPE: Parent
