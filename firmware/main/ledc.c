@@ -26,6 +26,7 @@
 // Atomic stores for the background "Idle" task
 static atomic_uint_fast32_t s_led_idle_task = ATOMIC_VAR_INIT(LED_IDLE); 
 static atomic_ullong s_led_idle_param = ATOMIC_VAR_INIT(0);
+static atomic_bool s_eng_locked = ATOMIC_VAR_INIT(false);
 
 // Atomic stores for the currently running task
 static atomic_uint_fast32_t s_led_task = ATOMIC_VAR_INIT(LED_IDLE); 
@@ -66,6 +67,10 @@ void ledc_set_task(led_task_t task, led_task_param_t param, uint32_t duration_ms
 
 void ledc_set_idle_task(led_task_t task, led_task_param_t param)
 {
+    if (atomic_load_explicit(&s_eng_locked, memory_order_relaxed)) {
+        return;
+    }
+
     // 1. Check if the new state perfectly matches the current idle state
     led_task_t current_idle_task = (led_task_t)atomic_load_explicit(&s_led_idle_task, memory_order_relaxed);
     uint64_t current_idle_param = atomic_load_explicit(&s_led_idle_param, memory_order_relaxed);
@@ -328,6 +333,16 @@ void led_task(void* arg)
 
         vTaskDelay(pdMS_TO_TICKS(TASK_TICK_RATE_MS));
     }
+}
+
+void ledc_eng_lock(void)
+{
+    atomic_store_explicit(&s_eng_locked, true, memory_order_relaxed);
+}
+
+void ledc_eng_unlock(void)
+{
+    atomic_store_explicit(&s_eng_locked, false, memory_order_relaxed);
 }
 
 #endif /* !CONFIG_EMULATOR_MODE */

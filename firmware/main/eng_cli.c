@@ -10,6 +10,8 @@
  *   identity                            - Show provisioning identity status
  *   reboot                              - Reboot the device
  *   reset                               - Factory reset and reboot
+ *   set_led <red_bits> <green_bits> [blink_bits] - Override idle LED state (14-bit binary strings, locks out firmware)
+ *   reset_led                           - Release the LED lock
  */
 #include "eng_cli.h"
 
@@ -29,6 +31,7 @@
 #include "device_config.h"
 #include "claim.h"
 #include "supervisor.h"
+#include "ledc.h"
 
 #define TAG "ENG_CLI"
 
@@ -189,6 +192,107 @@ static void register_reset_cmd(void)
 }
 
 /* ------------------------------------------------------------------ */
+/*  Command: set_led <red_bits> <green_bits>                          */
+/* ------------------------------------------------------------------ */
+
+#define SET_LED_BITS 14
+
+static struct {
+    struct arg_str *red;
+    struct arg_str *green;
+    struct arg_str *blink;
+    struct arg_end *end;
+} s_set_led_args;
+
+/* Parse a binary string of exactly SET_LED_BITS '0'/'1' chars into a uint16_t. */
+static bool parse_led_bitmask(const char *s, uint16_t *out)
+{
+    size_t len = strlen(s);
+    if (len != SET_LED_BITS) {
+        printf("Error: bitmask must be exactly %d binary digits (got %zu)\n", SET_LED_BITS, len);
+        return false;
+    }
+    uint16_t val = 0;
+    for (int i = 0; i < SET_LED_BITS; i++) {
+        if (s[i] == '1') {
+            val |= (1u << i);
+        } else if (s[i] != '0') {
+            printf("Error: invalid character '%c' — only '0' and '1' are allowed\n", s[i]);
+            return false;
+        }
+    }
+    *out = val;
+    return true;
+}
+
+static int cmd_set_led(int argc, char **argv)
+{
+    int nerrors = arg_parse(argc, argv, (void **)&s_set_led_args);
+    if (nerrors != 0) {
+        arg_print_errors(stderr, s_set_led_args.end, argv[0]);
+        return 1;
+    }
+
+    uint16_t red = 0, green = 0, blink = 0;
+    if (!parse_led_bitmask(s_set_led_args.red->sval[0], &red)) return 1;
+    if (!parse_led_bitmask(s_set_led_args.green->sval[0], &green)) return 1;
+    if (s_set_led_args.blink->count > 0) {
+        if (!parse_led_bitmask(s_set_led_args.blink->sval[0], &blink)) return 1;
+    }
+
+    led_task_param_t param = {0};
+    param.device_state.red        = red;
+    param.device_state.green      = green;
+    param.device_state.blink_mask = blink;
+
+    ledc_eng_unlock();
+    ledc_set_idle_task(LED_DEVICE_STATE, param);
+    ledc_eng_lock();
+
+    printf("LED idle state set and locked: red=0x%04X green=0x%04X blink=0x%04X\n", red, green, blink);
+    return 0;
+}
+
+static void register_set_led_cmd(void)
+{
+    s_set_led_args.red   = arg_str1(NULL, NULL, "<red_bits>",   "14-bit binary mask for red LEDs (e.g. 11000000000000)");
+    s_set_led_args.green = arg_str1(NULL, NULL, "<green_bits>", "14-bit binary mask for green LEDs (e.g. 00000000000000)");
+    s_set_led_args.blink = arg_str0(NULL, NULL, "[blink_bits]", "14-bit binary mask for blinking LEDs (optional, default all-off)");
+    s_set_led_args.end   = arg_end(3);
+
+    const esp_console_cmd_t cmd = {
+        .command  = "set_led",
+        .help     = "Override idle LED state with LED_DEVICE_STATE using 14-bit binary red/green/blink masks",
+        .hint     = "<red_bits> <green_bits> [blink_bits]",
+        .func     = &cmd_set_led,
+        .argtable = &s_set_led_args,
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+/* ------------------------------------------------------------------ */
+/*  Command: reset_led                                                */
+/* ------------------------------------------------------------------ */
+
+static int cmd_reset_led(int argc, char **argv)
+{
+    ledc_eng_unlock();
+    printf("LED lock released — idle state control returned to firmware.\n");
+    return 0;
+}
+
+static void register_reset_led_cmd(void)
+{
+    const esp_console_cmd_t cmd = {
+        .command = "reset_led",
+        .help    = "Release the eng LED lock, returning idle state control to the firmware",
+        .hint    = NULL,
+        .func    = &cmd_reset_led,
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+/* ------------------------------------------------------------------ */
 /*  Public API                                                        */
 /* ------------------------------------------------------------------ */
 
@@ -209,6 +313,8 @@ esp_err_t eng_cli_init(void)
     register_identity_cmd();
     register_reboot_cmd();
     register_reset_cmd();
+    register_set_led_cmd();
+    register_reset_led_cmd();
 
     ESP_ERROR_CHECK(esp_console_new_repl_uart(&uart_config, &repl_config, &repl));
     ESP_ERROR_CHECK(esp_console_start_repl(repl));

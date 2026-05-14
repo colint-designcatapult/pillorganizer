@@ -48,3 +48,8 @@ void ledc_set_task(led_task_t task, led_task_param_t param, uint32_t duration_ms
 void ledc_init();
 
 void ledc_set_idle_task(led_task_t task, led_task_param_t param);
+
+// Prevent the normal LED controller from overwriting the idle task.
+// Used by the engineering CLI to hold a specific LED state for debugging.
+void ledc_eng_lock(void);
+void ledc_eng_unlock(void);
