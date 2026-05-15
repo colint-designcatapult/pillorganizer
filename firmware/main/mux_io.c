@@ -35,6 +35,7 @@ void mux_prep_deep_sleep(void) { }
 #include "esp_log.h"
 #include "supervisor.h"
 #include "battery.h"
+#include <stdatomic.h>
 
 #define TAG "MUX_IO"
 
@@ -47,6 +48,7 @@ extern uint32_t ulp_adc_readings_1;
 extern uint32_t ulp_active_buffer;
 
 static TaskHandle_t ulp_task_handle = NULL;
+static atomic_bool s_raw_print = ATOMIC_VAR_INIT(false);
 
 #define ADC_READINGS 17
 #define ADC_DOOR_CHANNEL_START 1
@@ -84,8 +86,11 @@ static RTC_DATA_ATTR ch_stats_t ch_stats[ADC_NUM_DOOR_CHANNELS];
 static void init_ulp_program(void);
 static void start_ulp_program(void);
 
+static int ctr = 0;
+
 static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
 {    
+    ctr++;
     uint32_t wake_flags = WAKE_REASON_NONE;
 
     /* Read from the INACTIVE buffer to prevent race conditions */
@@ -109,6 +114,14 @@ static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
         wake_flags |= WAKE_REASON_BATTERY;
     }
 
+    if (ctr % 10 == 0 && atomic_load_explicit(&s_raw_print, memory_order_relaxed)) {
+        printf("MUX raw %d:",ctr);
+        for (int i = 0; i <= 16; i++) {
+            printf("\t%lu", local_buffer[i]);
+        }
+        printf("\n");
+    }
+
     // 2. Inhibit door logic if no battery is present AND the pulse is currently HIGH
     if (battery_get_presence() == BATTERY_PRESENCE_DISCONNECTED && battery_is_pulse_high(bat_start_val, bat_end_val)) {
         // Throw away these ULP reads so they don't corrupt the EMA/MAD door baselines.
@@ -118,6 +131,11 @@ static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
     /* ==========================================================
      * Door Channel Processing
      * ========================================================== */
+
+    // Perform print after battery presense to avoid noise
+
+
+
     #define AMBIENT_CHANGE_THRESHOLD 3 
     #define DEBOUNCE_SAMPLES         2 
 
@@ -370,6 +388,13 @@ void mux_force_door_state_reset(int door_id) {
     ch_stats[door_id].initialized = false;
     ESP_LOGI(TAG, "Forced state reset for door %d", door_id);
   }
+}
+
+bool mux_eng_toggle_raw_print(void)
+{
+    bool prev = atomic_load_explicit(&s_raw_print, memory_order_relaxed);
+    atomic_store_explicit(&s_raw_print, !prev, memory_order_relaxed);
+    return !prev;
 }
 
 #endif /* !CONFIG_EMULATOR_MODE */

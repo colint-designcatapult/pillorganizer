@@ -12,6 +12,7 @@
  *   reset                               - Factory reset and reboot
  *   set_led <red_bits> <green_bits> [blink_bits] - Override idle LED state (14-bit binary strings, locks out firmware)
  *   reset_led                           - Release the LED lock
+ *   mux_raw                             - Toggle printing raw ULP ADC values to console
  */
 #include "eng_cli.h"
 
@@ -32,6 +33,7 @@
 #include "claim.h"
 #include "supervisor.h"
 #include "ledc.h"
+#include "mux_io.h"
 
 #define TAG "ENG_CLI"
 
@@ -271,6 +273,28 @@ static void register_set_led_cmd(void)
 }
 
 /* ------------------------------------------------------------------ */
+/*  Command: mux_raw                                                  */
+/* ------------------------------------------------------------------ */
+
+static int cmd_mux_raw(int argc, char **argv)
+{
+    bool enabled = mux_eng_toggle_raw_print();
+    printf("MUX raw print: %s\n", enabled ? "ON" : "OFF");
+    return 0;
+}
+
+static void register_mux_raw_cmd(void)
+{
+    const esp_console_cmd_t cmd = {
+        .command = "mux_raw",
+        .help    = "Toggle printing of raw ULP ADC values (channels 1-14) on every ULP event",
+        .hint    = NULL,
+        .func    = &cmd_mux_raw,
+    };
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+/* ------------------------------------------------------------------ */
 /*  Command: reset_led                                                */
 /* ------------------------------------------------------------------ */
 
@@ -315,6 +339,7 @@ esp_err_t eng_cli_init(void)
     register_reset_cmd();
     register_set_led_cmd();
     register_reset_led_cmd();
+    register_mux_raw_cmd();
 
     ESP_ERROR_CHECK(esp_console_new_repl_uart(&uart_config, &repl_config, &repl));
     ESP_ERROR_CHECK(esp_console_start_repl(repl));

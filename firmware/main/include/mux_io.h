@@ -16,3 +16,7 @@ bool mux_wake_deep_sleep_early();
 void mux_prep_deep_sleep();
 
 void mux_force_door_state_reset(int door_id);
+
+// Toggle printing of raw ULP ADC values (local_buffer indices 1-14) to console.
+// Returns the new state: true = printing enabled, false = disabled.
+bool mux_eng_toggle_raw_print(void);
