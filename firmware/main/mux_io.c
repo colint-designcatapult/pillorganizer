@@ -1,4 +1,5 @@
 #include "mux_io.h"
+#include "ledc.h"
 #include "sdkconfig.h"
 
 #if CONFIG_EMULATOR_MODE
@@ -46,13 +47,14 @@ extern const uint8_t ulp_main_bin_end[]   asm("_binary_ulp_main_bin_end");
 extern uint32_t ulp_adc_readings_0;
 extern uint32_t ulp_adc_readings_1;
 extern uint32_t ulp_active_buffer;
+extern uint32_t ulp_primed;
 
 static TaskHandle_t ulp_task_handle = NULL;
 static atomic_bool s_raw_print = ATOMIC_VAR_INIT(false);
 
-#define ADC_READINGS 17
-#define ADC_DOOR_CHANNEL_START 1
-#define ADC_DOOR_CHANNEL_END 14
+#define ADC_READINGS 16
+#define ADC_DOOR_CHANNEL_START 0
+#define ADC_DOOR_CHANNEL_END 13
 #define ADC_NUM_DOOR_CHANNELS (ADC_DOOR_CHANNEL_END - ADC_DOOR_CHANNEL_START + 1)
 
 #define SCALE_FACTOR 256  // Scales integers to give us "decimal" precision
@@ -79,47 +81,57 @@ typedef struct {
     door_state_t state;
     uint8_t debounce_cnt;  // NEW: Tracks consecutive readings for state changes
     bool initialized;
+    uint8_t reset_ctr;
 } ch_stats_t;
 
 static RTC_DATA_ATTR ch_stats_t ch_stats[ADC_NUM_DOOR_CHANNELS];
+static RTC_DATA_ATTR uint32_t ulp_ctr = 0;
+
+/* Previous cycle's ledc_get_state() value. Initialised to 0 (not idle, no
+ * red LEDs) so the first cycle after boot/wake always re-baselines cleanly. */
+static RTC_DATA_ATTR uint16_t s_prev_led_state = 0;
 
 static void init_ulp_program(void);
 static void start_ulp_program(void);
 
-static int ctr = 0;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
 static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
 {    
-    ctr++;
     uint32_t wake_flags = WAKE_REASON_NONE;
-
-    /* Read from the INACTIVE buffer to prevent race conditions */
-    uint32_t active_buf = ulp_active_buffer & 0xFFFF;
-    uint32_t* values = (active_buf == 0) ? &ulp_adc_readings_1 : &ulp_adc_readings_0;
-
-    uint32_t local_buffer[ADC_READINGS];
-    for (int i = 0; i < ADC_READINGS; i++) {
-        local_buffer[i] = values[i] & 0xFFFF; // ULP stores data in lower 16 bits
+    // This is the first iteration, prev values invalid
+    if (ulp_ctr++ == 0) {
+        return wake_flags;
     }
+
+    /* Read from the INACTIVE buffer (just completed) to prevent race conditions.
+     * The ACTIVE buffer (currently being filled) holds the previous cycle's data
+     * and is safe to read for bat_start_val — ch14 won't be overwritten for ~140ms. */
+    uint32_t active_buf = ulp_active_buffer & 0xFFFF;
+    uint32_t* values      = (active_buf == 0) ? &ulp_adc_readings_1 : &ulp_adc_readings_0;
+    uint32_t* prev_values = (active_buf == 0) ? &ulp_adc_readings_0 : &ulp_adc_readings_1;
 
     /* ==========================================================
      * Battery Presence & Square Wave Filtering
      * ========================================================== */
-    uint32_t bat_start_val = local_buffer[0];
-    uint32_t bat_end_val   = local_buffer[16];
-    uint32_t vbus_val      = local_buffer[15];
+    /* bat_start_val comes from the previous cycle's ch14 reading (cross-cycle
+     * square wave detection). bat_end_val and vbus from the current cycle. */
+    uint32_t bat_start_val = prev_values[14] & 0xFFFF;
+    uint32_t bat_end_val   = values[14] & 0xFFFF;
+    uint32_t vbus_val      = values[15] & 0xFFFF;
 
     // Delegate EVERYTHING to the battery module! It returns true if the state meaningfully changed.
     if (battery_submit_adc_readings(bat_start_val, bat_end_val, vbus_val)) {
         wake_flags |= WAKE_REASON_BATTERY;
     }
 
-    if (ctr % 10 == 0 && atomic_load_explicit(&s_raw_print, memory_order_relaxed)) {
-        printf("MUX raw %d:",ctr);
-        for (int i = 0; i <= 16; i++) {
-            printf("\t%lu", local_buffer[i]);
+    if (atomic_load_explicit(&s_raw_print, memory_order_relaxed)) {
+        printf("MUX raw:");
+        for (int i = 0; i <= 15; i++) {
+            printf("\t%lu", values[i] & 0xFFFF);
         }
-        printf("\n");
+        printf("\t%lu\t%lu\t%lu\n", bat_start_val, bat_end_val, active_buf);
     }
 
     // 2. Inhibit door logic if no battery is present AND the pulse is currently HIGH
@@ -129,23 +141,50 @@ static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
     }
 
     /* ==========================================================
+     * LED Interference Suppression
+     * ========================================================== */
+    uint16_t led_state  = ledc_get_state();
+    bool     is_idle    = (led_state  >> 15) & 1;
+    bool     was_idle   = (s_prev_led_state >> 15) & 1;
+    uint16_t red_mask   =  led_state  & 0x3FFF;
+    uint16_t prev_red   =  s_prev_led_state & 0x3FFF;
+    s_prev_led_state    =  led_state;
+
+    // If we are currently playing an LED animation, skip processing
+    if (!is_idle) {
+        return wake_flags;
+    }
+
+    // Re-baseline closed doors on red transition OR if we were previously playing an animation
+    if (red_mask != prev_red || !was_idle) {
+        for (int door = 0; door < ADC_NUM_DOOR_CHANNELS; door++) {
+            
+            if (ch_stats[door].state == DOOR_CLOSED) {
+                ch_stats[door].initialized = false;
+                ch_stats[door].reset_ctr = 3; // cooldown for 3 samples before reinitializing
+            }
+        }
+    }
+
+    /* ==========================================================
      * Door Channel Processing
      * ========================================================== */
 
-    // Perform print after battery presense to avoid noise
-
-
-
-    #define AMBIENT_CHANGE_THRESHOLD 3 
-    #define DEBOUNCE_SAMPLES         2 
+    #define AMBIENT_CHANGE_THRESHOLD 3
+    #define DEBOUNCE_SAMPLES         2
 
     int candidate_state_changes = 0;
 
     for (int ch = ADC_DOOR_CHANNEL_START; ch <= ADC_DOOR_CHANNEL_END; ch++) {
         int door = ch - ADC_DOOR_CHANNEL_START;
         ch_stats_t* stats = &ch_stats[door];
+
+        if (stats->reset_ctr > 0) {
+            stats->reset_ctr--;
+            continue;
+        }
         
-        int32_t s_val = local_buffer[ch] * SCALE_FACTOR; 
+        int32_t s_val = (values[ch] & 0xFFFF) * SCALE_FACTOR; 
 
         if (!stats->initialized) {
             stats->ema = s_val;
@@ -153,6 +192,7 @@ static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
             stats->state = DOOR_CLOSED;
             stats->debounce_cnt = 0;
             stats->initialized = true;
+            stats->reset_ctr = 0;
             continue;
         }
 
@@ -169,8 +209,12 @@ static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
     for (int ch = ADC_DOOR_CHANNEL_START; ch <= ADC_DOOR_CHANNEL_END; ch++) {
         int door = ch - ADC_DOOR_CHANNEL_START;
         ch_stats_t* stats = &ch_stats[door];
+
+        if (stats->reset_ctr > 0) {
+            continue;
+        }
         
-        int32_t s_val = local_buffer[ch] * SCALE_FACTOR;
+        int32_t s_val = (values[ch] & 0xFFFF) * SCALE_FACTOR;
 
         if (is_ambient_event) {
             stats->ema = s_val;
@@ -216,6 +260,7 @@ static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
     
     return wake_flags;
 }
+#pragma GCC diagnostic pop
 
 static void IRAM_ATTR ulp_isr_handler(void *arg)
 {
@@ -361,8 +406,8 @@ static void init_ulp_program(void)
     rtc_gpio_init(MUX_PIN_D);
     rtc_gpio_set_direction(MUX_PIN_D, RTC_GPIO_MODE_OUTPUT_ONLY);
 
-    /* 200ms ULP wakeup period (polling should run every 180ms) */
-    ulp_set_wakeup_period(0, 180000);
+    /* 10ms ULP wakeup period — one channel sampled per tick, 16 ticks per cycle (~160ms) */
+    ulp_set_wakeup_period(0, 10000);
 
 #if CONFIG_IDF_TARGET_ESP32
 #ifndef CONFIG_FIRMWARE_ENGINEERING

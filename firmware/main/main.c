@@ -314,7 +314,10 @@ static void app_init_hw()
     // HARDWARE INITIALIZATION
     // 
 
-    // Initialize the MUX first so we receive bin door events as early as possible
+    // Initialize battery before MUX as MUX depends on battery
+    battery_init();
+
+    // Initialize the MUX early so we receive bin door events as early as possible
     mux_init();
 
     // Init GPIO
@@ -325,9 +328,6 @@ static void app_init_hw()
 
     // Initialize LED controller
     ledc_init();
-
-    // Initialize battery 
-    battery_init();
 }
 
 #endif /* !CONFIG_EMULATOR_MODE */
@@ -369,9 +369,14 @@ void app_main(void)
     app_init_hw();
 
     ESP_LOGI(TAG, "Hardware initialized");
+    
 #else
     ESP_LOGI(TAG, "=== QEMU Emulator Mode ===");
 #endif
+
+    // Start the engineering CLI (UART console)
+    eng_cli_init();
+
 
     // Initialize device configuration 
     devcfg_init();
@@ -387,9 +392,6 @@ void app_main(void)
 
     // Initialize the web server for testing/engineering
     web_server_init();
-
-    // Start the engineering CLI (UART console)
-    eng_cli_init();
 
     // Hand off business logic to the supervisor
     supervisor_run();

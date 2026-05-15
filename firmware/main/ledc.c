@@ -345,4 +345,19 @@ void ledc_eng_unlock(void)
     atomic_store_explicit(&s_eng_locked, false, memory_order_relaxed);
 }
 
+uint16_t ledc_get_state()
+{
+    led_task_t current_task = (led_task_t)atomic_load_explicit(&s_led_task, memory_order_relaxed);
+    uint64_t current_param_raw = atomic_load_explicit(&s_led_param, memory_order_relaxed);
+    led_task_param_t current_param = (led_task_param_t)current_param_raw;
+
+    uint16_t result = 0;
+    result = current_param.device_state.red;
+
+    if (current_task == LED_IDLE || current_task == LED_DEVICE_STATE) {
+        result |= (1 << 15);
+    }
+    return result;
+}
+
 #endif /* !CONFIG_EMULATOR_MODE */

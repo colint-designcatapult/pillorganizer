@@ -135,4 +135,12 @@ void ledc_eng_unlock(void)
     atomic_store_explicit(&s_eng_locked, false, memory_order_relaxed);
 }
 
+uint16_t ledc_get_state(void)
+{
+    /* Emulator has no LEDs — always report idle, no red channels lit. */
+    led_task_t task = (led_task_t)atomic_load_explicit(&s_task, memory_order_relaxed);
+    bool is_idle = (task == LED_IDLE || task == LED_DEVICE_STATE);
+    return is_idle ? (1 << 15) : 0;
+}
+
 #endif /* CONFIG_EMULATOR_MODE */
