@@ -27,6 +27,7 @@ static atomic_ullong        s_param       = ATOMIC_VAR_INIT(0);
 static atomic_uint_fast32_t s_idle_task   = ATOMIC_VAR_INIT(LED_IDLE);
 static atomic_ullong        s_idle_param  = ATOMIC_VAR_INIT(0);
 static atomic_bool          s_timed_active = ATOMIC_VAR_INIT(false);
+static atomic_bool          s_eng_locked  = ATOMIC_VAR_INIT(false);
 
 static void log_state(const char *prefix, led_task_t task, led_task_param_t p, uint32_t duration_ms)
 {
@@ -103,6 +104,10 @@ void ledc_set_task(led_task_t task, led_task_param_t param, uint32_t duration_ms
 
 void ledc_set_idle_task(led_task_t task, led_task_param_t param)
 {
+    if (atomic_load_explicit(&s_eng_locked, memory_order_relaxed)) {
+        return;
+    }
+
     led_task_t cur_idle  = (led_task_t)atomic_load_explicit(&s_idle_task,  memory_order_relaxed);
     uint64_t   cur_param =             atomic_load_explicit(&s_idle_param, memory_order_relaxed);
 
@@ -118,6 +123,24 @@ void ledc_set_idle_task(led_task_t task, led_task_param_t param)
     if (!atomic_load_explicit(&s_timed_active, memory_order_acquire)) {
         ledc_set_task(task, param, 0);
     }
+}
+
+void ledc_eng_lock(void)
+{
+    atomic_store_explicit(&s_eng_locked, true, memory_order_relaxed);
+}
+
+void ledc_eng_unlock(void)
+{
+    atomic_store_explicit(&s_eng_locked, false, memory_order_relaxed);
+}
+
+uint16_t ledc_get_state(void)
+{
+    /* Emulator has no LEDs — always report idle, no red channels lit. */
+    led_task_t task = (led_task_t)atomic_load_explicit(&s_task, memory_order_relaxed);
+    bool is_idle = (task == LED_IDLE || task == LED_DEVICE_STATE);
+    return is_idle ? (1 << 15) : 0;
 }
 
 #endif /* CONFIG_EMULATOR_MODE */

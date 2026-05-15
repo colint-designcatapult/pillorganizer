@@ -48,3 +48,14 @@ void ledc_set_task(led_task_t task, led_task_param_t param, uint32_t duration_ms
 void ledc_init();
 
 void ledc_set_idle_task(led_task_t task, led_task_param_t param);
+
+// Returns the current LED state as a packed uint16_t:
+//   Bit 15: "idle" flag — set when the device is LED_IDLE or LED_DEVICE_STATE
+//           (i.e. not playing an animation). Used by the MUX driver.
+//   Bits 0–13: red LED bitmask, one bit per door.
+uint16_t ledc_get_state(void);
+
+// Prevent the normal LED controller from overwriting the idle task.
+// Used by the engineering CLI to hold a specific LED state for debugging.
+void ledc_eng_lock(void);
+void ledc_eng_unlock(void);
