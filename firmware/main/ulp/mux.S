@@ -183,7 +183,7 @@ bits_ready:
 
     move r3, led_red_mask
     ld r3, r3, 0
-    and r3, r3, r0
+    and r0, r3, r0
     jumpr set_red_bit, 1, ge
     jump red_done
 set_red_bit:
@@ -192,9 +192,12 @@ set_red_bit:
     add r1, r1, r0
     st r1, r3, 0
 red_done:
+    move r3, channel_bitmask
+    add r3, r3, r2
+    ld r0, r3, 0                /* reload channel bit for green test */
     move r3, led_green_mask
     ld r3, r3, 0
-    and r3, r3, r0
+    and r0, r3, r0
     jumpr set_green_bit, 1, ge
     jump green_done
 set_green_bit:
