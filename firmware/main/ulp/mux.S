@@ -6,7 +6,7 @@
  * (which has now settled for 10ms), then selects the next channel and halts.
  * The CPU is woken once per complete 16-channel cycle (~160ms).
  *
- * Features 4x oversampling, DYNAMIC ATTENUATION, and DOUBLE BUFFERING.
+ * Features 4x oversampling and DYNAMIC ATTENUATION.
  */
 #include "soc/rtc_cntl_reg.h"
 #include "soc/rtc_io_reg.h"
@@ -19,19 +19,22 @@
     #define ADC_ATTEN_SHIFT (MUX_ADC_CHANNEL * 2)
 
 .bss
-    /* Buffer 0 */
+    /* ADC sample buffer (16 elements * 4 bytes each) */
     .global adc_readings_0
 adc_readings_0:
-    .skip 64   /* 16 elements * 4 bytes each */
-
-    /* Buffer 1 */
-    .global adc_readings_1
-adc_readings_1:
     .skip 64
 
-    /* Tracks which buffer the ULP is currently filling (0 or 1) */
-    .global active_buffer
-active_buffer:
+    /* Per-sample intensity snapshots (16 entries per cycle) */
+    .global led_intensity_snap_0
+led_intensity_snap_0:
+    .skip 64
+
+    /* Per-cycle red/green ON bits for sample indices 0..15 */
+    .global led_red_bits_0
+led_red_bits_0:
+    .long 0
+    .global led_green_bits_0
+led_green_bits_0:
     .long 0
 
     /*
@@ -45,6 +48,17 @@ current_sequence_idx:
     /* 0 = MUX not yet set (bootstrap tick); 1 = pipeline running */
     .global primed
 primed:
+    .long 0
+
+    /* LED snapshot written by the main CPU every LED task tick (20ms). */
+    .global led_red_mask
+led_red_mask:
+    .long 0
+    .global led_green_mask
+led_green_mask:
+    .long 0
+    .global led_intensity
+led_intensity:
     .long 0
 
 .text
@@ -70,6 +84,25 @@ channel_sequence:
     .long 13
     .long 14
     .long 15
+
+    .global channel_bitmask
+channel_bitmask:
+    .long 0x0001
+    .long 0x0002
+    .long 0x0004
+    .long 0x0008
+    .long 0x0010
+    .long 0x0020
+    .long 0x0040
+    .long 0x0080
+    .long 0x0100
+    .long 0x0200
+    .long 0x0400
+    .long 0x0800
+    .long 0x1000
+    .long 0x2000
+    .long 0x4000
+    .long 0x8000
 
 real_entry:
     /* Bootstrap: if MUX has never been set, prime it and halt */
@@ -127,24 +160,57 @@ read_adc:
     rsh r1, r1, 2               /* r1 = average of 4 samples */
 
     /* ==========================================================
-     * Write to Double Buffer
+     * Write sample and LED metadata
      * ========================================================== */
-    move r3, active_buffer
-    ld r0, r3, 0
-    and r0, r0, 1
-    jumpr write_buf_1, 1, ge
-
-write_buf_0:
     move r3, adc_readings_0
-    jump do_write
-
-write_buf_1:
-    move r3, adc_readings_1
-
-do_write:
     add r3, r3, r2              /* word offset = channel index */
     st r1, r3, 0
 
+    /* If this is the first index in the cycle, reset packed red/green bits */
+    move r0, r2
+    jump clear_cycle_bits, eq
+    jump bits_ready
+clear_cycle_bits:
+    move r1, 0
+    move r3, led_red_bits_0
+    st r1, r3, 0
+    move r3, led_green_bits_0
+    st r1, r3, 0
+bits_ready:
+    move r3, channel_bitmask
+    add r3, r3, r2
+    ld r0, r3, 0                /* r0 = sample-index bit */
+
+    move r3, led_red_mask
+    ld r3, r3, 0
+    and r3, r3, r0
+    jumpr set_red_bit, 1, ge
+    jump red_done
+set_red_bit:
+    move r3, led_red_bits_0
+    ld r1, r3, 0
+    add r1, r1, r0
+    st r1, r3, 0
+red_done:
+    move r3, led_green_mask
+    ld r3, r3, 0
+    and r3, r3, r0
+    jumpr set_green_bit, 1, ge
+    jump green_done
+set_green_bit:
+    move r3, led_green_bits_0
+    ld r1, r3, 0
+    add r1, r1, r0
+    st r1, r3, 0
+green_done:
+
+    move r3, led_intensity
+    ld r0, r3, 0
+    move r3, led_intensity_snap_0
+    add r3, r3, r2
+    st r0, r3, 0
+
+advance_index:
     /* Advance index; check if full cycle is complete */
     add r2, r2, 1
     move r0, r2
@@ -157,13 +223,6 @@ do_write:
     jump set_next_mux
 
 finish_cycle:
-    /* Flip active_buffer (0 -> 1, 1 -> 0) */
-    move r3, active_buffer
-    ld r0, r3, 0
-    add r0, r0, 1
-    and r0, r0, 1
-    st r0, r3, 0
-
     wake
 
     /* Reset index to 0; MUX will be primed for ch0 below */
