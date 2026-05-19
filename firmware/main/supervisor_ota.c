@@ -33,7 +33,11 @@ static void handle_download_failure(void)
 bool supervisor_ota_init(void)
 {
     esp_err_t err = ota_load_and_clear_pending_job(&s_job);
+    if (err == ESP_ERR_NOT_FOUND) {
+        return false;
+    }
     if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to load pending OTA job: %s", esp_err_to_name(err));
         return false;
     }
 
