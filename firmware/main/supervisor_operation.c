@@ -1,7 +1,6 @@
 #include "supervisor_operation.h"
 #include <string.h>
 #include <esp_log.h>
-#include <esp_ota_ops.h>
 #include <esp_app_desc.h>
 #include "mqtt.h"
 #include "device_config.h"
@@ -993,10 +992,6 @@ void supervisor_operation_init()
     s_state = STATE_INIT;
     load_state();
 
-    // Mark this firmware partition as valid — enables bootloader rollback if the
-    // new firmware crashes before reaching this point on the next boot.
-    esp_ota_mark_app_valid_cancel_rollback();
-
     // Init shadow state and OTA module
     shadow_state_init();
     ota_init();
@@ -1006,6 +1001,11 @@ void supervisor_operation_init()
 
     // Mark as initialized
     atomic_store(&s_init, true);
+
+    // Perform boot validation last: checks the OTA partition state and either
+    // marks the firmware valid (cancelling rollback) or records a rollback failure
+    // to be reported to AWS IoT Core on the next MQTT connection.
+    ota_boot_validate();
 }
 
 bool supervisor_operation_is_initialized()

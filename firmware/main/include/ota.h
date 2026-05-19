@@ -96,3 +96,15 @@ esp_err_t ota_load_and_clear_pending_job(ota_job_t* out);
  * Called by supervisor_ota after a flash attempt.
  */
 void ota_store_boot_validation(const char* job_id, const char* version);
+
+/*
+ * Checks the ESP OTA partition state and performs boot validation:
+ *   - If the running partition is in ESP_OTA_IMG_PENDING_VERIFY state (first boot
+ *     after a flash), calls esp_ota_mark_app_valid_cancel_rollback() and sets the
+ *     deferred job status to SUCCEEDED (or FAILED on a version mismatch).
+ *   - If not in PENDING_VERIFY (rollback occurred or factory firmware), sets the
+ *     deferred job status to FAILED when a pending NVS record is found.
+ * Reads and erases the OTA_NVS_PENDING_KEY NVS entry as part of this check.
+ * Must be called at the end of supervisor_operation_init(), after ota_init().
+ */
+void ota_boot_validate(void);

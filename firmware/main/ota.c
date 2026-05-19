@@ -188,43 +188,93 @@ static void reset_state(void)
 void ota_init(void)
 {
     reset_state();
-    s_notify_next_sub_id    = -1;
-    s_start_next_sub_id     = -1;
+    s_notify_next_sub_id     = -1;
+    s_start_next_sub_id      = -1;
     s_boot_pending_job_id[0] = '\0';
-    s_boot_pending_status    = Succeeded;  /* default; overwritten below if needed */
-
-    /* Check for a pending boot-validation job left by a previous flash.
-     * This is written by ota_on_complete() before rebooting.
-     * We determine success or failure by comparing the stored target version
-     * against the firmware that is actually running now:
-     *   - Match   → new firmware booted cleanly → will publish SUCCEEDED on MQTT connect.
-     *   - Mismatch → bootloader rolled back to old firmware → will publish FAILED. */
-    ota_pending_val_t pending = {0};
-    esp_err_t nvs_err = nvs_read_blob(OTA_NVS_PENDING_KEY, &pending, sizeof(pending));
-    if (nvs_err == ESP_OK && pending.job_id[0] != '\0') {
-        const char* running_version = esp_app_get_description()->version;
-        bool version_match = (strcmp(pending.version, running_version) == 0);
-
-        memcpy(s_boot_pending_job_id, pending.job_id, sizeof(s_boot_pending_job_id));
-        s_boot_pending_status = version_match ? Succeeded : Failed;
-
-        /* Clear the NVS entry immediately — if we crash again before publishing,
-         * a subsequent boot will not re-attempt the publish for the same job. */
-        esp_err_t erase_err = nvs_erase_key_entry(OTA_NVS_PENDING_KEY);
-        if (erase_err != ESP_OK) {
-            ESP_LOGW(TAG, "Failed to erase NVS pending key: %d", erase_err);
-        }
-
-        if (version_match) {
-            ESP_LOGI(TAG, "Boot validation: job %s succeeded (running %s)",
-                     pending.job_id, running_version);
-        } else {
-            ESP_LOGW(TAG, "Boot validation: job %s FAILED — expected %s, running %s (rollback?)",
-                     pending.job_id, pending.version, running_version);
-        }
-    }
+    s_boot_pending_status    = Succeeded;
 
     ESP_LOGI(TAG, "OTA module initialized");
+}
+
+/* Marks the running OTA partition valid (cancelling any pending rollback) and
+ * returns true if the partition was in PENDING_VERIFY state — i.e. this is the
+ * first boot of freshly-flashed firmware with rollback enabled.
+ *
+ * esp_ota_mark_app_valid_cancel_rollback() is always called: it is required
+ * when the partition is PENDING_VERIFY, and is a safe no-op otherwise (factory
+ * firmware, already-validated partition, or rollback disabled).
+ * Always returns false in emulator builds. */
+static bool mark_valid_if_pending(void)
+{
+#if CONFIG_EMULATOR_MODE
+    return false;
+#else
+    const esp_partition_t *running = esp_ota_get_running_partition();
+    esp_ota_img_states_t img_state = ESP_OTA_IMG_UNDEFINED;
+    esp_err_t err = esp_ota_get_state_partition(running, &img_state);
+    bool pending_verify = (err == ESP_OK && img_state == ESP_OTA_IMG_PENDING_VERIFY);
+
+    esp_ota_mark_app_valid_cancel_rollback();
+    return pending_verify;
+#endif
+}
+
+/* Reads the NVS boot-validation record written before the last OTA reboot,
+ * resolves the deferred job status (SUCCEEDED or FAILED), and stores it in
+ * module state for ota_on_connect() to publish.  The NVS key is erased here
+ * so a subsequent crash does not re-report the same job.
+ *
+ * is_new_firmware must be true when the running partition was in PENDING_VERIFY
+ * (i.e. mark_valid_if_pending() returned true).  When false, a pending record
+ * indicates the bootloader rolled back to the previous image. */
+static void resolve_pending_job_status(bool is_new_firmware)
+{
+    ota_pending_val_t pending = {0};
+    esp_err_t err = nvs_read_blob(OTA_NVS_PENDING_KEY, &pending, sizeof(pending));
+    if (err != ESP_OK || pending.job_id[0] == '\0') {
+        if (is_new_firmware) {
+            ESP_LOGI(TAG, "OTA partition marked valid (no job tracking)");
+        }
+        return;
+    }
+
+    const char *running_ver = esp_app_get_description()->version;
+    bool version_match = (strcmp(pending.version, running_ver) == 0);
+
+    memcpy(s_boot_pending_job_id, pending.job_id, sizeof(s_boot_pending_job_id));
+    s_boot_pending_status = version_match ? Succeeded : Failed;
+
+    if (is_new_firmware && version_match) {
+        ESP_LOGI(TAG, "Boot validation: job %s succeeded (running %s)",
+                 pending.job_id, running_ver);
+    } else if (is_new_firmware) {
+        /* Unexpected: PENDING_VERIFY but wrong version.  Mark valid to avoid a
+         * boot loop, but report the job as failed to AWS IoT. */
+        ESP_LOGW(TAG, "Boot validation: job %s version mismatch in PENDING_VERIFY "
+                 "(expected %s, running %s) — reporting FAILED",
+                 pending.job_id, pending.version, running_ver);
+    } else if (!version_match) {
+        ESP_LOGW(TAG, "Boot validation: job %s FAILED — expected %s, running %s (rollback?)",
+                 pending.job_id, pending.version, running_ver);
+    } else {
+        /* Partition is already VALID — either CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE is
+         * not set (esp_ota_end() marks valid at flash time), or the NVS record survived
+         * an extra reboot after a prior successful validation.  Either way, the right
+         * firmware is running so report SUCCEEDED. */
+        ESP_LOGI(TAG, "Boot validation: job %s succeeded (running %s)",
+                 pending.job_id, running_ver);
+    }
+
+    err = nvs_erase_key_entry(OTA_NVS_PENDING_KEY);
+    if (err != ESP_OK) {
+        ESP_LOGW(TAG, "Failed to erase NVS pending validation key: %d", err);
+    }
+}
+
+void ota_boot_validate(void)
+{
+    bool is_new_firmware = mark_valid_if_pending();
+    resolve_pending_job_status(is_new_firmware);
 }
 
 void ota_on_connect(void)
