@@ -571,7 +571,12 @@ esp_err_t ota_load_and_clear_pending_job(ota_job_t* out)
     out->url[sizeof(out->url) - 1]         = '\0';
 
     if (out->job_id[0] == '\0') {
-        return ESP_ERR_NOT_FOUND;
+        ESP_LOGW(TAG, "Pending OTA job in NVS is invalid: empty job_id; erasing stale key");
+        esp_err_t erase_err = nvs_erase_key_entry(OTA_NVS_JOB_KEY);
+        if (erase_err != ESP_OK) {
+            ESP_LOGW(TAG, "Failed to erase invalid pending job NVS key: %d", erase_err);
+        }
+        return ESP_ERR_INVALID_STATE;
     }
 
     esp_err_t erase_err = nvs_erase_key_entry(OTA_NVS_JOB_KEY);
