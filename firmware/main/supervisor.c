@@ -1,6 +1,7 @@
 #include "supervisor.h"
 #include "supervisor_operation.h"
 #include "supervisor_provision.h"
+#include "supervisor_ota.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include "esp_log.h"
@@ -34,6 +35,7 @@ RTC_NOINIT_ATTR uint32_t reset_pending;
 
 typedef enum {
     STATE_PROVISIONING,
+    STATE_OTA,
     STATE_OPERATIONAL,
     STATE_PENDING_REBOOT
 } supervisor_state_t;
@@ -100,12 +102,17 @@ void supervisor_run()
     // Check if Wi-Fi wants to be reset
     supervisor_check_wifi_reset();
 
-    // Flag if the device is fully operational, or setup (provisioning)
-    // Try to init the provisioning supervisor, returns true if needs provisioning
-    supervisor_state_t current_state = supervisor_provision_init() ? STATE_PROVISIONING : STATE_OPERATIONAL;
-
-    if (current_state == STATE_OPERATIONAL) {
-        // Initialize the operational supervisor instead
+    // Determine which supervisor mode to enter, in priority order:
+    //   1. Provisioning (highest) — device not yet provisioned
+    //   2. OTA           — pending OTA job in NVS
+    //   3. Operational   (lowest) — normal runtime
+    supervisor_state_t current_state;
+    if (supervisor_provision_init()) {
+        current_state = STATE_PROVISIONING;
+    } else if (supervisor_ota_init()) {
+        current_state = STATE_OTA;
+    } else {
+        current_state = STATE_OPERATIONAL;
         supervisor_operation_init();
     }
 
@@ -123,7 +130,30 @@ void supervisor_run()
 
         if (event_received) {
             ESP_LOGI(TAG, "Event received: %d. Supervisor state %s", event.id, 
-                current_state == STATE_OPERATIONAL ? "OPERATIONAL" : "PROVISIONING");
+                current_state == STATE_OPERATIONAL ? "OPERATIONAL" :
+                current_state == STATE_PROVISIONING ? "PROVISIONING" : 
+                current_state == STATE_OTA ? "OTA" : "PENDING_REBOOT");
+
+
+            switch (current_state) {
+                case STATE_PROVISIONING:
+                    supervisor_provision_event(&event);
+                    break;
+                case STATE_OTA:
+                    supervisor_ota_event(&event);
+                    break;
+                case STATE_OPERATIONAL:
+                    supervisor_operation_event(&event);
+                    break;
+                case STATE_PENDING_REBOOT:
+                    if (event.id == EVENT_LED_EFFECT_COMPLETE) {
+                        esp_restart();
+                    }
+                    break;
+                default:
+                    ESP_ERROR_CHECK(ESP_ERR_INVALID_STATE);
+                    break;
+            }
 
             // Process unconditional events
             if (event.id == EVENT_REBOOT_REQUESTED) {
@@ -139,22 +169,6 @@ void supervisor_run()
                 return;
             }
 
-            switch (current_state) {
-                case STATE_PROVISIONING:
-                    supervisor_provision_event(&event);
-                    break;
-                case STATE_OPERATIONAL:
-                    supervisor_operation_event(&event);
-                    break;
-                case STATE_PENDING_REBOOT:
-                    if (event.id == EVENT_LED_EFFECT_COMPLETE) {
-                        esp_restart();
-                    }
-                    break;
-                default:
-                    ESP_ERROR_CHECK(ESP_ERR_INVALID_STATE);
-                    break;
-            }
         } else {
             // Timeout of 1 sec received
             // Pass to subordinate supervisor
@@ -162,6 +176,8 @@ void supervisor_run()
                 supervisor_operation_tick();
             } else if(current_state == STATE_PROVISIONING) {
                 supervisor_provision_tick();
+            } else if (current_state == STATE_OTA) {
+                supervisor_ota_tick();
             } else {
                 // nothing?
                 // Should probably add a timeout here for reboot

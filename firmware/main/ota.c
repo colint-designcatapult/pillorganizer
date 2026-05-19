@@ -32,6 +32,10 @@ extern const char root_ca_pem_end[]   asm("_binary_root_ca_pem_end");
  * whether to publish SUCCEEDED (new firmware booted) or FAILED (rollback). */
 #define OTA_NVS_PENDING_KEY  "ota_pending_val"
 
+/* NVS key used to persist an incoming OTA job so supervisor_ota can execute
+ * the download after a reboot into the lightweight OTA mode. */
+#define OTA_NVS_JOB_KEY      "ota_pending_job"
+
 /* Struct persisted to NVS after a successful flash. */
 typedef struct {
     char job_id[JOBID_MAX_LENGTH + 1];
@@ -46,8 +50,6 @@ static char        s_job_url[OTA_URL_MAX_LEN];
 
 static int s_notify_next_sub_id      = -1;
 static int s_start_next_sub_id       = -1;
-static int s_update_accepted_sub_id  = -1;
-static int s_update_rejected_sub_id  = -1;
 
 /*
  * Set by ota_init() when a pending-validation entry is found in NVS.
@@ -111,64 +113,9 @@ static int publish_job_status(const char* job_id, JobCurrentStatus_t status)
     return msg_id;
 }
 
-/* Subscribe to the per-job update confirmation topics. */
-static void subscribe_job_update_topics(const char* job_id)
-{
-    char thing_name[THINGNAME_MAX_LENGTH + 1];
-    if (!devcfg_get_thing_name_str(thing_name, sizeof(thing_name))) {
-        ESP_LOGE(TAG, "Could not retrieve thing name for per-job subscriptions");
-        return;
-    }
-
-    char topic[TOPIC_BUFFER_SIZE];
-    int written;
-
-    written = snprintf(topic, sizeof(topic),
-                       "$aws/things/%s/jobs/%s/update/accepted",
-                       thing_name, job_id);
-    if (written > 0 && written < (int)sizeof(topic)) {
-        int sub_id = -1;
-        esp_err_t err = mqtt_subscribe(topic, 1, &sub_id);
-        if (err != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to subscribe update/accepted for job %s: %d", job_id, err);
-        } else {
-            s_update_accepted_sub_id = sub_id;
-            ESP_LOGI(TAG, "Subscribed update/accepted for job %s (sub_id=%d)", job_id, sub_id);
-        }
-    } else {
-        ESP_LOGE(TAG, "update/accepted topic too long for job %s", job_id);
-    }
-
-    written = snprintf(topic, sizeof(topic),
-                       "$aws/things/%s/jobs/%s/update/rejected",
-                       thing_name, job_id);
-    if (written > 0 && written < (int)sizeof(topic)) {
-        int sub_id = -1;
-        esp_err_t err = mqtt_subscribe(topic, 1, &sub_id);
-        if (err != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to subscribe update/rejected for job %s: %d", job_id, err);
-        } else {
-            s_update_rejected_sub_id = sub_id;
-            ESP_LOGI(TAG, "Subscribed update/rejected for job %s (sub_id=%d)", job_id, sub_id);
-        }
-    } else {
-        ESP_LOGE(TAG, "update/rejected topic too long for job %s", job_id);
-    }
-}
-
-/* Reset all job state back to IDLE. */
-static void reset_state(void)
-{
-    s_state       = OTA_IDLE;
-    s_job_id[0]   = '\0';
-    s_job_version[0] = '\0';
-    s_job_url[0]  = '\0';
-    s_update_accepted_sub_id = -1;
-    s_update_rejected_sub_id = -1;
-}
-
 /* ---------------------------------------------------------------------------
- * OTA worker task — runs the blocking download in its own FreeRTOS task
+ * OTA worker task — performs the blocking HTTPS download in its own FreeRTOS
+ * task and posts EVENT_OTA_COMPLETE or EVENT_OTA_FAILED when done.
  * -------------------------------------------------------------------------*/
 
 static void ota_worker_task(void* arg)
@@ -179,17 +126,18 @@ static void ota_worker_task(void* arg)
     esp_task_wdt_add(NULL);
 #endif
 
-    ESP_LOGI(TAG, "OTA worker task started: %s", url);
+    ESP_LOGI(TAG, "OTA worker started: %s", url);
 
     esp_http_client_config_t http_cfg = {
         .url               = url,
         .cert_pem          = root_ca_pem_start,
-        .keep_alive_enable = true,
-        /* Pre-signed S3 URLs can be very long (1 KB+).  Increase both the
-         * receive and transmit buffers so the HTTP client can encode the full
-         * request line without hitting "Out of buffer". */
+        /* Pre-signed S3 URLs can be very long (1 KB+), so the TX buffer needs
+         * enough space to emit the full HTTP request line without hitting
+         * "Out of buffer". Keep the RX buffer larger to provide additional
+         * headroom for the OTA response while limiting TX-side memory usage. */
         .buffer_size       = 4096,
-        .buffer_size_tx    = 4096,
+        .buffer_size_tx    = 2048,
+        .keep_alive_enable = true,
     };
     esp_https_ota_config_t ota_cfg = {
         .http_config = &http_cfg,
@@ -224,6 +172,15 @@ static void ota_worker_task(void* arg)
     vTaskDelete(NULL);
 }
 
+/* Reset all job state back to IDLE. */
+static void reset_state(void)
+{
+    s_state       = OTA_IDLE;
+    s_job_id[0]   = '\0';
+    s_job_version[0] = '\0';
+    s_job_url[0]  = '\0';
+}
+
 /* ---------------------------------------------------------------------------
  * Public API
  * -------------------------------------------------------------------------*/
@@ -231,43 +188,93 @@ static void ota_worker_task(void* arg)
 void ota_init(void)
 {
     reset_state();
-    s_notify_next_sub_id    = -1;
-    s_start_next_sub_id     = -1;
+    s_notify_next_sub_id     = -1;
+    s_start_next_sub_id      = -1;
     s_boot_pending_job_id[0] = '\0';
-    s_boot_pending_status    = Succeeded;  /* default; overwritten below if needed */
-
-    /* Check for a pending boot-validation job left by a previous flash.
-     * This is written by ota_on_complete() before rebooting.
-     * We determine success or failure by comparing the stored target version
-     * against the firmware that is actually running now:
-     *   - Match   → new firmware booted cleanly → will publish SUCCEEDED on MQTT connect.
-     *   - Mismatch → bootloader rolled back to old firmware → will publish FAILED. */
-    ota_pending_val_t pending = {0};
-    esp_err_t nvs_err = nvs_read_blob(OTA_NVS_PENDING_KEY, &pending, sizeof(pending));
-    if (nvs_err == ESP_OK && pending.job_id[0] != '\0') {
-        const char* running_version = esp_app_get_description()->version;
-        bool version_match = (strcmp(pending.version, running_version) == 0);
-
-        memcpy(s_boot_pending_job_id, pending.job_id, sizeof(s_boot_pending_job_id));
-        s_boot_pending_status = version_match ? Succeeded : Failed;
-
-        /* Clear the NVS entry immediately — if we crash again before publishing,
-         * a subsequent boot will not re-attempt the publish for the same job. */
-        esp_err_t erase_err = nvs_erase_key_entry(OTA_NVS_PENDING_KEY);
-        if (erase_err != ESP_OK) {
-            ESP_LOGW(TAG, "Failed to erase NVS pending key: %d", erase_err);
-        }
-
-        if (version_match) {
-            ESP_LOGI(TAG, "Boot validation: job %s succeeded (running %s)",
-                     pending.job_id, running_version);
-        } else {
-            ESP_LOGW(TAG, "Boot validation: job %s FAILED — expected %s, running %s (rollback?)",
-                     pending.job_id, pending.version, running_version);
-        }
-    }
+    s_boot_pending_status    = Succeeded;
 
     ESP_LOGI(TAG, "OTA module initialized");
+}
+
+/* Marks the running OTA partition valid (cancelling any pending rollback) and
+ * returns true if the partition was in PENDING_VERIFY state — i.e. this is the
+ * first boot of freshly-flashed firmware with rollback enabled.
+ *
+ * esp_ota_mark_app_valid_cancel_rollback() is always called: it is required
+ * when the partition is PENDING_VERIFY, and is a safe no-op otherwise (factory
+ * firmware, already-validated partition, or rollback disabled).
+ * Always returns false in emulator builds. */
+static bool mark_valid_if_pending(void)
+{
+#if CONFIG_EMULATOR_MODE
+    return false;
+#else
+    const esp_partition_t *running = esp_ota_get_running_partition();
+    esp_ota_img_states_t img_state = ESP_OTA_IMG_UNDEFINED;
+    esp_err_t err = esp_ota_get_state_partition(running, &img_state);
+    bool pending_verify = (err == ESP_OK && img_state == ESP_OTA_IMG_PENDING_VERIFY);
+
+    esp_ota_mark_app_valid_cancel_rollback();
+    return pending_verify;
+#endif
+}
+
+/* Reads the NVS boot-validation record written before the last OTA reboot,
+ * resolves the deferred job status (SUCCEEDED or FAILED), and stores it in
+ * module state for ota_on_connect() to publish.  The NVS key is erased here
+ * so a subsequent crash does not re-report the same job.
+ *
+ * is_new_firmware must be true when the running partition was in PENDING_VERIFY
+ * (i.e. mark_valid_if_pending() returned true).  When false, a pending record
+ * indicates the bootloader rolled back to the previous image. */
+static void resolve_pending_job_status(bool is_new_firmware)
+{
+    ota_pending_val_t pending = {0};
+    esp_err_t err = nvs_read_blob(OTA_NVS_PENDING_KEY, &pending, sizeof(pending));
+    if (err != ESP_OK || pending.job_id[0] == '\0') {
+        if (is_new_firmware) {
+            ESP_LOGI(TAG, "OTA partition marked valid (no job tracking)");
+        }
+        return;
+    }
+
+    const char *running_ver = esp_app_get_description()->version;
+    bool version_match = (strcmp(pending.version, running_ver) == 0);
+
+    memcpy(s_boot_pending_job_id, pending.job_id, sizeof(s_boot_pending_job_id));
+    s_boot_pending_status = version_match ? Succeeded : Failed;
+
+    if (is_new_firmware && version_match) {
+        ESP_LOGI(TAG, "Boot validation: job %s succeeded (running %s)",
+                 pending.job_id, running_ver);
+    } else if (is_new_firmware) {
+        /* Unexpected: PENDING_VERIFY but wrong version.  Mark valid to avoid a
+         * boot loop, but report the job as failed to AWS IoT. */
+        ESP_LOGW(TAG, "Boot validation: job %s version mismatch in PENDING_VERIFY "
+                 "(expected %s, running %s) — reporting FAILED",
+                 pending.job_id, pending.version, running_ver);
+    } else if (!version_match) {
+        ESP_LOGW(TAG, "Boot validation: job %s FAILED — expected %s, running %s (rollback?)",
+                 pending.job_id, pending.version, running_ver);
+    } else {
+        /* Partition is already VALID — either CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE is
+         * not set (esp_ota_end() marks valid at flash time), or the NVS record survived
+         * an extra reboot after a prior successful validation.  Either way, the right
+         * firmware is running so report SUCCEEDED. */
+        ESP_LOGI(TAG, "Boot validation: job %s succeeded (running %s)",
+                 pending.job_id, running_ver);
+    }
+
+    err = nvs_erase_key_entry(OTA_NVS_PENDING_KEY);
+    if (err != ESP_OK) {
+        ESP_LOGW(TAG, "Failed to erase NVS pending validation key: %d", err);
+    }
+}
+
+void ota_boot_validate(void)
+{
+    bool is_new_firmware = mark_valid_if_pending();
+    resolve_pending_job_status(is_new_firmware);
 }
 
 void ota_on_connect(void)
@@ -370,14 +377,6 @@ void ota_on_subscribe(int sub_id)
             ESP_LOGI(TAG, "StartNext request published — checking for pending OTA job");
         }
     }
-
-    if (sub_id == s_update_accepted_sub_id) {
-        ESP_LOGI(TAG, "OTA update/accepted subscription confirmed (sub_id=%d)", sub_id);
-    }
-
-    if (sub_id == s_update_rejected_sub_id) {
-        ESP_LOGI(TAG, "OTA update/rejected subscription confirmed (sub_id=%d)", sub_id);
-    }
 }
 
 void ota_on_data(const char* topic, size_t topic_len, const char* data, size_t data_len)
@@ -392,24 +391,6 @@ void ota_on_data(const char* topic, size_t topic_len, const char* data, size_t d
     size_t copy_len = topic_len < sizeof(topic_buf) - 1 ? topic_len : sizeof(topic_buf) - 1;
     memcpy(topic_buf, topic, copy_len);
     topic_buf[copy_len] = '\0';
-
-    /* Check for the per-job update/rejected confirmation topic.
-     * s_job_id is read here from the MQTT task, but it is set by the
-     * supervisor task in ota_accept_job() before the subscription is active,
-     * and cleared only after the job ends — so this read is safe. */
-    if (s_update_rejected_sub_id >= 0 && s_job_id[0] != '\0') {
-        char rejected_topic[TOPIC_BUFFER_SIZE];
-        int written = snprintf(rejected_topic, sizeof(rejected_topic),
-                               "$aws/things/%s/jobs/%s/update/rejected",
-                               thing_name, s_job_id);
-        if (written > 0 && written < (int)sizeof(rejected_topic) &&
-            copy_len == (size_t)written &&
-            strncmp(topic_buf, rejected_topic, copy_len) == 0) {
-            ESP_LOGE(TAG, "AWS rejected status update for job %s — resetting", s_job_id);
-            supervisor_submit_event(EVENT_OTA_FAILED);
-            return;
-        }
-    }
 
     /* Match Jobs notification topics */
     JobsTopic_t topic_type;
@@ -491,7 +472,7 @@ void ota_on_data(const char* topic, size_t topic_len, const char* data, size_t d
     }
 
     /* Allocate job descriptor — ownership transfers to the supervisor task */
-    ota_job_t* job = calloc(1, sizeof(ota_job_t));
+    ota_job_t* job = (ota_job_t*)calloc(1, sizeof(ota_job_t));
     if (!job) {
         ESP_LOGE(TAG, "Failed to allocate ota_job_t — dropping job %s",
                  job_id_item->valuestring);
@@ -533,8 +514,6 @@ void ota_accept_job(const ota_job_t* job)
     memcpy(s_job_version, job->version, version_len + 1);
     s_state = OTA_JOB_RECEIVED;
 
-    subscribe_job_update_topics(job->job_id);
-
     ESP_LOGI(TAG, "OTA job accepted: id=%s version=%s url=%s",
              job->job_id, job->version, job->url);
 }
@@ -553,24 +532,19 @@ void ota_reject(void)
     reset_state();
 }
 
-void ota_execute(void)
+esp_err_t ota_execute_job(const ota_job_t* job)
 {
-    if (s_state != OTA_JOB_RECEIVED || s_job_url[0] == '\0' || s_job_id[0] == '\0') {
-        ESP_LOGE(TAG, "ota_execute called in unexpected state (state=%d)", (int)s_state);
-        return;
+    if (!job || job->url[0] == '\0' || job->job_id[0] == '\0') {
+        ESP_LOGE(TAG, "ota_execute_job: invalid job");
+        return ESP_ERR_INVALID_ARG;
     }
 
-    ESP_LOGI(TAG, "Executing OTA job %s — spawning worker task", s_job_id);
+    ESP_LOGI(TAG, "Spawning OTA worker for job %s", job->job_id);
 
-    /* Publish IN_PROGRESS before spawning the task */
-    publish_job_status(s_job_id, InProgress);
-
-    char* url_copy = strdup(s_job_url);
+    char* url_copy = strdup(job->url);
     if (!url_copy) {
         ESP_LOGE(TAG, "Failed to allocate URL for OTA worker task");
-        publish_job_status(s_job_id, Failed);
-        reset_state();
-        return;
+        return ESP_ERR_NO_MEM;
     }
 
     BaseType_t ret = xTaskCreate(ota_worker_task, "ota_worker",
@@ -579,42 +553,87 @@ void ota_execute(void)
     if (ret != pdPASS) {
         ESP_LOGE(TAG, "Failed to create OTA worker task");
         free(url_copy);
-        publish_job_status(s_job_id, Failed);
-        reset_state();
-        return;
+        return ESP_FAIL;
     }
 
-    s_state = OTA_IN_PROGRESS;
-    ESP_LOGI(TAG, "OTA worker task spawned — state → IN_PROGRESS");
+    return ESP_OK;
 }
 
-void ota_on_complete(void)
+void ota_store_boot_validation(const char* job_id, const char* version)
 {
-    ESP_LOGI(TAG, "OTA flash succeeded for job %s — persisting to NVS, rebooting to validate",
-             s_job_id);
-
-    /* Persist the job ID and target version to NVS.
-     * SUCCEEDED will only be published after the new firmware successfully
-     * boots and connects to MQTT (see ota_init() + ota_on_connect()).
-     * If the bootloader rolls back, FAILED will be published instead. */
     ota_pending_val_t pending;
     memset(&pending, 0, sizeof(pending));
-    memcpy(pending.job_id,  s_job_id,      strlen(s_job_id)      + 1);
-    memcpy(pending.version, s_job_version, strlen(s_job_version) + 1);
+    snprintf(pending.job_id,  sizeof(pending.job_id),  "%s", job_id);
+    snprintf(pending.version, sizeof(pending.version), "%s", version);
 
     esp_err_t err = nvs_write_blob(OTA_NVS_PENDING_KEY, &pending, sizeof(pending));
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to persist OTA pending validation to NVS: %d — "
+        ESP_LOGE(TAG, "Failed to write boot-validation to NVS: %d — "
                  "job status may not be reported", err);
+    } else {
+        ESP_LOGI(TAG, "Boot-validation written: job=%s version='%s'", job_id, version);
     }
-
-    s_state = OTA_SUCCEEDED;
-    /* Caller (supervisor) submits EVENT_REBOOT_REQUESTED */
 }
 
-void ota_on_failed(void)
+esp_err_t ota_store_accepted_job_to_nvs(void)
 {
-    ESP_LOGE(TAG, "OTA failed for job %s — resetting state", s_job_id);
-    publish_job_status(s_job_id, Failed);
-    reset_state();
+    if (s_job_id[0] == '\0') {
+        ESP_LOGE(TAG, "ota_store_accepted_job_to_nvs: no accepted job");
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    ota_job_t job;
+    memset(&job, 0, sizeof(job));
+    snprintf(job.job_id,  sizeof(job.job_id),  "%s", s_job_id);
+    snprintf(job.version, sizeof(job.version), "%s", s_job_version);
+    snprintf(job.url,     sizeof(job.url),     "%s", s_job_url);
+
+    esp_err_t err = nvs_write_blob(OTA_NVS_JOB_KEY, &job, sizeof(job));
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to write pending OTA job to NVS: %d", err);
+    } else {
+        ESP_LOGI(TAG, "Pending OTA job stored: id=%s version=%s", job.job_id, job.version);
+    }
+    return err;
+}
+
+void ota_publish_accepted_job_in_progress(void)
+{
+    if (s_job_id[0] == '\0') {
+        ESP_LOGE(TAG, "ota_publish_accepted_job_in_progress: no accepted job");
+        return;
+    }
+    publish_job_status(s_job_id, InProgress);
+}
+
+esp_err_t ota_load_and_clear_pending_job(ota_job_t* out)
+{
+    if (!out) return ESP_ERR_INVALID_ARG;
+
+    esp_err_t err = nvs_read_blob(OTA_NVS_JOB_KEY, out, sizeof(ota_job_t));
+    if (err != ESP_OK) {
+        return err;  /* ESP_ERR_NOT_FOUND if no pending job */
+    }
+
+    /* Null-terminate defensively in case NVS data is corrupt */
+    out->job_id[sizeof(out->job_id) - 1]   = '\0';
+    out->version[sizeof(out->version) - 1] = '\0';
+    out->url[sizeof(out->url) - 1]         = '\0';
+
+    if (out->job_id[0] == '\0') {
+        ESP_LOGW(TAG, "Pending OTA job in NVS is invalid: empty job_id; erasing stale key");
+        esp_err_t erase_err = nvs_erase_key_entry(OTA_NVS_JOB_KEY);
+        if (erase_err != ESP_OK) {
+            ESP_LOGW(TAG, "Failed to erase invalid pending job NVS key: %d", erase_err);
+        }
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    esp_err_t erase_err = nvs_erase_key_entry(OTA_NVS_JOB_KEY);
+    if (erase_err != ESP_OK) {
+        ESP_LOGW(TAG, "Failed to erase pending job NVS key: %d", erase_err);
+    }
+
+    ESP_LOGI(TAG, "Loaded pending OTA job: id=%s version=%s", out->job_id, out->version);
+    return ESP_OK;
 }
