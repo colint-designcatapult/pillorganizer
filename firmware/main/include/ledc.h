@@ -11,7 +11,8 @@ typedef enum {
     LED_PROGRESS,
     LED_BLINK,
     LED_FIREWORK,
-    LED_DEVICE_STATE
+    LED_DEVICE_STATE,
+    LED_SOLID
 } led_task_t;
 
 typedef union {
@@ -39,6 +40,11 @@ typedef union {
         uint16_t green;
         uint16_t blink_mask;
     } device_state;
+    struct {
+        uint16_t red;
+        uint16_t green;
+        uint8_t intensity; 
+    } solid;
     uint64_t raw;
 } led_task_param_t;
 
@@ -50,8 +56,9 @@ void ledc_init();
 void ledc_set_idle_task(led_task_t task, led_task_param_t param);
 
 // Returns the current LED state as a packed uint16_t:
-//   Bit 15: "idle" flag — set when the device is LED_IDLE or LED_DEVICE_STATE
-//           (i.e. not playing an animation). Used by the MUX driver.
+//   Bit 15: "idle" flag — set when the device is LED_IDLE, LED_DEVICE_STATE,
+//           or the all-doors amber breathe (i.e. not playing an animation).
+//   Bit 14: "breathe" flag — set when the all-doors amber breathe is active.
 //   Bits 0–13: red LED bitmask, one bit per door.
 uint16_t ledc_get_state(void);
 

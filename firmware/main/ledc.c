@@ -9,6 +9,7 @@
 #include "i2c_dev.h"
 #include <stdatomic.h>
 #include "supervisor.h"
+#include "ulp_main.h"
 #include "string.h"
 #include <stdlib.h>
 #include <string.h>
@@ -34,13 +35,26 @@ static atomic_ullong s_led_param = ATOMIC_VAR_INIT(0);
 static atomic_uint_fast32_t s_led_duration = ATOMIC_VAR_INIT(0);
 static atomic_bool s_reset = ATOMIC_VAR_INIT(true);
 
+extern uint32_t ulp_led_red_mask;
+extern uint32_t ulp_led_green_mask;
+extern uint32_t ulp_led_intensity;
+
 void led_task(void* arg);
+
+static inline void update_ulp_led_snapshot(uint16_t red_mask, uint16_t green_mask, uint8_t intensity)
+{
+    ulp_led_red_mask = red_mask;
+    ulp_led_green_mask = green_mask;
+    ulp_led_intensity = intensity;
+}
 
 void ledc_init(void)
 {
     // Initialize the LED driver
     IS31FL3730_init();
     IS31FL3730_set_brightness(MAX_BREATHE_STEPS);
+
+    update_ulp_led_snapshot(0, 0, 0);
 
     xTaskCreate(led_task, "LED Task", 4096, NULL, 1, NULL);   
 }
@@ -137,6 +151,9 @@ void led_task(void* arg)
     
     // NEW: Track the fade-in state
     uint32_t fade_ticks_remaining = 0;
+    uint16_t current_red_mask = 0;
+    uint16_t current_green_mask = 0;
+    uint8_t current_intensity = 0;
 
     for(;;) {
         // 1. Thread-safe read and reset of the flag using atomic_exchange
@@ -169,28 +186,49 @@ void led_task(void* arg)
                     apply_led_bitfields(0, 0); // Completely off
                     IS31FL3730_set_brightness(0);
                     i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);   
+                    current_red_mask = 0;
+                    current_green_mask = 0;
+                    current_intensity = 0;
                     break;
                 case LED_BREATHE:
                     step = 1;
                     apply_led_bitfields(param.breathe.red, param.breathe.green);
                     i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);   
+                    current_red_mask = param.breathe.red;
+                    current_green_mask = param.breathe.green;
                     break;
                 case LED_DEVICE_STATE:
                 case LED_BLINK:
                 case LED_PROGRESS:
                     IS31FL3730_set_brightness(MAX_BREATHE_STEPS);
+                    current_intensity = MAX_BREATHE_STEPS;
                     if (task == LED_BLINK) {
                         apply_led_bitfields(param.blink.red, param.blink.green);
                         i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
+                        current_red_mask = param.blink.red;
+                        current_green_mask = param.blink.green;
                     } else if (task == LED_DEVICE_STATE) {
                         apply_led_bitfields(param.device_state.red, param.device_state.green);
                         i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
+                        current_red_mask = param.device_state.red;
+                        current_green_mask = param.device_state.green;
                     }
                     break;
                 case LED_FIREWORK:
                     IS31FL3730_set_brightness(MAX_BREATHE_STEPS);
                     apply_led_bitfields(param.firework.red, param.firework.green);
                     i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
+                    current_red_mask = param.firework.red;
+                    current_green_mask = param.firework.green;
+                    current_intensity = MAX_BREATHE_STEPS;
+                    break;
+                case LED_SOLID:
+                    IS31FL3730_set_brightness(param.solid.intensity);
+                    apply_led_bitfields(param.solid.red, param.solid.green);
+                    i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
+                    current_red_mask = param.solid.red;
+                    current_green_mask = param.solid.green;
+                    current_intensity = param.solid.intensity;
                     break;
                 default:
                     break;
@@ -229,25 +267,32 @@ void led_task(void* arg)
                 step_ctr += step;
                 IS31FL3730_set_brightness((uint8_t)step_ctr);
                 i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);   
+                current_red_mask = param.breathe.red;
+                current_green_mask = param.breathe.green;
+                current_intensity = (uint8_t)step_ctr;
                 break;
 
             case LED_BLINK:
+            {
+                bool on = (step_ctr / BLINK_INTERVAL_TICKS) % 2 == 0;
                 if (step_ctr % BLINK_INTERVAL_TICKS == 0) {
-                    bool on = (step_ctr / BLINK_INTERVAL_TICKS) % 2 == 0;
                     apply_led_bitfields(on ? param.blink.red : 0, on ? param.blink.green : 0);
                     i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
                 }
+                current_red_mask = on ? param.blink.red : 0;
+                current_green_mask = on ? param.blink.green : 0;
+                current_intensity = MAX_BREATHE_STEPS;
                 step_ctr++;
                 break;
+            }
 
             case LED_DEVICE_STATE: 
                 // Checks to see if we need to flip the blink phase
+            {
+                bool blink_on = (step_ctr / BLINK_INTERVAL_TICKS) % 2 == 0;
+                uint16_t r_mask = param.device_state.red;
+                uint16_t g_mask = param.device_state.green;
                 if (step_ctr % BLINK_INTERVAL_TICKS == 0) {
-                    bool blink_on = (step_ctr / BLINK_INTERVAL_TICKS) % 2 == 0;
-                    
-                    uint16_t r_mask = param.device_state.red;
-                    uint16_t g_mask = param.device_state.green;
-                    
                     // If we're in the 'OFF' phase of a blink, mask out the blinking LEDs
                     if (!blink_on) {
                         r_mask &= ~(param.device_state.blink_mask);
@@ -257,8 +302,16 @@ void led_task(void* arg)
                     apply_led_bitfields(r_mask, g_mask);
                     i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
                 }
+                if (!blink_on) {
+                    r_mask &= ~(param.device_state.blink_mask);
+                    g_mask &= ~(param.device_state.blink_mask);
+                }
+                current_red_mask = r_mask;
+                current_green_mask = g_mask;
+                current_intensity = MAX_BREATHE_STEPS;
                 step_ctr++;
                 break;
+            }
 
             case LED_PROGRESS: {
                 uint32_t target_tick = param.progress.progress * PROGRESS_TICKS_PER_STEP;
@@ -279,6 +332,9 @@ void led_task(void* arg)
 
                 apply_led_bitfields(red_mask & param.progress.red, green_mask & param.progress.green);
                 i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
+                current_red_mask = red_mask & param.progress.red;
+                current_green_mask = green_mask & param.progress.green;
+                current_intensity = MAX_BREATHE_STEPS;
                 break;
             }
             case LED_FIREWORK: {
@@ -309,12 +365,21 @@ void led_task(void* arg)
 
                 apply_led_bitfields(r_mask & param.firework.red, g_mask & param.firework.green);
                 i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
+                current_red_mask = r_mask & param.firework.red;
+                current_green_mask = g_mask & param.firework.green;
+                current_intensity = MAX_BREATHE_STEPS;
                 
                 step_ctr++;
                 break;
             }
+            case LED_SOLID:
+                // No animation — mask and intensity are set at init
+                break;
             case LED_IDLE:
             default:
+                current_red_mask = 0;
+                current_green_mask = 0;
+                current_intensity = 0;
                 break;
         }
 
@@ -327,9 +392,12 @@ void led_task(void* arg)
             
             IS31FL3730_set_brightness(brightness);
             i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
+            current_intensity = brightness;
             
             fade_ticks_remaining--;
         }
+
+        update_ulp_led_snapshot(current_red_mask, current_green_mask, current_intensity);
 
         vTaskDelay(pdMS_TO_TICKS(TASK_TICK_RATE_MS));
     }
@@ -350,6 +418,12 @@ uint16_t ledc_get_state()
     led_task_t current_task = (led_task_t)atomic_load_explicit(&s_led_task, memory_order_relaxed);
     uint64_t current_param_raw = atomic_load_explicit(&s_led_param, memory_order_relaxed);
     led_task_param_t current_param = (led_task_param_t)current_param_raw;
+
+    // Amber breathe (all doors, all colors) is classified as idle but flagged
+    // separately so the MUX driver can suppress re-baselining during the ramp.
+    if(current_task == LED_BREATHE && current_param.breathe.red == LED_ALL_DOORS && current_param.breathe.green == LED_ALL_DOORS) {
+        return (1 << 15) | (1 << 14);
+    }
 
     uint16_t result = 0;
     result = current_param.device_state.red;
