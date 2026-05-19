@@ -18,9 +18,6 @@
 typedef enum {
     OTA_IDLE,
     OTA_JOB_RECEIVED,
-    OTA_IN_PROGRESS,
-    OTA_SUCCEEDED,
-    OTA_FAILED,
 } ota_state_t;
 
 #define OTA_URL_MAX_LEN     2048
@@ -53,18 +50,10 @@ void ota_on_subscribe(int sub_id);
 
 /*
  * Accept a validated OTA job from the supervisor event handler.
- * Copies job_id and url into module state, sets state to OTA_JOB_RECEIVED,
- * and subscribes to per-job update/accepted and update/rejected topics.
+ * Copies job_id, version, and url into module state, sets state to OTA_JOB_RECEIVED.
  * Must only be called from the supervisor task.
  */
 void ota_accept_job(const ota_job_t* job);
-
-/*
- * Execute the pending OTA job. Non-blocking — spawns a dedicated worker task
- * that calls esp_https_ota() and posts EVENT_OTA_COMPLETE or EVENT_OTA_FAILED
- * when done. Must only be called when state is OTA_JOB_RECEIVED.
- */
-void ota_execute(void);
 
 /*
  * Reject the pending job. Publishes IN_PROGRESS then FAILED sequentially.
@@ -73,13 +62,37 @@ void ota_execute(void);
 void ota_reject(void);
 
 /*
- * Called by the supervisor when EVENT_OTA_COMPLETE is received.
- * Publishes SUCCEEDED job status and resets state to OTA_SUCCEEDED.
+ * Spawn a worker task to download and flash the firmware at job->url.
+ * Non-blocking — the worker posts EVENT_OTA_COMPLETE or EVENT_OTA_FAILED to
+ * the supervisor queue when done. Called by supervisor_ota after time sync.
+ * Returns ESP_OK if the task was successfully created, error otherwise.
  */
-void ota_on_complete(void);
+esp_err_t ota_execute_job(const ota_job_t* job);
 
 /*
- * Called by the supervisor when EVENT_OTA_FAILED is received.
- * Publishes FAILED job status and resets state to OTA_IDLE.
+ * Stores the currently accepted job (job_id, version, url) to NVS so that
+ * supervisor_ota can consume it on the next boot.
+ * Must only be called after ota_accept_job().
  */
-void ota_on_failed(void);
+esp_err_t ota_store_accepted_job_to_nvs(void);
+
+/*
+ * Publishes IN_PROGRESS status for the currently accepted job to MQTT.
+ * Must only be called after ota_accept_job().
+ */
+void ota_publish_accepted_job_in_progress(void);
+
+/*
+ * Reads the pending OTA job from NVS into *out and erases the NVS entry.
+ * Returns ESP_ERR_NOT_FOUND if no pending job exists.
+ * Called by supervisor_ota_init() on boot.
+ */
+esp_err_t ota_load_and_clear_pending_job(ota_job_t* out);
+
+/*
+ * Writes a boot-validation entry to NVS so the operational supervisor can
+ * report the job result to AWS IoT Core on the next MQTT connection.
+ * Pass the target version on success, or an empty string ("") to force FAILED.
+ * Called by supervisor_ota after a flash attempt.
+ */
+void ota_store_boot_validation(const char* job_id, const char* version);

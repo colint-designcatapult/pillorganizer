@@ -28,6 +28,7 @@ set(MAIN_SRCS
     shadow_state.c
     supervisor_operation.c
     supervisor_provision.c
+    supervisor_ota.c
     battery.c
     web_server.c
     event_outbox.c

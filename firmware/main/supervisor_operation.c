@@ -28,7 +28,6 @@ typedef enum {
     STATE_CONNECTING_MQTT,
     STATE_MQTT_CONNECTED,
     STATE_OPERATIONAL,
-    STATE_OTA,
 } supervisor_operation_state_t;
 
 static atomic_bool s_init = ATOMIC_VAR_INIT(false);
@@ -1049,9 +1048,9 @@ void supervisor_operation_event(const supervisor_event_t* event)
         ota_job_t* job = (ota_job_t*)(intptr_t)event->payload;
         if (!job) {
             ESP_LOGE(TAG, "EVENT_OTA_JOB_RECEIVED with NULL payload");
-        } else if (s_pending_deferred == DEFERRED_OTA || s_state == STATE_OTA) {
-            /* Already processing an OTA job — discard duplicate */
-            ESP_LOGD(TAG, "OTA job %s ignored — already processing a job", job->job_id);
+        } else if (s_pending_deferred != DEFERRED_NONE) {
+            /* Already have a deferred action pending — discard duplicate */
+            ESP_LOGD(TAG, "OTA job %s ignored — deferred action already pending", job->job_id);
             free(job);
         } else {
             /* Accept the job into OTA module state */
@@ -1064,22 +1063,12 @@ void supervisor_operation_event(const supervisor_event_t* event)
                          job->job_id, current_version);
                 ota_reject();
             } else {
-                ESP_LOGI(TAG, "OTA job %s received, deferring execution until device is idle",
+                ESP_LOGI(TAG, "OTA job %s received, deferring reboot until device is idle",
                          job->job_id);
                 s_pending_deferred = DEFERRED_OTA;
             }
             free(job);
         }
-    } else if (event->id == EVENT_OTA_COMPLETE) {
-        s_pending_deferred = DEFERRED_NONE;
-        ota_on_complete();
-        /* State stays STATE_OTA; device will reboot shortly */
-        supervisor_submit_event(EVENT_REBOOT_REQUESTED);
-    } else if (event->id == EVENT_OTA_FAILED) {
-        s_pending_deferred = DEFERRED_NONE;
-        ota_on_failed();
-        s_state = STATE_OPERATIONAL;
-        ESP_LOGI(TAG, "OTA failed — returning to OPERATIONAL state");
     }
 
     // Handle medication reload FSM 
@@ -1153,7 +1142,7 @@ void supervisor_operation_event(const supervisor_event_t* event)
             if (event->id == EVENT_CMD_RELOAD) {
                 cmd_reload_action_t action = (cmd_reload_action_t)event->payload;
                 if (action == CMD_RELOAD_INITIATE) {
-                    if (s_device_state.reload_state.stage == RELOAD_NONE) {
+                    if (s_device_state.reload_state.stage != RELOAD_RELOADING) {
                         ESP_LOGI(TAG, "CMD: Reload initiate received");
                         supervisor_operation_trigger_reload();
                     } else {
@@ -1191,18 +1180,18 @@ void supervisor_operation_event(const supervisor_event_t* event)
                 }
             }
             break;
-        case STATE_OTA:
-            /* OTA download is in progress in the worker task.
-             * Do not process operational events; wait for EVENT_OTA_COMPLETE
-             * or EVENT_OTA_FAILED to arrive from the worker task. */
-            break;
         default:
             ESP_LOGW(TAG, "Unhandled state: %d", s_state);
             break;
     }
 
     // Unconditional tasks to perform after state-specific tasks are complete
-    if (event->id == EVENT_NETIF_DISCONNECTED) {
+    if (event->id == EVENT_REBOOT_REQUESTED) {
+        /* Flush the latest device state to NVS before the reboot so nothing
+         * is lost if the pending LED effect takes a moment to fire. */
+        ESP_LOGI(TAG, "Reboot requested — flushing device state to NVS");
+        update_device_state();
+    } else if (event->id == EVENT_NETIF_DISCONNECTED) {
         // Attempt to reconnect to Wi-Fi
         ESP_LOGW(TAG, "Disconnected from Wi-Fi, reconnecting...");
         s_state = STATE_CONNECTING_NETIF;
@@ -1211,12 +1200,7 @@ void supervisor_operation_event(const supervisor_event_t* event)
         ESP_LOGW(TAG, "Disconnected from MQTT");
         /* Reset all in-flight packet IDs so events are republished on reconnect. */
         event_outbox_reset_inflight();
-        /* Don't overwrite STATE_OTA — the download runs over HTTP independently
-         * of MQTT.  The MQTT client will reconnect on its own; when it does,
-         * EVENT_MQTT_CONNECTED will be ignored because s_state != STATE_CONNECTING_MQTT. */
-        if (s_state != STATE_OTA) {
-            s_state = STATE_CONNECTING_MQTT;
-        }
+        s_state = STATE_CONNECTING_MQTT;
     } else if (event->id == EVENT_MQTT_PUBACK) {
         /* MQTT QoS-1 acknowledgement: mark the entry delivered and drain. */
         int msg_id = (int)(intptr_t)event->payload;
@@ -1228,13 +1212,6 @@ void supervisor_operation_event(const supervisor_event_t* event)
 
 void supervisor_operation_tick()
 {
-    /* While OTA is in progress, skip all operational tick work — the download
-     * runs in the worker task and will post EVENT_OTA_COMPLETE or
-     * EVENT_OTA_FAILED when done. */
-    if (s_state == STATE_OTA) {
-        return;
-    }
-
     // Check reload timeout
     if (s_device_state.reload_state.stage == RELOAD_RELOADING) {
         int64_t dur = app_rtc_calc_duration_ms(s_device_state.reload_state.start_time, 
@@ -1283,8 +1260,21 @@ void supervisor_operation_tick()
         deferred_action_t action = s_pending_deferred;
         s_pending_deferred = DEFERRED_NONE;
         if (action == DEFERRED_OTA) {
-            s_state = STATE_OTA;
-            ota_execute();
+            /* Publish IN_PROGRESS so AWS IoT Core knows we're acting on the job,
+             * then persist the job to NVS and reboot into supervisor_ota mode
+             * which performs the HTTPS download with reduced RAM pressure. */
+            ota_publish_accepted_job_in_progress();
+            esp_err_t nvs_err = ota_store_accepted_job_to_nvs();
+            if (nvs_err != ESP_OK) {
+                ESP_LOGE(TAG, "Failed to store OTA job to NVS (%d) — cannot reboot for OTA",
+                         nvs_err);
+            } else {
+                ESP_LOGI(TAG, "OTA job stored — rebooting into OTA mode");
+                ledc_set_task(LED_BREATHE, (led_task_param_t){
+                    .breathe = { .red = LED_ALL_DOORS, .green = 0x00 }
+                }, 2000);
+                supervisor_submit_event(EVENT_REBOOT_REQUESTED);
+            }
         }
     }
 
@@ -1354,6 +1344,11 @@ esp_err_t supervisor_operation_trigger_reload(void)
         s_device_state.reload_state.manual = true;
         ESP_LOGI(TAG, "Manual reload triggered - reset all bins to DISABLED");
         ESP_ERROR_CHECK(update_device_state());
+        return ESP_OK;
+    } else if (s_device_state.reload_state.stage == RELOAD_NEEDS_RELOAD) {
+        // Just start reloading
+        // Do not set manual flag so that the epoch week is advanced
+        start_reload();
         return ESP_OK;
     } else {
         ESP_LOGW(TAG, "Reload already in progress (stage: %d)", s_device_state.reload_state.stage);

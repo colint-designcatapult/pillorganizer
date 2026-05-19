@@ -32,6 +32,10 @@ extern const char root_ca_pem_end[]   asm("_binary_root_ca_pem_end");
  * whether to publish SUCCEEDED (new firmware booted) or FAILED (rollback). */
 #define OTA_NVS_PENDING_KEY  "ota_pending_val"
 
+/* NVS key used to persist an incoming OTA job so supervisor_ota can execute
+ * the download after a reboot into the lightweight OTA mode. */
+#define OTA_NVS_JOB_KEY      "ota_pending_job"
+
 /* Struct persisted to NVS after a successful flash. */
 typedef struct {
     char job_id[JOBID_MAX_LENGTH + 1];
@@ -46,8 +50,6 @@ static char        s_job_url[OTA_URL_MAX_LEN];
 
 static int s_notify_next_sub_id      = -1;
 static int s_start_next_sub_id       = -1;
-static int s_update_accepted_sub_id  = -1;
-static int s_update_rejected_sub_id  = -1;
 
 /*
  * Set by ota_init() when a pending-validation entry is found in NVS.
@@ -111,64 +113,9 @@ static int publish_job_status(const char* job_id, JobCurrentStatus_t status)
     return msg_id;
 }
 
-/* Subscribe to the per-job update confirmation topics. */
-static void subscribe_job_update_topics(const char* job_id)
-{
-    char thing_name[THINGNAME_MAX_LENGTH + 1];
-    if (!devcfg_get_thing_name_str(thing_name, sizeof(thing_name))) {
-        ESP_LOGE(TAG, "Could not retrieve thing name for per-job subscriptions");
-        return;
-    }
-
-    char topic[TOPIC_BUFFER_SIZE];
-    int written;
-
-    written = snprintf(topic, sizeof(topic),
-                       "$aws/things/%s/jobs/%s/update/accepted",
-                       thing_name, job_id);
-    if (written > 0 && written < (int)sizeof(topic)) {
-        int sub_id = -1;
-        esp_err_t err = mqtt_subscribe(topic, 1, &sub_id);
-        if (err != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to subscribe update/accepted for job %s: %d", job_id, err);
-        } else {
-            s_update_accepted_sub_id = sub_id;
-            ESP_LOGI(TAG, "Subscribed update/accepted for job %s (sub_id=%d)", job_id, sub_id);
-        }
-    } else {
-        ESP_LOGE(TAG, "update/accepted topic too long for job %s", job_id);
-    }
-
-    written = snprintf(topic, sizeof(topic),
-                       "$aws/things/%s/jobs/%s/update/rejected",
-                       thing_name, job_id);
-    if (written > 0 && written < (int)sizeof(topic)) {
-        int sub_id = -1;
-        esp_err_t err = mqtt_subscribe(topic, 1, &sub_id);
-        if (err != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to subscribe update/rejected for job %s: %d", job_id, err);
-        } else {
-            s_update_rejected_sub_id = sub_id;
-            ESP_LOGI(TAG, "Subscribed update/rejected for job %s (sub_id=%d)", job_id, sub_id);
-        }
-    } else {
-        ESP_LOGE(TAG, "update/rejected topic too long for job %s", job_id);
-    }
-}
-
-/* Reset all job state back to IDLE. */
-static void reset_state(void)
-{
-    s_state       = OTA_IDLE;
-    s_job_id[0]   = '\0';
-    s_job_version[0] = '\0';
-    s_job_url[0]  = '\0';
-    s_update_accepted_sub_id = -1;
-    s_update_rejected_sub_id = -1;
-}
-
 /* ---------------------------------------------------------------------------
- * OTA worker task — runs the blocking download in its own FreeRTOS task
+ * OTA worker task — performs the blocking HTTPS download in its own FreeRTOS
+ * task and posts EVENT_OTA_COMPLETE or EVENT_OTA_FAILED when done.
  * -------------------------------------------------------------------------*/
 
 static void ota_worker_task(void* arg)
@@ -179,17 +126,17 @@ static void ota_worker_task(void* arg)
     esp_task_wdt_add(NULL);
 #endif
 
-    ESP_LOGI(TAG, "OTA worker task started: %s", url);
+    ESP_LOGI(TAG, "OTA worker started: %s", url);
 
     esp_http_client_config_t http_cfg = {
         .url               = url,
         .cert_pem          = root_ca_pem_start,
-        .keep_alive_enable = true,
         /* Pre-signed S3 URLs can be very long (1 KB+).  Increase both the
          * receive and transmit buffers so the HTTP client can encode the full
          * request line without hitting "Out of buffer". */
         .buffer_size       = 4096,
-        .buffer_size_tx    = 4096,
+        .buffer_size_tx    = 2048,
+        .keep_alive_enable = true,
     };
     esp_https_ota_config_t ota_cfg = {
         .http_config = &http_cfg,
@@ -222,6 +169,15 @@ static void ota_worker_task(void* arg)
     esp_task_wdt_delete(NULL);
 #endif
     vTaskDelete(NULL);
+}
+
+/* Reset all job state back to IDLE. */
+static void reset_state(void)
+{
+    s_state       = OTA_IDLE;
+    s_job_id[0]   = '\0';
+    s_job_version[0] = '\0';
+    s_job_url[0]  = '\0';
 }
 
 /* ---------------------------------------------------------------------------
@@ -370,14 +326,6 @@ void ota_on_subscribe(int sub_id)
             ESP_LOGI(TAG, "StartNext request published — checking for pending OTA job");
         }
     }
-
-    if (sub_id == s_update_accepted_sub_id) {
-        ESP_LOGI(TAG, "OTA update/accepted subscription confirmed (sub_id=%d)", sub_id);
-    }
-
-    if (sub_id == s_update_rejected_sub_id) {
-        ESP_LOGI(TAG, "OTA update/rejected subscription confirmed (sub_id=%d)", sub_id);
-    }
 }
 
 void ota_on_data(const char* topic, size_t topic_len, const char* data, size_t data_len)
@@ -392,24 +340,6 @@ void ota_on_data(const char* topic, size_t topic_len, const char* data, size_t d
     size_t copy_len = topic_len < sizeof(topic_buf) - 1 ? topic_len : sizeof(topic_buf) - 1;
     memcpy(topic_buf, topic, copy_len);
     topic_buf[copy_len] = '\0';
-
-    /* Check for the per-job update/rejected confirmation topic.
-     * s_job_id is read here from the MQTT task, but it is set by the
-     * supervisor task in ota_accept_job() before the subscription is active,
-     * and cleared only after the job ends — so this read is safe. */
-    if (s_update_rejected_sub_id >= 0 && s_job_id[0] != '\0') {
-        char rejected_topic[TOPIC_BUFFER_SIZE];
-        int written = snprintf(rejected_topic, sizeof(rejected_topic),
-                               "$aws/things/%s/jobs/%s/update/rejected",
-                               thing_name, s_job_id);
-        if (written > 0 && written < (int)sizeof(rejected_topic) &&
-            copy_len == (size_t)written &&
-            strncmp(topic_buf, rejected_topic, copy_len) == 0) {
-            ESP_LOGE(TAG, "AWS rejected status update for job %s — resetting", s_job_id);
-            supervisor_submit_event(EVENT_OTA_FAILED);
-            return;
-        }
-    }
 
     /* Match Jobs notification topics */
     JobsTopic_t topic_type;
@@ -491,7 +421,7 @@ void ota_on_data(const char* topic, size_t topic_len, const char* data, size_t d
     }
 
     /* Allocate job descriptor — ownership transfers to the supervisor task */
-    ota_job_t* job = calloc(1, sizeof(ota_job_t));
+    ota_job_t* job = (ota_job_t*)calloc(1, sizeof(ota_job_t));
     if (!job) {
         ESP_LOGE(TAG, "Failed to allocate ota_job_t — dropping job %s",
                  job_id_item->valuestring);
@@ -533,8 +463,6 @@ void ota_accept_job(const ota_job_t* job)
     memcpy(s_job_version, job->version, version_len + 1);
     s_state = OTA_JOB_RECEIVED;
 
-    subscribe_job_update_topics(job->job_id);
-
     ESP_LOGI(TAG, "OTA job accepted: id=%s version=%s url=%s",
              job->job_id, job->version, job->url);
 }
@@ -553,24 +481,19 @@ void ota_reject(void)
     reset_state();
 }
 
-void ota_execute(void)
+esp_err_t ota_execute_job(const ota_job_t* job)
 {
-    if (s_state != OTA_JOB_RECEIVED || s_job_url[0] == '\0' || s_job_id[0] == '\0') {
-        ESP_LOGE(TAG, "ota_execute called in unexpected state (state=%d)", (int)s_state);
-        return;
+    if (!job || job->url[0] == '\0' || job->job_id[0] == '\0') {
+        ESP_LOGE(TAG, "ota_execute_job: invalid job");
+        return ESP_ERR_INVALID_ARG;
     }
 
-    ESP_LOGI(TAG, "Executing OTA job %s — spawning worker task", s_job_id);
+    ESP_LOGI(TAG, "Spawning OTA worker for job %s", job->job_id);
 
-    /* Publish IN_PROGRESS before spawning the task */
-    publish_job_status(s_job_id, InProgress);
-
-    char* url_copy = strdup(s_job_url);
+    char* url_copy = strdup(job->url);
     if (!url_copy) {
         ESP_LOGE(TAG, "Failed to allocate URL for OTA worker task");
-        publish_job_status(s_job_id, Failed);
-        reset_state();
-        return;
+        return ESP_ERR_NO_MEM;
     }
 
     BaseType_t ret = xTaskCreate(ota_worker_task, "ota_worker",
@@ -579,42 +502,82 @@ void ota_execute(void)
     if (ret != pdPASS) {
         ESP_LOGE(TAG, "Failed to create OTA worker task");
         free(url_copy);
-        publish_job_status(s_job_id, Failed);
-        reset_state();
-        return;
+        return ESP_FAIL;
     }
 
-    s_state = OTA_IN_PROGRESS;
-    ESP_LOGI(TAG, "OTA worker task spawned — state → IN_PROGRESS");
+    return ESP_OK;
 }
 
-void ota_on_complete(void)
+void ota_store_boot_validation(const char* job_id, const char* version)
 {
-    ESP_LOGI(TAG, "OTA flash succeeded for job %s — persisting to NVS, rebooting to validate",
-             s_job_id);
-
-    /* Persist the job ID and target version to NVS.
-     * SUCCEEDED will only be published after the new firmware successfully
-     * boots and connects to MQTT (see ota_init() + ota_on_connect()).
-     * If the bootloader rolls back, FAILED will be published instead. */
     ota_pending_val_t pending;
     memset(&pending, 0, sizeof(pending));
-    memcpy(pending.job_id,  s_job_id,      strlen(s_job_id)      + 1);
-    memcpy(pending.version, s_job_version, strlen(s_job_version) + 1);
+    snprintf(pending.job_id,  sizeof(pending.job_id),  "%s", job_id);
+    snprintf(pending.version, sizeof(pending.version), "%s", version);
 
     esp_err_t err = nvs_write_blob(OTA_NVS_PENDING_KEY, &pending, sizeof(pending));
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to persist OTA pending validation to NVS: %d — "
+        ESP_LOGE(TAG, "Failed to write boot-validation to NVS: %d — "
                  "job status may not be reported", err);
+    } else {
+        ESP_LOGI(TAG, "Boot-validation written: job=%s version='%s'", job_id, version);
     }
-
-    s_state = OTA_SUCCEEDED;
-    /* Caller (supervisor) submits EVENT_REBOOT_REQUESTED */
 }
 
-void ota_on_failed(void)
+esp_err_t ota_store_accepted_job_to_nvs(void)
 {
-    ESP_LOGE(TAG, "OTA failed for job %s — resetting state", s_job_id);
-    publish_job_status(s_job_id, Failed);
-    reset_state();
+    if (s_job_id[0] == '\0') {
+        ESP_LOGE(TAG, "ota_store_accepted_job_to_nvs: no accepted job");
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    ota_job_t job;
+    memset(&job, 0, sizeof(job));
+    snprintf(job.job_id,  sizeof(job.job_id),  "%s", s_job_id);
+    snprintf(job.version, sizeof(job.version), "%s", s_job_version);
+    snprintf(job.url,     sizeof(job.url),     "%s", s_job_url);
+
+    esp_err_t err = nvs_write_blob(OTA_NVS_JOB_KEY, &job, sizeof(job));
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to write pending OTA job to NVS: %d", err);
+    } else {
+        ESP_LOGI(TAG, "Pending OTA job stored: id=%s version=%s", job.job_id, job.version);
+    }
+    return err;
+}
+
+void ota_publish_accepted_job_in_progress(void)
+{
+    if (s_job_id[0] == '\0') {
+        ESP_LOGE(TAG, "ota_publish_accepted_job_in_progress: no accepted job");
+        return;
+    }
+    publish_job_status(s_job_id, InProgress);
+}
+
+esp_err_t ota_load_and_clear_pending_job(ota_job_t* out)
+{
+    if (!out) return ESP_ERR_INVALID_ARG;
+
+    esp_err_t err = nvs_read_blob(OTA_NVS_JOB_KEY, out, sizeof(ota_job_t));
+    if (err != ESP_OK) {
+        return err;  /* ESP_ERR_NOT_FOUND if no pending job */
+    }
+
+    /* Null-terminate defensively in case NVS data is corrupt */
+    out->job_id[sizeof(out->job_id) - 1]   = '\0';
+    out->version[sizeof(out->version) - 1] = '\0';
+    out->url[sizeof(out->url) - 1]         = '\0';
+
+    if (out->job_id[0] == '\0') {
+        return ESP_ERR_NOT_FOUND;
+    }
+
+    esp_err_t erase_err = nvs_erase_key_entry(OTA_NVS_JOB_KEY);
+    if (erase_err != ESP_OK) {
+        ESP_LOGW(TAG, "Failed to erase pending job NVS key: %d", erase_err);
+    }
+
+    ESP_LOGI(TAG, "Loaded pending OTA job: id=%s version=%s", out->job_id, out->version);
+    return ESP_OK;
 }
