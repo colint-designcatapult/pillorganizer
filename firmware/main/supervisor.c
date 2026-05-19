@@ -134,19 +134,6 @@ void supervisor_run()
                 current_state == STATE_PROVISIONING ? "PROVISIONING" : 
                 current_state == STATE_OTA ? "OTA" : "PENDING_REBOOT");
 
-            // Process unconditional events
-            if (event.id == EVENT_REBOOT_REQUESTED) {
-                current_state = STATE_PENDING_REBOOT;
-#ifdef CONFIG_EMULATOR_MODE
-                /* Guarantee EVENT_LED_EFFECT_COMPLETE arrives after this
-                 * transition even if the ledc stub's task lost the race. */
-                supervisor_submit_event(EVENT_LED_EFFECT_COMPLETE);
-#endif
-            } else if (event.id == EVENT_DEEP_SLEEP_REQUESTED) {
-                // Exit supervisor loop
-                ESP_LOGI(TAG, "Deep sleep requested, exiting supervisor loop");
-                return;
-            }
 
             switch (current_state) {
                 case STATE_PROVISIONING:
@@ -167,6 +154,21 @@ void supervisor_run()
                     ESP_ERROR_CHECK(ESP_ERR_INVALID_STATE);
                     break;
             }
+
+            // Process unconditional events
+            if (event.id == EVENT_REBOOT_REQUESTED) {
+                current_state = STATE_PENDING_REBOOT;
+#ifdef CONFIG_EMULATOR_MODE
+                /* Guarantee EVENT_LED_EFFECT_COMPLETE arrives after this
+                 * transition even if the ledc stub's task lost the race. */
+                supervisor_submit_event(EVENT_LED_EFFECT_COMPLETE);
+#endif
+            } else if (event.id == EVENT_DEEP_SLEEP_REQUESTED) {
+                // Exit supervisor loop
+                ESP_LOGI(TAG, "Deep sleep requested, exiting supervisor loop");
+                return;
+            }
+
         } else {
             // Timeout of 1 sec received
             // Pass to subordinate supervisor
