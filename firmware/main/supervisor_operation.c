@@ -1260,15 +1260,15 @@ void supervisor_operation_tick()
         deferred_action_t action = s_pending_deferred;
         s_pending_deferred = DEFERRED_NONE;
         if (action == DEFERRED_OTA) {
-            /* Publish IN_PROGRESS so AWS IoT Core knows we're acting on the job,
-             * then persist the job to NVS and reboot into supervisor_ota mode
-             * which performs the HTTPS download with reduced RAM pressure. */
-            ota_publish_accepted_job_in_progress();
+            /* Persist the accepted job to NVS first, then publish IN_PROGRESS
+             * and reboot into supervisor_ota mode which performs the HTTPS
+             * download with reduced RAM pressure. */
             esp_err_t nvs_err = ota_store_accepted_job_to_nvs();
             if (nvs_err != ESP_OK) {
                 ESP_LOGE(TAG, "Failed to store OTA job to NVS (%d) — cannot reboot for OTA",
                          nvs_err);
             } else {
+                ota_publish_accepted_job_in_progress();
                 ESP_LOGI(TAG, "OTA job stored — rebooting into OTA mode");
                 ledc_set_task(LED_BREATHE, (led_task_param_t){
                     .breathe = { .red = LED_ALL_DOORS, .green = 0x00 }
