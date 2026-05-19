@@ -656,8 +656,6 @@ void mux_force_door_state_reset(int door_id)
     if (door_id >= 0 && door_id < ADC_NUM_DOOR_CHANNELS) {
         ch_stats[door_id].state = DOOR_CLOSED;
         ch_stats[door_id].debounce_cnt = 0;
-        ch_stats[door_id].initialized = false;
-        rtc_last_known_state[door_id] = DOOR_CLOSED;
         ESP_LOGI(TAG, "Forced state reset for door %d", door_id);
     }
 }
