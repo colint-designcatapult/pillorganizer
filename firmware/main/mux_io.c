@@ -212,7 +212,6 @@ static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
                     .intensity = 0
                 }
             });
-            printf("LED OFF");
             ledc_eng_lock();
             if (ulp_ctr > 6)
                 s_calib_state = CALIB_LED_OFF_SAMPLE;
@@ -229,7 +228,6 @@ static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
                     .intensity = 127
                 }
             });
-            printf("LED ON");
             ledc_eng_lock();
             if (ulp_ctr > 12) {
                 s_calib_state = CALIB_LED_ON_SAMPLE;
@@ -247,7 +245,6 @@ static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
                     .intensity = 64
                 }
             });
-            printf("LED 50");
             ledc_eng_lock();
             if (ulp_ctr > 18) {
                 s_calib_state = CALIB_LED_50_SAMPLE;
