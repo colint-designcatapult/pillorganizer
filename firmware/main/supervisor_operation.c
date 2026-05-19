@@ -1265,7 +1265,11 @@ void supervisor_operation_tick()
              * download with reduced RAM pressure. */
             esp_err_t nvs_err = ota_store_accepted_job_to_nvs();
             if (nvs_err != ESP_OK) {
-                ESP_LOGE(TAG, "Failed to store OTA job to NVS (%d) — cannot reboot for OTA",
+                /* Keep the deferred OTA action pending so the supervisor can
+                 * retry once the device is idle again instead of dropping the
+                 * accepted job flow after a transient NVS failure. */
+                s_pending_deferred = DEFERRED_OTA;
+                ESP_LOGE(TAG, "Failed to store OTA job to NVS (%d) — will retry OTA later",
                          nvs_err);
             } else {
                 ota_publish_accepted_job_in_progress();
