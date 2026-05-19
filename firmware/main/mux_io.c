@@ -190,6 +190,7 @@ typedef enum {
     CALIB_LED_ON_SAMPLE,
     CALIB_LED_50,
     CALIB_LED_50_SAMPLE,
+    CALIB_SWEEP,
     CALIB_NONE
 } ulp_calib_state_t;
 
@@ -207,7 +208,7 @@ static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
             ledc_eng_unlock();
             ledc_set_idle_task(LED_SOLID, (led_task_param_t){
                 .solid = {
-                    .red = 0,
+                    .red = LED_ALL_DOORS,
                     .green = 0,
                     .intensity = 0
                 }
@@ -251,9 +252,27 @@ static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
             }
             break;
         case CALIB_LED_50_SAMPLE:
-            s_calib_state = CALIB_NONE;
-            ledc_eng_unlock();
+            s_calib_state = CALIB_SWEEP;
             break;
+        case CALIB_SWEEP: {
+            uint32_t step = (ulp_ctr >= 18) ? (ulp_ctr - 18) : 0;
+            if (step > 6) step = 6;
+            uint8_t sweep_intensity = (uint8_t)((step * 127) / 6);
+            ledc_eng_unlock();
+            ledc_set_idle_task(LED_SOLID, (led_task_param_t){
+                .solid = {
+                    .red = LED_ALL_DOORS,
+                    .green = LED_ALL_DOORS,
+                    .intensity = sweep_intensity
+                }
+            });
+            ledc_eng_lock();
+            if (ulp_ctr > 24) {
+                s_calib_state = CALIB_NONE;
+                ledc_eng_unlock();
+            }
+            break;
+        }
         case CALIB_NONE:
             break;
     }
@@ -299,25 +318,31 @@ static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
     int32_t avg_adc_raw = 0;
     int32_t avg_intensity = 0;
     int red_count = 0;
-    for (int i = ADC_DOOR_CHANNEL_START; i <= ADC_DOOR_CHANNEL_END; i++) {
-        if (red_on[i]) {
-            avg_adc_raw += raw_adc[i];
-            avg_intensity += intensity[i];
-            red_count++;
+    {
+        int32_t adc_sorted[ADC_NUM_DOOR_CHANNELS];
+        int32_t int_sorted[ADC_NUM_DOOR_CHANNELS];
+        for (int i = 0; i < ADC_NUM_DOOR_CHANNELS; i++) {
+            adc_sorted[i] = raw_adc[ADC_DOOR_CHANNEL_START + i];
+            int_sorted[i] = intensity[ADC_DOOR_CHANNEL_START + i];
         }
+        sort_int32_asc(adc_sorted, ADC_NUM_DOOR_CHANNELS);
+        sort_int32_asc(int_sorted, ADC_NUM_DOOR_CHANNELS);
+        for (int i = 2; i < (ADC_NUM_DOOR_CHANNELS - 2); i++) {
+            avg_adc_raw += adc_sorted[i];
+            avg_intensity += int_sorted[i];
+        }
+        avg_adc_raw /= (ADC_NUM_DOOR_CHANNELS - 4);
+        avg_intensity /= (ADC_NUM_DOOR_CHANNELS - 4);
     }
-    if (red_count > 0) {
-        avg_adc_raw /= red_count;
-        avg_intensity /= red_count;
+    for (int i = ADC_DOOR_CHANNEL_START; i <= ADC_DOOR_CHANNEL_END; i++) {
+        if (red_on[i]) red_count++;
     }
 
-    bool is_calib_sample = (calib_state_before == CALIB_LED_OFF_SAMPLE ||
-                            calib_state_before == CALIB_LED_ON_SAMPLE ||
-                            calib_state_before == CALIB_LED_50_SAMPLE);
+    bool is_calib_active = (calib_state_before != CALIB_NONE);
 
-    if ((red_count > 0 || is_calib_sample) && !s_leak_global_cal.calibrated) {
+    if ((red_count > 0 || is_calib_active) && !s_leak_global_cal.calibrated) {
         leak_global_cal_t* g = &s_leak_global_cal;
-        if (red_count > 0) {
+        if (red_count > 0 || is_calib_active) {
             if (g->sample_count < UINT16_MAX) g->sample_count++;
             g->sum_i += avg_intensity;
             g->sum_a += avg_adc_raw;
@@ -359,7 +384,7 @@ static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
     }
 
     for (int i = ADC_DOOR_CHANNEL_START; i <= ADC_DOOR_CHANNEL_END; i++) {
-        if (!red_on[i] && !is_calib_sample) {
+        if (!red_on[i] && !is_calib_active) {
             continue;
         }
 
@@ -629,7 +654,10 @@ static void start_ulp_program(void)
 void mux_force_door_state_reset(int door_id)
 {
     if (door_id >= 0 && door_id < ADC_NUM_DOOR_CHANNELS) {
+        ch_stats[door_id].state = DOOR_CLOSED;
+        ch_stats[door_id].debounce_cnt = 0;
         ch_stats[door_id].initialized = false;
+        rtc_last_known_state[door_id] = DOOR_CLOSED;
         ESP_LOGI(TAG, "Forced state reset for door %d", door_id);
     }
 }
