@@ -222,6 +222,14 @@ void led_task(void* arg)
                     current_green_mask = param.firework.green;
                     current_intensity = MAX_BREATHE_STEPS;
                     break;
+                case LED_SOLID:
+                    IS31FL3730_set_brightness(param.solid.intensity);
+                    apply_led_bitfields(param.solid.red, param.solid.green);
+                    i2c_write_register(ISSI_ADDR, ISSI_REG_UPDATE, 0x00);
+                    current_red_mask = param.solid.red;
+                    current_green_mask = param.solid.green;
+                    current_intensity = param.solid.intensity;
+                    break;
                 default:
                     break;
             }
@@ -364,6 +372,9 @@ void led_task(void* arg)
                 step_ctr++;
                 break;
             }
+            case LED_SOLID:
+                // No animation — mask and intensity are set at init
+                break;
             case LED_IDLE:
             default:
                 current_red_mask = 0;

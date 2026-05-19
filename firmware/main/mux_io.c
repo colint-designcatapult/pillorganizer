@@ -188,6 +188,8 @@ typedef enum {
     CALIB_LED_OFF_SAMPLE,
     CALIB_LED_ON,
     CALIB_LED_ON_SAMPLE,
+    CALIB_LED_50,
+    CALIB_LED_50_SAMPLE,
     CALIB_NONE
 } ulp_calib_state_t;
 
@@ -203,11 +205,11 @@ static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
     switch (s_calib_state) {
         case CALIB_LED_OFF:
             ledc_eng_unlock();
-            ledc_set_idle_task(LED_DEVICE_STATE, (led_task_param_t){
-                .device_state = {
+            ledc_set_idle_task(LED_SOLID, (led_task_param_t){
+                .solid = {
                     .red = 0,
                     .green = 0,
-                    .blink_mask = 0
+                    .intensity = 0
                 }
             });
             printf("LED OFF");
@@ -220,11 +222,11 @@ static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
             break;
         case CALIB_LED_ON:
             ledc_eng_unlock();
-            ledc_set_idle_task(LED_DEVICE_STATE, (led_task_param_t){
-                .device_state = {
+            ledc_set_idle_task(LED_SOLID, (led_task_param_t){
+                .solid = {
                     .red = LED_ALL_DOORS,
                     .green = LED_ALL_DOORS,
-                    .blink_mask = 0
+                    .intensity = 127
                 }
             });
             printf("LED ON");
@@ -234,6 +236,24 @@ static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
             }
             break;
         case CALIB_LED_ON_SAMPLE:
+            s_calib_state = CALIB_LED_50;
+            break;
+        case CALIB_LED_50:
+            ledc_eng_unlock();
+            ledc_set_idle_task(LED_SOLID, (led_task_param_t){
+                .solid = {
+                    .red = LED_ALL_DOORS,
+                    .green = LED_ALL_DOORS,
+                    .intensity = 64
+                }
+            });
+            printf("LED 50");
+            ledc_eng_lock();
+            if (ulp_ctr > 18) {
+                s_calib_state = CALIB_LED_50_SAMPLE;
+            }
+            break;
+        case CALIB_LED_50_SAMPLE:
             s_calib_state = CALIB_NONE;
             ledc_eng_unlock();
             break;
@@ -295,7 +315,8 @@ static uint32_t RTC_IRAM_ATTR process_ulp_events(void)
     }
 
     bool is_calib_sample = (calib_state_before == CALIB_LED_OFF_SAMPLE ||
-                            calib_state_before == CALIB_LED_ON_SAMPLE);
+                            calib_state_before == CALIB_LED_ON_SAMPLE ||
+                            calib_state_before == CALIB_LED_50_SAMPLE);
 
     if ((red_count > 0 || is_calib_sample) && !s_leak_global_cal.calibrated) {
         leak_global_cal_t* g = &s_leak_global_cal;
