@@ -11,7 +11,8 @@ typedef enum {
     LED_PROGRESS,
     LED_BLINK,
     LED_FIREWORK,
-    LED_DEVICE_STATE
+    LED_DEVICE_STATE,
+    LED_SOLID
 } led_task_t;
 
 typedef union {
@@ -39,6 +40,11 @@ typedef union {
         uint16_t green;
         uint16_t blink_mask;
     } device_state;
+    struct {
+        uint16_t red;
+        uint16_t green;
+        uint8_t intensity; 
+    } solid;
     uint64_t raw;
 } led_task_param_t;
 
