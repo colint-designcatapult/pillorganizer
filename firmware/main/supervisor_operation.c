@@ -566,10 +566,9 @@ static void reload_complete()
     cleanup_reload();
     ESP_LOGI(TAG, "Reload complete: epoch_week updated to %lld", s_device_state.epoch_week);
 
+    ESP_ERROR_CHECK(update_device_state());
     // Ensure the new state is persisted
     ESP_ERROR_CHECK(devcfg_flush_state_to_nvs());
-
-    ESP_ERROR_CHECK(update_device_state());
 }
 
 static void check_state_transitions()
@@ -1151,11 +1150,11 @@ void supervisor_operation_event(const supervisor_event_t* event)
                 } else if (action == CMD_RELOAD_COMPLETE) {
                     if (s_device_state.reload_state.stage == RELOAD_RELOADING) {
                         ESP_LOGI(TAG, "CMD: Reload complete received");
-                        reload_complete();
+                        supervisor_submit_event(EVENT_RELOAD_COMPLETE);
                     } else if (s_device_state.reload_state.stage == RELOAD_NEEDS_RELOAD) {
                         ESP_LOGI(TAG, "CMD: Reload complete received (NEEDS_RELOAD -> start + complete)");
                         start_reload();
-                        reload_complete();
+                        supervisor_submit_event(EVENT_RELOAD_COMPLETE);
                     } else {
                         ESP_LOGW(TAG, "CMD: Reload complete ignored (stage=%d)", s_device_state.reload_state.stage);
                     }
