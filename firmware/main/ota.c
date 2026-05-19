@@ -131,9 +131,10 @@ static void ota_worker_task(void* arg)
     esp_http_client_config_t http_cfg = {
         .url               = url,
         .cert_pem          = root_ca_pem_start,
-        /* Pre-signed S3 URLs can be very long (1 KB+).  Increase both the
-         * receive and transmit buffers so the HTTP client can encode the full
-         * request line without hitting "Out of buffer". */
+        /* Pre-signed S3 URLs can be very long (1 KB+), so the TX buffer needs
+         * enough space to emit the full HTTP request line without hitting
+         * "Out of buffer". Keep the RX buffer larger to provide additional
+         * headroom for the OTA response while limiting TX-side memory usage. */
         .buffer_size       = 4096,
         .buffer_size_tx    = 2048,
         .keep_alive_enable = true,
