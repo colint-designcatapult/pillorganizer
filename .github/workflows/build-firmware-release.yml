@@ -1,0 +1,100 @@
+name: Build Firmware Release
+
+on:
+  workflow_run:
+    workflows: [Create New Release]
+    types: [completed]
+    branches: [master]
+
+jobs:
+  build-firmware:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          fetch-depth: 0
+
+      - name: Get release tag
+        id: release_info
+        run: |
+          # Auto-detect latest tag
+          LATEST_TAG=$(git tag -l "0.*+*" --sort=-version:refname | head -1)
+          
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No release tag found"
+            exit 1
+          fi
+          echo "tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
+          echo "Found release tag: ${LATEST_TAG}"
+
+      - name: Checkout release tag
+        run: |
+          git checkout "${{ steps.release_info.outputs.tag }}"
+
+      - name: Initialize firmware submodules
+        run: |
+          cd firmware
+          git submodule update --init --recursive
+
+      - name: Setup ESP-IDF 5.4.3
+        run: |
+          mkdir -p ~/esp
+          cd ~/esp
+          git clone --depth 1 --branch v5.4.3 https://github.com/espressif/esp-idf.git
+          cd esp-idf
+          git submodule update --init --recursive
+          ./install.sh esp32
+
+      - name: Build firmware with sdkconfig.defaults
+        working-directory: firmware
+        run: |
+          source ~/esp/esp-idf/export.sh
+          # Use defaults to generate the sdkconfig for this build
+          idf.py build
+
+      - name: Verify firmware artifacts
+        run: |
+          echo "Checking built firmware artifacts..."
+          ls -lh firmware/build/bootloader/bootloader.bin
+          ls -lh firmware/build/bootloader/bootloader.elf
+          ls -lh firmware/build/bootloader/bootloader.map
+          ls -lh firmware/build/pill-box.bin
+          ls -lh firmware/build/pill-box.elf
+          ls -lh firmware/build/pill-box.map
+          ls -lh firmware/build/partition_table/partition-table.bin
+          echo ""
+          echo "All firmware artifacts built successfully!"
+
+      - name: Upload firmware to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.release_info.outputs.tag }}
+          files: |
+            firmware/build/bootloader/bootloader.bin
+            firmware/build/bootloader/bootloader.elf
+            firmware/build/bootloader/bootloader.map
+            firmware/build/pill-box.bin
+            firmware/build/pill-box.elf
+            firmware/build/pill-box.map
+            firmware/build/partition_table/partition-table.bin
+          append_body: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Firmware Build Summary
+        run: |
+          echo "Firmware build completed successfully"
+          echo "Release tag: ${{ steps.release_info.outputs.tag }}"
+          echo ""
+          echo "Uploaded firmware artifacts to release:"
+          echo "- bootloader/bootloader.bin"
+          echo "- bootloader/bootloader.elf"
+          echo "- bootloader/bootloader.map"
+          echo "- pill-box.bin"
+          echo "- pill-box.elf"
+          echo "- pill-box.map"
+          echo "- partition_table/partition-table.bin"

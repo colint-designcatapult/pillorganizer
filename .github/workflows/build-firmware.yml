@@ -1,0 +1,69 @@
+name: Build Firmware
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - 'firmware/**'
+      - '.github/workflows/build-firmware.yml'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'firmware/**'
+      - '.github/workflows/build-firmware.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.1
+        with:
+          fetch-depth: 0
+
+      - name: Initialize firmware submodules
+        run: |
+          cd firmware
+          git submodule update --init --recursive
+
+      - name: Setup ESP-IDF 5.4.3
+        run: |
+          mkdir -p ~/esp
+          cd ~/esp
+          git clone --depth 1 --branch v5.4.3 https://github.com/espressif/esp-idf.git
+          cd esp-idf
+          git submodule update --init --recursive
+          ./install.sh esp32
+
+      - name: Build firmware with sdkconfig.defaults
+        working-directory: firmware
+        run: |
+          source ~/esp/esp-idf/export.sh
+          # Use defaults to generate the sdkconfig for this build
+          idf.py build
+
+      - name: Verify pill-box.bin artifact
+        run: |
+          echo "Checking pill-box.bin..."
+          ls -lh firmware/build/pill-box.bin
+          echo "Firmware artifact ready!"
+
+      - name: Upload pill-box.bin as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-build
+          path: firmware/build/pill-box.bin
+          retention-days: 90
+
+      - name: Firmware Build Summary
+        run: |
+          echo "Firmware build completed successfully"
+          echo ""
+          echo "Built artifact:"
+          echo "- pill-box.bin (uploaded as 'firmware-build' artifact)"
